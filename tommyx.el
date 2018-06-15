@@ -22,6 +22,7 @@
 (use-package evil :ensure t)
 (use-package helm :ensure t)
 (use-package helm-flx :ensure t)
+(use-package which-key :ensure t)
 (use-package spacemacs-theme :defer t
              :init (load-theme 'spacemacs-dark t))
 
@@ -30,6 +31,10 @@
 
 ;; evil-mode
 (evil-mode 1) ; use evil-mode at startup
+
+;; which key
+(which-key-mode)
+(setq which-key-idle-delay 0.5)
 
 ;; helm
 (require 'helm-config)
@@ -59,6 +64,12 @@
 
 ;; helm
 (global-set-key (kbd "M-x") 'helm-M-x)
+
+;; evil
+; allow repeat in visual mode
+(evil-define-key 'visual 'global "." (kbd ":norm . RET")) 
+; use U for redo
+(evil-define-key 'normal 'global "U" 'undo-tree-redo)
 
 
 ;;; misc settings
