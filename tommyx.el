@@ -18,19 +18,78 @@
 (eval-when-compile
   (require 'use-package))
 
-;;; install the following packages
+
+;;; packages settings before loading
+
+;; evil
+(setq evil-want-Y-yank-to-eol t)
+(setq evil-want-integration nil)
+
+
+;;; install packages
 (use-package evil :ensure t)
+(use-package evil-collection :ensure t :after evil)
+(use-package evil-visualstar :ensure t)
 (use-package helm :ensure t)
 (use-package helm-flx :ensure t)
 (use-package which-key :ensure t)
 (use-package spacemacs-theme :ensure t :defer t
-             :init (load-theme 'spacemacs-dark t))
+             :init (load-theme 'spacemacs-light t))
+(use-package ace-window :ensure t)
+(use-package general :ensure t)
+(use-package highlight-indent-guides :ensure t)
+(use-package origami :ensure t)
+(use-package volatile-highlights :ensure t)
 
 
 ;;; package settings
 
 ;; evil-mode
 (evil-mode 1) ; use evil-mode at startup
+; split to the right and below
+(setq evil-split-window-below t)
+(setq evil-vsplit-window-right t)
+(setq evil-ex-substitute-global t)
+; auto center after search
+(defun my-center-line (&rest _) (evil-scroll-line-to-center nil))
+(advice-add 'evil-search-next :after #'my-center-line)
+(advice-add 'evil-search-previous :after #'my-center-line)
+(advice-add 'evil-search-word-forward :after #'evil-search-previous)
+(advice-add 'evil-search-word-backward :after #'evil-search-next)
+
+;; volatile-highlight
+(vhl/define-extension 'evil
+                      'evil-move
+                      'evil-paste-after
+                      'evil-paste-before
+                      'evil-paste-pop)
+(with-eval-after-load 'evil
+    (vhl/install-extension 'evil)
+    (vhl/load-extension 'evil))
+(vhl/define-extension 'undo-tree
+                      'undo-tree-move
+                      'undo-tree-yank)
+(with-eval-after-load 'undo-tree
+    (vhl/install-extension 'undo-tree)
+    (vhl/load-extension 'undo-tree))
+(volatile-highlights-mode)
+
+;; evil-collection
+(setq evil-collection-setup-minibuffer t)
+(evil-collection-init)
+
+;; highlight indent guides
+(add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
+(add-hook 'text-mode-hook 'highlight-indent-guides-mode)
+(setq highlight-indent-guides-method 'character) ; TODO use the character method. right now the font doesn't work
+(setq highlight-indent-guides-character ?\|)
+(setq highlight-indent-guides-responsive 'stack)
+
+;; evil-visualstar
+(global-evil-visualstar-mode)
+
+;; general
+(general-evil-setup)
 
 ;; which key
 (which-key-mode 1)
@@ -69,17 +128,199 @@
 ;; helm
 (global-set-key (kbd "M-x") 'helm-M-x)
 ; use ctrl-n for recent files
+(evil-define-key 'motion 'global (kbd "C-n") 'helm-mini)
 (evil-define-key 'normal 'global (kbd "C-n") 'helm-mini)
 ; use ctrl-p for find files
+(evil-define-key 'motion 'global (kbd "C-p") 'helm-find-files)
 (evil-define-key 'normal 'global (kbd "C-p") 'helm-find-files)
+; in helm window move using j and k
+(define-key helm-map (kbd "C-j") 'helm-next-line)
+(define-key helm-map (kbd "C-k") 'helm-previous-line)
+; in file window, move up one level using C-h
+(define-key helm-find-files-map (kbd "C-h") 'helm-find-files-up-one-level)
 
 ;; evil
+
+; leader
+(define-prefix-command 'leader-map)
+(evil-define-key 'motion 'global "," 'leader-map)
+; use Q for macro record and q for playback
+(evil-define-key 'normal 'global "q" 'evil-execute-macro)
+(evil-define-key 'motion 'global "Q" 'evil-record-macro)
+(evil-define-key 'visual 'global "Q" 'evil-record-macro)
 ; allow repeat in visual mode
-(evil-define-key 'visual 'global "." (kbd ":norm . RET")) 
+(evil-define-key 'visual 'global "." (kbd ";norm . RET"))
+; macro in visual mode
+(evil-define-key 'visual 'global "q" (lambda () (interactive) (evil-ex "'<,'>norm @")))
 ; use U for redo
 (evil-define-key 'normal 'global "U" 'undo-tree-redo)
 ; use ; for :
 (evil-define-key 'motion 'global ";" 'evil-ex)
+; repeat last ex command
+(evil-define-key 'motion 'global ",." "@:")
+; save all
+(evil-define-key 'motion 'global ",wa" (kbd ";wa RET"))
+; change to last buffer
+(evil-define-key 'motion 'global (kbd ", TAB") 'evil-buffer)
+; kill buffer
+(evil-define-key 'motion 'global ",q" 'kill-buffer)
+; use visual line
+(evil-define-key 'motion 'global "j" 'evil-next-visual-line)
+(evil-define-key 'motion 'global "k" 'evil-previous-visual-line)
+; faster movement
+(evil-define-motion fast-move-up () :type exclusive
+    (evil-previous-visual-line 5))
+(evil-define-motion fast-move-down () :type exclusive
+    (evil-next-visual-line 5))
+(evil-define-motion fast-move-left () :type exclusive
+    (evil-backward-char 8))
+(evil-define-motion fast-move-right () :type exclusive
+    (evil-forward-char 8))
+(evil-define-key 'motion 'global "H" (lambda () (interactive) (evil-backward-char 8)))
+(evil-define-key 'motion 'global "J" (lambda () (interactive) (evil-next-visual-line 5)))
+(evil-define-key 'motion 'global "K" (lambda () (interactive) (evil-previous-visual-line 5)))
+(evil-define-key 'motion 'global "L" (lambda () (interactive) (evil-forward-char 8)))
+(evil-define-key 'motion 'global "G" 'evil-first-non-blank)
+(evil-define-key 'motion 'global ":" 'evil-end-of-line)
+(evil-define-key 'normal 'global "H" 'fast-move-left)
+(evil-define-key 'normal 'global "J" 'fast-move-down)
+(evil-define-key 'normal 'global "K" 'fast-move-up)
+(evil-define-key 'normal 'global "L" 'fast-move-right)
+(evil-define-key 'normal 'global "G" 'evil-first-non-blank)
+(evil-define-key 'normal 'global ":" 'evil-end-of-line)
+(evil-define-key 'visual 'global "H" 'fast-move-left)
+(evil-define-key 'visual 'global "J" 'fast-move-down)
+(evil-define-key 'visual 'global "K" 'fast-move-up)
+(evil-define-key 'visual 'global "L" 'fast-move-right)
+(evil-define-key 'visual 'global "G" 'evil-first-non-blank)
+(evil-define-key 'visual 'global ":" (lambda () (interactive) (evil-end-of-line)))
+; use gG to go to bottom
+(evil-define-key 'motion 'global "gG" 'evil-goto-line)
+; search
+(evil-define-key 'motion 'global (kbd "SPC") (lambda () (interactive) (evil-search-forward)))
+(evil-define-key 'motion 'global (kbd "S-SPC") (lambda () (interactive) (evil-search-backward)))
+; use { and } to indent
+(evil-define-key 'normal 'global "{" (lambda () (interactive) (evil-shift-left-line 1)))
+(evil-define-key 'normal 'global "}" (lambda () (interactive) (evil-shift-right-line 1)))
+(evil-define-key 'visual 'global "{" "<gv")
+(evil-define-key 'visual 'global "}" ">gv")
+; move cursor to comfortable reading position
+(evil-define-key 'motion 'global ",z" (lambda () (interactive) (recenter-top-bottom (/ (* (window-total-height) 2) 7))))
+; substitute command
+(evil-define-key 'normal 'global ",s" (lambda () (interactive) (evil-ex "s/")))
+(evil-define-key 'normal 'global ",S" (lambda () (interactive) (evil-ex "%s/")))
+(evil-define-key 'visual 'global ",s" (lambda () (interactive) (evil-ex "'<,'>s/")))
+; easy quit visual mode
+(evil-define-key 'visual 'global (kbd ", SPC") 'evil-exit-visual-state)
+; m and M for jumping
+(evil-define-key 'motion 'global "m" 'evil-jump-backward)
+(evil-define-key 'motion 'global "M" 'evil-jump-forward)
+(evil-define-key 'normal 'global "m" 'evil-jump-backward)
+(evil-define-key 'normal 'global "M" 'evil-jump-forward)
+(evil-define-key 'visual 'global "m" 'evil-jump-backward)
+(evil-define-key 'visual 'global "M" 'evil-jump-forward)
+; map dw cw etc.
+    ;; nmap dw daw
+    ;; nmap cw ciw
+    ;; nmap yw yiw
+    ;; nmap dW daW
+    ;; nmap cW ciW
+    ;; nmap yW yiW
+    ;; nmap d) di)
+    ;; nmap c) ci)
+    ;; nmap y) yi)
+    ;; nmap d] di]
+    ;; nmap c] ci]
+    ;; nmap y] yi]
+    ;; nmap d} di}
+    ;; nmap c} ci}
+    ;; nmap y} yi}
+    ;; nmap d> di>
+    ;; nmap c> ci>
+    ;; nmap y> yi>
+    ;; nmap d' di'
+    ;; nmap c' ci'
+    ;; nmap y' yi'
+    ;; nmap d" di"
+    ;; nmap c" ci"
+    ;; nmap y" yi"
+    ;; nmap dt dit
+    ;; nmap ct cit
+    ;; nmap yt yit
+    ;; nmap dn dgn
+    ;; nmap cn cgn
+
+(general-nmap "d" (general-key-dispatch 'evil-delete
+                   :timeout 0.5
+              "w" (general-simulate-key ('evil-delete "aw"))
+              "W" (general-simulate-key ('evil-delete "aW"))
+              ")" (general-simulate-key ('evil-delete "i)"))
+              "]" (general-simulate-key ('evil-delete "i]"))
+              "}" (general-simulate-key ('evil-delete "i}"))
+              ">" (general-simulate-key ('evil-delete "i>"))
+              "'" (general-simulate-key ('evil-delete "i'"))
+              "t" (general-simulate-key ('evil-delete "it"))
+              "n" (general-simulate-key ('evil-delete "gn"))
+))
+(evil-define-key 'visual 'global "d" 'evil-delete)
+(general-nmap "c" (general-key-dispatch 'evil-change
+                   :timeout 0.5
+              "w" (general-simulate-key ('evil-change "iw"))
+              "W" (general-simulate-key ('evil-change "iW"))
+              ")" (general-simulate-key ('evil-change "i)"))
+              "]" (general-simulate-key ('evil-change "i]"))
+              "}" (general-simulate-key ('evil-change "i}"))
+              ">" (general-simulate-key ('evil-change "i>"))
+              "'" (general-simulate-key ('evil-change "i'"))
+              "t" (general-simulate-key ('evil-change "it"))
+              "n" (general-simulate-key ('evil-change "gn"))
+))
+(evil-define-key 'visual 'global "c" 'evil-change)
+(general-nmap "y" (general-key-dispatch 'evil-yank
+                   :timeout 0.5
+              "w" (general-simulate-key ('evil-yank "iw"))
+              "W" (general-simulate-key ('evil-yank "iW"))
+              ")" (general-simulate-key ('evil-yank "i)"))
+              "]" (general-simulate-key ('evil-yank "i]"))
+              "}" (general-simulate-key ('evil-yank "i}"))
+              ">" (general-simulate-key ('evil-yank "i>"))
+              "'" (general-simulate-key ('evil-yank "i'"))
+              "t" (general-simulate-key ('evil-yank "it"))
+))
+(evil-define-key 'visual 'global "y" 'evil-yank)
+; join with ,j
+(evil-define-key 'normal 'global ",j" 'evil-join)
+; break with ,k
+(evil-define-key 'normal 'global ",k" 'newline)
+
+;; insert mode mappings
+(general-imap "j" (general-key-dispatch 'self-insert-command
+                   :timeout 0.25
+              "j" 'self-insert-command
+              "t" (lambda () (interactive) (insert "TODO"))
+              "f" (lambda () (interactive) (insert "\\"))
+              "k" 'evil-normal-state ; jk quit insert mode
+              "l" 'evil-delete-backward-word ; jl delete word
+              ";" 'move-end-of-line ; j; move to end of line
+              "p" 'evil-complete-next ; jp complete
+              "[" 'evil-complete-next-line ; j[ context complete (TODO)
+))
+
+;; window management
+(evil-define-key 'motion 'global (kbd "C-w C-h") 'evil-window-left)
+(evil-define-key 'motion 'global (kbd "C-w C-j") 'evil-window-down)
+(evil-define-key 'motion 'global (kbd "C-w C-k") 'evil-window-up)
+(evil-define-key 'motion 'global (kbd "C-w C-l") 'evil-window-right)
+(evil-define-key 'motion 'global ",wv" 'evil-window-vsplit)
+(evil-define-key 'motion 'global ",wh" 'evil-window-split)
+(evil-define-key 'motion 'global ",wq" 'evil-quit)
+
+;; ace-window
+(evil-define-key 'motion 'global (kbd "TAB") 'ace-window)
+
+;; misc bindings
+; use alt-h for help instead of ctrl-h
+(global-set-key (kbd "M-h") help-map)
 
 
 ;;; misc settings
@@ -89,8 +330,8 @@
 
 ;; set font
 (set-face-attribute 'default nil
-                    :family "Consolas"
-                    :height 150
+                    :family "Noto Mono"
+                    :height 120
                     :weight 'normal
                     :width 'normal)
 
@@ -100,10 +341,13 @@
 (scroll-bar-mode -1)
 (menu-bar-mode -1)
 
-
-
-
-
-;;; the following may load my stuff
-;; (setq user-init-file (or load-file-name (buffer-file-name)))
-;; (setq user-emacs-directory (file-name-directory user-init-file))
+;; enable some modes
+; flycheck
+(add-hook 'prog-mode-hook 'flycheck-mode)
+; flyspell
+(dolist (hook '(prog-mode-hook))
+    (add-hook hook 'flyspell-prog-mode))
+(dolist (hook '(text-mode-hook))
+    (add-hook hook (lambda () (flyspell-mode 1))))
+(dolist (hook '(change-log-mode-hook log-edit-mode-hook))
+    (add-hook hook (lambda () (flyspell-mode -1))))
