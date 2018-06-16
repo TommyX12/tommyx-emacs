@@ -15,8 +15,7 @@
   (package-refresh-contents)
   (package-install 'use-package))
 
-(eval-when-compile
-  (require 'use-package))
+(eval-when-compile (require 'use-package))
 
 
 ;;; packages settings before loading
@@ -30,19 +29,40 @@
 (use-package evil :ensure t)
 (use-package evil-collection :ensure t :after evil)
 (use-package evil-visualstar :ensure t)
+(use-package evil-surround :ensure t)
 (use-package helm :ensure t)
 (use-package helm-flx :ensure t)
 (use-package which-key :ensure t)
 (use-package spacemacs-theme :ensure t :defer t
-             :init (load-theme 'spacemacs-light t))
+             :init (load-theme 'spacemacs-dark t))
 (use-package ace-window :ensure t)
 (use-package general :ensure t)
 (use-package highlight-indent-guides :ensure t)
 (use-package origami :ensure t)
 (use-package volatile-highlights :ensure t)
+(use-package flycheck :ensure t)
+(use-package flyspell-lazy :ensure t)
+(use-package rainbow-delimiters :ensure t)
+(use-package avy :ensure t)
+(use-package smartparens :ensure t
+	     ; don't show in mode display
+	     :diminish smartparens-mode)
 
 
 ;;; package settings
+
+;; smartparens
+(require 'smartparens-config)
+(smartparens-global-mode 1)
+(show-smartparens-global-mode 1)
+(setq smartparens-strict-mode nil)
+; auto expanison of brackets
+(sp-local-pair 'prog-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
+(sp-local-pair 'text-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
+(sp-local-pair 'prog-mode "[" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
+(sp-local-pair 'text-mode "[" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
+(sp-local-pair 'prog-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
+(sp-local-pair 'text-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
 
 ;; evil-mode
 (evil-mode 1) ; use evil-mode at startup
@@ -56,6 +76,17 @@
 (advice-add 'evil-search-previous :after #'my-center-line)
 (advice-add 'evil-search-word-forward :after #'evil-search-previous)
 (advice-add 'evil-search-word-backward :after #'evil-search-next)
+
+;; rainbow-delimiters
+(add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
+(add-hook 'text-mode-hook #'rainbow-delimiters-mode)
+
+;; evil-surround
+(global-evil-surround-mode 1)
+
+;; avy
+(setq avy-keys '(?w ?e ?r ?u ?i ?o ?p ?a ?s ?d ?g ?h ?j ?k ?l ?v ?n))
+(setq avy-all-windows nil)
 
 ;; volatile-highlight
 (vhl/define-extension 'evil
@@ -78,18 +109,26 @@
 (setq evil-collection-setup-minibuffer t)
 (evil-collection-init)
 
+;; flyspell lazy
+(flyspell-lazy-mode 1)
+(setq flyspell-lazy-idle-seconds 1)
+(setq flyspell-lazy-window-idle-seconds 2)
+
 ;; highlight indent guides
 (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
 (add-hook 'text-mode-hook 'highlight-indent-guides-mode)
 (setq highlight-indent-guides-method 'character) ; TODO use the character method. right now the font doesn't work
 (setq highlight-indent-guides-character ?\|)
-(setq highlight-indent-guides-responsive 'stack)
+(setq highlight-indent-guides-responsive 'nil)
 
 ;; evil-visualstar
 (global-evil-visualstar-mode)
 
 ;; general
 (general-evil-setup)
+
+;; flycheck
+(global-flycheck-mode)
 
 ;; which key
 (which-key-mode 1)
@@ -196,9 +235,17 @@
 (evil-define-key 'visual 'global ":" (lambda () (interactive) (evil-end-of-line)))
 ; use gG to go to bottom
 (evil-define-key 'motion 'global "gG" 'evil-goto-line)
+; easy copy and pasting (TODO need some work)
+(evil-define-key 'insert 'global (kbd "C-b") (lambda () (interactive) (evil-paste-from-register ?\")))
+(evil-define-key 'insert 'global (kbd "C-v") (lambda () (interactive) (evil-paste-from-register ?\"))) ; TODO need some work
+(evil-define-key 'visual 'global (kbd "C-c") (lambda () (interactive) (evil-yank))) ; TODO need some work
 ; search
 (evil-define-key 'motion 'global (kbd "SPC") (lambda () (interactive) (evil-search-forward)))
+(evil-define-key 'normal 'global (kbd "SPC") (lambda () (interactive) (evil-search-forward)))
+(evil-define-key 'visual 'global (kbd "SPC") (lambda () (interactive) (evil-search-forward)))
 (evil-define-key 'motion 'global (kbd "S-SPC") (lambda () (interactive) (evil-search-backward)))
+(evil-define-key 'normal 'global (kbd "S-SPC") (lambda () (interactive) (evil-search-backward)))
+(evil-define-key 'visual 'global (kbd "S-SPC") (lambda () (interactive) (evil-search-backward)))
 ; use { and } to indent
 (evil-define-key 'normal 'global "{" (lambda () (interactive) (evil-shift-left-line 1)))
 (evil-define-key 'normal 'global "}" (lambda () (interactive) (evil-shift-right-line 1)))
@@ -210,6 +257,9 @@
 (evil-define-key 'normal 'global ",s" (lambda () (interactive) (evil-ex "s/")))
 (evil-define-key 'normal 'global ",S" (lambda () (interactive) (evil-ex "%s/")))
 (evil-define-key 'visual 'global ",s" (lambda () (interactive) (evil-ex "'<,'>s/")))
+; switch color scheme
+(evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme 'spacemacs-light t)))
+(evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme 'spacemacs-dark t)))
 ; easy quit visual mode
 (evil-define-key 'visual 'global (kbd ", SPC") 'evil-exit-visual-state)
 ; m and M for jumping
@@ -220,36 +270,6 @@
 (evil-define-key 'visual 'global "m" 'evil-jump-backward)
 (evil-define-key 'visual 'global "M" 'evil-jump-forward)
 ; map dw cw etc.
-    ;; nmap dw daw
-    ;; nmap cw ciw
-    ;; nmap yw yiw
-    ;; nmap dW daW
-    ;; nmap cW ciW
-    ;; nmap yW yiW
-    ;; nmap d) di)
-    ;; nmap c) ci)
-    ;; nmap y) yi)
-    ;; nmap d] di]
-    ;; nmap c] ci]
-    ;; nmap y] yi]
-    ;; nmap d} di}
-    ;; nmap c} ci}
-    ;; nmap y} yi}
-    ;; nmap d> di>
-    ;; nmap c> ci>
-    ;; nmap y> yi>
-    ;; nmap d' di'
-    ;; nmap c' ci'
-    ;; nmap y' yi'
-    ;; nmap d" di"
-    ;; nmap c" ci"
-    ;; nmap y" yi"
-    ;; nmap dt dit
-    ;; nmap ct cit
-    ;; nmap yt yit
-    ;; nmap dn dgn
-    ;; nmap cn cgn
-
 (general-nmap "d" (general-key-dispatch 'evil-delete
                    :timeout 0.5
               "w" (general-simulate-key ('evil-delete "aw"))
@@ -318,6 +338,10 @@
 ;; ace-window
 (evil-define-key 'motion 'global (kbd "TAB") 'ace-window)
 
+;; avy
+(evil-define-key 'motion 'global "f" 'avy-goto-word-0)
+(evil-define-key 'motion 'global "F" 'avy-goto-char-2)
+
 ;; misc bindings
 ; use alt-h for help instead of ctrl-h
 (global-set-key (kbd "M-h") help-map)
@@ -328,10 +352,23 @@
 ;; auto display line numbers
 (add-hook 'prog-mode-hook (lambda () (display-line-numbers-mode)))
 
+;; disable blink
+(blink-cursor-mode 0)
+
 ;; set font
+(if (not (boundp 'selected-font)) (progn
+  (setq selected-font "DejaVu Sans Mono")
+  (cond
+    ((find-font (font-spec :name "Consolas"))
+    (setq selected-font "Consolas"))
+    ((find-font (font-spec :name "Noto Mono"))
+    (setq selected-font "Noto Mono"))
+)))
+(if (not (boundp 'font-size))
+    (setq font-size 120))
 (set-face-attribute 'default nil
-                    :family "Noto Mono"
-                    :height 120
+                    :family selected-font
+                    :height font-size
                     :weight 'normal
                     :width 'normal)
 
@@ -342,11 +379,9 @@
 (menu-bar-mode -1)
 
 ;; enable some modes
-; flycheck
-(add-hook 'prog-mode-hook 'flycheck-mode)
 ; flyspell
 (dolist (hook '(prog-mode-hook))
-    (add-hook hook 'flyspell-prog-mode))
+    (add-hook hook (lambda () (flyspell-prog-mode))))
 (dolist (hook '(text-mode-hook))
     (add-hook hook (lambda () (flyspell-mode 1))))
 (dolist (hook '(change-log-mode-hook log-edit-mode-hook))
