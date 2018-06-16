@@ -24,6 +24,10 @@
 (setq evil-want-Y-yank-to-eol t)
 (setq evil-want-integration nil)
 
+;; evil-collectoin
+(setq evil-collection-company-use-tng nil)
+(setq evil-collection-setup-minibuffer nil)
+
 
 ;;; install packages
 (use-package evil :ensure t)
@@ -33,8 +37,8 @@
 (use-package helm :ensure t)
 (use-package helm-flx :ensure t)
 (use-package which-key :ensure t)
-(use-package spacemacs-theme :ensure t :defer t
-             :init (load-theme 'spacemacs-dark t))
+(use-package spacemacs-theme :ensure t :defer t)
+(use-package doom-themes :ensure t :defer t)
 (use-package ace-window :ensure t)
 (use-package general :ensure t)
 (use-package highlight-indent-guides :ensure t)
@@ -47,9 +51,47 @@
 (use-package smartparens :ensure t
 	     ; don't show in mode display
 	     :diminish smartparens-mode)
+(use-package company :ensure t)
+(use-package company-quickhelp :ensure t)
+(use-package company-flx :ensure t)
+(use-package yasnippet :ensure t)
+(use-package yasnippet-snippets :ensure t)
+(use-package powerline :ensure t)
+(use-package powerline-evil :ensure t)
+(use-package spaceline :ensure t)
 
 
 ;;; package settings
+
+;; powerline
+(require 'spaceline-config)
+(setq powerline-default-separator 'slant)
+(spaceline-spacemacs-theme)
+(spaceline-helm-mode)
+
+;; yasnippet
+(add-hook 'after-init-hook 'yas-global-mode)
+(add-to-list 'yas-snippet-dirs (expand-file-name "snippets"
+    (file-name-directory load-file-name)))
+
+;; company
+(add-hook 'after-init-hook 'global-company-mode)
+(company-tng-configure-default)
+(company-quickhelp-mode)
+; (eval-after-load 'company
+  ; '(progn
+     ; (define-key company-active-map (kbd "TAB") 'company-select-next-if-tooltip-visible-or-complete-selection)
+     ; (define-key company-active-map (kbd "<tab>") 'company-select-next-if-tooltip-visible-or-complete-selection)))
+(setq company-frontends
+      '(company-pseudo-tooltip-unless-just-one-frontend
+        company-preview-frontend
+        company-tng-frontend
+        company-echo-metadata-frontend))
+(setq company-idle-delay 0.2)
+(setq company-quickhelp-delay 0.3)
+(setq company-require-match 'never)
+(with-eval-after-load 'company
+  (company-flx-mode +1))
 
 ;; smartparens
 (require 'smartparens-config)
@@ -63,6 +105,14 @@
 (sp-local-pair 'text-mode "[" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
 (sp-local-pair 'prog-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
 (sp-local-pair 'text-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
+
+;; themes
+; (load-theme 'spacemacs-dark t)
+(setq doom-themes-enable-bold t
+      doom-themes-enable-italic t)
+(setq dark-theme 'doom-one)
+(setq light-theme 'doom-one-light)
+(load-theme dark-theme t)
 
 ;; evil-mode
 (evil-mode 1) ; use evil-mode at startup
@@ -201,6 +251,7 @@
 (evil-define-key 'motion 'global ",wa" (kbd ";wa RET"))
 ; change to last buffer
 (evil-define-key 'motion 'global (kbd ", TAB") 'evil-buffer)
+(evil-define-key 'motion 'global (kbd ", <tab>") 'evil-buffer)
 ; kill buffer
 (evil-define-key 'motion 'global ",q" 'kill-buffer)
 ; use visual line
@@ -241,11 +292,9 @@
 (evil-define-key 'visual 'global (kbd "C-c") (lambda () (interactive) (evil-yank))) ; TODO need some work
 ; search
 (evil-define-key 'motion 'global (kbd "SPC") (lambda () (interactive) (evil-search-forward)))
-(evil-define-key 'normal 'global (kbd "SPC") (lambda () (interactive) (evil-search-forward)))
-(evil-define-key 'visual 'global (kbd "SPC") (lambda () (interactive) (evil-search-forward)))
+(evil-define-key 'normal 'help-mode-map (kbd "SPC") (lambda () (interactive) (evil-search-forward)))
 (evil-define-key 'motion 'global (kbd "S-SPC") (lambda () (interactive) (evil-search-backward)))
-(evil-define-key 'normal 'global (kbd "S-SPC") (lambda () (interactive) (evil-search-backward)))
-(evil-define-key 'visual 'global (kbd "S-SPC") (lambda () (interactive) (evil-search-backward)))
+(evil-define-key 'normal 'help-mode-map (kbd "S-SPC") (lambda () (interactive) (evil-search-backward)))
 ; use { and } to indent
 (evil-define-key 'normal 'global "{" (lambda () (interactive) (evil-shift-left-line 1)))
 (evil-define-key 'normal 'global "}" (lambda () (interactive) (evil-shift-right-line 1)))
@@ -258,8 +307,8 @@
 (evil-define-key 'normal 'global ",S" (lambda () (interactive) (evil-ex "%s/")))
 (evil-define-key 'visual 'global ",s" (lambda () (interactive) (evil-ex "'<,'>s/")))
 ; switch color scheme
-(evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme 'spacemacs-light t)))
-(evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme 'spacemacs-dark t)))
+(evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme light-theme t)))
+(evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme dark-theme t)))
 ; easy quit visual mode
 (evil-define-key 'visual 'global (kbd ", SPC") 'evil-exit-visual-state)
 ; m and M for jumping
@@ -279,6 +328,7 @@
               "}" (general-simulate-key ('evil-delete "i}"))
               ">" (general-simulate-key ('evil-delete "i>"))
               "'" (general-simulate-key ('evil-delete "i'"))
+              "\"" (general-simulate-key ('evil-delete "i\""))
               "t" (general-simulate-key ('evil-delete "it"))
               "n" (general-simulate-key ('evil-delete "gn"))
 ))
@@ -292,6 +342,7 @@
               "}" (general-simulate-key ('evil-change "i}"))
               ">" (general-simulate-key ('evil-change "i>"))
               "'" (general-simulate-key ('evil-change "i'"))
+              "\"" (general-simulate-key ('evil-change "i\""))
               "t" (general-simulate-key ('evil-change "it"))
               "n" (general-simulate-key ('evil-change "gn"))
 ))
@@ -305,6 +356,7 @@
               "}" (general-simulate-key ('evil-yank "i}"))
               ">" (general-simulate-key ('evil-yank "i>"))
               "'" (general-simulate-key ('evil-yank "i'"))
+              "\"" (general-simulate-key ('evil-yank "i\""))
               "t" (general-simulate-key ('evil-yank "it"))
 ))
 (evil-define-key 'visual 'global "y" 'evil-yank)
@@ -314,6 +366,9 @@
 (evil-define-key 'normal 'global ",k" 'newline)
 
 ;; insert mode mappings
+(evil-define-key 'insert 'global (kbd "C-l") 'yas-expand)
+(evil-define-key 'insert 'global (kbd "C-j") 'yas-next-field)
+(evil-define-key 'insert 'global (kbd "C-k") 'yas-prev-field)
 (general-imap "j" (general-key-dispatch 'self-insert-command
                    :timeout 0.25
               "j" 'self-insert-command
@@ -322,8 +377,8 @@
               "k" 'evil-normal-state ; jk quit insert mode
               "l" 'evil-delete-backward-word ; jl delete word
               ";" 'move-end-of-line ; j; move to end of line
-              "p" 'evil-complete-next ; jp complete
-              "[" 'evil-complete-next-line ; j[ context complete (TODO)
+              "p" 'company-complete-common-or-cycle ; jp complete
+              "[" 'evil-complete-next ; j[ context complete (TODO)
 ))
 
 ;; window management
@@ -337,6 +392,11 @@
 
 ;; ace-window
 (evil-define-key 'motion 'global (kbd "TAB") 'ace-window)
+(evil-define-key 'normal 'eshell-mode-map (kbd "TAB") 'ace-window)
+(evil-define-key 'normal 'shell-mode-map (kbd "TAB") 'ace-window)
+(evil-define-key 'motion 'global (kbd "<tab>") 'ace-window)
+(evil-define-key 'normal 'eshell-mode-map (kbd "<tab>") 'ace-window)
+(evil-define-key 'normal 'shell-mode-map (kbd "<tab>") 'ace-window)
 
 ;; avy
 (evil-define-key 'motion 'global "f" 'avy-goto-word-0)
@@ -344,7 +404,7 @@
 
 ;; misc bindings
 ; use alt-h for help instead of ctrl-h
-(global-set-key (kbd "M-h") help-map)
+(bind-key* (kbd "M-h") help-map)
 
 
 ;;; misc settings
