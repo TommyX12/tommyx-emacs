@@ -23,8 +23,9 @@
 ;; evil
 (setq evil-want-Y-yank-to-eol t)
 (setq evil-want-integration nil)
+(setq evil-search-module 'evil-search)
 
-;; evil-collectoin
+;; evil-collection
 (setq evil-collection-company-use-tng nil)
 (setq evil-collection-setup-minibuffer nil)
 
@@ -34,6 +35,11 @@
 (use-package evil-collection :ensure t :after evil)
 (use-package evil-visualstar :ensure t)
 (use-package evil-surround :ensure t)
+(use-package evil-args :ensure t)
+(use-package evil-matchit :ensure t :defer t)
+(use-package evil-numbers :ensure t)
+(use-package evil-search-highlight-persist :ensure t)
+(use-package evil-nerd-commenter :ensure t)
 (use-package helm :ensure t)
 (use-package helm-flx :ensure t)
 (use-package which-key :ensure t)
@@ -59,13 +65,49 @@
 (use-package powerline :ensure t)
 (use-package powerline-evil :ensure t)
 (use-package spaceline :ensure t)
+(use-package window-numbering :ensure t)
+(use-package which-func :ensure t)
+(use-package git-gutter :ensure t)
+(use-package yascroll :ensure t)
+(use-package color-identifiers-mode :ensure t)
 
 
 ;;; package settings
 
+;; color-identifiers-mode
+(setq color-identifiers-coloring-method 'sequential)
+(setq color-identifiers:max-color-saturation 0.25)
+(setq color-identifiers:min-color-saturation 0.25)
+(setq color-identifiers:timer (run-with-idle-timer 3 t 'color-identifiers:refresh))
+(global-color-identifiers-mode)
+
+;; window-numbering
+(window-numbering-mode)
+
+;; yascroll
+(global-yascroll-bar-mode 1)
+(setq yascroll:delay-to-hide nil)
+(set-face-foreground 'yascroll:thumb-fringe "DarkGrey")
+(set-face-background 'yascroll:thumb-fringe "DarkGrey")
+
+;; git gutter
+(setq
+    git-gutter:window-width 1
+    git-gutter:update-interval 1.5
+    git-gutter:modified-sign "|"
+    git-gutter:added-sign "|"
+    git-gutter:deleted-sign "-")
+(global-git-gutter-mode +1)
+
+;; which-function
+(add-hook 'prog-mode-hook #'which-function-mode)
+(setq-default header-line-format '(" - " which-func-format))
+
 ;; powerline
+(setq powerline-default-separator nil)
 (require 'spaceline-config)
-(setq powerline-default-separator 'slant)
+(spaceline-toggle-hud-off)
+(spaceline-toggle-which-function-off)
 (spaceline-spacemacs-theme)
 (spaceline-helm-mode)
 
@@ -114,18 +156,28 @@
 (setq light-theme 'doom-one-light)
 (load-theme dark-theme t)
 
-;; evil-mode
+;; evil
 (evil-mode 1) ; use evil-mode at startup
+; treat underscore as word
+(modify-syntax-entry ?_ "w")
 ; split to the right and below
 (setq evil-split-window-below t)
 (setq evil-vsplit-window-right t)
 (setq evil-ex-substitute-global t)
 ; auto center after search
 (defun my-center-line (&rest _) (evil-scroll-line-to-center nil))
-(advice-add 'evil-search-next :after #'my-center-line)
-(advice-add 'evil-search-previous :after #'my-center-line)
-(advice-add 'evil-search-word-forward :after #'evil-search-previous)
-(advice-add 'evil-search-word-backward :after #'evil-search-next)
+(advice-add 'evil-ex-search-next :after #'my-center-line)
+(advice-add 'evil-ex-search-previous :after #'my-center-line)
+(advice-add 'evil-ex-search-word-forward :after #'evil-ex-search-previous)
+(advice-add 'evil-ex-search-word-backward :after #'evil-ex-search-next)
+(defun my-search-previous (&rest _) (evil-ex-search-previous))
+(defun my-search-next (&rest _) (evil-ex-search-next))
+(advice-add 'evil-visualstar/begin-search-forward :after #'my-search-previous)
+(advice-add 'evil-visualstar/begin-search-backward :after #'my-search-next)
+; no magic for search
+(setq evil-magic nil) ; doesn't work
+; search highlight persist
+(global-evil-search-highlight-persist) ; doesn't work
 
 ;; rainbow-delimiters
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
@@ -137,6 +189,11 @@
 ;; avy
 (setq avy-keys '(?w ?e ?r ?u ?i ?o ?p ?a ?s ?d ?g ?h ?j ?k ?l ?v ?n))
 (setq avy-all-windows nil)
+
+;; undo-tree
+; persistent undo
+(setq undo-tree-auto-save-history t)
+(setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/history")))
 
 ;; volatile-highlight
 (vhl/define-extension 'evil
@@ -169,7 +226,7 @@
 (add-hook 'text-mode-hook 'highlight-indent-guides-mode)
 (setq highlight-indent-guides-method 'character) ; TODO use the character method. right now the font doesn't work
 (setq highlight-indent-guides-character ?\|)
-(setq highlight-indent-guides-responsive 'nil)
+(setq highlight-indent-guides-responsive nil)
 
 ;; evil-visualstar
 (global-evil-visualstar-mode)
@@ -190,11 +247,9 @@
 (helm-autoresize-mode 1) ; always auto resize window
 (setq helm-split-window-inside-p t)
 (setq helm-full-frame nil)
-(setq helm-mode-fuzzy-match t)
 (setq helm-recentf-fuzzy-match t)
 (setq helm-buffers-fuzzy-matching t)
 (setq helm-recentf-fuzzy-match t)
-(setq helm-buffers-fuzzy-matching t)
 (setq helm-locate-fuzzy-match t)
 (setq helm-M-x-fuzzy-match t)
 (setq helm-semantic-fuzzy-match t)
@@ -205,6 +260,8 @@
 (setq helm-etags-fuzzy-match t)
 (setq helm-mode-fuzzy-match t)
 (setq helm-completion-in-region-fuzzy-match t)
+(setq recentf-max-menu-items 20)
+(setq recentf-max-saved-items 50)
 
 ;; helm-flx
 (helm-flx-mode +1)
@@ -253,7 +310,7 @@
 (evil-define-key 'motion 'global (kbd ", TAB") 'evil-buffer)
 (evil-define-key 'motion 'global (kbd ", <tab>") 'evil-buffer)
 ; kill buffer
-(evil-define-key 'motion 'global ",q" 'kill-buffer)
+(evil-define-key 'motion 'global ",q" 'kill-this-buffer)
 ; use visual line
 (evil-define-key 'motion 'global "j" 'evil-next-visual-line)
 (evil-define-key 'motion 'global "k" 'evil-previous-visual-line)
@@ -286,15 +343,20 @@
 (evil-define-key 'visual 'global ":" (lambda () (interactive) (evil-end-of-line)))
 ; use gG to go to bottom
 (evil-define-key 'motion 'global "gG" 'evil-goto-line)
+; evil numbers
+(evil-define-key 'normal 'global "=" 'evil-numbers/inc-at-pt)
+(evil-define-key 'normal 'global "-" 'evil-numbers/dec-at-pt)
+(evil-define-key 'visual 'global "=" 'evil-numbers/inc-at-pt)
+(evil-define-key 'visual 'global "-" 'evil-numbers/dec-at-pt)
 ; easy copy and pasting (TODO need some work)
 (evil-define-key 'insert 'global (kbd "C-b") (lambda () (interactive) (evil-paste-from-register ?\")))
 (evil-define-key 'insert 'global (kbd "C-v") (lambda () (interactive) (evil-paste-from-register ?\"))) ; TODO need some work
 (evil-define-key 'visual 'global (kbd "C-c") (lambda () (interactive) (evil-yank))) ; TODO need some work
 ; search
-(evil-define-key 'motion 'global (kbd "SPC") (lambda () (interactive) (evil-search-forward)))
-(evil-define-key 'normal 'help-mode-map (kbd "SPC") (lambda () (interactive) (evil-search-forward)))
-(evil-define-key 'motion 'global (kbd "S-SPC") (lambda () (interactive) (evil-search-backward)))
-(evil-define-key 'normal 'help-mode-map (kbd "S-SPC") (lambda () (interactive) (evil-search-backward)))
+(evil-define-key 'motion 'global (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
+(evil-define-key 'normal 'help-mode-map (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
+(evil-define-key 'motion 'global (kbd "S-SPC") (lambda () (interactive) (evil-ex-search-backward)))
+(evil-define-key 'normal 'help-mode-map (kbd "S-SPC") (lambda () (interactive) (evil-ex-search-backward)))
 ; use { and } to indent
 (evil-define-key 'normal 'global "{" (lambda () (interactive) (evil-shift-left-line 1)))
 (evil-define-key 'normal 'global "}" (lambda () (interactive) (evil-shift-right-line 1)))
@@ -303,12 +365,17 @@
 ; move cursor to comfortable reading position
 (evil-define-key 'motion 'global ",z" (lambda () (interactive) (recenter-top-bottom (/ (* (window-total-height) 2) 7))))
 ; substitute command
-(evil-define-key 'normal 'global ",s" (lambda () (interactive) (evil-ex "s/")))
+(evil-define-key 'normal 'global ",s" (lambda () (interactive) (evil-ex "s/register")))
 (evil-define-key 'normal 'global ",S" (lambda () (interactive) (evil-ex "%s/")))
 (evil-define-key 'visual 'global ",s" (lambda () (interactive) (evil-ex "'<,'>s/")))
+; argument text object
+(define-key evil-inner-text-objects-map "a" 'evil-inner-arg)
+(define-key evil-outer-text-objects-map "a" 'evil-outer-arg)
 ; switch color scheme
-(evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme light-theme t)))
-(evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme dark-theme t)))
+(evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme light-theme t) (spaceline-compile)))
+(evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme dark-theme t) (spaceline-compile)))
+; ,<space> no highlight
+(evil-define-key 'motion 'global (kbd ", SPC") 'evil-ex-nohighlight)
 ; easy quit visual mode
 (evil-define-key 'visual 'global (kbd ", SPC") 'evil-exit-visual-state)
 ; m and M for jumping
@@ -389,14 +456,30 @@
 (evil-define-key 'motion 'global ",wv" 'evil-window-vsplit)
 (evil-define-key 'motion 'global ",wh" 'evil-window-split)
 (evil-define-key 'motion 'global ",wq" 'evil-quit)
+(evil-define-key 'motion 'global ",0" 'select-window-0)
+(evil-define-key 'motion 'global ",1" 'select-window-1)
+(evil-define-key 'motion 'global ",2" 'select-window-2)
+(evil-define-key 'motion 'global ",3" 'select-window-3)
+(evil-define-key 'motion 'global ",4" 'select-window-4)
+(evil-define-key 'motion 'global ",5" 'select-window-5)
+(evil-define-key 'motion 'global ",6" 'select-window-6)
+(evil-define-key 'motion 'global ",7" 'select-window-7)
+(evil-define-key 'motion 'global ",8" 'select-window-8)
+(evil-define-key 'motion 'global ",9" 'select-window-9)
+
+;; nerd commenter
+(evil-define-key 'normal 'global (kbd ",c SPC") 'evilnc-comment-or-uncomment-lines)
+(evil-define-key 'visual 'global (kbd ",c SPC") 'evilnc-comment-or-uncomment-lines)
+(evil-define-key 'normal 'global (kbd ",c y") 'evilnc-copy-and-comment-lines)
+(evil-define-key 'visual 'global (kbd ",c y") 'evilnc-copy-and-comment-lines)
 
 ;; ace-window
-(evil-define-key 'motion 'global (kbd "TAB") 'ace-window)
-(evil-define-key 'normal 'eshell-mode-map (kbd "TAB") 'ace-window)
-(evil-define-key 'normal 'shell-mode-map (kbd "TAB") 'ace-window)
-(evil-define-key 'motion 'global (kbd "<tab>") 'ace-window)
-(evil-define-key 'normal 'eshell-mode-map (kbd "<tab>") 'ace-window)
-(evil-define-key 'normal 'shell-mode-map (kbd "<tab>") 'ace-window)
+; (evil-define-key 'motion 'global (kbd "TAB") 'ace-window)
+; (evil-define-key 'normal 'eshell-mode-map (kbd "TAB") 'ace-window)
+; (evil-define-key 'normal 'shell-mode-map (kbd "TAB") 'ace-window)
+; (evil-define-key 'motion 'global (kbd "<tab>") 'ace-window)
+; (evil-define-key 'normal 'eshell-mode-map (kbd "<tab>") 'ace-window)
+; (evil-define-key 'normal 'shell-mode-map (kbd "<tab>") 'ace-window)
 
 ;; avy
 (evil-define-key 'motion 'global "f" 'avy-goto-word-0)
@@ -408,6 +491,12 @@
 
 
 ;;; misc settings
+
+;; auto start server if on GUI
+(and window-system (server-start))
+
+;; no auto saving
+(auto-save-mode -1)
 
 ;; auto display line numbers
 (add-hook 'prog-mode-hook (lambda () (display-line-numbers-mode)))
