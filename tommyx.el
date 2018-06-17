@@ -70,15 +70,16 @@
 (use-package git-gutter :ensure t)
 (use-package yascroll :ensure t)
 (use-package color-identifiers-mode :ensure t)
+(use-package neotree :ensure t)
 
 
 ;;; package settings
 
 ;; color-identifiers-mode
 (setq color-identifiers-coloring-method 'sequential)
-(setq color-identifiers:max-color-saturation 0.25)
+(setq color-identifiers:max-color-saturation 0.3)
 (setq color-identifiers:min-color-saturation 0.25)
-(setq color-identifiers:timer (run-with-idle-timer 3 t 'color-identifiers:refresh))
+(setq color-identifiers:timer (run-with-idle-timer 2.5 t 'color-identifiers:refresh))
 (global-color-identifiers-mode)
 
 ;; window-numbering
@@ -87,8 +88,8 @@
 ;; yascroll
 (global-yascroll-bar-mode 1)
 (setq yascroll:delay-to-hide nil)
-(set-face-foreground 'yascroll:thumb-fringe "DarkGrey")
-(set-face-background 'yascroll:thumb-fringe "DarkGrey")
+(set-face-foreground 'yascroll:thumb-fringe "#555555")
+(set-face-background 'yascroll:thumb-fringe "#555555")
 
 ;; git gutter
 (setq
@@ -101,7 +102,8 @@
 
 ;; which-function
 (add-hook 'prog-mode-hook #'which-function-mode)
-(setq-default header-line-format '(" - " which-func-format))
+(add-hook 'prog-mode-hook (lambda () (interactive)
+    (setq header-line-format '(" - " which-func-format))))
 
 ;; powerline
 (setq powerline-default-separator nil)
@@ -212,8 +214,15 @@
     (vhl/load-extension 'undo-tree))
 (volatile-highlights-mode)
 
+;; neotree
+; (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
+(setq neo-theme 'arrow)
+(setq neo-show-hidden-files t)
+(add-hook 'neotree-mode-hook (lambda () (interactive)
+    (hl-line-mode 1)))
+
 ;; evil-collection
-(setq evil-collection-setup-minibuffer t)
+(delete 'neotree evil-collection-mode-list)
 (evil-collection-init)
 
 ;; flyspell lazy
@@ -374,6 +383,26 @@
 ; switch color scheme
 (evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme light-theme t) (spaceline-compile)))
 (evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme dark-theme t) (spaceline-compile)))
+; neo tree
+(evil-define-key 'motion 'global ",n" (lambda () (interactive) (neotree-show)))
+(evil-define-key 'motion 'global ",N" (lambda () (interactive) (neotree-find)))
+(evil-define-key 'normal neotree-mode-map
+    ; apparently writing neotree-mode-map instead of 'neotree-mode-map works
+    "h" (neotree-make-executor :dir-fn 'neo-open-dir)
+    "l" (neotree-make-executor :dir-fn 'neo-open-dir)
+    "R" 'neotree-refresh
+    "r" 'neotree-refresh
+    "u" 'neotree-select-up-node
+    "U" 'neotree-select-down-node
+    "c" 'neotree-change-root
+    "O" 'neotree-create-node
+    "C" 'neotree-rename-node
+    "D" 'neotree-delete-node
+    "Y" 'neotree-copy-node
+    "o" 'neotree-enter
+    (kbd "RET") 'neotree-enter
+    (kbd "<return>") 'neotree-enter
+)
 ; ,<space> no highlight
 (evil-define-key 'motion 'global (kbd ", SPC") 'evil-ex-nohighlight)
 ; easy quit visual mode
@@ -491,6 +520,9 @@
 
 
 ;;; misc settings
+
+;; auto load if changed
+(global-auto-revert-mode t)
 
 ;; auto start server if on GUI
 (and window-system (server-start))
