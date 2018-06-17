@@ -63,17 +63,7 @@
 (use-package company :ensure t)
 (use-package company-quickhelp :ensure t)
 (use-package company-flx :ensure t)
-(use-package yasnippet :ensure t
-  :bind (:map yas-minor-mode-map
-	("TAB" . nil)
-	("<tab>" . nil)
-	("S-TAB" . nil)
-	("<S-tab>" . nil))
-	(:map yas-keymap
-	("TAB" . nil)
-	("<tab>" . nil)
-	("S-TAB" . nil)
-	("<S-tab>" . nil)))
+(use-package yasnippet :ensure t)
 (use-package yasnippet-snippets :ensure t)
 (use-package powerline :ensure t)
 (use-package powerline-evil :ensure t)
@@ -88,16 +78,12 @@
 (use-package page-break-lines :ensure t)
 (use-package dashboard :ensure t :after page-break-lines)
 (use-package org :ensure t)
-(use-package org-super-agenda :ensure t)
 ; language specific
 (use-package csv-mode :ensure t)
 (use-package json-mode :ensure t)
 
 
 ;;; package settings
-
-;; org
-(add-hook 'org-mode-hook (lambda () (interactive) (org-indent-mode)))
 
 ;; color-identifiers-mode
 (setq color-identifiers-coloring-method 'sequential)
@@ -111,9 +97,6 @@
 
 ;; window-numbering
 (window-numbering-mode)
-
-;; org
-(org-super-agenda-mode)
 
 ;; yascroll
 (global-yascroll-bar-mode 1)
@@ -143,19 +126,6 @@
 (spaceline-spacemacs-theme)
 (spaceline-helm-mode)
 
-;; dashboard
-(setq dashboard-items '((agenda . 5)
-			(recents  . 5)
-			(projects . 5)
-                        (bookmarks . 5)))
-; custom logo and message
-(setq dashboard-banner-length 250)
-(setq dashboard-banner-logo-title
-    (concat "GNU Emacs " emacs-version " (" system-configuration ")"))
-(setq dashboard-startup-banner (expand-file-name "logo.png"
-    (file-name-directory load-file-name)))
-
-
 ;; yasnippet
 (add-hook 'after-init-hook 'yas-global-mode)
 (add-to-list 'yas-snippet-dirs (expand-file-name "snippets"
@@ -165,10 +135,10 @@
 (add-hook 'after-init-hook 'global-company-mode)
 (company-tng-configure-default)
 (company-quickhelp-mode)
-(eval-after-load 'company
-  '(progn
-     (define-key company-active-map (kbd "S-TAB") 'company-select-previous)
-     (define-key company-active-map (kbd "<S-tab>") 'company-select-previous)))
+; (eval-after-load 'company
+  ; '(progn
+     ; (define-key company-active-map (kbd "TAB") 'company-select-next-if-tooltip-visible-or-complete-selection)
+     ; (define-key company-active-map (kbd "<tab>") 'company-select-next-if-tooltip-visible-or-complete-selection)))
 (setq company-frontends
       '(company-pseudo-tooltip-unless-just-one-frontend
         company-preview-frontend
@@ -267,7 +237,6 @@
 
 ;; evil-collection
 (delete 'neotree evil-collection-mode-list)
-(delete 'company evil-collection-mode-list)
 (evil-collection-init)
 
 ;; flyspell lazy
@@ -302,8 +271,6 @@
 (require 'helm-config)
 (helm-mode 1)
 (helm-autoresize-mode 1) ; always auto resize window
-(setq helm-autoresize-max-height 30)
-(setq helm-autoresize-min-height 20)
 (setq helm-split-window-inside-p t)
 (setq helm-full-frame nil)
 (setq helm-recentf-fuzzy-match t)
@@ -365,12 +332,14 @@
 ; allow repeat in visual mode
 (evil-define-key 'visual 'global "." (kbd ";norm . RET"))
 ; open line above
+
+
 (defun smart-open-line-above () (interactive)
   (move-beginning-of-line nil)
   (newline-and-indent)
   (forward-line -1)
   (indent-according-to-mode))
-(evil-define-key 'insert 'global (kbd "<S-return>") 'smart-open-line-above)
+(evil-define-key 'insert 'global (kbd "S-RET") 'smart-open-line-above)
 ; macro in visual mode
 (evil-define-key 'visual 'global "q" (lambda () (interactive) (evil-ex "'<,'>norm @")))
 ; use U for redo
@@ -429,9 +398,9 @@
 (evil-define-key 'visual 'global (kbd "C-c") (lambda () (interactive) (evil-yank))) ; TODO need some work
 ; search
 (evil-define-key 'motion 'global (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
-(evil-define-key 'normal help-mode-map (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
+(evil-define-key 'normal 'help-mode-map (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
 (evil-define-key 'motion 'global (kbd "S-SPC") (lambda () (interactive) (evil-ex-search-backward)))
-(evil-define-key 'normal help-mode-map (kbd "S-SPC") (lambda () (interactive) (evil-ex-search-backward)))
+(evil-define-key 'normal 'help-mode-map (kbd "S-SPC") (lambda () (interactive) (evil-ex-search-backward)))
 ; use { and } to indent
 (evil-define-key 'normal 'global "{" (lambda () (interactive) (evil-shift-left-line 1)))
 (evil-define-key 'normal 'global "}" (lambda () (interactive) (evil-shift-right-line 1)))
@@ -440,7 +409,7 @@
 ; move cursor to comfortable reading position
 (evil-define-key 'motion 'global ",z" (lambda () (interactive) (recenter-top-bottom (/ (* (window-total-height) 2) 7))))
 ; substitute command
-(evil-define-key 'normal 'global ",s" (lambda () (interactive) (evil-ex "s/")))
+(evil-define-key 'normal 'global ",s" (lambda () (interactive) (evil-ex "s/register")))
 (evil-define-key 'normal 'global ",S" (lambda () (interactive) (evil-ex "%s/")))
 (evil-define-key 'visual 'global ",s" (lambda () (interactive) (evil-ex "'<,'>s/")))
 ; argument text object
@@ -460,55 +429,14 @@
     "r" 'neotree-refresh
     "u" 'neotree-select-up-node
     "U" 'neotree-select-down-node
-    "i" 'neotree-change-root
-    "a" 'neotree-create-node ; add
-    "m" 'neotree-rename-node ; move
-    "d" 'neotree-delete-node ; delete
-    "c" 'neotree-copy-node ; copy
+    "c" 'neotree-change-root
+    "O" 'neotree-create-node
+    "C" 'neotree-rename-node
+    "D" 'neotree-delete-node
+    "Y" 'neotree-copy-node
     "o" 'neotree-enter
     (kbd "RET") 'neotree-enter
     (kbd "<return>") 'neotree-enter
-)
-(evil-define-key 'normal org-mode-map
-  ;; using evil-collection with org mode:
-  ;;
-  ;; can use zc, zo, zO etc.
-  ;;
-  ;; TAB toggle show or hide, navigate table
-  ;; C-TAB cycle visibility
-
-    ;; custom
-    (kbd "C-S-h") 'org-shiftmetaleft ; promote/outdent
-    (kbd "C-S-j") 'org-metadown ; move down
-    (kbd "C-S-k") 'org-metaup ; move up
-    (kbd "C-S-l") 'org-shiftmetaright ; demote/indent
-    (kbd "M-h") help-map
-
-    (kbd "C-h") (lambda () (interactive) (outline-hide-subtree))
-    (kbd "C-j") 'org-next-visible-heading
-    (kbd "C-k") 'org-previous-visible-heading
-    (kbd "C-l") (lambda () (interactive) (outline-show-entry) (outline-show-children))
-
-    "X" 'outline-show-all
-    "Z" 'org-shifttab ; cycle global visibility
-)
-(evil-define-key 'insert org-mode-map
-  ;; using evil-collection with org mode:
-  ;;
-  ;; M-RET create heading at same level
-  ;; M-S-RET create TODO heading at same level
-  ;; C-RET create heading at same level below current one
-  ;; C-S-RET create TODO heading at same level below current one
-  ;; 
-  ;; TAB and S-TAB go through table fields
-  ;; RET table next row
-
-    (kbd "M-h") help-map
-)
-(evil-define-key 'visual org-mode-map
-    (kbd "C-S-h") (lambda () (interactive) (org-metaleft) (evil-visual-restore)) ; promote/outdent
-    (kbd "C-S-l") (lambda () (interactive) (org-metaright) (evil-visual-restore)) ; demote/indent
-    (kbd "M-h") help-map
 )
 ; ,<space> no highlight
 (evil-define-key 'motion 'global (kbd ", SPC") 'evil-ex-nohighlight)
@@ -567,12 +495,6 @@
 (evil-define-key 'normal 'global ",j" 'evil-join)
 ; break with ,k
 (evil-define-key 'normal 'global ",k" 'newline)
-
-;; help mode
-(evil-define-key 'motion help-mode-map (kbd "u") 'help-go-back)
-(evil-define-key 'normal help-mode-map (kbd "u") 'help-go-back)
-(evil-define-key 'motion help-mode-map (kbd "U") 'help-go-forward)
-(evil-define-key 'normal help-mode-map (kbd "U") 'help-go-forward)
 
 ;; insert mode mappings
 (evil-define-key 'insert 'global (kbd "C-l") 'yas-expand)
@@ -634,13 +556,6 @@
 
 ;;; misc settings
 
-;; scroll-off emulation
-(setq scroll-margin (/ (* (window-total-height) 2) 7))
-
-;; wrap lines
-(add-hook 'prog-mode-hook (lambda () (setq truncate-lines nil)))
-(add-hook 'text-mode-hook (lambda () (setq truncate-lines nil)))
-
 ;; auto load if changed
 (global-auto-revert-mode t)
 
@@ -648,11 +563,7 @@
 (and window-system (server-start))
 
 ;; no auto saving
-(add-hook 'prog-mode-hook (lambda () (auto-save-mode -1)))
-(add-hook 'text-mode-hook (lambda () (auto-save-mode -1)))
-
-;; no backup file
-(setq make-backup-files nil)
+(auto-save-mode -1)
 
 ;; auto display line numbers
 (add-hook 'prog-mode-hook (lambda () (display-line-numbers-mode)))
