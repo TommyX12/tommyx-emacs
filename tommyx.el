@@ -98,6 +98,7 @@
 
 ;; org
 (add-hook 'org-mode-hook (lambda () (interactive) (org-indent-mode)))
+(setq org-agenda-window-setup 'current-window)
 
 ;; color-identifiers-mode
 (setq color-identifiers-coloring-method 'sequential)
@@ -108,6 +109,7 @@
 
 ;; dashboard
 (dashboard-setup-startup-hook)
+(add-hook 'dashboard-mode-hook (lambda () (hl-line-mode 1)))
 
 ;; window-numbering
 (window-numbering-mode)
@@ -116,6 +118,8 @@
 (org-super-agenda-mode)
 (setq org-M-RET-may-split-line nil)
 (setq org-log-done 'time)
+(add-hook 'org-agenda-mode-hook (lambda () (hl-line-mode 1)))
+(evil-set-initial-state 'org-agenda-mode 'motion)
 
 ;; yascroll
 (global-yascroll-bar-mode 1)
@@ -146,8 +150,7 @@
 (spaceline-helm-mode)
 
 ;; dashboard
-(setq dashboard-items '((agenda . 5)
-			(recents  . 5)
+(setq dashboard-items '((recents  . 5)
 			(projects . 5)
                         (bookmarks . 5)))
 ; custom logo and message
@@ -323,6 +326,7 @@
 (setq helm-completion-in-region-fuzzy-match t)
 (setq recentf-max-menu-items 20)
 (setq recentf-max-saved-items 50)
+(setq helm-move-to-line-cycle-in-source nil)
 
 ;; helm-flx
 (helm-flx-mode +1)
@@ -486,16 +490,23 @@
   ;; C-c C-s: add / change scheduled start
   ;; C-c C-d: add / change deadline
   ;; C-c ,: add / change priority
-  ;; C-c .: enter / modify timestamp
-  ;; C-c !: enter / modify inactive (no agenda) timestamp
-  ;; S-up/down: change date similar to speeddating
+  ;; C-c .: enter / modify timestamp (date only)
+  ;; C-u C-c .: enter / modify timestamp (with time)
+  ;; C-c C-.: enter / modify inactive (no agenda) timestamp (date only)
+  ;; C-c C-.: enter / modify inactive (no agenda) timestamp (date only)
   ;; 
   ;; C-c C-c:
   ;; refresh item under cursor
   ;; toggle state of checkbox
   ;; edit tag of item
+  ;; 
+  ;; C-c [: add current file to agenda file list
 
-    ;; custom
+    (kbd "C-c C-.") 'org-time-stamp-inactive ; with C-u as previx also add time.
+
+    (kbd "C--") 'org-shiftdown ; change date similar to speeddating
+    (kbd "C-=") 'org-shiftup
+
     (kbd "C-S-h") 'org-shiftmetaleft ; promote/outdent
     (kbd "C-S-j") 'org-metadown ; move down
     (kbd "C-S-k") 'org-metaup ; move up
@@ -509,6 +520,8 @@
 
     "X" 'outline-show-all
     "Z" 'org-shifttab ; cycle global visibility
+
+    (kbd "C-S-f") 'helm-org-in-buffer-headings
 )
 (evil-define-key 'insert org-mode-map
   ;; using evil-collection with org mode:
@@ -521,6 +534,8 @@
   ;; TAB and S-TAB: go through table fields
   ;; RET: table next row
 
+    (kbd "C-c C-.") 'org-time-stamp-inactive ; with C-u as previx also add time.
+
     (kbd "M-h") help-map
 )
 (evil-define-key 'visual org-mode-map
@@ -530,6 +545,24 @@
 
     (kbd "C-j") 'org-next-visible-heading
     (kbd "C-k") 'org-previous-visible-heading
+)
+(evil-define-key 'motion org-agenda-mode-map
+  ;; C-c C-t: make into todo / cycle todo states
+  ;; C-c C-s: add / change scheduled start
+  ;; C-c C-d: add / change deadline
+  ;; C-c ,: add / change priority
+  ;; 
+  ;; TAB: goto entry.
+  ;;
+  ;; r: refresh
+  ;; q: quit
+  
+    (kbd "M-h") help-map
+
+    "j" 'org-agenda-next-line
+    "k" 'org-agenda-previous-line
+    "J" 'org-agenda-next-date-line
+    "K" 'org-agenda-previous-date-line
 )
 ; ,<space> no highlight
 (evil-define-key 'motion 'global (kbd ", SPC") 'evil-ex-nohighlight)
