@@ -103,7 +103,7 @@
 (setq color-identifiers-coloring-method 'sequential)
 (setq color-identifiers:max-color-saturation 0.3)
 (setq color-identifiers:min-color-saturation 0.25)
-(setq color-identifiers:timer (run-with-idle-timer 2.5 t 'color-identifiers:refresh))
+(setq color-identifiers:timer (run-with-idle-timer 2 t 'color-identifiers:refresh))
 (global-color-identifiers-mode)
 
 ;; dashboard
@@ -114,6 +114,8 @@
 
 ;; org
 (org-super-agenda-mode)
+(setq org-M-RET-may-split-line nil)
+(setq org-log-done 'time)
 
 ;; yascroll
 (global-yascroll-bar-mode 1)
@@ -174,7 +176,7 @@
         company-preview-frontend
         company-tng-frontend
         company-echo-metadata-frontend))
-(setq company-idle-delay 0.2)
+(setq company-idle-delay 0)
 (setq company-quickhelp-delay 0.3)
 (setq company-require-match 'never)
 (with-eval-after-load 'company
@@ -273,7 +275,7 @@
 ;; flyspell lazy
 (flyspell-lazy-mode 1)
 (setq flyspell-lazy-idle-seconds 1)
-(setq flyspell-lazy-window-idle-seconds 2)
+(setq flyspell-lazy-window-idle-seconds 2.5)
 
 ;; highlight indent guides
 (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
@@ -370,6 +372,7 @@
   (newline-and-indent)
   (forward-line -1)
   (indent-according-to-mode))
+(evil-define-key 'insert 'global (kbd "S-RET") 'smart-open-line-above)
 (evil-define-key 'insert 'global (kbd "<S-return>") 'smart-open-line-above)
 ; macro in visual mode
 (evil-define-key 'visual 'global "q" (lambda () (interactive) (evil-ex "'<,'>norm @")))
@@ -472,10 +475,25 @@
 (evil-define-key 'normal org-mode-map
   ;; using evil-collection with org mode:
   ;;
+  ;; notes:
   ;; can use zc, zo, zO etc.
+  ;; many of these are dot-repeatable.
   ;;
-  ;; TAB toggle show or hide, navigate table
-  ;; C-TAB cycle visibility
+  ;; TAB: toggle show or hide, navigate table
+  ;; C-TAB: cycle visibility
+  ;;
+  ;; C-c C-t: make into todo / cycle todo states
+  ;; C-c C-s: add / change scheduled start
+  ;; C-c C-d: add / change deadline
+  ;; C-c ,: add / change priority
+  ;; C-c .: enter / modify timestamp
+  ;; C-c !: enter / modify inactive (no agenda) timestamp
+  ;; S-up/down: change date similar to speeddating
+  ;; 
+  ;; C-c C-c:
+  ;; refresh item under cursor
+  ;; toggle state of checkbox
+  ;; edit tag of item
 
     ;; custom
     (kbd "C-S-h") 'org-shiftmetaleft ; promote/outdent
@@ -495,13 +513,13 @@
 (evil-define-key 'insert org-mode-map
   ;; using evil-collection with org mode:
   ;;
-  ;; M-RET create heading at same level
-  ;; M-S-RET create TODO heading at same level
-  ;; C-RET create heading at same level below current one
-  ;; C-S-RET create TODO heading at same level below current one
+  ;; M-RET: create heading at same level
+  ;; M-S-RET: create TODO heading at same level
+  ;; C-RET: create heading at same level below current one (most useful)
+  ;; C-S-RET: create TODO heading at same level below current one
   ;; 
-  ;; TAB and S-TAB go through table fields
-  ;; RET table next row
+  ;; TAB and S-TAB: go through table fields
+  ;; RET: table next row
 
     (kbd "M-h") help-map
 )
@@ -509,6 +527,9 @@
     (kbd "C-S-h") (lambda () (interactive) (org-metaleft) (evil-visual-restore)) ; promote/outdent
     (kbd "C-S-l") (lambda () (interactive) (org-metaright) (evil-visual-restore)) ; demote/indent
     (kbd "M-h") help-map
+
+    (kbd "C-j") 'org-next-visible-heading
+    (kbd "C-k") 'org-previous-visible-heading
 )
 ; ,<space> no highlight
 (evil-define-key 'motion 'global (kbd ", SPC") 'evil-ex-nohighlight)
@@ -633,6 +654,13 @@
 
 
 ;;; misc settings
+
+;; UTF-8 as default encoding
+(set-language-environment "UTF-8")
+(prefer-coding-system 'utf-8)
+(set-default-coding-systems 'utf-8)
+(set-language-environment 'utf-8)
+(set-selection-coding-system 'utf-8)
 
 ;; scroll-off emulation
 (setq scroll-margin (/ (* (window-total-height) 2) 7))
