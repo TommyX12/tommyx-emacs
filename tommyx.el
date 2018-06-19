@@ -388,6 +388,9 @@
 (evil-define-key 'motion 'global ",." "@:")
 ; save all
 (evil-define-key 'motion 'global ",wa" (kbd ";wa RET"))
+; scrolling
+(evil-define-key 'motion 'global (kbd "M-j") 'evil-scroll-down)
+(evil-define-key 'motion 'global (kbd "M-k") 'evil-scroll-up)
 ; change to last buffer
 (evil-define-key 'motion 'global (kbd ", TAB") 'evil-buffer)
 (evil-define-key 'motion 'global (kbd ", <tab>") 'evil-buffer)
@@ -502,6 +505,10 @@
   ;; 
   ;; C-c [: add current file to agenda file list
 
+  ;; remove bindings
+    (kbd "M-j") nil
+    (kbd "M-k") nil
+
     (kbd "C-c C-.") 'org-time-stamp-inactive ; with C-u as previx also add time.
 
     (kbd "C--") 'org-shiftdown ; change date similar to speeddating
@@ -546,6 +553,7 @@
     (kbd "C-j") 'org-next-visible-heading
     (kbd "C-k") 'org-previous-visible-heading
 )
+(evil-define-key 'motion 'global ",a" 'org-agenda) ; open agenda
 (evil-define-key 'motion org-agenda-mode-map
   ;; C-c C-t: make into todo / cycle todo states
   ;; C-c C-s: add / change scheduled start
