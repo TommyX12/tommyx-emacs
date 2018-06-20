@@ -75,9 +75,9 @@
 	("S-TAB" . nil)
 	("<S-tab>" . nil)))
 (use-package yasnippet-snippets :ensure t)
-(use-package powerline :ensure t)
-(use-package powerline-evil :ensure t)
-(use-package spaceline :ensure t)
+;; (use-package powerline :ensure t)
+;; (use-package powerline-evil :ensure t)
+;; (use-package spaceline :ensure t)
 (use-package window-numbering :ensure t)
 (use-package which-func :ensure t)
 (use-package git-gutter :ensure t)
@@ -89,16 +89,13 @@
 (use-package dashboard :ensure t :after page-break-lines)
 (use-package org :ensure t)
 (use-package org-super-agenda :ensure t)
+(use-package load-relative :ensure t)
 ; language specific
 (use-package csv-mode :ensure t)
 (use-package json-mode :ensure t)
 
 
 ;;; package settings
-
-;; org
-(add-hook 'org-mode-hook (lambda () (interactive) (org-indent-mode)))
-(setq org-agenda-window-setup 'current-window)
 
 ;; color-identifiers-mode
 (setq color-identifiers-coloring-method 'sequential)
@@ -141,13 +138,14 @@
 (add-hook 'prog-mode-hook (lambda () (interactive)
     (setq header-line-format '(" - " which-func-format))))
 
-;; powerline
-(setq powerline-default-separator nil)
-(require 'spaceline-config)
-(spaceline-toggle-hud-off)
-(spaceline-toggle-which-function-off)
-(spaceline-spacemacs-theme)
-(spaceline-helm-mode)
+;; powerline and spaceline
+;; (setq powerline-default-separator nil)
+;; (require 'spaceline-config)
+;; (spaceline-toggle-which-function-off)
+;; (spaceline-toggle-hud-off)
+;; (spaceline-spacemacs-theme)
+;; (spaceline-helm-mode)
+;; (spaceline-compile)
 
 ;; dashboard
 (setq dashboard-items '((recents  . 5)
@@ -439,9 +437,15 @@
 (evil-define-key 'visual 'global (kbd "C-c") (lambda () (interactive) (evil-yank))) ; TODO need some work
 ; search
 (evil-define-key 'motion 'global (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
-(evil-define-key 'normal help-mode-map (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
+(evil-define-key 'normal 'global (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
+(evil-define-key 'visual 'global (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
 (evil-define-key 'motion 'global (kbd "S-SPC") (lambda () (interactive) (evil-ex-search-backward)))
+(evil-define-key 'normal 'global (kbd "S-SPC") (lambda () (interactive) (evil-ex-search-backward)))
+(evil-define-key 'visual 'global (kbd "S-SPC") (lambda () (interactive) (evil-ex-search-backward)))
+(evil-define-key 'normal help-mode-map (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
 (evil-define-key 'normal help-mode-map (kbd "S-SPC") (lambda () (interactive) (evil-ex-search-backward)))
+(evil-define-key 'normal neotree-mode-map (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
+(evil-define-key 'normal neotree-mode-map (kbd "S-SPC") (lambda () (interactive) (evil-ex-search-backward)))
 ; use { and } to indent
 (evil-define-key 'normal 'global "{" (lambda () (interactive) (evil-shift-left-line 1)))
 (evil-define-key 'normal 'global "}" (lambda () (interactive) (evil-shift-right-line 1)))
@@ -457,8 +461,10 @@
 (define-key evil-inner-text-objects-map "a" 'evil-inner-arg)
 (define-key evil-outer-text-objects-map "a" 'evil-outer-arg)
 ; switch color scheme
-(evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme light-theme t) (spaceline-compile)))
-(evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme dark-theme t) (spaceline-compile)))
+(evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme light-theme t)))
+(evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme dark-theme t)))
+;; (evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme light-theme t) (spaceline-compile)))
+;; (evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme dark-theme t) (spaceline-compile)))
 ; neo tree
 (evil-define-key 'motion 'global ",n" (lambda () (interactive) (neotree-show)))
 (evil-define-key 'motion 'global ",N" (lambda () (interactive) (neotree-find)))
@@ -478,99 +484,6 @@
     "o" 'neotree-enter
     (kbd "RET") 'neotree-enter
     (kbd "<return>") 'neotree-enter
-)
-(evil-define-key 'normal org-mode-map
-  ;; using evil-collection with org mode:
-  ;;
-  ;; notes:
-  ;; can use zc, zo, zO etc.
-  ;; many of these are dot-repeatable.
-  ;;
-  ;; TAB: toggle show or hide, navigate table
-  ;; C-TAB: cycle visibility
-  ;;
-  ;; C-c C-t: make into todo / cycle todo states
-  ;; C-c C-s: add / change scheduled start
-  ;; C-c C-d: add / change deadline
-  ;; C-c ,: add / change priority
-  ;; C-c .: enter / modify timestamp (date only)
-  ;; C-u C-c .: enter / modify timestamp (with time)
-  ;; C-c C-.: enter / modify inactive (no agenda) timestamp (date only)
-  ;; C-c C-.: enter / modify inactive (no agenda) timestamp (date only)
-  ;; 
-  ;; C-c C-c:
-  ;; refresh item under cursor
-  ;; toggle state of checkbox
-  ;; edit tag of item
-  ;; 
-  ;; C-c [: add current file to agenda file list
-
-  ;; remove bindings
-    (kbd "M-j") nil
-    (kbd "M-k") nil
-
-    (kbd "C-c C-.") 'org-time-stamp-inactive ; with C-u as previx also add time.
-
-    (kbd "C--") 'org-shiftdown ; change date similar to speeddating
-    (kbd "C-=") 'org-shiftup
-
-    (kbd "C-S-h") 'org-shiftmetaleft ; promote/outdent
-    (kbd "C-S-j") 'org-metadown ; move down
-    (kbd "C-S-k") 'org-metaup ; move up
-    (kbd "C-S-l") 'org-shiftmetaright ; demote/indent
-    (kbd "M-h") help-map
-
-    (kbd "C-h") (lambda () (interactive) (outline-hide-subtree))
-    (kbd "C-j") 'org-next-visible-heading
-    (kbd "C-k") 'org-previous-visible-heading
-    (kbd "C-l") (lambda () (interactive) (outline-show-entry) (outline-show-children))
-
-    "X" 'outline-show-all
-    "Z" 'org-shifttab ; cycle global visibility
-
-    (kbd "C-S-f") 'helm-org-in-buffer-headings
-)
-(evil-define-key 'insert org-mode-map
-  ;; using evil-collection with org mode:
-  ;;
-  ;; M-RET: create heading at same level
-  ;; M-S-RET: create TODO heading at same level
-  ;; C-RET: create heading at same level below current one (most useful)
-  ;; C-S-RET: create TODO heading at same level below current one
-  ;; 
-  ;; TAB and S-TAB: go through table fields
-  ;; RET: table next row
-
-    (kbd "C-c C-.") 'org-time-stamp-inactive ; with C-u as previx also add time.
-
-    (kbd "M-h") help-map
-)
-(evil-define-key 'visual org-mode-map
-    (kbd "C-S-h") (lambda () (interactive) (org-metaleft) (evil-visual-restore)) ; promote/outdent
-    (kbd "C-S-l") (lambda () (interactive) (org-metaright) (evil-visual-restore)) ; demote/indent
-    (kbd "M-h") help-map
-
-    (kbd "C-j") 'org-next-visible-heading
-    (kbd "C-k") 'org-previous-visible-heading
-)
-(evil-define-key 'motion 'global ",a" 'org-agenda) ; open agenda
-(evil-define-key 'motion org-agenda-mode-map
-  ;; C-c C-t: make into todo / cycle todo states
-  ;; C-c C-s: add / change scheduled start
-  ;; C-c C-d: add / change deadline
-  ;; C-c ,: add / change priority
-  ;; 
-  ;; TAB: goto entry.
-  ;;
-  ;; r: refresh
-  ;; q: quit
-  
-    (kbd "M-h") help-map
-
-    "j" 'org-agenda-next-line
-    "k" 'org-agenda-previous-line
-    "J" 'org-agenda-next-date-line
-    "K" 'org-agenda-previous-date-line
 )
 ; ,<space> no highlight
 (evil-define-key 'motion 'global (kbd ", SPC") 'evil-ex-nohighlight)
@@ -627,6 +540,7 @@
 (evil-define-key 'visual 'global "y" 'evil-yank)
 ; join with ,j
 (evil-define-key 'normal 'global ",j" 'evil-join)
+(evil-define-key 'visual 'global ",j" 'evil-join)
 ; break with ,k
 (evil-define-key 'normal 'global ",k" 'newline)
 
@@ -686,7 +600,8 @@
 ; (evil-define-key 'normal 'shell-mode-map (kbd "<tab>") 'ace-window)
 
 ;; avy
-(evil-define-key 'motion 'global "f" 'avy-goto-word-0)
+(evil-define-key 'motion 'global "f" (lambda () (interactive)
+    (if hl-line-mode (avy-goto-line) (avy-goto-word-0 nil))))
 (evil-define-key 'motion 'global "F" 'avy-goto-char-2)
 
 ;; misc bindings
@@ -760,3 +675,7 @@
     (add-hook hook (lambda () (flyspell-mode 1))))
 (dolist (hook '(change-log-mode-hook log-edit-mode-hook))
     (add-hook hook (lambda () (flyspell-mode -1))))
+
+
+;;; org
+(load-relative "./tommyx-org.el")
