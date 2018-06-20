@@ -75,9 +75,9 @@
 	("S-TAB" . nil)
 	("<S-tab>" . nil)))
 (use-package yasnippet-snippets :ensure t)
-;; (use-package powerline :ensure t)
-;; (use-package powerline-evil :ensure t)
-;; (use-package spaceline :ensure t)
+(use-package powerline :ensure t)
+(use-package powerline-evil :ensure t)
+(use-package spaceline :ensure t)
 (use-package window-numbering :ensure t)
 (use-package which-func :ensure t)
 (use-package git-gutter :ensure t)
@@ -139,13 +139,28 @@
     (setq header-line-format '(" - " which-func-format))))
 
 ;; powerline and spaceline
-;; (setq powerline-default-separator nil)
-;; (require 'spaceline-config)
-;; (spaceline-toggle-which-function-off)
-;; (spaceline-toggle-hud-off)
-;; (spaceline-spacemacs-theme)
-;; (spaceline-helm-mode)
-;; (spaceline-compile)
+(setq powerline-default-separator nil)
+(require 'spaceline-config)
+(spaceline-toggle-which-function-off)
+(spaceline-toggle-hud-off)
+(spaceline-spacemacs-theme)
+(spaceline-helm-mode)
+(spaceline-compile)
+; delayed update trigger for performance
+(setq delayed-mode-line-updating nil)
+(defun delayed-mode-line-format ()
+  "The mode-line format function with auto caching."
+  (when delayed-mode-line-updating
+    (set-window-parameter nil 'delayed-mode-line-cache (spaceline-ml-main)))
+  (window-parameter nil 'delayed-mode-line-cache))
+(defun delayed-mode-line-update ()
+  "Updates the mode-line."
+  (setq delayed-mode-line-updating t)
+    (force-mode-line-update t)
+    (run-at-time 0.01 nil (lambda () (setq delayed-mode-line-updating nil))))
+(setq-default mode-line-format '("%e" (:eval (delayed-mode-line-format))))
+(run-with-idle-timer 0.5 t 'delayed-mode-line-update)
+(add-hook 'window-configuration-change-hook 'delayed-mode-line-update)
 
 ;; dashboard
 (setq dashboard-items '((recents  . 5)
@@ -177,7 +192,7 @@
         company-preview-frontend
         company-tng-frontend
         company-echo-metadata-frontend))
-(setq company-idle-delay 0)
+(setq company-idle-delay 0.2)
 (setq company-quickhelp-delay 0.3)
 (setq company-require-match 'never)
 (with-eval-after-load 'company
@@ -207,7 +222,7 @@
 ;; evil
 (evil-mode 1) ; use evil-mode at startup
 ; treat underscore as word
-(modify-syntax-entry ?_ "w")
+(add-hook 'prog-mode-hook (lambda () (modify-syntax-entry ?_ "w")))
 ; split to the right and below
 (setq evil-split-window-below t)
 (setq evil-vsplit-window-right t)
@@ -262,7 +277,7 @@
 
 ;; neotree
 ; (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
-(setq neo-theme 'arrow)
+(setq neo-theme 'nerd)
 (setq neo-show-hidden-files t)
 (add-hook 'neotree-mode-hook (lambda () (interactive)
     (hl-line-mode 1)))
@@ -278,12 +293,12 @@
 (setq flyspell-lazy-idle-seconds 1)
 (setq flyspell-lazy-window-idle-seconds 2.5)
 
-;; highlight indent guides
-(add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
-(add-hook 'text-mode-hook 'highlight-indent-guides-mode)
-(setq highlight-indent-guides-method 'character) ; TODO use the character method. right now the font doesn't work
-(setq highlight-indent-guides-character ?\|)
-(setq highlight-indent-guides-responsive nil)
+;; highlight indent guides (currently disabled)
+;; (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
+;; (add-hook 'text-mode-hook 'highlight-indent-guides-mode)
+;; (setq highlight-indent-guides-method 'character) ; TODO use the character method. right now the font doesn't work
+;; (setq highlight-indent-guides-character ?\|)
+;; (setq highlight-indent-guides-responsive nil)
 
 ;; evil-visualstar
 (global-evil-visualstar-mode)
@@ -461,10 +476,10 @@
 (define-key evil-inner-text-objects-map "a" 'evil-inner-arg)
 (define-key evil-outer-text-objects-map "a" 'evil-outer-arg)
 ; switch color scheme
-(evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme light-theme t)))
-(evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme dark-theme t)))
-;; (evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme light-theme t) (spaceline-compile)))
-;; (evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme dark-theme t) (spaceline-compile)))
+;; (evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme light-theme t)))
+;; (evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme dark-theme t)))
+(evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme light-theme t) (spaceline-compile)))
+(evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme dark-theme t) (spaceline-compile)))
 ; neo tree
 (evil-define-key 'motion 'global ",n" (lambda () (interactive) (neotree-show)))
 (evil-define-key 'motion 'global ",N" (lambda () (interactive) (neotree-find)))
