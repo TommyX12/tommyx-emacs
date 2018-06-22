@@ -1,3 +1,7 @@
+;;; add current directory to load-path
+(add-to-list 'load-path (file-name-directory load-file-name))
+(add-to-list 'custom-theme-load-path (file-name-directory load-file-name))
+
 
 ;;; initialize packages
 (require 'package)
@@ -52,7 +56,8 @@
 (use-package general :ensure t)
 (use-package highlight-indent-guides :ensure t)
 (use-package origami :ensure t)
-(use-package volatile-highlights :ensure t)
+;; (use-package volatile-highlights :ensure t)
+(use-package evil-goggles :ensure t)
 (use-package flycheck :ensure t)
 (use-package flyspell-lazy :ensure t)
 (use-package rainbow-delimiters :ensure t)
@@ -90,6 +95,7 @@
 (use-package org :ensure t)
 (use-package org-super-agenda :ensure t)
 (use-package load-relative :ensure t)
+(use-package rainbow-mode :ensure t)
 ; language specific
 (use-package csv-mode :ensure t)
 (use-package json-mode :ensure t)
@@ -136,13 +142,13 @@
 ;; which-function
 (add-hook 'prog-mode-hook #'which-function-mode)
 (add-hook 'prog-mode-hook (lambda () (interactive)
-    (setq header-line-format '(" - " which-func-format))))
+    (setq-default header-line-format '(" - " which-func-format))))
 
 ;; powerline and spaceline
-(setq powerline-default-separator nil)
+(setq powerline-default-separator 'slant)
 (require 'spaceline-config)
 (spaceline-toggle-which-function-off)
-(spaceline-toggle-hud-off)
+(spaceline-toggle-hud-on)
 (spaceline-spacemacs-theme)
 (spaceline-helm-mode)
 (spaceline-compile)
@@ -153,14 +159,16 @@
   (when delayed-mode-line-updating
     (set-window-parameter nil 'delayed-mode-line-cache (spaceline-ml-main)))
   (window-parameter nil 'delayed-mode-line-cache))
-(defun delayed-mode-line-update ()
+(defun delayed-mode-line-update (&rest _)
   "Updates the mode-line."
   (setq delayed-mode-line-updating t)
     (force-mode-line-update t)
     (run-at-time 0.01 nil (lambda () (setq delayed-mode-line-updating nil))))
 (setq-default mode-line-format '("%e" (:eval (delayed-mode-line-format))))
+; update mode line
 (run-with-idle-timer 0.5 t 'delayed-mode-line-update)
 (add-hook 'window-configuration-change-hook 'delayed-mode-line-update)
+;; (advice-add 'select-window :after #'delayed-mode-line-update) ; TODO avy-jump calls this too much
 
 ;; dashboard
 (setq dashboard-items '((recents  . 5)
@@ -202,6 +210,7 @@
 (require 'smartparens-config)
 (smartparens-global-mode 1)
 (show-smartparens-global-mode 1)
+(setq sp-show-pair-from-inside t)
 (setq smartparens-strict-mode nil)
 ; auto expanison of brackets
 (sp-local-pair 'prog-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
@@ -215,14 +224,12 @@
 ; (load-theme 'spacemacs-dark t)
 (setq doom-themes-enable-bold t
       doom-themes-enable-italic t)
-(setq dark-theme 'doom-one)
-(setq light-theme 'doom-one-light)
+(setq dark-theme 'infinity-dark)
+(setq light-theme 'infinity-light)
 (load-theme dark-theme t)
 
 ;; evil
 (evil-mode 1) ; use evil-mode at startup
-; treat underscore as word
-(add-hook 'prog-mode-hook (lambda () (modify-syntax-entry ?_ "w")))
 ; split to the right and below
 (setq evil-split-window-below t)
 (setq evil-vsplit-window-right t)
@@ -259,21 +266,27 @@
 (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/history")))
 
 ;; volatile-highlight
-(vhl/define-extension 'evil
-                      'evil-move
-                      'evil-paste-after
-                      'evil-paste-before
-                      'evil-paste-pop)
-(with-eval-after-load 'evil
-    (vhl/install-extension 'evil)
-    (vhl/load-extension 'evil))
-(vhl/define-extension 'undo-tree
-                      'undo-tree-move
-                      'undo-tree-yank)
-(with-eval-after-load 'undo-tree
-    (vhl/install-extension 'undo-tree)
-    (vhl/load-extension 'undo-tree))
-(volatile-highlights-mode)
+;; (vhl/define-extension 'evil
+;;                       'evil-move
+;;                       'evil-paste-after
+;;                       'evil-paste-before
+;;                       'evil-paste-pop)
+;; (with-eval-after-load 'evil
+;;     (vhl/install-extension 'evil)
+;;     (vhl/load-extension 'evil))
+;; (vhl/define-extension 'undo-tree
+;;                       'undo-tree-move
+;;                       'undo-tree-yank)
+;; (with-eval-after-load 'undo-tree
+;;     (vhl/install-extension 'undo-tree)
+;;     (vhl/load-extension 'undo-tree))
+;; (volatile-highlights-mode)
+
+;; evil-goggles
+(setq evil-goggles-duration 0.1)
+(setq evil-goggles-async-duration 0.2)
+(setq evil-goggles-blocking-duration 0.2)
+(evil-goggles-mode)
 
 ;; neotree
 ; (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
@@ -625,6 +638,13 @@
 
 
 ;;; misc settings
+
+;; file-type based syntax entry
+; treat underscore as word
+(add-hook 'prog-mode-hook (lambda () (modify-syntax-entry ?_ "w")))
+; treat underscore as word
+(add-hook 'lisp-mode-hook (lambda () (modify-syntax-entry ?- "w")))
+(add-hook 'emacs-lisp-mode-hook (lambda () (modify-syntax-entry ?- "w")))
 
 ;; UTF-8 as default encoding
 (set-language-environment "UTF-8")

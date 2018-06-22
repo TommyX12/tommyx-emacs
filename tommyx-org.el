@@ -5,23 +5,23 @@
 (setq org-agenda-sticky t) ; hide, not kill, agenda buffer when quiting
 
 ;; check if org-notes-dir exists.
-(when (boundp 'org-agenda-dir)
+;; (when (boundp 'org-agenda-dir)
 
 ;; configs
-(setq org-todo-keywords '((sequence "TODO" "WIP" "DONE")))
+(setq org-todo-keywords '((sequence "TODO" "DONE")))
 
 ;; agenda files
-(add-to-list 'org-agenda-files org-agenda-dir)
+(add-to-list 'org-agenda-files org-directory)
 
 ;; capture templates
-(setq org-capture-templates `(
+(setq org-capture-templates '(
     ("i" "Inbox" entry
-    (file+headline ,(concat (file-name-as-directory org-agenda-dir) "GTD.org") "Inbox")
+    (file+headline "GTD.org" "Inbox")
     "* %? %i")
 ))
 
 ;; checks if org-notes-dir exists.
-)
+;; )
 
 ;; key bindings
 (evil-define-key 'motion 'global (kbd ", C-c") 'org-capture)
