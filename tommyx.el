@@ -171,7 +171,7 @@
 ;; (advice-add 'select-window :after #'delayed-mode-line-update) ; TODO avy-jump calls this too much
 
 ;; dashboard
-(setq dashboard-items '((recents  . 5)
+(setq dashboard-items '((agenda . 10) (recents  . 5)
 			(projects . 5)
                         (bookmarks . 5)))
 ; custom logo and message
@@ -292,9 +292,13 @@
 ; (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
 (setq neo-theme 'nerd)
 (setq neo-show-hidden-files t)
-(add-hook 'neotree-mode-hook (lambda () (interactive)
-    (hl-line-mode 1)))
+(add-hook 'neotree-mode-hook (lambda () (hl-line-mode 1)))
 (setq neo-confirm-change-root 'off-p)
+(setq neo-banner-message "")
+(setq neo-show-updir-line nil)
+(setq neo-toggle-window-keep-p t)
+(setq neo-window-width 30)
+(add-hook 'after-init-hook (lambda () (neotree-show)))
 
 ;; evil-collection
 (delete 'neotree evil-collection-mode-list)
@@ -350,9 +354,10 @@
 (setq helm-etags-fuzzy-match t)
 (setq helm-mode-fuzzy-match t)
 (setq helm-completion-in-region-fuzzy-match t)
-(setq recentf-max-menu-items 20)
-(setq recentf-max-saved-items 50)
+(setq recentf-max-menu-items 100)
+(setq recentf-max-saved-items 100)
 (setq helm-move-to-line-cycle-in-source nil)
+(setq helm-ff-file-name-history-use-recentf t)
 
 ;; helm-flx
 (helm-flx-mode +1)
@@ -422,6 +427,11 @@
 (evil-define-key 'motion 'global (kbd ", <tab>") 'evil-buffer)
 ; kill buffer
 (evil-define-key 'motion 'global ",q" 'kill-this-buffer)
+; ,d delete line content
+(evil-define-key 'normal 'global ",d" (lambda () (interactive) (evil-first-non-blank) (kill-line)))
+; ,f fix spelling
+(evil-define-key 'normal 'global ",f" 'flyspell-auto-correct-word)
+(evil-define-key 'normal 'global ",F" (lambda () (interactive) (flyspell-lazy-check-visible) (flyspell-auto-correct-previous-word (point))))
 ; use visual line
 (evil-define-key 'motion 'global "j" 'evil-next-visual-line)
 (evil-define-key 'motion 'global "k" 'evil-previous-visual-line)
@@ -582,6 +592,8 @@
 (evil-define-key 'insert 'global (kbd "C-l") 'yas-expand)
 (evil-define-key 'insert 'global (kbd "C-j") 'yas-next-field)
 (evil-define-key 'insert 'global (kbd "C-k") 'yas-prev-field)
+(evil-define-key 'insert 'global (kbd "S-SPC S-SPC") (lambda () (interactive) (save-excursion (flyspell-lazy-check-pending) (flyspell-auto-correct-previous-word (point)))))
+(evil-define-key 'insert 'global (kbd "<S-space> <S-space>") (lambda () (interactive) (save-excursion (flyspell-lazy-check-pending) (flyspell-auto-correct-previous-word (point)))))
 (general-imap "j" (general-key-dispatch 'self-insert-command
                    :timeout 0.25
               "j" 'self-insert-command
@@ -595,23 +607,23 @@
 ))
 
 ;; window management
-(evil-define-key 'motion 'global (kbd "C-w C-h") 'evil-window-left)
-(evil-define-key 'motion 'global (kbd "C-w C-j") 'evil-window-down)
-(evil-define-key 'motion 'global (kbd "C-w C-k") 'evil-window-up)
-(evil-define-key 'motion 'global (kbd "C-w C-l") 'evil-window-right)
-(evil-define-key 'motion 'global ",wv" 'evil-window-vsplit)
-(evil-define-key 'motion 'global ",wh" 'evil-window-split)
-(evil-define-key 'motion 'global ",wq" 'evil-quit)
-(evil-define-key 'motion 'global ",0" 'select-window-0)
-(evil-define-key 'motion 'global ",1" 'select-window-1)
-(evil-define-key 'motion 'global ",2" 'select-window-2)
-(evil-define-key 'motion 'global ",3" 'select-window-3)
-(evil-define-key 'motion 'global ",4" 'select-window-4)
-(evil-define-key 'motion 'global ",5" 'select-window-5)
-(evil-define-key 'motion 'global ",6" 'select-window-6)
-(evil-define-key 'motion 'global ",7" 'select-window-7)
-(evil-define-key 'motion 'global ",8" 'select-window-8)
-(evil-define-key 'motion 'global ",9" 'select-window-9)
+(evil-define-key 'motion 'global (kbd "C-w C-h") (lambda () (interactive) (evil-window-left 1) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global (kbd "C-w C-j") (lambda () (interactive) (evil-window-down 1) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global (kbd "C-w C-k") (lambda () (interactive) (evil-window-up 1) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global (kbd "C-w C-l") (lambda () (interactive) (evil-window-right 1) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",wv" (lambda () (interactive) (evil-window-vsplit) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",wh" (lambda () (interactive) (evil-window-split) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",wq" (lambda () (interactive) (evil-quit) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",0" (lambda () (interactive) (select-window-0) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",1" (lambda () (interactive) (select-window-1) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",2" (lambda () (interactive) (select-window-2) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",3" (lambda () (interactive) (select-window-3) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",4" (lambda () (interactive) (select-window-4) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",5" (lambda () (interactive) (select-window-5) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",6" (lambda () (interactive) (select-window-6) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",7" (lambda () (interactive) (select-window-7) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",8" (lambda () (interactive) (select-window-8) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",9" (lambda () (interactive) (select-window-9) (delayed-mode-line-update)))
 
 ;; nerd commenter
 (evil-define-key 'normal 'global (kbd ",c SPC") 'evilnc-comment-or-uncomment-lines)
@@ -629,8 +641,8 @@
 
 ;; avy
 (evil-define-key 'motion 'global "f" (lambda () (interactive)
-    (if hl-line-mode (avy-goto-line) (avy-goto-word-0 nil))))
-(evil-define-key 'motion 'global "F" 'avy-goto-char-2)
+    (if hl-line-mode (evil-avy-goto-line) (evil-avy-goto-word-0 nil))))
+(evil-define-key 'motion 'global "F" 'evil-avy-goto-char-2)
 
 ;; misc bindings
 ; use alt-h for help instead of ctrl-h
@@ -675,6 +687,8 @@
 
 ;; auto display line numbers
 (add-hook 'prog-mode-hook (lambda () (display-line-numbers-mode)))
+(add-hook 'nxml-mode-hook (lambda () (display-line-numbers-mode)))
+(add-hook 'html-mode-hook (lambda () (display-line-numbers-mode)))
 
 ;; disable blink
 (blink-cursor-mode 0)

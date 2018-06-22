@@ -7,16 +7,22 @@
 ;; check if org-notes-dir exists.
 ;; (when (boundp 'org-agenda-dir)
 
-;; configs
+;; todo
 (setq org-todo-keywords '((sequence "TODO" "DONE")))
+
+;; refiling
+(setq org-refile-targets '((nil . (:level . 1)) (nil . (:level . 2))))
 
 ;; agenda files
 (add-to-list 'org-agenda-files org-directory)
 
 ;; capture templates
 (setq org-capture-templates '(
-    ("i" "Inbox" entry
-    (file+headline "GTD.org" "Inbox")
+    ("I" "Important" entry
+    (file+headline "GTD.org" "Important")
+    "* %? %i")
+    ("i" "Not important" entry
+    (file+headline "GTD.org" "Not important")
     "* %? %i")
 ))
 
@@ -24,9 +30,11 @@
 ;; )
 
 ;; key bindings
-(evil-define-key 'motion 'global (kbd ", C-c") 'org-capture)
-(evil-define-key 'normal 'global (kbd ", C-c") 'org-capture)
-(evil-define-key 'visual 'global (kbd ", C-c") 'org-capture)
+; global
+(evil-define-key 'motion 'global (kbd ", C-c c") 'org-capture)
+(evil-define-key 'motion 'global (kbd ", C-c a") 'org-agenda)
+(evil-define-key 'motion 'global (kbd ", C-c C-f") 'helm-org-agenda-files-headings)
+; org mode
 (evil-define-key 'normal org-mode-map
   ;; using evil-collection with org mode:
   ;;
@@ -40,6 +48,7 @@
   ;; C-c C-t: make into todo / cycle todo states
   ;; C-c C-s: add / change scheduled start
   ;; C-c C-d: add / change deadline
+  ;; C-c C-w: refile (move to)
   ;; C-c ,: add / change priority
   ;; C-c .: enter / modify timestamp (date only)
   ;; C-u C-c .: enter / modify timestamp (with time)
@@ -72,6 +81,15 @@
     (kbd "C-S-l") 'org-shiftmetaright ; demote/indent
     (kbd "M-h") help-map
 
+    (kbd "M-RET") 'org-insert-heading-respect-content
+    (kbd "M-S-RET") 'org-insert-todo-heading-respect-content
+    (kbd "C-RET") 'org-insert-subheading
+    (kbd "C-S-RET") 'org-insert-todo-subheading
+    (kbd "<M-return>") 'org-insert-heading-respect-content
+    (kbd "<M-S-return>") 'org-insert-todo-heading-respect-content
+    (kbd "<C-return>") 'org-insert-subheading
+    (kbd "<C-S-return>") 'org-insert-todo-subheading
+
     (kbd "C-h") (lambda () (interactive) (outline-hide-subtree))
     (kbd "C-j") 'org-next-visible-heading
     (kbd "C-k") 'org-previous-visible-heading
@@ -95,17 +113,30 @@
 
     (kbd "C-c C-.") 'org-time-stamp-inactive ; with C-u as previx also add time.
 
+    (kbd "M-RET") 'org-insert-heading-respect-content
+    (kbd "M-S-RET") 'org-insert-todo-heading-respect-content
+    (kbd "C-RET") 'org-insert-subheading
+    (kbd "C-S-RET") 'org-insert-todo-subheading
+    (kbd "<M-return>") 'org-insert-heading-respect-content
+    (kbd "<M-S-return>") 'org-insert-todo-heading-respect-content
+    (kbd "<C-return>") 'org-insert-subheading
+    (kbd "<C-S-return>") 'org-insert-todo-subheading
+
     (kbd "M-h") help-map
 )
+(evil-define-motion evil-org-next-visible-heading () :type exclusive
+    (org-next-visible-heading 1))
+(evil-define-motion evil-org-previous-visible-heading () :type exclusive
+    (org-previous-visible-heading 1))
 (evil-define-key 'visual org-mode-map
     (kbd "C-S-h") (lambda () (interactive) (org-metaleft) (evil-visual-restore)) ; promote/outdent
     (kbd "C-S-l") (lambda () (interactive) (org-metaright) (evil-visual-restore)) ; demote/indent
     (kbd "M-h") help-map
 
-    (kbd "C-j") 'org-next-visible-heading
-    (kbd "C-k") 'org-previous-visible-heading
+    (kbd "C-j") 'evil-org-next-visible-heading
+    (kbd "C-k") 'evil-org-previous-visible-heading
 )
-(evil-define-key 'motion 'global ",a" 'org-agenda) ; open agenda
+; org agenda
 (evil-define-key 'motion org-agenda-mode-map
   ;; C-c C-t: make into todo / cycle todo states
   ;; C-c C-s: add / change scheduled start
