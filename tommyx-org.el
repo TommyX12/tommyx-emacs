@@ -136,6 +136,7 @@
     (kbd "C-j") 'evil-org-next-visible-heading
     (kbd "C-k") 'evil-org-previous-visible-heading
 )
+(evil-define-key 'motion 'global ",,n" 'org-narrow-to-subtree)
 ; org agenda
 (evil-define-key 'motion org-agenda-mode-map
   ;; C-c C-t: make into todo / cycle todo states
@@ -159,4 +160,6 @@
     "k" 'org-agenda-previous-line
     (kbd "C-j") 'org-agenda-next-date-line
     (kbd "C-k") 'org-agenda-previous-date-line
+
+    (kbd "C-c v") 'org-agenda-view-mode-dispatch
 )

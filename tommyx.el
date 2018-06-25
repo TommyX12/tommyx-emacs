@@ -3,6 +3,38 @@
 (add-to-list 'custom-theme-load-path (file-name-directory load-file-name))
 
 
+;;; themes
+; (load-theme 'spacemacs-dark t)
+(setq doom-themes-enable-bold t
+      doom-themes-enable-italic t)
+(setq dark-theme 'infinity-dark)
+(setq light-theme 'infinity-light)
+(load-theme dark-theme t)
+
+;; set font
+(if (not (boundp 'selected-font)) (progn
+  (setq selected-font "DejaVu Sans Mono")
+  (cond
+    ((find-font (font-spec :name "Consolas"))
+    (setq selected-font "Consolas"))
+    ((find-font (font-spec :name "Noto Mono"))
+    (setq selected-font "Noto Mono"))
+)))
+(if (not (boundp 'font-size))
+    (setq font-size 120))
+(set-face-attribute 'default nil
+                    :family selected-font
+                    :height font-size
+                    :weight 'normal
+                    :width 'normal)
+
+;; full screen automatically
+(toggle-frame-fullscreen)
+(tool-bar-mode -1)
+(scroll-bar-mode -1)
+(menu-bar-mode -1)
+
+
 ;;; initialize packages
 (require 'package)
 
@@ -35,6 +67,7 @@
 
 
 ;;; install packages
+(use-package undo-tree :ensure t)
 (use-package evil :ensure t)
 (use-package evil-collection :ensure t :after evil)
 (use-package evil-visualstar :ensure t)
@@ -54,6 +87,7 @@
 (use-package doom-themes :ensure t :defer t)
 (use-package ace-window :ensure t)
 (use-package general :ensure t)
+(use-package beacon :ensure t)
 (use-package highlight-indent-guides :ensure t)
 (use-package origami :ensure t)
 ;; (use-package volatile-highlights :ensure t)
@@ -107,7 +141,7 @@
 (setq color-identifiers-coloring-method 'sequential)
 (setq color-identifiers:max-color-saturation 0.3)
 (setq color-identifiers:min-color-saturation 0.25)
-(setq color-identifiers:timer (run-with-idle-timer 2 t 'color-identifiers:refresh))
+(setq color-identifiers:timer (run-with-idle-timer 5 t 'color-identifiers:refresh))
 (global-color-identifiers-mode)
 
 ;; dashboard
@@ -127,13 +161,22 @@
 ;; yascroll
 (global-yascroll-bar-mode 1)
 (setq yascroll:delay-to-hide nil)
-(set-face-foreground 'yascroll:thumb-fringe "#555555")
-(set-face-background 'yascroll:thumb-fringe "#555555")
+
+;; beacon
+(setq beacon-blink-when-focused t)
+(setq beacon-blink-when-buffer-changes t)
+(setq beacon-blink-when-window-changes t)
+(setq beacon-blink-when-window-scrolls t)
+(setq beacon-blink-duration 0.15)
+(setq beacon-blink-delay 0.15)
+(setq beacon-size 15)
+(setq beacon-color "#2499ff")
+(beacon-mode 1)
 
 ;; git gutter
 (setq
     git-gutter:window-width 1
-    git-gutter:update-interval 1.5
+    git-gutter:update-interval 5
     git-gutter:modified-sign "|"
     git-gutter:added-sign "|"
     git-gutter:deleted-sign "-")
@@ -220,14 +263,6 @@
 (sp-local-pair 'prog-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
 (sp-local-pair 'text-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
 
-;; themes
-; (load-theme 'spacemacs-dark t)
-(setq doom-themes-enable-bold t
-      doom-themes-enable-italic t)
-(setq dark-theme 'infinity-dark)
-(setq light-theme 'infinity-light)
-(load-theme dark-theme t)
-
 ;; evil
 (evil-mode 1) ; use evil-mode at startup
 ; split to the right and below
@@ -236,8 +271,8 @@
 (setq evil-ex-substitute-global t)
 ; auto center after search
 (defun my-center-line (&rest _) (evil-scroll-line-to-center nil))
-(advice-add 'evil-ex-search-next :after #'my-center-line)
-(advice-add 'evil-ex-search-previous :after #'my-center-line)
+;; (advice-add 'evil-ex-search-next :after #'my-center-line)
+;; (advice-add 'evil-ex-search-previous :after #'my-center-line)
 (advice-add 'evil-ex-search-word-forward :after #'evil-ex-search-previous)
 (advice-add 'evil-ex-search-word-backward :after #'evil-ex-search-next)
 (defun my-search-previous (&rest _) (evil-ex-search-previous))
@@ -261,6 +296,8 @@
 (setq avy-all-windows nil)
 
 ;; undo-tree
+; attempt to fix bug
+(setq undo-tree-enable-undo-in-region nil)
 ; persistent undo
 (setq undo-tree-auto-save-history t)
 (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/history")))
@@ -283,9 +320,10 @@
 ;; (volatile-highlights-mode)
 
 ;; evil-goggles
+(setq evil-goggles-pulse nil)
 (setq evil-goggles-duration 0.1)
 (setq evil-goggles-async-duration 0.2)
-(setq evil-goggles-blocking-duration 0.2)
+(setq evil-goggles-blocking-duration 0.1)
 (evil-goggles-mode)
 
 ;; neotree
@@ -298,6 +336,7 @@
 (setq neo-show-updir-line nil)
 (setq neo-toggle-window-keep-p t)
 (setq neo-window-width 30)
+(setq neo-vc-integration '(face))
 (add-hook 'after-init-hook (lambda () (neotree-show)))
 
 ;; evil-collection
@@ -307,8 +346,8 @@
 
 ;; flyspell lazy
 (flyspell-lazy-mode 1)
-(setq flyspell-lazy-idle-seconds 1)
-(setq flyspell-lazy-window-idle-seconds 2.5)
+(setq flyspell-lazy-idle-seconds 2.5)
+(setq flyspell-lazy-window-idle-seconds 5)
 
 ;; highlight indent guides (currently disabled)
 ;; (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
@@ -329,6 +368,8 @@
 ;; which key
 (which-key-mode 1)
 (setq which-key-idle-delay 0.5)
+(setq which-key-allow-evil-operators t)
+(setq which-key-show-operator-state-maps t)
 
 ;; projectile
 (projectile-mode)
@@ -360,9 +401,9 @@
 (setq helm-ff-file-name-history-use-recentf t)
 
 ;; helm-flx
-(helm-flx-mode +1)
 (setq helm-flx-for-helm-find-files t
       helm-flx-for-helm-locate t)
+(helm-flx-mode +1)
 
 ;; helm-descbinds
 (helm-descbinds-mode)
@@ -371,30 +412,28 @@
 (helm-projectile-on)
 
 
-;;; key bindings
+;;; heavy tasks
+(defun update-heavy-tasks () (interactive)
+  "Update all the heavy tasks."
+  (message "Updating heavy tasks...")
+  (color-identifiers:refresh)
+  (flyspell-lazy-check-visible)
+  (git-gutter:update-all-windows)
+  (flycheck-buffer)
+  (garbage-collect)
+  (message "Done.")
+  )
 
-;; helm
-(global-set-key (kbd "M-x") 'helm-M-x)
-; use ctrl-n for recent files
-(evil-define-key 'motion 'global (kbd "C-n") 'helm-mini)
-(evil-define-key 'normal 'global (kbd "C-n") 'helm-mini)
-; use ctrl-f for occur
-(evil-define-key 'motion 'global (kbd "C-f") 'helm-occur)
-(evil-define-key 'normal 'global (kbd "C-f") 'helm-occur)
-; use ctrl-p for find files
-(evil-define-key 'motion 'global (kbd "C-p") 'helm-find-files)
-(evil-define-key 'normal 'global (kbd "C-p") 'helm-find-files)
-; in helm window move using j and k
-(define-key helm-map (kbd "C-j") 'helm-next-line)
-(define-key helm-map (kbd "C-k") 'helm-previous-line)
-; in file window, move up one level using C-h
-(define-key helm-find-files-map (kbd "C-h") 'helm-find-files-up-one-level)
+
+;;; key bindings
 
 ;; evil
 
 ; leader
 (define-prefix-command 'leader-map)
 (evil-define-key 'motion 'global "," 'leader-map)
+; manually update things
+(evil-define-key 'motion 'global ",r" #'update-heavy-tasks)
 ; use Q for macro record and q for playback
 (evil-define-key 'normal 'global "q" 'evil-execute-macro)
 (evil-define-key 'motion 'global "Q" 'evil-record-macro)
@@ -498,6 +537,9 @@
 ; argument text object
 (define-key evil-inner-text-objects-map "a" 'evil-inner-arg)
 (define-key evil-outer-text-objects-map "a" 'evil-outer-arg)
+; narrowing
+(evil-define-key 'motion 'global ",,n" 'narrow-to-defun)
+(evil-define-key 'motion 'global ",,N" 'widen)
 ; switch color scheme
 ;; (evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme light-theme t)))
 ;; (evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme dark-theme t)))
@@ -582,6 +624,24 @@
 ; break with ,k
 (evil-define-key 'normal 'global ",k" 'newline)
 
+;; helm
+(global-set-key (kbd "M-x") 'helm-M-x)
+(evil-define-key 'motion 'global (kbd ", C-x") 'helm-resume)
+; use ctrl-n for recent files
+(evil-define-key 'motion 'global (kbd "C-n") 'helm-mini)
+(evil-define-key 'normal 'global (kbd "C-n") 'helm-mini)
+; use ctrl-f for occur
+(evil-define-key 'motion 'global (kbd "C-f") 'helm-occur)
+(evil-define-key 'normal 'global (kbd "C-f") 'helm-occur)
+; use ctrl-p for find files
+(evil-define-key 'motion 'global (kbd "C-p") 'helm-find-files)
+(evil-define-key 'normal 'global (kbd "C-p") 'helm-find-files)
+; in helm window move using j and k
+(define-key helm-map (kbd "C-j") 'helm-next-line)
+(define-key helm-map (kbd "C-k") 'helm-previous-line)
+; in file window, move up one level using C-h
+(define-key helm-find-files-map (kbd "C-h") 'helm-find-files-up-one-level)
+
 ;; help mode
 (evil-define-key 'motion help-mode-map (kbd "u") 'help-go-back)
 (evil-define-key 'normal help-mode-map (kbd "u") 'help-go-back)
@@ -647,6 +707,7 @@
 ;; misc bindings
 ; use alt-h for help instead of ctrl-h
 (bind-key* (kbd "M-h") help-map)
+(bind-key* (kbd "M-h M-h") 'helm-apropos)
 
 
 ;;; misc settings
@@ -693,28 +754,14 @@
 ;; disable blink
 (blink-cursor-mode 0)
 
-;; set font
-(if (not (boundp 'selected-font)) (progn
-  (setq selected-font "DejaVu Sans Mono")
-  (cond
-    ((find-font (font-spec :name "Consolas"))
-    (setq selected-font "Consolas"))
-    ((find-font (font-spec :name "Noto Mono"))
-    (setq selected-font "Noto Mono"))
-)))
-(if (not (boundp 'font-size))
-    (setq font-size 120))
-(set-face-attribute 'default nil
-                    :family selected-font
-                    :height font-size
-                    :weight 'normal
-                    :width 'normal)
+;; cursor line (right now disabled)
+;; (global-hl-line-mode 1)
+;; (setq global-hl-line-sticky-flag t)
 
-;; full screen automatically
-(toggle-frame-fullscreen)
-(tool-bar-mode -1)
-(scroll-bar-mode -1)
-(menu-bar-mode -1)
+;; garbage collection (improve some performance)
+(setq gc-cons-threshold 200000000)
+(run-with-idle-timer 5 t (lambda () (garbage-collect)))
+(add-hook 'focus-out-hook (lambda () (garbage-collect)))
 
 ;; enable some modes
 ; flyspell

@@ -353,23 +353,23 @@
 
 ;;;;; evil-goggles
     `(evil-goggles--pulse-face ((,class (:background ,yellow-bg :foreground ,yellow))))
-    `(evil-goggles-change-face ((,class (:background ,blue-bg-s :foreground ,blue))))
-    `(evil-goggles-commentary-face ((,class (:background ,aqua-bg :foreground ,aqua))))
-    `(evil-goggles-delete-face ((,class (:background ,red-bg-s :foreground ,red))))
-    `(evil-goggles-fill-and-move-face ((,class (:background ,green-bg-s :foreground ,green))))
-    `(evil-goggles-indent-face ((,class (:background ,green-bg-s :foreground ,green))))
-    `(evil-goggles-join-face ((,class (:background ,green-bg-s :foreground ,green))))
-    `(evil-goggles-nerd-commenter-face ((,class (:background ,aqua-bg :foreground ,aqua))))
-    `(evil-goggles-paste-face ((,class (:background ,green-bg-s :foreground ,green))))
-    `(evil-goggles-record-macro-face ((,class (:background ,blue-bg-s :foreground ,blue))))
-    `(evil-goggles-replace-with-register-face ((,class (:background ,yellow-bg :foreground ,yellow))))
-    `(evil-goggles-set-marker-face ((,class (:background ,blue-bg-s :foreground ,blue))))
-    `(evil-goggles-shift-face ((,class (:background ,blue-bg-s :foreground ,blue))))
-    `(evil-goggles-surround-face ((,class (:background ,blue-bg-s :foreground ,blue))))
-    `(evil-goggles-yank-face ((,class (:background ,blue-bg-s :foreground ,blue))))
-    `(evil-goggles-undo-redo-add-face ((,class (:background ,green-bg-s :foreground ,green))))
-    `(evil-goggles-undo-redo-change-face ((,class (:background ,blue-bg-s :foreground ,blue))))
-    `(evil-goggles-undo-redo-remove-face ((,class (:background ,red-bg-s :foreground ,red))))
+    `(evil-goggles-change-face ((,class (:background ,red-bg-s))))
+    `(evil-goggles-commentary-face ((,class (:background ,aqua-bg))))
+    `(evil-goggles-delete-face ((,class (:background ,red-bg-s))))
+    `(evil-goggles-fill-and-move-face ((,class (:background ,green-bg-s))))
+    `(evil-goggles-indent-face ((,class (:background ,green-bg-s))))
+    `(evil-goggles-join-face ((,class (:background ,green-bg-s))))
+    `(evil-goggles-nerd-commenter-face ((,class (:background ,aqua-bg))))
+    `(evil-goggles-paste-face ((,class (:background ,green-bg-s))))
+    `(evil-goggles-record-macro-face ((,class (:background ,blue-bg-s))))
+    `(evil-goggles-replace-with-register-face ((,class (:background ,yellow-bg))))
+    `(evil-goggles-set-marker-face ((,class (:background ,blue-bg-s))))
+    `(evil-goggles-shift-face ((,class (:background ,blue-bg-s))))
+    `(evil-goggles-surround-face ((,class (:background ,green-bg-s))))
+    `(evil-goggles-yank-face ((,class (:background ,blue-bg-s))))
+    `(evil-goggles-undo-redo-add-face ((,class (:background ,green-bg-s))))
+    `(evil-goggles-undo-redo-change-face ((,class (:background ,blue-bg-s))))
+    `(evil-goggles-undo-redo-remove-face ((,class (:background ,red-bg-s))))
 
 ;;;;; flycheck
     `(flycheck-error
@@ -429,7 +429,7 @@
 ;;;;; git-gutter
      `(git-gutter:added ((,class (:foreground ,green :inherit bold))))
      `(git-gutter:deleted ((,class (:foreground ,red :inherit bold))))
-     `(git-gutter:modified ((,class (:foreground ,yellow :inherit bold))))
+     `(git-gutter:modified ((,class (:foreground ,blue :inherit bold))))
 
 ;;;;; git-gutter-fr
     `(git-gutter-fr:added ((,class (:foreground ,green :inherit bold))))
@@ -672,6 +672,14 @@
     `(neo-dir-link-face ((,class (:foreground ,keyword))))
     `(neo-expand-btn-face ((,class (:foreground ,base))))
     `(neo-file-link-face ((,class (:foreground ,base))))
+    `(neo-vc-up-to-date-face ((,class (:inherit neo-file-link-face))))
+    `(neo-vc-needs-update-face ((,class (:inherit neo-file-link-face))))
+    `(neo-vc-default-face ((,class (:inherit neo-file-link-face))))
+    `(neo-vc-added-face ((,class (:background ,green-bg-s))))
+    `(neo-vc-edited-face ((,class (:background ,blue-bg-s))))
+    `(neo-vc-user-face ((,class (:background ,aqua-bg))))
+    `(neo-vc-unregistered-face ((,class (:background ,green-bg))))
+    `(neo-vc-removed-face ((,class (:background ,red-bg-s))))
     `(neo-root-dir-face ((,class (:foreground ,func :inherit bold :height 1.0))))
 
 ;;;;; org
@@ -679,7 +687,7 @@
     `(org-agenda-date ((,class (:foreground ,var :height 1.1))))
     `(org-agenda-date-today ((,class (:foreground ,keyword :inherit bold :height 1.3))))
     `(org-agenda-date-weekend ((,class (:inherit bold :foreground ,var))))
-    `(org-agenda-done ((,class (:foreground ,suc :height 1.2))))
+    `(org-agenda-done ((,class (:foreground ,suc))))
     `(org-agenda-structure ((,class (:inherit bold :foreground ,comp))))
     `(org-block ((,class (:background ,cblk-bg :foreground ,cblk))))
     `(org-block-begin-line ((,class (:background ,cblk-ln-bg :foreground ,cblk-ln))))
