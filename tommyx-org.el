@@ -1,3 +1,7 @@
+;; requires
+(require 'evil)
+(require 'org-super-agenda)
+
 ;; settings
 (add-hook 'org-mode-hook (lambda () (interactive) (org-indent-mode))) ; use clean view
 (setq org-agenda-window-setup 'current-window) ; use current window for agenda
@@ -15,6 +19,23 @@
 
 ;; agenda files
 (add-to-list 'org-agenda-files org-directory)
+
+;; agenda configs
+(setq org-agenda-span 'day)
+(setq org-agenda-move-date-from-past-immediately-to-today t)
+(org-super-agenda-mode)
+(evil-set-initial-state 'org-agenda-mode 'motion)
+(add-hook 'org-agenda-mode-hook (lambda () (hl-line-mode 1)))
+
+;; entry text filter
+; remove blank lines and state logs
+(setq org-agenda-entry-text-exclude-regexps '("^- State.*\n" "^[ \t]*\n"))
+
+;; logging
+(setq org-log-done 'time)
+
+;; misc
+(setq org-M-RET-may-split-line nil)
 
 ;; capture templates
 (setq org-capture-templates '(
@@ -72,7 +93,7 @@
 
     (kbd "C-c C-.") 'org-time-stamp-inactive ; with C-u as previx also add time.
 
-    (kbd "C--") 'org-shiftdown ; change date similar to speeddating
+    (kbd "C--") 'org-shiftdown ; change date like speed-dating
     (kbd "C-=") 'org-shiftup
 
     (kbd "C-S-h") 'org-shiftmetaleft ; promote/outdent
@@ -144,15 +165,26 @@
   ;; C-c C-d: add / change deadline
   ;; C-c ,: add / change priority
   ;;
+  ;; .: go to today.
+  ;;
   ;; TAB: goto entry.
   ;;
   ;; r: refresh
   ;; q: quit
 
+    "Z" (lambda () (interactive) (when org-agenda-entry-text-mode (org-agenda-entry-text-mode)))
+    "X" (lambda () (interactive) (when (not org-agenda-entry-text-mode) (org-agenda-entry-text-mode)))
+
     (kbd "M-h") help-map
 
+    (kbd "C--") 'org-agenda-do-date-earlier
+    (kbd "C-=") 'org-agenda-do-date-later
+
+    (kbd "C-h") 'org-agenda-earlier
+    (kbd "C-l") 'org-agenda-later
+
     "r" 'org-agenda-redo
-    "u" 'org-agenda-undo
+    "u" (lambda () (interactive) (message "Temporarily disabled undo.")) ; 'org-agenda-undo
     "U" 'org-agenda-redo
 
     "j" 'org-agenda-next-line

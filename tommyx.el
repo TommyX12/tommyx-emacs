@@ -1,6 +1,9 @@
 ;;; add current directory to load-path
 (add-to-list 'load-path (file-name-directory load-file-name))
-(add-to-list 'custom-theme-load-path (file-name-directory load-file-name))
+(add-to-list 'load-path
+    (expand-file-name "infinity-theme" (file-name-directory load-file-name)))
+(add-to-list 'custom-theme-load-path
+    (expand-file-name "infinity-theme" (file-name-directory load-file-name)))
 
 
 ;;; themes
@@ -113,6 +116,9 @@
 	("<tab>" . nil)
 	("S-TAB" . nil)
 	("<S-tab>" . nil)))
+(use-package ycmd :ensure t)
+(use-package company-ycmd :ensure t)
+(use-package flycheck-ycmd :ensure t)
 (use-package yasnippet-snippets :ensure t)
 (use-package powerline :ensure t)
 (use-package powerline-evil :ensure t)
@@ -150,13 +156,6 @@
 
 ;; window-numbering
 (window-numbering-mode)
-
-;; org
-(org-super-agenda-mode)
-(setq org-M-RET-may-split-line nil)
-(setq org-log-done 'time)
-(add-hook 'org-agenda-mode-hook (lambda () (hl-line-mode 1)))
-(evil-set-initial-state 'org-agenda-mode 'motion)
 
 ;; yascroll
 (global-yascroll-bar-mode 1)
@@ -244,10 +243,26 @@
         company-tng-frontend
         company-echo-metadata-frontend))
 (setq company-idle-delay 0.2)
-(setq company-quickhelp-delay 0.3)
+(setq company-quickhelp-delay nil) ; we will manually trigger the help
 (setq company-require-match 'never)
 (with-eval-after-load 'company
   (company-flx-mode +1))
+
+;; ycmd
+(setq fuck (expand-file-name "third_party/ycmd/ycmd/"
+    (file-name-directory load-file-name)))
+(setq ycmd-server-command `("python" "-u" ,(expand-file-name "third_party/ycmd/ycmd/"
+    (file-name-directory load-file-name))))
+(add-hook 'ycmd-mode-hook 'company-ycmd-setup)
+(add-hook 'ycmd-mode-hook 'flycheck-ycmd-setup)
+; generic file types
+(add-hook 'prog-mode-hook (lambda () (ycmd-mode 1)))
+(add-hook 'text-mode-hook (lambda () (ycmd-mode 1)))
+; java
+(add-to-list 'ycmd-file-type-map '(java-mode "java")) ; file type detection
+(evil-define-key 'normal java-mode-map (kbd "C-]") 'ycmd-goto) ; goto
+; elisp
+(add-hook 'emacs-lisp-mode-hook (lambda () (ycmd-mode -1))) ; disable ycm
 
 ;; smartparens
 (require 'smartparens-config)
@@ -372,6 +387,7 @@
 (setq which-key-show-operator-state-maps t)
 
 ;; projectile
+(setq projectile-enable-caching t)
 (projectile-mode)
 
 ;; helm
@@ -429,6 +445,12 @@
 
 ;; evil
 
+; disable C-z
+(global-set-key (kbd "C-z") nil)
+(evil-define-key 'motion 'global (kbd "C-z") nil)
+(evil-define-key 'normal 'global (kbd "C-z") nil)
+(evil-define-key 'visual 'global (kbd "C-z") nil)
+(evil-define-key 'insert 'global (kbd "C-z") nil)
 ; leader
 (define-prefix-command 'leader-map)
 (evil-define-key 'motion 'global "," 'leader-map)
@@ -627,15 +649,23 @@
 ;; helm
 (global-set-key (kbd "M-x") 'helm-M-x)
 (evil-define-key 'motion 'global (kbd ", C-x") 'helm-resume)
-; use ctrl-n for recent files
+; use ctrl-n for buffer and recent files
 (evil-define-key 'motion 'global (kbd "C-n") 'helm-mini)
 (evil-define-key 'normal 'global (kbd "C-n") 'helm-mini)
 ; use ctrl-f for occur
 (evil-define-key 'motion 'global (kbd "C-f") 'helm-occur)
 (evil-define-key 'normal 'global (kbd "C-f") 'helm-occur)
-; use ctrl-p for find files
-(evil-define-key 'motion 'global (kbd "C-p") 'helm-find-files)
-(evil-define-key 'normal 'global (kbd "C-p") 'helm-find-files)
+; use ctrl-p for all the stuff
+; (note that adding C-u can make projectile force refresh the cache)
+(evil-define-key 'normal 'global (kbd "C-p") nil)
+(evil-define-key 'motion 'global (kbd "C-p C-p") 'helm-projectile)
+(evil-define-key 'motion 'global (kbd "C-p C-S-p") 'helm-projectile-find-file-in-known-projects)
+(evil-define-key 'motion 'global (kbd ", S-TAB") 'helm-projectile-find-other-file) ; cpp vs h switching
+(evil-define-key 'motion 'global (kbd ", <S-tab>") 'helm-projectile-find-other-file) ; cpp vs h switching
+(evil-define-key 'motion 'global (kbd "C-p p") 'helm-projectile-switch-project)
+(evil-define-key 'motion 'global (kbd "C-p r") 'helm-recentf)
+(evil-define-key 'motion 'global (kbd "C-p C-f") 'helm-projectile-grep)
+(evil-define-key 'motion 'global (kbd "C-p f") 'helm-find-files)
 ; in helm window move using j and k
 (define-key helm-map (kbd "C-j") 'helm-next-line)
 (define-key helm-map (kbd "C-k") 'helm-previous-line)
@@ -665,6 +695,9 @@
               "p" 'company-complete-common-or-cycle ; jp complete
               "[" 'evil-complete-next ; j[ context complete (TODO)
 ))
+(eval-after-load 'company
+  '(progn
+     (define-key company-active-map (kbd "C-z") 'company-quickhelp-manual-begin)))
 
 ;; window management
 (evil-define-key 'motion 'global (kbd "C-w C-h") (lambda () (interactive) (evil-window-left 1) (delayed-mode-line-update)))
@@ -700,8 +733,9 @@
 ; (evil-define-key 'normal 'shell-mode-map (kbd "<tab>") 'ace-window)
 
 ;; avy
-(evil-define-key 'motion 'global "f" (lambda () (interactive)
-    (if hl-line-mode (evil-avy-goto-line) (evil-avy-goto-word-0 nil))))
+(evil-define-motion adaptive-avy () :type exclusive
+    (if hl-line-mode (evil-avy-goto-line) (evil-avy-goto-word-0 nil)))
+(evil-define-key 'motion 'global "f" 'adaptive-avy)
 (evil-define-key 'motion 'global "F" 'evil-avy-goto-char-2)
 
 ;; misc bindings
