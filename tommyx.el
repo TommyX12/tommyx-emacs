@@ -747,11 +747,11 @@
 ;;; misc settings
 
 ;; file-type based syntax entry
-; treat underscore as word
 (add-hook 'prog-mode-hook (lambda () (modify-syntax-entry ?_ "w")))
-; treat underscore as word
 (add-hook 'lisp-mode-hook (lambda () (modify-syntax-entry ?- "w")))
 (add-hook 'emacs-lisp-mode-hook (lambda () (modify-syntax-entry ?- "w")))
+(add-hook 'html-mode-hook (lambda () (modify-syntax-entry ?- "w") (modify-syntax-entry ?_ "w")))
+(add-hook 'nxml-mode-hook (lambda () (modify-syntax-entry ?- "w") (modify-syntax-entry ?_ "w")))
 
 ;; UTF-8 as default encoding
 (set-language-environment "UTF-8")
