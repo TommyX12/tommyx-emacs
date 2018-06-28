@@ -415,6 +415,8 @@
 (setq recentf-max-saved-items 100)
 (setq helm-move-to-line-cycle-in-source nil)
 (setq helm-ff-file-name-history-use-recentf t)
+(setq helm-follow-mode-persistent t)
+(setq helm-source-names-using-follow '("Occur"))
 
 ;; helm-flx
 (setq helm-flx-for-helm-find-files t
