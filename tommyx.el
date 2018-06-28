@@ -214,7 +214,7 @@
 ;; (advice-add 'select-window :after #'delayed-mode-line-update) ; TODO avy-jump calls this too much
 
 ;; dashboard
-(setq dashboard-items '((agenda . 10) (recents  . 5)
+(setq dashboard-items '((recents  . 5)
 			(projects . 5)
                         (bookmarks . 5)))
 ; custom logo and message
@@ -262,6 +262,8 @@
 ; java
 (add-to-list 'ycmd-file-type-map '(java-mode "java")) ; file type detection
 (evil-define-key 'normal java-mode-map (kbd "C-]") 'ycmd-goto) ; goto
+; python
+(evil-define-key 'normal python-mode-map (kbd "C-]") 'ycmd-goto) ; goto
 ; elisp
 (add-hook 'emacs-lisp-mode-hook (lambda () (ycmd-mode -1))) ; disable ycm
 
@@ -306,7 +308,7 @@
 
 ;; highlight numbers
 (add-hook 'prog-mode-hook #'highlight-numbers-mode)
-(add-hook 'text-mode-hook #'highlight-numbers-mode)
+;; (add-hook 'text-mode-hook #'highlight-numbers-mode)
 
 ;; evil-surround
 (global-evil-surround-mode 1)
@@ -487,6 +489,9 @@
 (evil-define-key 'motion 'global ",." "@:")
 ; save all
 (evil-define-key 'motion 'global ",wa" (kbd ";wa RET"))
+; sane tabbing
+(evil-define-key 'insert 'global (kbd "TAB") 'tab-to-tab-stop)
+(evil-define-key 'insert 'global (kbd "<tab>") 'tab-to-tab-stop)
 ; scrolling
 (evil-define-key 'motion 'global (kbd "M-j") 'evil-scroll-down)
 (evil-define-key 'motion 'global (kbd "M-k") 'evil-scroll-up)
@@ -760,6 +765,17 @@
 (add-hook 'html-mode-hook (lambda () (modify-syntax-entry ?- "w") (modify-syntax-entry ?_ "w")))
 (add-hook 'nxml-mode-hook (lambda () (modify-syntax-entry ?- "w") (modify-syntax-entry ?_ "w")))
 
+;; indent settings
+(setq-default indent-tabs-mode nil) ; use space instead of tabs
+(setq-default tab-width 4)
+(setq-default python-indent 4)
+(add-hook 'prog-mode-hook (lambda () (setq evil-shift-width tab-width)))
+(add-hook 'python-mode-hook (lambda ()
+(setq python-indent-offset 4)
+(setq python-indent 4)
+    (setq evil-shift-width python-indent)
+    (setq tab-width python-indent)))
+
 ;; UTF-8 as default encoding
 (set-language-environment "UTF-8")
 (prefer-coding-system 'utf-8)
@@ -798,6 +814,9 @@
 
 ;; disable blink
 (blink-cursor-mode 0)
+
+;; hl-line-mode for some modes
+(add-hook 'buffer-menu-mode-hook (lambda () (hl-line-mode 1)))
 
 ;; cursor line (right now disabled)
 ;; (global-hl-line-mode 1)
