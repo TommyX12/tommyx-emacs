@@ -136,6 +136,7 @@
 (use-package org-super-agenda :ensure t)
 (use-package load-relative :ensure t)
 (use-package rainbow-mode :ensure t)
+(use-package highlight-numbers :ensure t)
 ; language specific
 (use-package csv-mode :ensure t)
 (use-package json-mode :ensure t)
@@ -302,6 +303,10 @@
 ;; rainbow-delimiters
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
 (add-hook 'text-mode-hook #'rainbow-delimiters-mode)
+
+;; highlight numbers
+(add-hook 'prog-mode-hook #'highlight-numbers-mode)
+(add-hook 'text-mode-hook #'highlight-numbers-mode)
 
 ;; evil-surround
 (global-evil-surround-mode 1)
@@ -786,6 +791,10 @@
 (add-hook 'prog-mode-hook (lambda () (display-line-numbers-mode)))
 (add-hook 'nxml-mode-hook (lambda () (display-line-numbers-mode)))
 (add-hook 'html-mode-hook (lambda () (display-line-numbers-mode)))
+
+;; indicate end of buffer
+(add-hook 'prog-mode-hook (lambda () (setq indicate-buffer-boundaries t)))
+(add-hook 'text-mode-hook (lambda () (setq indicate-buffer-boundaries t)))
 
 ;; disable blink
 (blink-cursor-mode 0)
