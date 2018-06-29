@@ -22,11 +22,13 @@
     (setq selected-font "Consolas"))
     ((find-font (font-spec :name "Noto Mono"))
     (setq selected-font "Noto Mono"))
+    ((find-font (font-spec :name "Inconsolata"))
+    (setq selected-font "Inconsolata"))
 )))
 (if (not (boundp 'font-size))
     (setq font-size 120))
 (set-face-attribute 'default nil
-                    :family selected-font
+                    :family "DejaVu Sans Mono"
                     :height font-size
                     :weight 'normal
                     :width 'normal)
@@ -84,7 +86,10 @@
 (use-package helm :ensure t)
 (use-package helm-flx :ensure t)
 (use-package helm-descbinds :ensure t)
+(use-package helm-describe-modes :ensure t)
+(use-package helm-swoop :ensure t)
 (use-package helm-projectile :ensure t :after projectile)
+(use-package swiper-helm :ensure t)
 (use-package which-key :ensure t)
 (use-package spacemacs-theme :ensure t :defer t)
 (use-package doom-themes :ensure t :defer t)
@@ -93,7 +98,7 @@
 (use-package beacon :ensure t)
 (use-package highlight-indent-guides :ensure t)
 (use-package origami :ensure t)
-;; (use-package volatile-highlights :ensure t)
+(use-package volatile-highlights :ensure t)
 (use-package evil-goggles :ensure t)
 (use-package flycheck :ensure t)
 (use-package flyspell-lazy :ensure t)
@@ -333,13 +338,13 @@
 ;; (with-eval-after-load 'evil
 ;;     (vhl/install-extension 'evil)
 ;;     (vhl/load-extension 'evil))
-;; (vhl/define-extension 'undo-tree
-;;                       'undo-tree-move
-;;                       'undo-tree-yank)
-;; (with-eval-after-load 'undo-tree
-;;     (vhl/install-extension 'undo-tree)
-;;     (vhl/load-extension 'undo-tree))
-;; (volatile-highlights-mode)
+(vhl/define-extension 'undo-tree
+                      'undo-tree-move
+                      'undo-tree-yank)
+(with-eval-after-load 'undo-tree
+    (vhl/install-extension 'undo-tree)
+    (vhl/load-extension 'undo-tree))
+(volatile-highlights-mode 1)
 
 ;; evil-goggles
 (setq evil-goggles-pulse nil)
@@ -401,7 +406,7 @@
 (require 'helm-config)
 (helm-mode 1)
 (helm-autoresize-mode 1) ; always auto resize window
-(setq helm-autoresize-max-height 30)
+(setq helm-autoresize-max-height 40)
 (setq helm-autoresize-min-height 20)
 (setq helm-split-window-inside-p t)
 (setq helm-full-frame nil)
@@ -432,6 +437,9 @@
 
 ;; helm-descbinds
 (helm-descbinds-mode)
+
+;; helm-descbinds-mode
+(global-set-key [remap describe-mode] #'helm-describe-modes)
 
 ;; helm-projectile
 (helm-projectile-on)
