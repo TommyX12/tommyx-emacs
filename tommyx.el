@@ -489,6 +489,23 @@
   )
 
 
+;;; key bindings util functions
+(defun selection-or-thing-at-point ()
+  (cond
+   ;; If there is selection use it
+   ((and transient-mark-mode
+         mark-active
+         (not (eq (mark) (point))))
+    (let ((mark-saved (mark))
+          (point-saved (point)))
+      (deactivate-mark)
+      (buffer-substring-no-properties mark-saved point-saved)))
+   ;; Otherwise, use symbol at point or empty
+   (t (format "%s"
+              (or (thing-at-point 'symbol)
+                  "")))))
+
+
 ;;; key bindings
 
 ;; use esc (same as "C-[") for escape
@@ -510,10 +527,6 @@
 
     "x" '(counsel-M-x
         :which-key "counsel M-x")
-    "f" '(swiper
-        :which-key "search current buffer")
-    "F" '(swiper-all
-        :which-key "search all buffers")
 
     "hx" '(helm-M-x
         :which-key "helm M-x")
@@ -523,8 +536,23 @@
 )
 (general-define-key
     :keymaps 'override
+    :states '(visual)
+    :prefix "SPC"
+
+    "f" '((lambda () (interactive) (swiper (selection-or-thing-at-point)))
+        :which-key "search selection")
+    "F" '((lambda () (interactive) (swiper-all (selection-or-thing-at-point)))
+        :which-key "search all buffers")
+)
+(general-define-key
+    :keymaps 'override
     :states '(motion normal)
     :prefix "SPC"
+
+    "f" '(swiper
+        :which-key "search")
+    "F" '(swiper-all
+        :which-key "search all buffers")
 
     "wh" '((lambda () (interactive) (evil-window-left 1) (delayed-mode-line-update))
         :which-key "move to window left")
