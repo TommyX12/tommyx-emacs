@@ -719,7 +719,7 @@
     `(org-priority ((,class (:foreground ,war :inherit bold))))
     `(org-quote ((,class (:inherit org-block :slant italic))))
     `(org-scheduled ((,class (:foreground ,comp))))
-    `(org-scheduled-today ((,class (:foreground ,func :height 1.1))))
+    `(org-scheduled-today ((,class (:foreground ,func))))
     `(org-scheduled-previously ((,class (:foreground ,base :slant italic))))
     `(org-sexp-date ((,class (:foreground ,base))))
     `(org-special-keyword ((,class (:foreground ,func))))

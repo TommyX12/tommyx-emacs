@@ -20,15 +20,11 @@
   (cond
     ((find-font (font-spec :name "Consolas"))
     (setq selected-font "Consolas"))
-    ((find-font (font-spec :name "Noto Mono"))
-    (setq selected-font "Noto Mono"))
-    ((find-font (font-spec :name "Inconsolata"))
-    (setq selected-font "Inconsolata"))
 )))
 (if (not (boundp 'font-size))
     (setq font-size 120))
 (set-face-attribute 'default nil
-                    :family "DejaVu Sans Mono"
+                    :family selected-font
                     :height font-size
                     :weight 'normal
                     :width 'normal)
@@ -83,6 +79,7 @@
 (use-package evil-search-highlight-persist :ensure t)
 (use-package evil-nerd-commenter :ensure t)
 (use-package projectile :ensure t)
+(use-package smex :ensure t)
 (use-package helm :ensure t)
 (use-package helm-flx :ensure t)
 (use-package helm-descbinds :ensure t)
@@ -90,6 +87,9 @@
 (use-package helm-swoop :ensure t)
 (use-package helm-projectile :ensure t :after projectile)
 (use-package swiper-helm :ensure t)
+(use-package ivy :ensure t)
+(use-package counsel :ensure t)
+(use-package swiper :ensure t)
 (use-package which-key :ensure t)
 (use-package spacemacs-theme :ensure t :defer t)
 (use-package doom-themes :ensure t :defer t)
@@ -404,10 +404,10 @@
 
 ;; helm
 (require 'helm-config)
-(helm-mode 1)
+;; (helm-mode 1)
 (helm-autoresize-mode 1) ; always auto resize window
 (setq helm-autoresize-max-height 40)
-(setq helm-autoresize-min-height 20)
+(setq helm-autoresize-min-height 40)
 (setq helm-split-window-inside-p t)
 (setq helm-full-frame nil)
 (setq helm-recentf-fuzzy-match t)
@@ -444,6 +444,37 @@
 ;; helm-projectile
 (helm-projectile-on)
 
+;; ivy, counsel and swiper
+; main
+(ivy-mode 1)
+(counsel-mode 1)
+; remove initial input in ivy commands
+(setq ivy-initial-inputs-alist nil)
+; enable fuzzy, except for swiper
+(setq ivy-re-builders-alist
+      '((swiper . ivy--regex-plus)
+        (swiper-multi . ivy--regex-plus)
+        (t      . ivy--regex-fuzzy)))
+; enable wrapping
+(setq ivy-wrap t)
+(setq ivy-action-wrap t)
+; add recent files and bookmarks to ivy-switch-buffer
+(setq ivy-use-virtual-buffers t)
+; better UI
+(defun ivy-format-function-custom (cands)
+  "Transform CANS into a string for minibuffer."
+  (ivy--format-function-generic
+   (lambda (str)
+     (concat "> " (ivy--add-face str 'ivy-current-match)))
+   (lambda (str)
+     (concat "  " str))
+   cands
+   "\n"))
+(setq ivy-format-function 'ivy-format-function-custom)
+;; (setq ivy-format-function 'ivy-format-function-default)
+; misc
+(setq ivy-height 12)
+
 
 ;;; heavy tasks
 (defun update-heavy-tasks () (interactive)
@@ -459,6 +490,106 @@
 
 
 ;;; key bindings
+
+;; use esc (same as "C-[") for escape
+(global-set-key (kbd "ESC") 'keyboard-escape-quit)
+(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+
+;; global leader
+(define-prefix-command 'global-leader-window)
+(define-prefix-command 'global-leader-helm)
+(general-define-key
+    :keymaps 'override
+    :states '(motion normal visual)
+    :prefix "SPC"
+
+    "w" '(global-leader-window
+        :which-key "window")
+    "h" '(global-leader-helm
+        :which-key "helm")
+
+    "x" '(counsel-M-x
+        :which-key "counsel M-x")
+    "f" '(swiper
+        :which-key "search current buffer")
+    "F" '(swiper-all
+        :which-key "search all buffers")
+
+    "hx" '(helm-M-x
+        :which-key "helm M-x")
+    "ho" '(helm-occur
+        :which-key "helm occur")
+
+)
+(general-define-key
+    :keymaps 'override
+    :states '(motion normal)
+    :prefix "SPC"
+
+    "wh" '((lambda () (interactive) (evil-window-left 1) (delayed-mode-line-update))
+        :which-key "move to window left")
+    "wj" '((lambda () (interactive) (evil-window-down 1) (delayed-mode-line-update))
+        :which-key "move to window down")
+    "wk" '((lambda () (interactive) (evil-window-up 1) (delayed-mode-line-update))
+        :which-key "move to window up")
+    "wl" '((lambda () (interactive) (evil-window-right 1) (delayed-mode-line-update))
+        :which-key "move to window right")
+    "wv" '((lambda () (interactive) (evil-window-vsplit) (delayed-mode-line-update))
+        :which-key "split window vertically")
+    "wV" '((lambda () (interactive) (evil-window-split) (delayed-mode-line-update))
+        :which-key "split window horizontally")
+    "wq" '((lambda () (interactive) (evil-quit) (delayed-mode-line-update))
+        :which-key "close window")
+
+    "hh" '(helm-resume
+        :which-key "helm resume")
+    "hm" '(helm-mini
+        :which-key "helm mini")
+    "hp" '(helm-projectile
+        :which-key "helm projectile")
+    "hP" '(helm-projectile-find-file-in-known-projects
+        :which-key "helm projectile all")
+    "h <tab>" '(helm-projectile-find-other-file ; cpp vs h switching
+        :which-key "helm projectile other file")
+    "h TAB" '(helm-projectile-find-other-file ; cpp vs h switching
+        :which-key "helm projectile other file")
+    "h C-p" '(helm-projectile-switch-project
+        :which-key "helm projectile project")
+    "hr" '(helm-recentf
+        :which-key "helm recentf")
+    "hg" '(helm-projectile-grep
+        :which-key "helm projectile grep")
+    "hf" '(helm-find-files
+        :which-key "helm find files")
+    "hF" '(helm-for-files
+        :which-key "helm for files")
+
+    "0" '((lambda () (interactive) (select-window-0) (delayed-mode-line-update))
+        :which-key "move to window 0")
+    "1"  '((lambda () (interactive) (select-window-1) (delayed-mode-line-update))
+        :which-key "move to window 1")
+    "2"  '((lambda () (interactive) (select-window-2) (delayed-mode-line-update))
+        :which-key "move to window 2")
+    "3"  '((lambda () (interactive) (select-window-3) (delayed-mode-line-update))
+        :which-key "move to window 3")
+    "4"  '((lambda () (interactive) (select-window-4) (delayed-mode-line-update))
+        :which-key "move to window 4")
+    "5"  '((lambda () (interactive) (select-window-5) (delayed-mode-line-update))
+        :which-key "move to window 5")
+    "6"  '((lambda () (interactive) (select-window-6) (delayed-mode-line-update))
+        :which-key "move to window 6")
+    "7"  '((lambda () (interactive) (select-window-7) (delayed-mode-line-update))
+        :which-key "move to window 7")
+    "8"  '((lambda () (interactive) (select-window-8) (delayed-mode-line-update))
+        :which-key "move to window 8")
+    "9"  '((lambda () (interactive) (select-window-9) (delayed-mode-line-update))
+        :which-key "move to window 9")
+
+    "TAB" '(evil-buffer
+        :which-key "switch to other buffer")
+    "n" '(ivy-switch-buffer
+        :which-key "switch buffer")
+)
 
 ;; evil
 
@@ -555,16 +686,16 @@
 (evil-define-key 'insert 'global (kbd "C-v") (lambda () (interactive) (evil-paste-from-register ?\"))) ; TODO need some work
 (evil-define-key 'visual 'global (kbd "C-c") (lambda () (interactive) (evil-yank))) ; TODO need some work
 ; search
-(evil-define-key 'motion 'global (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
-(evil-define-key 'normal 'global (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
-(evil-define-key 'visual 'global (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
-(evil-define-key 'motion 'global (kbd "S-SPC") (lambda () (interactive) (evil-ex-search-backward)))
-(evil-define-key 'normal 'global (kbd "S-SPC") (lambda () (interactive) (evil-ex-search-backward)))
-(evil-define-key 'visual 'global (kbd "S-SPC") (lambda () (interactive) (evil-ex-search-backward)))
-(evil-define-key 'normal help-mode-map (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
-(evil-define-key 'normal help-mode-map (kbd "S-SPC") (lambda () (interactive) (evil-ex-search-backward)))
-(evil-define-key 'normal neotree-mode-map (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
-(evil-define-key 'normal neotree-mode-map (kbd "S-SPC") (lambda () (interactive) (evil-ex-search-backward)))
+;; (evil-define-key 'motion 'global (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
+;; (evil-define-key 'normal 'global (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
+;; (evil-define-key 'visual 'global (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
+;; (evil-define-key 'motion 'global (kbd "S-SPC") (lambda () (interactive) (evil-ex-search-backward)))
+;; (evil-define-key 'normal 'global (kbd "S-SPC") (lambda () (interactive) (evil-ex-search-backward)))
+;; (evil-define-key 'visual 'global (kbd "S-SPC") (lambda () (interactive) (evil-ex-search-backward)))
+;; (evil-define-key 'normal help-mode-map (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
+;; (evil-define-key 'normal help-mode-map (kbd "S-SPC") (lambda () (interactive) (evil-ex-search-backward)))
+;; (evil-define-key 'normal neotree-mode-map (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
+;; (evil-define-key 'normal neotree-mode-map (kbd "S-SPC") (lambda () (interactive) (evil-ex-search-backward)))
 ; use { and } to indent
 (evil-define-key 'normal 'global "{" (lambda () (interactive) (evil-shift-left-line 1)))
 (evil-define-key 'normal 'global "}" (lambda () (interactive) (evil-shift-right-line 1)))
@@ -667,7 +798,7 @@
 (evil-define-key 'normal 'global ",k" 'newline)
 
 ;; helm
-(global-set-key (kbd "M-x") 'helm-M-x)
+;; (global-set-key (kbd "M-x") 'helm-M-x)
 (evil-define-key 'motion 'global (kbd ", C-x") 'helm-resume)
 ; use ctrl-n for buffer and recent files
 (evil-define-key 'motion 'global (kbd "C-n") 'helm-mini)
@@ -677,20 +808,34 @@
 (evil-define-key 'normal 'global (kbd "C-f") 'helm-occur)
 ; use ctrl-p for all the stuff
 ; (note that adding C-u can make projectile force refresh the cache)
-(evil-define-key 'normal 'global (kbd "C-p") nil)
-(evil-define-key 'motion 'global (kbd "C-p C-p") 'helm-projectile)
-(evil-define-key 'motion 'global (kbd "C-p C-S-p") 'helm-projectile-find-file-in-known-projects)
-(evil-define-key 'motion 'global (kbd ", S-TAB") 'helm-projectile-find-other-file) ; cpp vs h switching
-(evil-define-key 'motion 'global (kbd ", <S-tab>") 'helm-projectile-find-other-file) ; cpp vs h switching
-(evil-define-key 'motion 'global (kbd "C-p p") 'helm-projectile-switch-project)
-(evil-define-key 'motion 'global (kbd "C-p r") 'helm-recentf)
-(evil-define-key 'motion 'global (kbd "C-p C-f") 'helm-projectile-grep)
-(evil-define-key 'motion 'global (kbd "C-p f") 'helm-find-files)
+;; (evil-define-key 'normal 'global (kbd "C-p") nil)
+;; (evil-define-key 'motion 'global (kbd "C-p C-p") 'helm-projectile)
+;; (evil-define-key 'motion 'global (kbd "C-p C-S-p") 'helm-projectile-find-file-in-known-projects)
+;; (evil-define-key 'motion 'global (kbd ", S-TAB") 'helm-projectile-find-other-file) ; cpp vs h switching
+;; (evil-define-key 'motion 'global (kbd ", <S-tab>") 'helm-projectile-find-other-file) ; cpp vs h switching
+;; (evil-define-key 'motion 'global (kbd "C-p p") 'helm-projectile-switch-project)
+;; (evil-define-key 'motion 'global (kbd "C-p r") 'helm-recentf)
+;; (evil-define-key 'motion 'global (kbd "C-p C-f") 'helm-projectile-grep)
+;; (evil-define-key 'motion 'global (kbd "C-p f") 'helm-find-files)
 ; in helm window move using j and k
 (define-key helm-map (kbd "C-j") 'helm-next-line)
 (define-key helm-map (kbd "C-k") 'helm-previous-line)
 ; in file window, move up one level using C-h
 (define-key helm-find-files-map (kbd "C-h") 'helm-find-files-up-one-level)
+
+;; ivy, counsel and swiper
+(general-define-key
+    :keymaps '(swiper-map ivy-minibuffer-map)
+    "C-j" 'ivy-next-line
+    "C-k" 'ivy-previous-line
+    "C-S-j" 'ivy-scroll-up-command
+    "C-S-k" 'ivy-scroll-down-command
+    ; ivy-next-history-element allows inserting cursor symbol.
+    "M-j" 'ivy-next-history-element
+    "M-k" 'ivy-previous-history-element
+    "C-RET" 'ivy-dispatching-done
+    "<C-return>" 'ivy-dispatching-done
+)
 
 ;; help mode
 (evil-define-key 'motion help-mode-map (kbd "u") 'help-go-back)
@@ -720,23 +865,23 @@
      (define-key company-active-map (kbd "C-z") 'company-quickhelp-manual-begin)))
 
 ;; window management
-(evil-define-key 'motion 'global (kbd "C-w C-h") (lambda () (interactive) (evil-window-left 1) (delayed-mode-line-update)))
-(evil-define-key 'motion 'global (kbd "C-w C-j") (lambda () (interactive) (evil-window-down 1) (delayed-mode-line-update)))
-(evil-define-key 'motion 'global (kbd "C-w C-k") (lambda () (interactive) (evil-window-up 1) (delayed-mode-line-update)))
-(evil-define-key 'motion 'global (kbd "C-w C-l") (lambda () (interactive) (evil-window-right 1) (delayed-mode-line-update)))
-(evil-define-key 'motion 'global ",wv" (lambda () (interactive) (evil-window-vsplit) (delayed-mode-line-update)))
-(evil-define-key 'motion 'global ",wh" (lambda () (interactive) (evil-window-split) (delayed-mode-line-update)))
-(evil-define-key 'motion 'global ",wq" (lambda () (interactive) (evil-quit) (delayed-mode-line-update)))
-(evil-define-key 'motion 'global ",0" (lambda () (interactive) (select-window-0) (delayed-mode-line-update)))
-(evil-define-key 'motion 'global ",1" (lambda () (interactive) (select-window-1) (delayed-mode-line-update)))
-(evil-define-key 'motion 'global ",2" (lambda () (interactive) (select-window-2) (delayed-mode-line-update)))
-(evil-define-key 'motion 'global ",3" (lambda () (interactive) (select-window-3) (delayed-mode-line-update)))
-(evil-define-key 'motion 'global ",4" (lambda () (interactive) (select-window-4) (delayed-mode-line-update)))
-(evil-define-key 'motion 'global ",5" (lambda () (interactive) (select-window-5) (delayed-mode-line-update)))
-(evil-define-key 'motion 'global ",6" (lambda () (interactive) (select-window-6) (delayed-mode-line-update)))
-(evil-define-key 'motion 'global ",7" (lambda () (interactive) (select-window-7) (delayed-mode-line-update)))
-(evil-define-key 'motion 'global ",8" (lambda () (interactive) (select-window-8) (delayed-mode-line-update)))
-(evil-define-key 'motion 'global ",9" (lambda () (interactive) (select-window-9) (delayed-mode-line-update)))
+;; (evil-define-key 'motion 'global (kbd "C-w C-h") (lambda () (interactive) (evil-window-left 1) (delayed-mode-line-update)))
+;; (evil-define-key 'motion 'global (kbd "C-w C-j") (lambda () (interactive) (evil-window-down 1) (delayed-mode-line-update)))
+;; (evil-define-key 'motion 'global (kbd "C-w C-k") (lambda () (interactive) (evil-window-up 1) (delayed-mode-line-update)))
+;; (evil-define-key 'motion 'global (kbd "C-w C-l") (lambda () (interactive) (evil-window-right 1) (delayed-mode-line-update)))
+;; (evil-define-key 'motion 'global ",wv" (lambda () (interactive) (evil-window-vsplit) (delayed-mode-line-update)))
+;; (evil-define-key 'motion 'global ",wh" (lambda () (interactive) (evil-window-split) (delayed-mode-line-update)))
+;; (evil-define-key 'motion 'global ",wq" (lambda () (interactive) (evil-quit) (delayed-mode-line-update)))
+;; (evil-define-key 'motion 'global ",0" (lambda () (interactive) (select-window-0) (delayed-mode-line-update)))
+;; (evil-define-key 'motion 'global ",1" (lambda () (interactive) (select-window-1) (delayed-mode-line-update)))
+;; (evil-define-key 'motion 'global ",2" (lambda () (interactive) (select-window-2) (delayed-mode-line-update)))
+;; (evil-define-key 'motion 'global ",3" (lambda () (interactive) (select-window-3) (delayed-mode-line-update)))
+;; (evil-define-key 'motion 'global ",4" (lambda () (interactive) (select-window-4) (delayed-mode-line-update)))
+;; (evil-define-key 'motion 'global ",5" (lambda () (interactive) (select-window-5) (delayed-mode-line-update)))
+;; (evil-define-key 'motion 'global ",6" (lambda () (interactive) (select-window-6) (delayed-mode-line-update)))
+;; (evil-define-key 'motion 'global ",7" (lambda () (interactive) (select-window-7) (delayed-mode-line-update)))
+;; (evil-define-key 'motion 'global ",8" (lambda () (interactive) (select-window-8) (delayed-mode-line-update)))
+;; (evil-define-key 'motion 'global ",9" (lambda () (interactive) (select-window-9) (delayed-mode-line-update)))
 
 ;; nerd commenter
 (evil-define-key 'normal 'global (kbd ",c SPC") 'evilnc-comment-or-uncomment-lines)
