@@ -68,6 +68,11 @@
 
 
 ;;; install packages
+(use-package emms :ensure t
+    :config 
+    (require 'emms-setup)
+    (emms-all)
+    (emms-default-players))
 (use-package undo-tree :ensure t)
 (use-package evil :ensure t)
 (use-package evil-collection :ensure t :after evil)
@@ -88,7 +93,9 @@
 (use-package helm-projectile :ensure t :after projectile)
 (use-package swiper-helm :ensure t)
 (use-package ivy :ensure t)
+(use-package ivy-posframe :ensure t)
 (use-package counsel :ensure t)
+(use-package counsel-projectile :ensure t)
 (use-package swiper :ensure t)
 (use-package which-key :ensure t)
 (use-package spacemacs-theme :ensure t :defer t)
@@ -108,6 +115,7 @@
 	     ; don't show in mode display
 	     :diminish smartparens-mode)
 (use-package company :ensure t)
+(use-package company-childframe :ensure t)
 (use-package company-quickhelp :ensure t)
 (use-package company-flx :ensure t)
 (use-package yasnippet :ensure t
@@ -229,7 +237,6 @@
 (setq dashboard-startup-banner (expand-file-name "logo.png"
     (file-name-directory load-file-name)))
 
-
 ;; yasnippet
 (add-hook 'after-init-hook 'yas-global-mode)
 (add-to-list 'yas-snippet-dirs (expand-file-name "snippets"
@@ -238,14 +245,38 @@
 ;; company
 (add-hook 'after-init-hook 'global-company-mode)
 (company-tng-configure-default)
-(company-quickhelp-mode)
+; company posframe (childframe)
+(company-childframe-mode 1)
+(defun company-childframe-show () ; override function
+  "Show company-childframe candidate menu."
+  (let* ((height (min company-tooltip-limit company-candidates-length))
+         (lines (company--create-lines company-selection height))
+         (contents (mapconcat #'identity lines "\n"))
+         (buffer (get-buffer-create company-childframe-buffer)))
+    (setq contents (copy-sequence contents))
+    (remove-text-properties 0 (length contents) '(mouse-face nil) contents)
+    (with-current-buffer buffer
+      (setq-local overriding-local-map company-childframe-active-map))
+    (posframe-show buffer
+                   :override-parameters '((border-width . 1))
+                   :string contents
+                   :position (- (point) (length company-prefix))
+                   :x-pixel-offset (* -1 company-tooltip-margin (default-font-width))
+                   :font company-childframe-font
+                   :min-width company-tooltip-minimum-width
+                   :background-color (face-attribute 'company-tooltip :background))))
+; integration with desktop package if installed
+(when (require 'desktop nil 'noerror)
+  (push '(company-childframe-mode . nil)
+      desktop-minor-mode-table))
+;; (company-quickhelp-mode)
 (eval-after-load 'company
   '(progn
      (define-key company-active-map (kbd "S-TAB") 'company-select-previous)
      (define-key company-active-map (kbd "<S-tab>") 'company-select-previous)))
 (setq company-frontends
       '(company-pseudo-tooltip-unless-just-one-frontend
-        company-preview-frontend
+        ;; company-preview-frontend
         company-tng-frontend
         company-echo-metadata-frontend))
 (setq company-idle-delay 0.2)
@@ -404,6 +435,9 @@
 
 ;; helm
 (require 'helm-config)
+;; (setq helm-display-function 'helm-display-buffer-in-own-frame
+;;         helm-display-buffer-reuse-frame t
+;;         helm-use-undecorated-frame-option t)
 ;; (helm-mode 1)
 (helm-autoresize-mode 1) ; always auto resize window
 (setq helm-autoresize-max-height 40)
@@ -460,6 +494,45 @@
 (setq ivy-action-wrap t)
 ; add recent files and bookmarks to ivy-switch-buffer
 (setq ivy-use-virtual-buffers t)
+; display functions
+(setq ivy-posframe-parameters '(
+    (width . 50)
+    (border-width . 1)
+    (min-width . 50)
+    (refresh . 1)
+    ))
+(setq ivy-display-functions-alist
+      '((counsel-irony . ivy-posframe-display-at-point)
+        (ivy-completion-in-region . ivy-posframe-display-at-point)
+        (swiper . ivy-posframe-display-at-window-bottom-left)
+        (swiper-multi . ivy-posframe-display-at-window-bottom-left)
+        (t . ivy-posframe-display-at-point)))
+(ivy-posframe-enable)
+(defun ivy-posframe--display (str &optional poshandler) ; override function
+  "Show STR in ivy's posframe."
+  (if (not (ivy-posframe-workable-p))
+      (ivy-display-function-fallback str)
+    (with-selected-window (ivy--get-window ivy-last)
+      (posframe-show
+       ivy-posframe-buffer
+       :font ivy-posframe-font
+       :string
+       (with-current-buffer (get-buffer-create " *Minibuf-1*")
+         (let ((point (point))
+               (string (if ivy-posframe--ignore-prompt
+                           str
+                         (concat (buffer-string) "  " str))))
+           (add-text-properties (- point 1) point '(face ivy-posframe-cursor) string)
+           string))
+       :position (point)
+       :poshandler poshandler
+       :background-color (face-attribute 'ivy-posframe :background)
+       :foreground-color (face-attribute 'ivy-posframe :foreground)
+       :height ivy-height
+       :width (window-width)
+       :min-height 10
+       :min-width 50
+       :override-parameters ivy-posframe-parameters))))
 ; better UI
 (defun ivy-format-function-custom (cands)
   "Transform CANS into a string for minibuffer."
@@ -515,6 +588,7 @@
 ;; global leader
 (define-prefix-command 'global-leader-window)
 (define-prefix-command 'global-leader-helm)
+(define-prefix-command 'global-leader-ivy)
 (general-define-key
     :keymaps 'override
     :states '(motion normal visual)
@@ -524,6 +598,8 @@
         :which-key "window")
     "h" '(global-leader-helm
         :which-key "helm")
+    "i" '(global-leader-ivy
+        :which-key "ivy")
 
     "x" '(counsel-M-x
         :which-key "counsel M-x")
@@ -568,6 +644,26 @@
         :which-key "split window horizontally")
     "wq" '((lambda () (interactive) (evil-quit) (delayed-mode-line-update))
         :which-key "close window")
+
+    "n" '(ivy-switch-buffer
+        :which-key "switch buffer")
+
+    "ii" '(ivy-resume
+        :which-key "ivy resume")
+    "ip" '(counsel-projectile
+        :which-key "counsel projectile")
+    "i <tab>" '(projectile-find-other-file
+        :which-key "counsel projectile other file")
+    "i TAB" '(projectile-find-other-file
+        :which-key "counsel projectile other file")
+    "i C-p" '(counsel-projectile-switch-project
+        :which-key "counsel projectile project")
+    "ir" '(counsel-recentf
+        :which-key "counsel recentf")
+    "ig" '(counsel-projectile-grep
+        :which-key "counsel projectile grep")
+    "if" '(counsel-find-file
+        :which-key "counsel find files")
 
     "hh" '(helm-resume
         :which-key "helm resume")
@@ -615,8 +711,6 @@
 
     "TAB" '(evil-buffer
         :which-key "switch to other buffer")
-    "n" '(ivy-switch-buffer
-        :which-key "switch buffer")
 )
 
 ;; evil
@@ -863,6 +957,17 @@
     "M-k" 'ivy-previous-history-element
     "C-RET" 'ivy-dispatching-done
     "<C-return>" 'ivy-dispatching-done
+    ; alt-done includes entering directory, not opening in dired.
+    "S-RET" 'ivy-alt-done
+    "<S-return>" 'ivy-alt-done
+)
+(general-define-key
+    :keymaps '(counsel-find-file-map)
+    ; use return for opening directory
+    "RET" 'ivy-alt-done
+    "<return>" 'ivy-alt-done
+    "S-RET" 'ivy-immediate-done
+    "<S-return>" 'ivy-immediate-done
 )
 
 ;; help mode
@@ -934,10 +1039,13 @@
 ;; misc bindings
 ; use alt-h for help instead of ctrl-h
 (bind-key* (kbd "M-h") help-map)
-(bind-key* (kbd "M-h M-h") 'helm-apropos)
+(bind-key* (kbd "M-h M-h") 'counsel-apropos)
 
 
 ;;; misc settings
+
+;; no alert sounds
+(setq ring-bell-function 'ignore)
 
 ;; file-type based syntax entry
 (add-hook 'prog-mode-hook (lambda () (modify-syntax-entry ?_ "w")))

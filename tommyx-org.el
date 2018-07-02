@@ -54,7 +54,7 @@
 ; global
 (evil-define-key 'motion 'global (kbd ", C-c c") 'org-capture)
 (evil-define-key 'motion 'global (kbd ", C-c a") 'org-agenda)
-(evil-define-key 'motion 'global (kbd ", C-c C-f") 'helm-org-agenda-files-headings)
+(evil-define-key 'motion 'global (kbd ", C-c C-f") 'counsel-org-goto-all)
 ; org mode
 (evil-define-key 'normal org-mode-map
   ;; using evil-collection with org mode:
@@ -119,7 +119,7 @@
     "X" 'outline-show-all
     "Z" 'org-shifttab ; cycle global visibility
 
-    (kbd "C-S-f") 'helm-org-in-buffer-headings
+    (kbd "C-S-f") 'counsel-org-goto
 )
 (evil-define-key 'insert org-mode-map
   ;; using evil-collection with org mode:
