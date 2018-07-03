@@ -155,6 +155,19 @@
 ; language specific
 (use-package csv-mode :ensure t)
 (use-package json-mode :ensure t)
+(use-package web-mode :ensure t
+    :config
+    (setq web-mode-enable-auto-expanding t)
+    (add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
+    (add-to-list 'auto-mode-alist '("\\.tpl\\.php\\'" . web-mode))
+    (add-to-list 'auto-mode-alist '("\\.[agj]sp\\'" . web-mode))
+    (add-to-list 'auto-mode-alist '("\\.as[cp]x\\'" . web-mode))
+    (add-to-list 'auto-mode-alist '("\\.erb\\'" . web-mode))
+    (add-to-list 'auto-mode-alist '("\\.mustache\\'" . web-mode))
+    (add-to-list 'auto-mode-alist '("\\.djhtml\\'" . web-mode))
+    (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
+    (add-to-list 'auto-mode-alist '("\\.xml?\\'" . web-mode))
+)
 
 
 ;;; package settings
@@ -459,8 +472,8 @@
 (setq helm-etags-fuzzy-match t)
 (setq helm-mode-fuzzy-match t)
 (setq helm-completion-in-region-fuzzy-match t)
-(setq recentf-max-menu-items 100)
-(setq recentf-max-saved-items 100)
+(setq recentf-max-menu-items 200)
+(setq recentf-max-saved-items 200)
 (setq helm-move-to-line-cycle-in-source nil)
 (setq helm-ff-file-name-history-use-recentf t)
 (setq helm-follow-mode-persistent t)
@@ -658,7 +671,7 @@
         :which-key "counsel projectile other file")
     "i TAB" '(projectile-find-other-file
         :which-key "counsel projectile other file")
-    "i C-p" '(counsel-projectile-switch-project
+    "iP" '(counsel-projectile-switch-project
         :which-key "counsel projectile project")
     "ir" '(counsel-recentf
         :which-key "counsel recentf")
