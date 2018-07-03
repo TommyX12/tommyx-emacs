@@ -176,7 +176,9 @@
     `(shadow ((,class (:foreground ,base-dim))))
     `(success ((,class (:foreground ,suc))))
     `(tooltip ((,class (:background ,ttip-sl :foreground ,base :bold nil :italic nil :underline nil))))
-    `(vertical-border ((,class (:foreground ,border))))
+    `(vertical-border ((,class (:foreground ,border :background ,border))))
+    `(border ((,class (:foreground ,border :background ,border))))
+    `(internal-border ((,class (:foreground ,border :background ,border))))
     `(warning ((,class (:foreground ,war))))
 
 ;;;;; ace-window
@@ -538,6 +540,9 @@
     `(ivy-minibuffer-match-face-4 ((,class (:foreground ,head3 :underline t))))
     `(ivy-remote ((,class (:foreground ,cyan))))
 
+;;;;; ivy-posframe
+    `(ivy-posframe ((,class (:inherit default))))
+
 ;;;;; latex
     `(font-latex-bold-face ((,class (:foreground ,comp))))
     `(font-latex-italic-face ((,class (:foreground ,keyword :italic t))))
@@ -873,6 +878,11 @@
     `(whitespace-space-before-tab ((,class (:background nil :foreground ,yellow))))
     `(whitespace-tab ((,class (:background nil :foreground ,act2))))
     `(whitespace-trailing ((,class (:background ,err :foreground ,war))))
+
+;;;;; window-divider
+    `(window-divider ((,class (:inherit border))))
+    `(window-divider-first-pixel ((,class (:inherit border))))
+    `(window-divider-last-pixel ((,class (:inherit border))))
 
 ;;;;; yascroll
     `(yascroll:thumb-fringe ((,class (:background ,secondary-2 :foreground ,secondary-2))))

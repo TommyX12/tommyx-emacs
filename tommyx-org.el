@@ -17,6 +17,10 @@
 ;; refiling
 (setq org-refile-targets '((nil . (:level . 1)) (nil . (:level . 2))))
 
+;; ivy integration
+(setq counsel-org-headline-display-style 'path)
+(setq counsel-org-headline-path-separator "/")
+
 ;; agenda files
 (add-to-list 'org-agenda-files org-directory)
 

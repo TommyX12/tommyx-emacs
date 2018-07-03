@@ -12,7 +12,9 @@
       doom-themes-enable-italic t)
 (setq dark-theme 'infinity-dark)
 (setq light-theme 'infinity-light)
-(load-theme dark-theme t)
+(if (and (boundp 'use-light-theme) use-light-theme)
+    (load-theme light-theme t)
+    (load-theme dark-theme t))
 
 ;; set font
 (if (not (boundp 'selected-font)) (progn
@@ -258,7 +260,7 @@
     (with-current-buffer buffer
       (setq-local overriding-local-map company-childframe-active-map))
     (posframe-show buffer
-                   :override-parameters '((border-width . 1))
+                   :override-parameters '((border-width . 1) (internal-border-width . 1))
                    :string contents
                    :position (- (point) (length company-prefix))
                    :x-pixel-offset (* -1 company-tooltip-margin (default-font-width))
@@ -497,7 +499,7 @@
 ; display functions
 (setq ivy-posframe-parameters '(
     (width . 50)
-    (border-width . 1)
+    (border-width . 1) (internal-border-width . 1)
     (min-width . 50)
     (refresh . 1)
     ))
@@ -638,10 +640,10 @@
         :which-key "move to window up")
     "wl" '((lambda () (interactive) (evil-window-right 1) (delayed-mode-line-update))
         :which-key "move to window right")
+    "wd" '((lambda () (interactive) (evil-window-split) (delayed-mode-line-update))
+        :which-key "split window horizontally")
     "wv" '((lambda () (interactive) (evil-window-vsplit) (delayed-mode-line-update))
         :which-key "split window vertically")
-    "wV" '((lambda () (interactive) (evil-window-split) (delayed-mode-line-update))
-        :which-key "split window horizontally")
     "wq" '((lambda () (interactive) (evil-quit) (delayed-mode-line-update))
         :which-key "close window")
 
@@ -1115,6 +1117,12 @@
 (setq gc-cons-threshold 200000000)
 (run-with-idle-timer 5 t (lambda () (garbage-collect)))
 (add-hook 'focus-out-hook (lambda () (garbage-collect)))
+
+;; window divider
+(setq window-divider-default-places 'right-only)
+(setq window-divider-default-right-width 2)
+(setq window-divider-default-bottom-width 2)
+(window-divider-mode 1)
 
 ;; enable some modes
 ; flyspell
