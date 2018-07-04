@@ -158,9 +158,14 @@
 ; language specific
 (use-package csv-mode :ensure t)
 (use-package json-mode :ensure t)
+;; (use-package vue-mode :ensure t
+;;     :config
+;;     (setq mmm-submode-decoration-level 0)
+;; )
 (use-package web-mode :ensure t
     :config
     (setq web-mode-enable-auto-expanding t)
+    (setq-default web-mode-markup-indent-offset 2)
     (add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
     (add-to-list 'auto-mode-alist '("\\.tpl\\.php\\'" . web-mode))
     (add-to-list 'auto-mode-alist '("\\.[agj]sp\\'" . web-mode))
@@ -170,6 +175,9 @@
     (add-to-list 'auto-mode-alist '("\\.djhtml\\'" . web-mode))
     (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
     (add-to-list 'auto-mode-alist '("\\.xml?\\'" . web-mode))
+
+    ; use for vue files
+    (add-to-list 'auto-mode-alist '("\\.vue\\'" . web-mode))
 )
 (use-package js2-mode :ensure t
     :config
@@ -183,6 +191,7 @@
     (add-hook 'css-mode-hook  'emmet-mode)
     (setq emmet-move-cursor-after-expanding t)
     (setq emmet-move-cursor-between-quotes t)
+    (setq emmet-indentation 2)
     :bind (:map emmet-mode-keymap
         ("C-j" . nil)
     )
@@ -197,7 +206,8 @@
 (setq color-identifiers:max-color-saturation 0.3)
 (setq color-identifiers:min-color-saturation 0.25)
 (setq color-identifiers:timer (run-with-idle-timer 5 t 'color-identifiers:refresh))
-(global-color-identifiers-mode)
+(add-hook 'prog-mode-hook (lambda () (color-identifiers-mode 1)))
+(global-color-identifiers-mode 1)
 
 ;; dashboard
 (dashboard-setup-startup-hook)
@@ -624,6 +634,8 @@
 (define-prefix-command 'global-leader-window)
 (define-prefix-command 'global-leader-helm)
 (define-prefix-command 'global-leader-ivy)
+(define-prefix-command 'global-leader-org)
+(define-prefix-command 'global-leader-mode-specific)
 (general-define-key
     :keymaps 'override
     :states '(motion normal visual)
@@ -635,6 +647,10 @@
         :which-key "helm")
     "i" '(global-leader-ivy
         :which-key "ivy")
+    "o" '(global-leader-org
+        :which-key "org")
+    "j" '(global-leader-mode-specific
+        :which-key "mode specific")
 
     "x" '(counsel-M-x
         :which-key "counsel M-x")
@@ -1113,10 +1129,15 @@
 (setq-default python-indent 4)
 (add-hook 'prog-mode-hook (lambda () (setq evil-shift-width tab-width)))
 (add-hook 'python-mode-hook (lambda ()
-(setq python-indent-offset 4)
-(setq python-indent 4)
-    (setq evil-shift-width python-indent)
-    (setq tab-width python-indent)))
+    (setq-local python-indent-offset 4)
+    (setq-local python-indent 4)
+    (setq-local evil-shift-width python-indent)
+    (setq-local tab-width python-indent)
+))
+(add-hook 'web-mode-hook (lambda ()
+    (setq-local evil-shift-width 2)
+    (setq-local tab-width 2)
+))
 
 ;; UTF-8 as default encoding
 (set-language-environment "UTF-8")

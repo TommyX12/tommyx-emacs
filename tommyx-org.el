@@ -58,10 +58,37 @@
 ;; )
 
 ;; key bindings
-; global
-(evil-define-key 'motion 'global (kbd ", C-c c") 'org-capture)
-(evil-define-key 'motion 'global (kbd ", C-c a") 'org-agenda)
-(evil-define-key 'motion 'global (kbd ", C-c C-f") 'counsel-org-goto-all)
+; global leader
+(general-define-key
+    :keymaps 'override
+    :states '(motion normal visual)
+    :prefix "SPC"
+
+    "of" '(counsel-org-goto-all ; go to heading of opened org files
+        :which-key "org goto all")
+
+    "oc" '(org-capture
+        :which-key "org capture")
+
+    "oa" '(org-agenda
+        :which-key "org agenda")
+)
+; org mode leader
+(general-define-key
+    :keymaps 'org-mode-map
+    :states '(motion normal visual)
+    :prefix "SPC"
+
+    "jf" '(counsel-org-goto
+        :which-key "org goto")
+)
+(general-define-key
+    :keymaps 'org-mode-map
+    :states '(motion normal)
+    :prefix "SPC"
+
+    ;; adding stuff like set tag, and other org mode stuff.
+)
 ; org mode
 (evil-define-key 'normal org-mode-map
   ;; using evil-collection with org mode:
@@ -125,8 +152,6 @@
 
     "X" 'outline-show-all
     "Z" 'org-shifttab ; cycle global visibility
-
-    (kbd "C-S-f") 'counsel-org-goto
 )
 (evil-define-key 'insert org-mode-map
   ;; using evil-collection with org mode:
