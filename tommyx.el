@@ -91,7 +91,10 @@
 (use-package helm-flx :ensure t)
 (use-package helm-descbinds :ensure t)
 (use-package helm-describe-modes :ensure t)
-(use-package helm-swoop :ensure t)
+(use-package helm-swoop :ensure t
+    :config
+    (setq helm-swoop-split-with-multiple-windows t)
+)
 (use-package helm-projectile :ensure t :after projectile)
 (use-package swiper-helm :ensure t)
 (use-package ivy :ensure t)
@@ -168,6 +171,23 @@
     (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
     (add-to-list 'auto-mode-alist '("\\.xml?\\'" . web-mode))
 )
+(use-package js2-mode :ensure t
+    :config
+    (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+    (setq js2-strict-missing-semi-warning nil)
+)
+(use-package emmet-mode :ensure t
+    :config
+    (add-hook 'sgml-mode-hook 'emmet-mode)
+    (add-hook 'web-mode-hook 'emmet-mode)
+    (add-hook 'css-mode-hook  'emmet-mode)
+    (setq emmet-move-cursor-after-expanding t)
+    (setq emmet-move-cursor-between-quotes t)
+    :bind (:map emmet-mode-keymap
+        ("C-j" . nil)
+    )
+)
+;; (use-package js2-refactor :ensure t)
 
 
 ;;; package settings
@@ -501,7 +521,7 @@
 (setq ivy-initial-inputs-alist nil)
 ; enable fuzzy, except for swiper
 (setq ivy-re-builders-alist
-      '((swiper . ivy--regex-plus)
+      '((swiper . ivy--regex-ignore-order)
         (swiper-multi . ivy--regex-plus)
         (t      . ivy--regex-fuzzy)))
 ; enable wrapping
@@ -578,7 +598,7 @@
 
 
 ;;; key bindings util functions
-(defun selection-or-thing-at-point ()
+(defun selection-or-word-at-point ()
   (cond
    ;; If there is selection use it
    ((and transient-mark-mode
@@ -590,7 +610,7 @@
       (buffer-substring-no-properties mark-saved point-saved)))
    ;; Otherwise, use symbol at point or empty
    (t (format "\\<%s\\>"
-              (or (thing-at-point 'symbol)
+              (or (word-at-point)
                   "")))))
 
 
@@ -623,6 +643,8 @@
         :which-key "helm M-x")
     "ho" '(helm-occur
         :which-key "helm occur")
+    "hs" '(helm-swoop
+        :which-key "helm swoop")
 
 )
 (general-define-key
@@ -630,9 +652,9 @@
     :states '(visual)
     :prefix "SPC"
 
-    "f" '((lambda () (interactive) (swiper (selection-or-thing-at-point)))
+    "f" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
         :which-key "search selection")
-    "F" '((lambda () (interactive) (swiper-all (selection-or-thing-at-point)))
+    "F" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
         :which-key "search all buffers")
 )
 (general-define-key
@@ -645,9 +667,9 @@
     "F" '(swiper-all
         :which-key "search in all buffers")
 
-    "*" '((lambda () (interactive) (swiper (selection-or-thing-at-point)))
+    "*" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
         :which-key "search cursor word")
-    "C-*" '((lambda () (interactive) (swiper-all (selection-or-thing-at-point)))
+    "C-*" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
         :which-key "search cursor word in all buffers")
 
     "wh" '((lambda () (interactive) (evil-window-left 1) (delayed-mode-line-update))
@@ -691,14 +713,14 @@
         :which-key "helm mini")
     "hp" '(helm-projectile
         :which-key "helm projectile")
-    "hP" '(helm-projectile-find-file-in-known-projects
+    "hP" '(helm-projectile-switch-project
+        :which-key "helm projectile project")
+    "h C-p" '(helm-projectile-find-file-in-known-projects
         :which-key "helm projectile all")
     "h <tab>" '(helm-projectile-find-other-file ; cpp vs h switching
         :which-key "helm projectile other file")
     "h TAB" '(helm-projectile-find-other-file ; cpp vs h switching
         :which-key "helm projectile other file")
-    "h C-p" '(helm-projectile-switch-project
-        :which-key "helm projectile project")
     "hr" '(helm-recentf
         :which-key "helm recentf")
     "hg" '(helm-projectile-grep
@@ -977,17 +999,18 @@
     "M-k" 'ivy-previous-history-element
     "C-RET" 'ivy-dispatching-done
     "<C-return>" 'ivy-dispatching-done
-    ; alt-done includes entering directory, not opening in dired.
-    "S-RET" 'ivy-alt-done
-    "<S-return>" 'ivy-alt-done
+    "S-RET" 'ivy-immediate-done ; use exact input, not candidate
+    "<S-return>" 'ivy-immediate-done
+    "C-l" 'ivy-done
 )
-(general-define-key
+(general-define-key ; use / to enter directory, not ENTER.
     :keymaps '(counsel-find-file-map)
     ; use return for opening directory
     "RET" 'ivy-alt-done
     "<return>" 'ivy-alt-done
-    "S-RET" 'ivy-immediate-done
+    "S-RET" 'ivy-immediate-done ; use exact input, not candidate
     "<S-return>" 'ivy-immediate-done
+    "C-l" 'ivy-alt-done
 )
 
 ;; help mode
@@ -997,9 +1020,19 @@
 (evil-define-key 'normal help-mode-map (kbd "U") 'help-go-forward)
 
 ;; insert mode mappings
-(evil-define-key 'insert 'global (kbd "C-l") 'yas-expand)
+; yas
 (evil-define-key 'insert 'global (kbd "C-j") 'yas-next-field)
 (evil-define-key 'insert 'global (kbd "C-k") 'yas-prev-field)
+(evil-define-key 'insert 'global (kbd "C-l") 'yas-expand)
+; emmet
+(evil-define-key 'insert emmet-mode-keymap (kbd "C-S-j") 'yas-next-field)
+(evil-define-key 'insert emmet-mode-keymap (kbd "C-S-k") 'yas-prev-field)
+(evil-define-key 'insert emmet-mode-keymap (kbd "C-S-l") 'yas-expand)
+(evil-define-key 'insert emmet-mode-keymap (kbd "C-j") 'emmet-next-edit-point)
+(evil-define-key 'insert emmet-mode-keymap (kbd "C-k") 'emmet-prev-edit-point)
+(evil-define-key 'insert emmet-mode-keymap (kbd "C-l") 'emmet-expand-line)
+(evil-define-key 'visual emmet-mode-keymap (kbd "C-l") 'emmet-wrap-with-markup)
+
 (evil-define-key 'insert 'global (kbd "S-SPC S-SPC") (lambda () (interactive) (save-excursion (flyspell-lazy-check-pending) (flyspell-auto-correct-previous-word (point)))))
 (evil-define-key 'insert 'global (kbd "<S-space> <S-space>") (lambda () (interactive) (save-excursion (flyspell-lazy-check-pending) (flyspell-auto-correct-previous-word (point)))))
 (general-imap "j" (general-key-dispatch 'self-insert-command
@@ -1018,10 +1051,10 @@
      (define-key company-active-map (kbd "C-z") 'company-quickhelp-manual-begin)))
 
 ;; window management
-;; (evil-define-key 'motion 'global (kbd "C-w C-h") (lambda () (interactive) (evil-window-left 1) (delayed-mode-line-update)))
-;; (evil-define-key 'motion 'global (kbd "C-w C-j") (lambda () (interactive) (evil-window-down 1) (delayed-mode-line-update)))
-;; (evil-define-key 'motion 'global (kbd "C-w C-k") (lambda () (interactive) (evil-window-up 1) (delayed-mode-line-update)))
-;; (evil-define-key 'motion 'global (kbd "C-w C-l") (lambda () (interactive) (evil-window-right 1) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global (kbd "C-w C-h") (lambda () (interactive) (evil-window-left 1) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global (kbd "C-w C-j") (lambda () (interactive) (evil-window-down 1) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global (kbd "C-w C-k") (lambda () (interactive) (evil-window-up 1) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global (kbd "C-w C-l") (lambda () (interactive) (evil-window-right 1) (delayed-mode-line-update)))
 ;; (evil-define-key 'motion 'global ",wv" (lambda () (interactive) (evil-window-vsplit) (delayed-mode-line-update)))
 ;; (evil-define-key 'motion 'global ",wh" (lambda () (interactive) (evil-window-split) (delayed-mode-line-update)))
 ;; (evil-define-key 'motion 'global ",wq" (lambda () (interactive) (evil-quit) (delayed-mode-line-update)))
@@ -1114,8 +1147,7 @@
 
 ;; auto display line numbers
 (add-hook 'prog-mode-hook (lambda () (display-line-numbers-mode)))
-(add-hook 'nxml-mode-hook (lambda () (display-line-numbers-mode)))
-(add-hook 'html-mode-hook (lambda () (display-line-numbers-mode)))
+(add-hook 'sgml-mode-hook (lambda () (display-line-numbers-mode)))
 
 ;; indicate end of buffer
 (add-hook 'prog-mode-hook (lambda () (setq indicate-buffer-boundaries t)))
