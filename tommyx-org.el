@@ -49,6 +49,9 @@
     ("i" "Not important" entry
     (file+headline "GTD.org" "Not important")
     "* %? %i")
+    ("m" "Misc TODO" entry
+    (file+headline "GTD.org" "Misc")
+    "* TODO %? %i")
 ))
 
 ;; checks if org-notes-dir exists.

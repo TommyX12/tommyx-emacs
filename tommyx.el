@@ -472,8 +472,8 @@
 (setq helm-etags-fuzzy-match t)
 (setq helm-mode-fuzzy-match t)
 (setq helm-completion-in-region-fuzzy-match t)
-(setq recentf-max-menu-items 200)
-(setq recentf-max-saved-items 200)
+(setq recentf-max-menu-items 250)
+(setq recentf-max-saved-items 250)
 (setq helm-move-to-line-cycle-in-source nil)
 (setq helm-ff-file-name-history-use-recentf t)
 (setq helm-follow-mode-persistent t)
@@ -589,7 +589,7 @@
       (deactivate-mark)
       (buffer-substring-no-properties mark-saved point-saved)))
    ;; Otherwise, use symbol at point or empty
-   (t (format "%s"
+   (t (format "\\<%s\\>"
               (or (thing-at-point 'symbol)
                   "")))))
 
@@ -643,7 +643,12 @@
     "f" '(swiper
         :which-key "search")
     "F" '(swiper-all
-        :which-key "search all buffers")
+        :which-key "search in all buffers")
+
+    "*" '((lambda () (interactive) (swiper (selection-or-thing-at-point)))
+        :which-key "search cursor word")
+    "C-*" '((lambda () (interactive) (swiper-all (selection-or-thing-at-point)))
+        :which-key "search cursor word in all buffers")
 
     "wh" '((lambda () (interactive) (evil-window-left 1) (delayed-mode-line-update))
         :which-key "move to window left")
