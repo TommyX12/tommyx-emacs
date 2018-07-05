@@ -221,7 +221,7 @@
 (setq yascroll:delay-to-hide nil)
 
 ;; beacon
-(setq beacon-blink-when-focused t)
+(setq beacon-blink-when-focused nil) ; may cause problem
 (setq beacon-blink-when-buffer-changes t)
 (setq beacon-blink-when-window-changes t)
 (setq beacon-blink-when-window-scrolls t)
@@ -1122,6 +1122,7 @@
 (add-hook 'emacs-lisp-mode-hook (lambda () (modify-syntax-entry ?- "w")))
 (add-hook 'html-mode-hook (lambda () (modify-syntax-entry ?- "w") (modify-syntax-entry ?_ "w")))
 (add-hook 'nxml-mode-hook (lambda () (modify-syntax-entry ?- "w") (modify-syntax-entry ?_ "w")))
+(add-hook 'css-mode-hook (lambda () (modify-syntax-entry ?- "w") (modify-syntax-entry ?_ "w")))
 
 ;; indent settings
 (setq-default indent-tabs-mode nil) ; use space instead of tabs
