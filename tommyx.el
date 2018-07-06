@@ -607,7 +607,7 @@
   )
 
 
-;;; key bindings util functions
+;;; key bindings util functions and motion
 (defun selection-or-word-at-point ()
   (cond
    ;; If there is selection use it
@@ -622,6 +622,8 @@
    (t (format "\\<%s\\>"
               (or (word-at-point)
                   "")))))
+(evil-define-motion swiper-movement () :type exclusive
+    (swiper))
 
 
 ;;; key bindings
@@ -668,10 +670,13 @@
     :states '(visual)
     :prefix "SPC"
 
-    "f" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
+    "f" '(swiper-movement
+        :which-key "search")
+
+    "*" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
         :which-key "search selection")
-    "F" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
-        :which-key "search all buffers")
+    "C-*" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
+        :which-key "search selection in all buffers")
 )
 (general-define-key
     :keymaps 'override
@@ -919,9 +924,9 @@
     (kbd "<return>") 'neotree-enter
 )
 ; ,<space> no highlight
-(evil-define-key 'motion 'global (kbd ", SPC") 'evil-ex-nohighlight)
+(evil-define-key 'motion 'global (kbd ", SPC") (lambda () (interactive) (evil-ex-nohighlight) (beacon-blink)))
 ; easy quit visual mode
-(evil-define-key 'visual 'global (kbd ", SPC") 'evil-exit-visual-state)
+(evil-define-key 'visual 'global (kbd ", SPC") (lambda () (interactive) (evil-exit-visual-state) (beacon-blink)))
 ; m and M for jumping
 (evil-define-key 'motion 'global "m" 'evil-jump-backward)
 (evil-define-key 'motion 'global "M" 'evil-jump-forward)

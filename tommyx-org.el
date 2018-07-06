@@ -87,7 +87,23 @@
     :states '(motion normal)
     :prefix "SPC"
 
-    ;; adding stuff like set tag, and other org mode stuff.
+    "jr" '(org-refile
+        :which-key "org refile")
+
+    "jt" '(org-todo
+        :which-key "org todo")
+
+    "js" '(org-schedule
+        :which-key "org schedule")
+
+    "jd" '(org-deadline
+        :which-key "org deadline")
+
+    "jp" '(org-priority
+        :which-key "org priority")
+
+    "jq" '(org-set-tags-command
+        :which-key "org set tags")
 )
 ; org mode
 (evil-define-key 'normal org-mode-map
@@ -191,6 +207,35 @@
 )
 (evil-define-key 'motion 'global ",,n" 'org-narrow-to-subtree)
 ; org agenda
+(general-define-key
+    :keymaps 'org-agenda-mode-map
+    :states '(motion normal visual)
+    :prefix "SPC"
+
+)
+(general-define-key
+    :keymaps 'org-agenda-mode-map
+    :states '(motion normal)
+    :prefix "SPC"
+
+    "jr" '(org-agenda-refile
+        :which-key "org agenda refile")
+
+    "jt" '(org-agenda-todo
+        :which-key "org agenda todo")
+
+    "js" '(org-agenda-schedule
+        :which-key "org agenda schedule")
+
+    "jd" '(org-agenda-deadline
+        :which-key "org agenda deadline")
+
+    "jp" '(org-agenda-priority
+        :which-key "org agenda priority")
+
+    "jq" '(org-agenda-set-tags
+        :which-key "org agenda set tags")
+)
 (evil-define-key 'motion org-agenda-mode-map
   ;; C-c C-t: make into todo / cycle todo states
   ;; C-c C-s: add / change scheduled start
