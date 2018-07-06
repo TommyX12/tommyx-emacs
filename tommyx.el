@@ -102,7 +102,10 @@
 (use-package counsel :ensure t)
 (use-package counsel-projectile :ensure t)
 (use-package swiper :ensure t)
-(use-package which-key :ensure t)
+(use-package which-key :ensure t
+    :config
+    ;; (setq which-key-popup-type 'side-window)
+)
 (use-package spacemacs-theme :ensure t :defer t)
 (use-package doom-themes :ensure t :defer t)
 (use-package ace-window :ensure t)
