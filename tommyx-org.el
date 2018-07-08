@@ -1,12 +1,10 @@
 ;; requires
 (require 'evil)
 (require 'org-super-agenda)
+(require 'org-pomodoro)
 
 ;; settings
 (add-hook 'org-mode-hook (lambda () (interactive) (org-indent-mode))) ; use clean view
-(setq org-agenda-window-setup 'current-window) ; use current window for agenda
-(setq org-agenda-use-tag-inheritance t) ; tag inheritance in agenda (turn off if slow)
-(setq org-agenda-sticky t) ; hide, not kill, agenda buffer when quiting
 
 ;; check if org-notes-dir exists.
 ;; (when (boundp 'org-agenda-dir)
@@ -24,12 +22,62 @@
 ;; agenda files
 (add-to-list 'org-agenda-files org-directory)
 
+;; super agenda groups
+(setq org-super-agenda-groups '(
+    (:name "Time Grid"
+        :time-grid t
+    )
+    (:name "Due"
+        :deadline today
+        :deadline past
+    )
+    (:name "Important + Urgent"
+        :and (:priority "A")
+    )
+    (:name "Primary"
+        :and (:priority "B")
+    )
+    (:name "Recurring"
+        :and (:tag ("recurring"))
+    )
+    (:name "Secondary"
+        :and (:priority "C")
+    )
+))
+
+;; clocking
+; ask for clock-out on leave
+(defun my/org-clock-query-out ()
+    "Ask the user before clocking out.
+    This is a useful function for adding to `kill-emacs-query-functions'."
+    (if (and
+        (featurep 'org-clock)
+        (funcall 'org-clocking-p)
+        (y-or-n-p "You are currently clocking time, clock out? "))
+        (org-clock-out) t)) ;; only fails on keyboard quit or error
+(add-hook 'kill-emacs-query-functions 'my/org-clock-query-out) ; timeclock.el puts this on the wrong hook!
+
 ;; agenda configs
+(setq org-agenda-window-setup 'only-window)
+(setq org-agenda-start-with-clockreport-mode t)
+(setq org-clock-report-include-clocking-task t)
+(setq org-agenda-start-with-log-mode t)
+(setq org-agenda-log-mode-items '(closed clock state))
+(setq org-agenda-restore-windows-after-quit t)
+(setq org-agenda-use-tag-inheritance t) ; tag inheritance in agenda (turn off if slow)
+(setq org-agenda-sticky nil) ; make sure to refresh agenda when re-launch
 (setq org-agenda-span 'day)
+(setq org-agenda-skip-deadline-if-done t)
+(setq org-agenda-skip-scheduled-if-done t)
+(setq org-agenda-skip-scheduled-if-done t)
+(setq org-agenda-skip-scheduled-if-deadline-is-shown t)
 (setq org-agenda-move-date-from-past-immediately-to-today t)
 (org-super-agenda-mode)
 (evil-set-initial-state 'org-agenda-mode 'motion)
 (add-hook 'org-agenda-mode-hook (lambda () (hl-line-mode 1)))
+(setq org-agenda-time-grid '((daily today)
+ (800 1000 1200 1400 1600 1800 2000)
+ "......" "----------------"))
 
 ;; entry text filter
 ; remove blank lines and state logs
@@ -64,6 +112,12 @@
     :states '(motion normal visual)
     :prefix "SPC"
 
+)
+(general-define-key
+    :keymaps 'override
+    :states '(motion normal)
+    :prefix "SPC"
+
     "of" '(counsel-org-goto-all ; go to heading of opened org files
         :which-key "org goto all")
 
@@ -72,6 +126,9 @@
 
     "oa" '(org-agenda
         :which-key "org agenda")
+
+    "oi" '(org-pomodoro
+        :which-key "org pomo clock in")
 )
 ; org mode leader
 (general-define-key
@@ -104,8 +161,13 @@
 
     "jq" '(org-set-tags-command
         :which-key "org set tags")
+
+    "ji" '(org-pomodoro
+        :which-key "org pomo clock in")
 )
 ; org mode
+(evil-define-key 'insert org-mode-map (kbd "TAB") 'org-cycle)
+(evil-define-key 'insert org-mode-map (kbd "<tab>") 'org-cycle)
 (evil-define-key 'normal org-mode-map
   ;; using evil-collection with org mode:
   ;;
@@ -164,7 +226,8 @@
     (kbd "C-h") (lambda () (interactive) (outline-hide-subtree))
     (kbd "C-j") 'org-next-visible-heading
     (kbd "C-k") 'org-previous-visible-heading
-    (kbd "C-l") (lambda () (interactive) (outline-show-entry) (outline-show-children))
+    ;; (kbd "C-l") (lambda () (interactive) (outline-show-entry) (outline-show-children))
+    (kbd "C-l") 'org-cycle
 
     "X" 'outline-show-all
     "Z" 'org-shifttab ; cycle global visibility
@@ -235,6 +298,9 @@
 
     "jq" '(org-agenda-set-tags
         :which-key "org agenda set tags")
+
+    "ji" '(org-pomodoro
+        :which-key "org pomo clock in")
 )
 (evil-define-key 'motion org-agenda-mode-map
   ;; C-c C-t: make into todo / cycle todo states

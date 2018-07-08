@@ -1,9 +1,11 @@
-;;; add current directory to load-path
+;;; add directories to load-path
 (add-to-list 'load-path (file-name-directory load-file-name))
 (add-to-list 'load-path
     (expand-file-name "infinity-theme" (file-name-directory load-file-name)))
 (add-to-list 'custom-theme-load-path
     (expand-file-name "infinity-theme" (file-name-directory load-file-name)))
+(add-to-list 'load-path
+    (expand-file-name "packages" (file-name-directory load-file-name)))
 
 
 ;;; themes
@@ -83,6 +85,12 @@
 (use-package evil-args :ensure t)
 (use-package evil-matchit :ensure t :defer t)
 (use-package evil-numbers :ensure t)
+(use-package evil-exchange :ensure t
+    :config
+    (setq evil-exchange-key (kbd ",x"))
+    (setq evil-exchange-cancel-key (kbd ",X"))
+    (evil-exchange-install)
+)
 (use-package evil-search-highlight-persist :ensure t)
 (use-package evil-nerd-commenter :ensure t)
 (use-package projectile :ensure t)
@@ -111,8 +119,14 @@
 (use-package ace-window :ensure t)
 (use-package general :ensure t)
 (use-package beacon :ensure t)
-(use-package highlight-indent-guides :ensure t)
-(use-package origami :ensure t)
+;; (use-package highlight-indent-guides :ensure t)
+;; (require 'visual-indentation-mode)
+;; (require 'highlight-indent-guides)
+;; (require 'indent-hint)
+(use-package origami :ensure t
+    :config
+    (global-origami-mode 1)
+)
 (use-package volatile-highlights :ensure t)
 (use-package evil-goggles :ensure t)
 (use-package flycheck :ensure t)
@@ -155,6 +169,8 @@
 (use-package dashboard :ensure t :after page-break-lines)
 (use-package org :ensure t)
 (use-package org-super-agenda :ensure t)
+(use-package org-journal :ensure t)
+(use-package org-pomodoro :ensure t)
 (use-package load-relative :ensure t)
 (use-package rainbow-mode :ensure t)
 (use-package highlight-numbers :ensure t)
@@ -458,9 +474,12 @@
 ;; highlight indent guides (currently disabled)
 ;; (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
 ;; (add-hook 'text-mode-hook 'highlight-indent-guides-mode)
-;; (setq highlight-indent-guides-method 'character) ; TODO use the character method. right now the font doesn't work
+;; (setq highlight-indent-guides-method 'character)
 ;; (setq highlight-indent-guides-character ?\|)
 ;; (setq highlight-indent-guides-responsive nil)
+
+;; visual indentation mode
+;; (add-hook 'prog-mode-hook 'visual-indentation-mode)
 
 ;; evil-visualstar
 (global-evil-visualstar-mode)
@@ -576,7 +595,7 @@
        :poshandler poshandler
        :background-color (face-attribute 'ivy-posframe :background)
        :foreground-color (face-attribute 'ivy-posframe :foreground)
-       :height ivy-height
+       :height (truncate (* 1.1 ivy-height))
        :width (window-width)
        :min-height 10
        :min-width 50
@@ -1043,6 +1062,23 @@
 (evil-define-key 'motion help-mode-map (kbd "U") 'help-go-forward)
 (evil-define-key 'normal help-mode-map (kbd "U") 'help-go-forward)
 
+;; web mode
+(evil-define-key 'normal web-mode-map (kbd "C-h") nil)
+(evil-define-key 'normal web-mode-map (kbd "C-l") nil)
+;; (evil-define-key 'normal web-mode-map (kbd "C-h") 'web-mode-fold-or-unfold)
+;; (evil-define-key 'normal web-mode-map (kbd "C-l") 'web-mode-fold-or-unfold)
+
+;; origami mode
+(evil-define-key 'normal 'global (kbd "C-h") 'origami-close-node-recursively)
+(evil-define-key 'normal 'global (kbd "C-j") 'origami-forward-fold)
+(evil-define-key 'normal 'global (kbd "C-k") 'origami-previous-fold)
+(evil-define-key 'normal 'global (kbd "C-l") 'origami-recursively-toggle-node)
+(evil-define-key 'normal 'global "Z" 'origami-close-all-nodes)
+(evil-define-key 'normal 'global "X" 'origami-open-all-nodes)
+(evil-define-key 'normal 'global "zx" 'origami-show-only-node)
+(evil-define-key 'normal 'global "zu" 'origami-undo)
+(evil-define-key 'normal 'global "zU" 'origami-redo)
+
 ;; insert mode mappings
 ; yas
 (evil-define-key 'insert 'global (kbd "C-j") 'yas-next-field)
@@ -1129,6 +1165,7 @@
 (add-hook 'lisp-mode-hook (lambda () (modify-syntax-entry ?- "w")))
 (add-hook 'emacs-lisp-mode-hook (lambda () (modify-syntax-entry ?- "w")))
 (add-hook 'html-mode-hook (lambda () (modify-syntax-entry ?- "w") (modify-syntax-entry ?_ "w")))
+(add-hook 'web-mode-hook (lambda () (modify-syntax-entry ?- "w") (modify-syntax-entry ?_ "w")))
 (add-hook 'nxml-mode-hook (lambda () (modify-syntax-entry ?- "w") (modify-syntax-entry ?_ "w")))
 (add-hook 'css-mode-hook (lambda () (modify-syntax-entry ?- "w") (modify-syntax-entry ?_ "w")))
 
@@ -1136,6 +1173,7 @@
 (setq-default indent-tabs-mode nil) ; use space instead of tabs
 (setq-default tab-width 4)
 (setq-default python-indent 4)
+(setq-default c-basic-offset 4)
 (add-hook 'prog-mode-hook (lambda () (setq evil-shift-width tab-width)))
 (add-hook 'python-mode-hook (lambda ()
     (setq-local python-indent-offset 4)
@@ -1188,6 +1226,7 @@
 
 ;; hl-line-mode for some modes
 (add-hook 'buffer-menu-mode-hook (lambda () (hl-line-mode 1)))
+(add-hook 'profiler-report-mode-hook (lambda () (hl-line-mode 1)))
 
 ;; cursor line (right now disabled)
 ;; (global-hl-line-mode 1)
@@ -1198,11 +1237,19 @@
 (run-with-idle-timer 5 t (lambda () (garbage-collect)))
 (add-hook 'focus-out-hook (lambda () (garbage-collect)))
 
+;; word wrap
+(add-hook 'prog-mode-hook (lambda () (toggle-word-wrap 1)))
+(add-hook 'text-mode-hook (lambda () (toggle-word-wrap 1)))
+(add-hook 'sgml-mode-hook (lambda () (toggle-word-wrap 1)))
+
 ;; window divider
 (setq window-divider-default-places 'right-only)
 (setq window-divider-default-right-width 2)
 (setq window-divider-default-bottom-width 2)
 (window-divider-mode 1)
+
+;; flyspell
+(setq flyspell-issue-message-flag nil)
 
 ;; enable some modes
 ; flyspell
