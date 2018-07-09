@@ -121,12 +121,10 @@
 (use-package beacon :ensure t)
 ;; (use-package highlight-indent-guides :ensure t)
 ;; (require 'visual-indentation-mode)
-;; (require 'highlight-indent-guides)
+;; (require 'highlight-indent-guides) ; my own version
 ;; (require 'indent-hint)
-(use-package origami :ensure t
-    :config
-    (global-origami-mode 1)
-)
+(require 'origami)
+;; (use-package origami :ensure t)
 (use-package volatile-highlights :ensure t)
 (use-package evil-goggles :ensure t)
 (use-package flycheck :ensure t)
@@ -474,9 +472,11 @@
 ;; highlight indent guides (currently disabled)
 ;; (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
 ;; (add-hook 'text-mode-hook 'highlight-indent-guides-mode)
-;; (setq highlight-indent-guides-method 'character)
-;; (setq highlight-indent-guides-character ?\|)
-;; (setq highlight-indent-guides-responsive nil)
+(setq highlight-indent-guides-method 'fill)
+(setq highlight-indent-guides-auto-odd-face-perc 3)
+(setq highlight-indent-guides-auto-even-face-perc 6)
+(setq highlight-indent-guides-character ?\|)
+(setq highlight-indent-guides-responsive nil)
 
 ;; visual indentation mode
 ;; (add-hook 'prog-mode-hook 'visual-indentation-mode)
@@ -544,6 +544,11 @@
 
 ;; helm-projectile
 (helm-projectile-on)
+
+;; origami
+(add-to-list 'origami-parser-alist
+    '(python-mode . origami-indent-parser))
+(global-origami-mode 1)
 
 ;; ivy, counsel and swiper
 ; main
@@ -1075,7 +1080,9 @@
 (evil-define-key 'normal 'global (kbd "C-l") 'origami-recursively-toggle-node)
 (evil-define-key 'normal 'global "Z" 'origami-close-all-nodes)
 (evil-define-key 'normal 'global "X" 'origami-open-all-nodes)
-(evil-define-key 'normal 'global "zx" 'origami-show-only-node)
+(evil-define-key 'normal 'global "zx" (lambda () (interactive)
+    (origami-show-only-node (current-buffer) (point))
+    (origami-open-node-recursively (current-buffer) (point))))
 (evil-define-key 'normal 'global "zu" 'origami-undo)
 (evil-define-key 'normal 'global "zU" 'origami-redo)
 
@@ -1170,7 +1177,7 @@
 (add-hook 'css-mode-hook (lambda () (modify-syntax-entry ?- "w") (modify-syntax-entry ?_ "w")))
 
 ;; indent settings
-(setq-default indent-tabs-mode nil) ; use space instead of tabs
+(setq-default indent-tabs-mode t) ; use tabs instead of space
 (setq-default tab-width 4)
 (setq-default python-indent 4)
 (setq-default c-basic-offset 4)
@@ -1180,11 +1187,15 @@
     (setq-local python-indent 4)
     (setq-local evil-shift-width python-indent)
     (setq-local tab-width python-indent)
+    (setq-local indent-tabs-mode t)
 ))
 (add-hook 'web-mode-hook (lambda ()
     (setq-local evil-shift-width 2)
     (setq-local tab-width 2)
 ))
+
+;; attempt to improve font-lock performance
+(setq jit-lock-defer-time 0)
 
 ;; UTF-8 as default encoding
 (set-language-environment "UTF-8")
@@ -1202,6 +1213,9 @@
 
 ;; auto load if changed
 (global-auto-revert-mode t)
+
+;; profiler
+(setq profiler-max-stack-depth 64)
 
 ;; auto start server if on GUI
 (and window-system (server-start))
@@ -1247,6 +1261,15 @@
 (setq window-divider-default-right-width 2)
 (setq window-divider-default-bottom-width 2)
 (window-divider-mode 1)
+
+;; indentation guide using whitespace mode
+(setq whitespace-style '(
+    tab-mark face tabs
+))
+(setq whitespace-display-mappings '(
+    (tab-mark ?\t   [?\| ?\t])
+))
+(global-whitespace-mode 1)
 
 ;; flyspell
 (setq flyspell-issue-message-flag nil)

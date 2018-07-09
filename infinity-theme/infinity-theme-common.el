@@ -83,7 +83,7 @@
     (bg11          (if (eq theme 'dark) (if (has-true-color) "#303136" "#262626") (if (has-true-color) "#EBEBEB" "#ffffff")))
     (bg12          (if (eq theme 'dark) (if (has-true-color) "#37383D" "#262626") (if (has-true-color) "#E0E0E0" "#ffffff")))
     (bg13          (if (eq theme 'dark) (if (has-true-color) "#1B1C1F" "#262626") (if (has-true-color) "#D2D2D2" "#ffffff")))
-    (bg14          (if (eq theme 'dark) (if (has-true-color) "#3B3D42" "#262626") (if (has-true-color) "#D2D2D2" "#ffffff")))
+    (bg14          (if (eq theme 'dark) (if (has-true-color) "#404147" "#262626") (if (has-true-color) "#C7C7C7" "#ffffff")))
     (bg2           (if (eq theme 'dark) (if (has-true-color) "#202126" "#1c1c1c") (if (has-true-color) "#e9e9e9" "#e4e4e4")))
     (bg3           (if (eq theme 'dark) (if (has-true-color) "#0a1014" "#121212") (if (has-true-color) "#dedede" "#d0d0d0")))
     (bg4           (if (eq theme 'dark) (if (has-true-color) "#080a14" "#080808") (if (has-true-color) "#dadada" "#bcbcbc")))
@@ -692,7 +692,7 @@
     `(neo-root-dir-face ((,class (:foreground ,func :inherit bold :height 1.0))))
 
 ;;;;; org
-    `(org-agenda-clocking ((,class (:background ,green-bg-s :inherit bold))))
+    `(org-agenda-clocking ((,class (:background ,green-bg-s :inherit bold :foreground ,comp))))
     `(org-agenda-date ((,class (:foreground ,var :height 1.1))))
     `(org-agenda-date-today ((,class (:foreground ,keyword :inherit bold :height 1.3))))
     `(org-agenda-date-weekend ((,class (:inherit bold :foreground ,var))))
@@ -887,7 +887,8 @@
     `(whitespace-space ((,class (:background nil :foreground ,act2))))
     `(whitespace-space-after-tab ((,class (:background nil :foreground ,yellow))))
     `(whitespace-space-before-tab ((,class (:background nil :foreground ,yellow))))
-    `(whitespace-tab ((,class (:background nil :foreground ,act2))))
+    ;; `(whitespace-tab ((,class (:background nil :foreground ,act2))))
+    `(whitespace-tab ((,class (:background nil :foreground ,bg14)))) ; indentation guide
     `(whitespace-trailing ((,class (:background ,err :foreground ,war))))
 
 ;;;;; window-divider

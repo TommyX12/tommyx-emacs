@@ -3,8 +3,13 @@
 (require 'org-super-agenda)
 (require 'org-pomodoro)
 
-;; settings
-(add-hook 'org-mode-hook (lambda () (interactive) (org-indent-mode))) ; use clean view
+;; startup settings
+(add-hook 'org-mode-hook (lambda () (interactive)
+	(setq-local indent-tabs-mode nil) ; use space instead of tabs
+))
+
+;; use clean (indented) view
+(setq org-startup-indented t)
 
 ;; check if org-notes-dir exists.
 ;; (when (boundp 'org-agenda-dir)
@@ -43,6 +48,9 @@
     (:name "Secondary"
         :and (:priority "C")
     )
+	(:name "Other Items"
+		:anything
+	)
 ))
 
 ;; clocking
