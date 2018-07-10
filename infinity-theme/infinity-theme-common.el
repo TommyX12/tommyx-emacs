@@ -82,7 +82,7 @@
     (bg1           (if (eq theme 'dark) (if (has-true-color) "#292a2e" "#262626") (if (has-true-color) "#f4f4f4" "#ffffff")))
     (bg11          (if (eq theme 'dark) (if (has-true-color) "#303136" "#262626") (if (has-true-color) "#EBEBEB" "#ffffff")))
     (bg12          (if (eq theme 'dark) (if (has-true-color) "#37383D" "#262626") (if (has-true-color) "#E0E0E0" "#ffffff")))
-    (bg13          (if (eq theme 'dark) (if (has-true-color) "#1B1C1F" "#262626") (if (has-true-color) "#D2D2D2" "#ffffff")))
+    (bg13          (if (eq theme 'dark) (if (has-true-color) "#1B1C1F" "#262626") (if (has-true-color) "#D4D4D4" "#ffffff")))
     (bg14          (if (eq theme 'dark) (if (has-true-color) "#404147" "#262626") (if (has-true-color) "#C7C7C7" "#ffffff")))
     (bg2           (if (eq theme 'dark) (if (has-true-color) "#202126" "#1c1c1c") (if (has-true-color) "#e9e9e9" "#e4e4e4")))
     (bg3           (if (eq theme 'dark) (if (has-true-color) "#0a1014" "#121212") (if (has-true-color) "#dedede" "#d0d0d0")))
