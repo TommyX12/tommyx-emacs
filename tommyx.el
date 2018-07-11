@@ -112,7 +112,18 @@
 (use-package swiper :ensure t)
 (use-package which-key :ensure t
 	:config
-	;; (setq which-key-popup-type 'side-window)
+	(which-key-mode 1)
+	(setq which-key-popup-type 'side-window)
+	(setq which-key-sort-order 'which-key-prefix-then-key-order-reverse)
+	(setq which-key-idle-delay 0.5)
+	(setq which-key-allow-evil-operators t)
+	(setq which-key-show-operator-state-maps t)
+	(setq which-key-binding-filter-function
+		(lambda (cell prefix)
+			(cond
+			((string-match "move to window 1" (cdr cell)) '("[0-9]" . "move to window [0-9]"))
+			((string-match "move to window [0-9]" (cdr cell)) nil)
+			(cell))))
 )
 (use-package spacemacs-theme :ensure t :defer t)
 (use-package doom-themes :ensure t :defer t)
@@ -156,7 +167,10 @@
 (use-package powerline :ensure t)
 (use-package powerline-evil :ensure t)
 (use-package spaceline :ensure t)
-(use-package window-numbering :ensure t)
+(use-package winum :ensure t
+	:config
+	(winum-mode)
+)
 (use-package which-func :ensure t)
 (use-package git-gutter :ensure t)
 (use-package yascroll :ensure t)
@@ -230,12 +244,12 @@
 (dashboard-setup-startup-hook)
 (add-hook 'dashboard-mode-hook (lambda () (hl-line-mode 1)))
 
-;; window-numbering
-(window-numbering-mode)
-
 ;; yascroll
 (global-yascroll-bar-mode 1)
 (setq yascroll:delay-to-hide nil)
+; disable in insert mode
+(add-hook 'evil-insert-state-entry-hook (lambda () (yascroll-bar-mode -1)))
+(add-hook 'evil-insert-state-exit-hook (lambda () (yascroll-bar-mode 1)))
 
 ;; beacon
 (setq beacon-blink-when-focused nil) ; may cause problem
@@ -247,6 +261,9 @@
 (setq beacon-size 15)
 (setq beacon-color "#2499ff")
 (beacon-mode 1)
+; disable in insert mode
+(add-hook 'evil-insert-state-entry-hook (lambda () (beacon-mode -1)))
+(add-hook 'evil-insert-state-exit-hook (lambda () (beacon-mode 1)))
 
 ;; git gutter
 (setq
@@ -496,12 +513,6 @@
 
 ;; flycheck
 (global-flycheck-mode)
-
-;; which key
-(which-key-mode 1)
-(setq which-key-idle-delay 0.5)
-(setq which-key-allow-evil-operators t)
-(setq which-key-show-operator-state-maps t)
 
 ;; projectile
 (setq projectile-enable-caching t)
@@ -785,25 +796,25 @@
 	"hF" '(helm-for-files
 		:which-key "helm for files")
 
-	"0" '((lambda () (interactive) (select-window-0) (delayed-mode-line-update))
+	"0" '((lambda () (interactive) (winum-select-window-0-or-10) (delayed-mode-line-update))
 		:which-key "move to window 0")
-	"1"	 '((lambda () (interactive) (select-window-1) (delayed-mode-line-update))
+	"1"	 '((lambda () (interactive) (winum-select-window-1) (delayed-mode-line-update))
 		:which-key "move to window 1")
-	"2"	 '((lambda () (interactive) (select-window-2) (delayed-mode-line-update))
+	"2"	 '((lambda () (interactive) (winum-select-window-2) (delayed-mode-line-update))
 		:which-key "move to window 2")
-	"3"	 '((lambda () (interactive) (select-window-3) (delayed-mode-line-update))
+	"3"	 '((lambda () (interactive) (winum-select-window-3) (delayed-mode-line-update))
 		:which-key "move to window 3")
-	"4"	 '((lambda () (interactive) (select-window-4) (delayed-mode-line-update))
+	"4"	 '((lambda () (interactive) (winum-select-window-4) (delayed-mode-line-update))
 		:which-key "move to window 4")
-	"5"	 '((lambda () (interactive) (select-window-5) (delayed-mode-line-update))
+	"5"	 '((lambda () (interactive) (winum-select-window-5) (delayed-mode-line-update))
 		:which-key "move to window 5")
-	"6"	 '((lambda () (interactive) (select-window-6) (delayed-mode-line-update))
+	"6"	 '((lambda () (interactive) (winum-select-window-6) (delayed-mode-line-update))
 		:which-key "move to window 6")
-	"7"	 '((lambda () (interactive) (select-window-7) (delayed-mode-line-update))
+	"7"	 '((lambda () (interactive) (winum-select-window-7) (delayed-mode-line-update))
 		:which-key "move to window 7")
-	"8"	 '((lambda () (interactive) (select-window-8) (delayed-mode-line-update))
+	"8"	 '((lambda () (interactive) (winum-select-window-8) (delayed-mode-line-update))
 		:which-key "move to window 8")
-	"9"	 '((lambda () (interactive) (select-window-9) (delayed-mode-line-update))
+	"9"	 '((lambda () (interactive) (winum-select-window-9) (delayed-mode-line-update))
 		:which-key "move to window 9")
 
 	"TAB" '(evil-buffer
@@ -812,6 +823,10 @@
 	"q" '(kill-this-buffer
 		:which-key "kill current buffer")
 )
+; create fake key to represent move to window keys
+(push '(("SPC 0") . ("SPC [0-9]" . "move to window [0-9]")) which-key-replacement-alist)
+; hide other keys
+(push '(("SPC [1-9]") . t) which-key-replacement-alist)
 
 ;; evil
 

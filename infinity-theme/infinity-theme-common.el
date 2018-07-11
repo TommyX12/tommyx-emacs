@@ -108,7 +108,7 @@
     (head3-bg      (if (eq theme 'dark) (if (has-true-color) "#293235" "#262626") (if (has-true-color) "#edf2e9" "#ffffff")))
     (head4         (if (eq theme 'dark) (if (has-true-color) "#b1951d" "#875f00") (if (has-true-color) "#b1951d" "#875f00")))
     (head4-bg      (if (eq theme 'dark) (if (has-true-color) "#32322c" "#262626") (if (has-true-color) "#f6f1e1" "#ffffff")))
-    (highlight     (if (eq theme 'dark) (if (has-true-color) "#3F4352" "#444444") (if (has-true-color) "#C8C8EB" "#d7d7ff")))
+    (highlight     (if (eq theme 'dark) (if (has-true-color) "#3F4352" "#444444") (if (has-true-color) "#C8D1EB" "#d7d7ff")))
     (highlight-dim (if (eq theme 'dark) (if (has-true-color) "#2B3747" "#444444") (if (has-true-color) "#C5C5E0" "#d7d7ff")))
     (keyword       (if (eq theme 'dark) (if (has-true-color) "#4f97d7" "#268bd2") (if (has-true-color) "#3a81c3" "#268bd2")))
     (lnum          (if (eq theme 'dark) (if (has-true-color) "#505050" "#444444") (if (has-true-color) "#a8b2bf" "#af87af")))
@@ -269,14 +269,14 @@
     `(diff-hl-insert ((,class :background ,green-bg :foreground ,green)))
 
 ;;;;; dired
-    `(dired-directory ((,class (:foreground ,keyword :background ,bg1 :inherit bold))))
+    `(dired-directory ((,class (:foreground ,keyword :background nil :inherit bold))))
     `(dired-flagged ((,class (:foreground ,red))))
     `(dired-header ((,class (:foreground ,comp :inherit bold))))
     `(dired-ignored ((,class (:inherit shadow))))
     `(dired-mark ((,class (:foreground ,comp :inherit bold))))
     `(dired-marked ((,class (:foreground ,magenta :inherit bold))))
     `(dired-perm-write ((,class (:foreground ,base :underline t))))
-    `(dired-symlink ((,class (:foreground ,cyan :background ,bg1 :inherit bold))))
+    `(dired-symlink ((,class (:foreground ,cyan :background nil :inherit bold))))
     `(dired-warning ((,class (:foreground ,war))))
 
 ;;;;; ediff
@@ -813,9 +813,9 @@
 ;;;;; swiper
     `(swiper-line-face ((,class (:background ,highlight :inherit bold))))
     `(swiper-match-face-1 ((,class (:inherit bold))))
-    `(swiper-match-face-2 ((,class (:foreground ,head1 :background ,head1-bg :underline t))))
-    `(swiper-match-face-3 ((,class (:foreground ,head4 :background ,head4-bg :underline t))))
-    `(swiper-match-face-4 ((,class (:foreground ,head3 :background ,head3-bg :underline t))))
+    `(swiper-match-face-2 ((,class (:foreground ,head1 :background ,blue-bg-s :underline t))))
+    `(swiper-match-face-3 ((,class (:foreground ,head4 :background ,blue-bg-s :underline t))))
+    `(swiper-match-face-4 ((,class (:foreground ,head3 :background ,blue-bg-s :underline t))))
 
 ;;;;; tabbar
     `(tabbar-button ((,class (:inherit tabbar-default ))))
