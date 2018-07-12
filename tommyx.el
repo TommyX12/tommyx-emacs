@@ -1272,9 +1272,9 @@
 ;; no backup file
 (setq make-backup-files nil)
 
-;; auto display line numbers
-(add-hook 'prog-mode-hook (lambda () (display-line-numbers-mode)))
-(add-hook 'sgml-mode-hook (lambda () (display-line-numbers-mode)))
+;; auto display line numbers (turned off for performance)
+;; (add-hook 'prog-mode-hook (lambda () (display-line-numbers-mode)))
+;; (add-hook 'sgml-mode-hook (lambda () (display-line-numbers-mode)))
 
 ;; indicate end of buffer
 (add-hook 'prog-mode-hook (lambda () (setq indicate-buffer-boundaries t)))
@@ -1306,6 +1306,10 @@
 (setq window-divider-default-right-width 2)
 (setq window-divider-default-bottom-width 2)
 (window-divider-mode 1)
+
+;; fringe margin
+(setq-default left-fringe-width 16)
+(setq-default right-fringe-width 8)
 
 ;; indentation guide using whitespace mode
 (setq whitespace-style '(

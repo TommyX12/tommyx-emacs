@@ -278,7 +278,7 @@
 	(kbd "C-j") 'evil-org-next-visible-heading
 	(kbd "C-k") 'evil-org-previous-visible-heading
 )
-(evil-define-key 'motion 'global ",,n" 'org-narrow-to-subtree)
+(evil-define-key 'motion 'org-mode-map ",,n" 'org-narrow-to-subtree)
 ; org agenda
 (general-define-key
 	:keymaps 'org-agenda-mode-map

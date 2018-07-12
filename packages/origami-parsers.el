@@ -47,8 +47,6 @@ position in the CONTENT."
                           acc))))
       (reverse acc))))
 
-(message "!!!!!!!!!!!!!!werpiowuepriowuepriwu")
-
 (defun origami-indent-parser (create)
   (cl-labels ((lines (string) (origami-get-positions string ".*?\r?\n"))
               (annotate-levels (lines)
