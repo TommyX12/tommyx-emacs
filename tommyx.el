@@ -976,6 +976,15 @@
 (evil-define-key 'normal 'global "}" (lambda () (interactive) (evil-shift-right-line 1)))
 (evil-define-key 'visual 'global "{" "<gv")
 (evil-define-key 'visual 'global "}" ">gv")
+; use ( and ) to do parenthesis motion
+(evil-define-motion move-to-next-parens () :type exclusive
+	(down-list))
+(evil-define-motion move-to-prev-parens () :type exclusive
+	(backward-up-list))
+(evil-define-key 'normal 'global "(" 'move-to-prev-parens)
+(evil-define-key 'normal 'global ")" 'move-to-next-parens)
+(evil-define-key 'visual 'global "(" 'move-to-prev-parens)
+(evil-define-key 'visual 'global ")" 'move-to-next-parens)
 ; move cursor to comfortable reading position
 (evil-define-key 'motion 'global ",z" (lambda () (interactive) (recenter-top-bottom (/ (* (window-total-height) 2) 7))))
 ; substitute command
@@ -1346,7 +1355,7 @@
 
 ;; input response (experimental)
 ;; (setq input-feedback-ov nil)
-;; (defun show-input-feedback (&rest _)
+;; (defun before-insert-advice (&rest _)
 ;; 	"Flash input feedback."
 ;; 	;; (when input-feedback-ov
 ;; 	;; 	(delete-overlay input-feedback-ov)
@@ -1359,12 +1368,14 @@
 ;; 	;; 	(redisplay)
 ;; 	;; )
 ;; )
-;; (defun remove-input-feedback (&rest _)
-;; 	"Removes input feedback."
-;; 	;; (redisplay t)
-;; )
-;; (advice-add 'self-insert-command :before #'show-input-feedback)
-;; (advice-add 'self-insert-command :after #'remove-input-feedback)
+(defun after-insert-advice (&rest _)
+	(redisplay t)
+	; change to the following if any problem arises.
+	;; (when (eq evil-state 'insert)
+	;; 	(redisplay t))
+)
+;; (advice-add 'self-insert-command :before #'before-insert-advice)
+(advice-add 'self-insert-command :after #'after-insert-advice)
 
 ;; indentation guide using whitespace mode
 (setq whitespace-style '(

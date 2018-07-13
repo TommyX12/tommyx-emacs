@@ -169,6 +169,9 @@
 	"jt" '(org-todo
 		:which-key "org todo")
 
+	"jT" '(org-shiftleft
+		:which-key "org todo back")
+
 	"js" '(org-schedule
 		:which-key "org schedule")
 
