@@ -20,6 +20,12 @@
 ;; refiling
 (setq org-refile-targets '((nil . (:level . 1)) (nil . (:level . 2))))
 
+;; priorities
+(setq org-lowest-priority ?3)
+(setq org-highest-priority ?1)
+(setq org-default-priority ?3)
+(setq org-priority-faces '((?1 . (:inherit error :bold t)) (?2 . (:inherit warning :bold t))  (?3 . (:inherit success :bold t))))
+
 ;; ivy integration
 (setq counsel-org-headline-display-style 'path)
 (setq counsel-org-headline-path-separator "/")
@@ -39,16 +45,16 @@
 		:deadline today
 	)
 	(:name "Important + Urgent"
-		:and (:priority "A")
+		:and (:priority "1")
 	)
 	(:name "Primary"
-		:and (:priority "B")
+		:and (:priority "2")
 	)
 	(:name "Recurring"
 		:and (:tag ("recurring"))
 	)
 	(:name "Secondary"
-		:and (:priority "C")
+		:and (:priority "3")
 	)
 	(:name "Other Items"
 		:anything
@@ -157,6 +163,9 @@
 	"jr" '(org-refile
 		:which-key "org refile")
 
+	"jc" '(org-copy
+		:which-key "org copy")
+
 	"jt" '(org-todo
 		:which-key "org todo")
 
@@ -210,8 +219,10 @@
   ;; C-c c: initiate org capture. can be used everywhere.
 
   ;; remove bindings
+	(kbd "M-h") nil
 	(kbd "M-j") nil
 	(kbd "M-k") nil
+	(kbd "M-l") nil
 
 	(kbd "C-c C-.") 'org-time-stamp-inactive ; with C-u as previx also add time.
 

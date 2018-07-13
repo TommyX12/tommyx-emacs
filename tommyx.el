@@ -167,6 +167,20 @@
 (use-package powerline :ensure t)
 (use-package powerline-evil :ensure t)
 (use-package spaceline :ensure t)
+;; (use-package ecb :ensure t
+;; 	:config
+;; 	(require 'ecb)
+;; 	(setq ecb-layout-name "right1")
+;; )
+;; (use-package sublimity :ensure t
+;; 	:config
+;; 	(require 'sublimity-scroll
+;; 	(require 'sublimity-map)
+;; 	(require 'sublimity-attractive)
+;; )
+;; (use-package minimap :ensure t
+;; 	:config
+;; )
 (use-package winum :ensure t
 	:config
 	(winum-mode)
@@ -247,6 +261,7 @@
 ;; yascroll
 (global-yascroll-bar-mode 1)
 (setq yascroll:delay-to-hide nil)
+(setq yascroll:scroll-bar '(right-fringe left-fringe text-area))
 ; disable in insert mode
 (add-hook 'evil-insert-state-entry-hook (lambda () (yascroll-bar-mode -1)))
 (add-hook 'evil-insert-state-exit-hook (lambda () (yascroll-bar-mode 1)))
@@ -379,6 +394,8 @@
 (add-hook 'ycmd-mode-hook 'company-ycmd-setup)
 (add-hook 'ycmd-mode-hook 'flycheck-ycmd-setup)
 (add-hook 'ycmd-mode-hook 'ycmd-eldoc-setup)
+; attempt to improve performance
+(setq company-ycmd-request-sync-timeout 0)
 ; generic file types
 (add-hook 'prog-mode-hook (lambda () (ycmd-mode 1)))
 (add-hook 'text-mode-hook (lambda () (ycmd-mode 1)))
@@ -487,6 +504,7 @@
 (setq neo-window-width 30)
 (setq neo-vc-integration '(face))
 (add-hook 'after-init-hook (lambda () (neotree-show)))
+(setq neo-mode-line-type 'default) ; for performance reason
 
 ;; evil-collection
 (delete 'neotree evil-collection-mode-list)
@@ -678,6 +696,15 @@
 
 ;;; key bindings
 
+;; profiler
+(general-define-key
+	:keymaps 'override
+
+	"C-M-p" (lambda () (interactive) (profiler-start 'cpu+mem))
+	"C-M-S-p" (lambda () (interactive)
+		(profiler-report) (profiler-stop) (profiler-reset))
+)
+
 ;; use esc (same as "C-[") for escape
 (global-set-key (kbd "ESC") 'keyboard-escape-quit)
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
@@ -704,8 +731,14 @@
 	"j" '(global-leader-mode-specific
 		:which-key "mode specific")
 
+	"is" '(counsel-semantic-or-imenu
+		:which-key "counsel semantic")
+
 	"x" '(counsel-M-x
 		:which-key "counsel M-x")
+
+	":" '(eval-expression
+		:which-key "eval lisp")
 
 	"hx" '(helm-M-x
 		:which-key "helm M-x")
@@ -1067,7 +1100,7 @@
 
 ;; ivy, counsel and swiper
 (general-define-key
-	:keymaps '(swiper-map ivy-minibuffer-map)
+	:keymaps '(swiper-map ivy-minibuffer-map counsel-imenu-map)
 	"C-j" 'ivy-next-line
 	"C-k" 'ivy-previous-line
 	"C-S-j" 'ivy-scroll-up-command
@@ -1118,7 +1151,7 @@
 (evil-define-key 'normal 'global (kbd "C-k") 'origami-previous-fold)
 (evil-define-key 'normal 'global (kbd "C-l") 'origami-recursively-toggle-node)
 (evil-define-key 'normal 'global "Z" 'origami-close-all-nodes)
-(evil-define-key 'normal 'global "X" 'origami-open-all-nodes)
+(evil-define-key 'normal 'global "X" (lambda () (interactive) (origami-open-all-nodes (current-buffer)) (origami-mode -1) (origami-mode 1)))
 (evil-define-key 'normal 'global "zx" (lambda () (interactive)
 	(origami-show-only-node (current-buffer) (point))
 	(origami-open-node-recursively (current-buffer) (point))))
@@ -1309,7 +1342,29 @@
 
 ;; fringe margin
 (setq-default left-fringe-width 16)
-(setq-default right-fringe-width 8)
+(setq-default right-fringe-width 10)
+
+;; input response (experimental)
+;; (setq input-feedback-ov nil)
+;; (defun show-input-feedback (&rest _)
+;; 	"Flash input feedback."
+;; 	;; (when input-feedback-ov
+;; 	;; 	(delete-overlay input-feedback-ov)
+;; 	;; )
+;; 	;; (when (eq evil-state 'insert)
+;; 	;; 	(setq input-feedback-ov (make-overlay (point) (- (point) 1)))
+;; 	;; 	(overlay-put input-feedback-ov 'priority 9999)
+;; 	;; 	(overlay-put input-feedback-ov 'window (selected-window))
+;; 	;; 	(overlay-put input-feedback-ov 'face 'evil-goggles-yank-face)
+;; 	;; 	(redisplay)
+;; 	;; )
+;; )
+;; (defun remove-input-feedback (&rest _)
+;; 	"Removes input feedback."
+;; 	;; (redisplay t)
+;; )
+;; (advice-add 'self-insert-command :before #'show-input-feedback)
+;; (advice-add 'self-insert-command :after #'remove-input-feedback)
 
 ;; indentation guide using whitespace mode
 (setq whitespace-style '(
