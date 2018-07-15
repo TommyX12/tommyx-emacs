@@ -72,12 +72,14 @@
 
 
 ;;; install packages
+(require 'font-lock+)
 (use-package emms :ensure t
 	:config 
 	(require 'emms-setup)
 	(emms-all)
 	(emms-default-players))
 (use-package undo-tree :ensure t)
+(use-package all-the-icons :ensure t)
 (use-package evil :ensure t)
 (use-package evil-collection :ensure t :after evil)
 (use-package evil-visualstar :ensure t)
@@ -94,6 +96,7 @@
 (use-package evil-search-highlight-persist :ensure t)
 (use-package evil-nerd-commenter :ensure t)
 (use-package projectile :ensure t)
+(require 'per-frame-header-mode-line)
 (use-package smex :ensure t)
 (use-package helm :ensure t)
 (use-package helm-flx :ensure t)
@@ -106,7 +109,11 @@
 (use-package helm-projectile :ensure t :after projectile)
 (use-package swiper-helm :ensure t)
 (use-package ivy :ensure t)
-(use-package ivy-posframe :ensure t)
+(use-package ivy-posframe :ensure t :after ivy)
+(use-package all-the-icons-ivy :ensure t :after ivy
+	:config
+	(all-the-icons-ivy-setup)
+)
 (use-package counsel :ensure t)
 (use-package counsel-projectile :ensure t)
 (use-package swiper :ensure t)
@@ -167,6 +174,10 @@
 (use-package powerline :ensure t)
 (use-package powerline-evil :ensure t)
 (use-package spaceline :ensure t)
+;; (use-package spaceline-all-the-icons :ensure t :after all-the-icons spaceline
+;; 	:config
+;; 	(spaceline-all-the-icons-theme)
+;; )
 ;; (use-package ecb :ensure t
 ;; 	:config
 ;; 	(require 'ecb)
@@ -197,6 +208,11 @@
 (use-package org-super-agenda :ensure t)
 (use-package org-journal :ensure t)
 (use-package org-pomodoro :ensure t)
+(use-package org-bullets :ensure t
+	:config
+	(setq org-bullets-bullet-list '("●"))
+	(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+)
 (use-package load-relative :ensure t)
 (use-package rainbow-mode :ensure t)
 (use-package highlight-numbers :ensure t)
@@ -413,6 +429,7 @@
 (show-smartparens-global-mode 1)
 (setq sp-show-pair-from-inside t)
 (setq smartparens-strict-mode nil)
+(setq sp-cancel-autoskip-on-backward-movement nil)
 ; auto expanison of brackets
 (sp-local-pair 'prog-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
 (sp-local-pair 'text-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
@@ -420,6 +437,8 @@
 (sp-local-pair 'text-mode "[" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
 (sp-local-pair 'prog-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
 (sp-local-pair 'text-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
+(defun remove-parens-overlay (&rest _) (sp-remove-active-pair-overlay))
+(advice-add 'evil-normal-state :after #'remove-parens-overlay)
 
 ;; evil
 (evil-mode 1) ; use evil-mode at startup
@@ -493,8 +512,8 @@
 (evil-goggles-mode)
 
 ;; neotree
-; (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
-(setq neo-theme 'nerd)
+(setq neo-theme (if (display-graphic-p) 'icons 'nerd))
+;; (setq neo-theme 'nerd)
 (setq neo-show-hidden-files t)
 (add-hook 'neotree-mode-hook (lambda () (hl-line-mode 1)))
 (setq neo-confirm-change-root 'off-p)
@@ -540,6 +559,8 @@
 ;; projectile
 (setq projectile-enable-caching t)
 (projectile-mode)
+; neotree integration
+(setq projectile-switch-project-action 'neotree-projectile-action)
 
 ;; helm
 (require 'helm-config)
@@ -626,6 +647,9 @@
   (if (not (ivy-posframe-workable-p))
 	  (ivy-display-function-fallback str)
 	(with-selected-window (ivy--get-window ivy-last)
+	  (when (get-buffer ivy-posframe-buffer)
+      (with-current-buffer ivy-posframe-buffer
+      (setq-local tab-width 2)))
 	  (posframe-show
 	   ivy-posframe-buffer
 	   :font ivy-posframe-font
@@ -1007,8 +1031,8 @@
 (evil-define-key 'motion 'global ",N" (lambda () (interactive) (neotree-find)))
 (evil-define-key 'normal neotree-mode-map
 	; apparently writing neotree-mode-map instead of 'neotree-mode-map works
-	"h" (neotree-make-executor :dir-fn 'neo-open-dir)
-	"l" (neotree-make-executor :dir-fn 'neo-open-dir)
+	;; "h" (neotree-make-executor :dir-fn 'neo-open-dir)
+	;; "l" (neotree-make-executor :dir-fn 'neo-open-dir)
 	"R" 'neotree-refresh
 	"r" 'neotree-refresh
 	"u" 'neotree-select-up-node
@@ -1274,12 +1298,19 @@
 	(setq-local evil-shift-width tab-width)
 ))
 (add-hook 'web-mode-hook (lambda ()
+  (setq-local tab-width 2)
+  (setq-local evil-shift-width tab-width)
+))
+(add-hook 'emacs-lisp-mode-hook (lambda ()
 	(setq-local tab-width 2)
 	(setq-local evil-shift-width tab-width)
 ))
 
 ;; attempt to improve font-lock performance
 (setq jit-lock-defer-time 0)
+
+;; attempt to improve font performance
+(setq inhibit-compacting-font-caches t)
 
 ;; attempt to improve long line performance
 (setq-default bidi-display-reordering nil)
@@ -1369,10 +1400,10 @@
 ;; 	;; )
 ;; )
 (defun after-insert-advice (&rest _)
-	(redisplay t)
+	;; (redisplay t)
 	; change to the following if any problem arises.
-	;; (when (eq evil-state 'insert)
-	;; 	(redisplay t))
+	(when (eq evil-state 'insert)
+		(redisplay t))
 )
 ;; (advice-add 'self-insert-command :before #'before-insert-advice)
 (advice-add 'self-insert-command :after #'after-insert-advice)
