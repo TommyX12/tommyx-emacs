@@ -18,7 +18,7 @@
 (setq org-todo-keywords '((sequence "TODO" "DONE")))
 
 ;; refiling
-(setq org-refile-targets '((nil . (:level . 1)) (nil . (:level . 2))))
+(setq org-refile-targets '((nil . (:level . 1)) (nil . (:level . 2)) (org-agenda-files . (:tag . "target"))))
 
 ;; priorities
 (setq org-lowest-priority ?3)
@@ -157,6 +157,14 @@
 
 	"jf" '(counsel-org-goto
 		:which-key "org goto")
+)
+(general-define-key
+	:keymaps 'org-mode-map
+	:states '(visual)
+	:prefix "SPC"
+
+	"js" '(org-sort
+		:which-key "org sort")
 )
 (general-define-key
 	:keymaps 'org-mode-map

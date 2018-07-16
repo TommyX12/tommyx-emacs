@@ -1024,6 +1024,11 @@
 ; narrowing
 (evil-define-key 'motion 'global ",,n" 'narrow-to-defun)
 (evil-define-key 'motion 'global ",,N" 'widen)
+; use enter and S-enter to open blank lines. TODO implement numeric prefix arg
+(evil-define-key 'normal 'global (kbd "RET") (lambda () (interactive) (save-excursion (evil-insert-newline-below))))
+(evil-define-key 'normal 'global (kbd "<return>") (lambda () (interactive) (save-excursion (evil-insert-newline-below))))
+(evil-define-key 'normal 'global (kbd "S-RET") (lambda () (interactive) (save-excursion (evil-insert-newline-above))))
+(evil-define-key 'normal 'global (kbd "<S-return>") (lambda () (interactive) (save-excursion (evil-insert-newline-above))))
 ; switch color scheme
 ;; (evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme light-theme t)))
 ;; (evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme dark-theme t)))
