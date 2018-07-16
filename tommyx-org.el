@@ -104,18 +104,21 @@
 
 ;; misc
 (setq org-M-RET-may-split-line nil)
+(setq org-fontify-done-headline t)
+(setq org-fontify-whole-heading-line t)
+(setq org-super-agenda-fontify-whole-header-line t) ; this doesn't work
 
 ;; capture templates
 (setq org-capture-templates '(
 	("I" "Important" entry
 	(file+headline "GTD.org" "Important")
-	"* %? %i")
+	"* %?%i")
 	("i" "Not important" entry
 	(file+headline "GTD.org" "Not important")
-	"* %? %i")
+	"* %?%i")
 	("m" "Misc TODO" entry
 	(file+headline "GTD.org" "Misc")
-	"* TODO %? %i")
+	"* TODO %?%i")
 ))
 
 ;; checks if org-notes-dir exists.
@@ -238,14 +241,14 @@
 	(kbd "C-S-l") 'org-shiftmetaright ; demote/indent
 	(kbd "M-h") help-map
 
-	(kbd "M-RET") 'org-insert-heading-respect-content
-	(kbd "M-S-RET") 'org-insert-todo-heading-respect-content
-	(kbd "C-RET") 'org-insert-subheading
-	(kbd "C-S-RET") 'org-insert-todo-subheading
-	(kbd "<M-return>") 'org-insert-heading-respect-content
-	(kbd "<M-S-return>") 'org-insert-todo-heading-respect-content
-	(kbd "<C-return>") 'org-insert-subheading
-	(kbd "<C-S-return>") 'org-insert-todo-subheading
+	(kbd "C-RET") 'org-insert-heading-respect-content
+	(kbd "C-S-RET") 'org-insert-todo-heading-respect-content
+	(kbd "M-RET") 'org-insert-subheading
+	(kbd "M-S-RET") 'org-insert-todo-subheading
+	(kbd "<C-return>") 'org-insert-heading-respect-content
+	(kbd "<C-S-return>") 'org-insert-todo-heading-respect-content
+	(kbd "<M-return>") 'org-insert-subheading
+	(kbd "<M-S-return>") 'org-insert-todo-subheading
 
 	(kbd "C-h") (lambda () (interactive) (outline-hide-subtree))
 	(kbd "C-j") 'org-next-visible-heading
@@ -269,14 +272,14 @@
 
 	(kbd "C-c C-.") 'org-time-stamp-inactive ; with C-u as previx also add time.
 
-	(kbd "M-RET") 'org-insert-heading-respect-content
-	(kbd "M-S-RET") 'org-insert-todo-heading-respect-content
-	(kbd "C-RET") 'org-insert-subheading
-	(kbd "C-S-RET") 'org-insert-todo-subheading
-	(kbd "<M-return>") 'org-insert-heading-respect-content
-	(kbd "<M-S-return>") 'org-insert-todo-heading-respect-content
-	(kbd "<C-return>") 'org-insert-subheading
-	(kbd "<C-S-return>") 'org-insert-todo-subheading
+	(kbd "C-RET") 'org-insert-heading-respect-content
+	(kbd "C-S-RET") 'org-insert-todo-heading-respect-content
+	(kbd "M-RET") 'org-insert-subheading
+	(kbd "M-S-RET") 'org-insert-todo-subheading
+	(kbd "<C-return>") 'org-insert-heading-respect-content
+	(kbd "<C-S-return>") 'org-insert-todo-heading-respect-content
+	(kbd "<M-return>") 'org-insert-subheading
+	(kbd "<M-S-return>") 'org-insert-todo-subheading
 
 	(kbd "M-h") help-map
 )

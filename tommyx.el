@@ -561,6 +561,7 @@
 (projectile-mode)
 ; neotree integration
 (setq projectile-switch-project-action 'neotree-projectile-action)
+(setq projectile-globally-ignored-directories (append '("node_modules" "dist" "bin" "build") projectile-globally-ignored-directories))
 
 ;; helm
 (require 'helm-config)
@@ -820,8 +821,10 @@
 
 	"ii" '(ivy-resume
 		:which-key "ivy resume")
-	"ip" '(counsel-projectile
-		:which-key "counsel projectile")
+	;; "ip" '(counsel-projectile
+	;; 	:which-key "counsel projectile")
+	"ip" '(counsel-projectile-find-file
+		:which-key "counsel projectile files")
 	"i <tab>" '(projectile-find-other-file
 		:which-key "counsel projectile other file")
 	"i TAB" '(projectile-find-other-file
@@ -1307,7 +1310,7 @@
 ))
 
 ;; attempt to improve font-lock performance
-(setq jit-lock-defer-time 0)
+;; (setq jit-lock-defer-time 0)
 
 ;; attempt to improve font performance
 (setq inhibit-compacting-font-caches t)
