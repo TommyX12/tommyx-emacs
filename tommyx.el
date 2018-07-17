@@ -89,8 +89,8 @@
 (use-package evil-numbers :ensure t)
 (use-package evil-exchange :ensure t
 	:config
-	(setq evil-exchange-key (kbd ",x"))
-	(setq evil-exchange-cancel-key (kbd ",X"))
+	(setq evil-exchange-key (kbd "x"))
+	(setq evil-exchange-cancel-key (kbd ",x"))
 	(evil-exchange-install)
 )
 (use-package evil-search-highlight-persist :ensure t)
@@ -279,6 +279,9 @@
 ; disable in insert mode
 (add-hook 'evil-insert-state-entry-hook (lambda () (yascroll-bar-mode -1)))
 (add-hook 'evil-insert-state-exit-hook (lambda () (yascroll-bar-mode 1)))
+; auto run on idle timer
+(run-with-idle-timer 0.5 t (lambda ()
+	(when (not (eq evil-state 'insert)) (yascroll:safe-show-scroll-bar))))
 
 ;; beacon
 (setq beacon-blink-when-focused nil) ; may cause problem
@@ -449,6 +452,7 @@
 ;; (advice-add 'evil-ex-search-next :after #'my-center-line)
 ;; (advice-add 'evil-ex-search-previous :after #'my-center-line)
 (advice-add 'evil-ex-search-word-forward :after #'evil-ex-search-previous)
+(advice-add 'evil-ex-search-unbounded-word-forward :after #'evil-ex-search-previous)
 (advice-add 'evil-ex-search-word-backward :after #'evil-ex-search-next)
 (defun my-search-previous (&rest _) (evil-ex-search-previous))
 (defun my-search-next (&rest _) (evil-ex-search-next))
@@ -822,9 +826,9 @@ Useful for a search overview popup."
 	"f" '(swiper-movement
 		:which-key "search")
 
-	"*" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
+	"t" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
 		:which-key "search selection")
-	"C-*" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
+	"T" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
 		:which-key "search selection in all buffers")
 )
 (general-define-key
@@ -837,9 +841,9 @@ Useful for a search overview popup."
 	"F" '(swiper-all
 		:which-key "search in all buffers")
 
-	"*" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
+	"t" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
 		:which-key "search cursor word")
-	"C-*" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
+	"T" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
 		:which-key "search cursor word in all buffers")
 
 	"wh" '((lambda () (interactive) (evil-window-left 1) (delayed-mode-line-update))
@@ -974,6 +978,14 @@ Useful for a search overview popup."
 ; sane tabbing
 (evil-define-key 'insert 'global (kbd "TAB") 'tab-to-tab-stop)
 (evil-define-key 'insert 'global (kbd "<tab>") 'tab-to-tab-stop)
+; use t instead of * for symbol search
+(evil-define-key 'normal 'global "t" 'evil-ex-search-word-forward)
+(evil-define-key 'normal 'global "T" 'evil-ex-search-unbounded-word-forward)
+(evil-define-key 'visual 'global "t" 'evil-visualstar/begin-search-forward)
+; faster surround
+(evil-define-key 'normal 'global "s" 'evil-surround-edit)
+(evil-define-key 'normal 'global "S" 'evil-Surround-edit)
+(evil-define-key 'visual 'global "s" 'evil-surround-region)
 ; scrolling
 (evil-define-key 'motion 'global (kbd "M-j") 'evil-scroll-down)
 (evil-define-key 'motion 'global (kbd "M-k") 'evil-scroll-up)
@@ -1150,8 +1162,8 @@ Useful for a search overview popup."
 ; join with ,j
 (evil-define-key 'normal 'global ",j" 'evil-join)
 (evil-define-key 'visual 'global ",j" 'evil-join)
-; break with ,k
-(evil-define-key 'normal 'global ",k" 'newline)
+; break with ,h
+(evil-define-key 'normal 'global ",h" 'newline)
 
 ;; helm
 ;; (global-set-key (kbd "M-x") 'helm-M-x)
@@ -1191,9 +1203,12 @@ Useful for a search overview popup."
 	"M-k" 'ivy-previous-history-element
 	"C-RET" 'ivy-dispatching-done
 	"<C-return>" 'ivy-dispatching-done
+	"C-S-RET" 'ivy-dispatching-call ; do not exit after. useful for copy.
+	"<C-S-return>" 'ivy-dispatching-call
 	"S-RET" 'ivy-immediate-done ; use exact input, not candidate
 	"<S-return>" 'ivy-immediate-done
 	"C-l" 'ivy-done
+	"C-n" 'ivy-call
 	"C-h" 'ivy-backward-kill-word
 
 	"j" (general-key-dispatch 'self-insert-command
@@ -1203,6 +1218,10 @@ Useful for a search overview popup."
 		"h" 'ivy-backward-kill-word
 		"p" 'ivy-partial ; complete text
 	)
+)
+(general-define-key
+	:keymaps '(swiper-map)
+	"C-n" 'swiper-query-replace
 )
 (general-define-key ; use / to enter directory, not ENTER.
 	:keymaps '(counsel-find-file-map)
