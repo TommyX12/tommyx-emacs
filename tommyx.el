@@ -636,14 +636,7 @@
 	(min-width . 50)
 	(refresh . 1)
 	))
-(setq ivy-display-functions-alist
-	  '((counsel-irony . ivy-posframe-display-at-point)
-		(ivy-completion-in-region . ivy-posframe-display-at-point)
-		(swiper . ivy-posframe-display-at-window-bottom-left)
-		(swiper-multi . ivy-posframe-display-at-window-bottom-left)
-		(t . ivy-posframe-display-at-point)))
-(ivy-posframe-enable)
-(defun ivy-posframe--display (str &optional poshandler) ; override function
+(defun ivy-posframe--display (str &optional poshandler full-width) ; override
   "Show STR in ivy's posframe."
   (if (not (ivy-posframe-workable-p))
 	  (ivy-display-function-fallback str)
@@ -667,10 +660,58 @@
 	   :background-color (face-attribute 'ivy-posframe :background)
 	   :foreground-color (face-attribute 'ivy-posframe :foreground)
 	   :height (truncate (* 1.1 ivy-height))
-	   :width (window-width)
+	   :width (window-width) ; (if full-width (window-width) nil)
 	   :min-height 10
 	   :min-width 50
 	   :override-parameters ivy-posframe-parameters))))
+(defun posframe-poshandler-adaptive-top-bottom (info)
+  "Posframe's position handler.
+
+Get a position which let posframe stay onto current window's
+top or bottom side without blocking center content.
+Useful for a search overview popup."
+  (let* (
+				(posframe (plist-get info :posframe))
+				(parent-frame (plist-get info :parent-frame))
+				(frame-height (frame-pixel-height parent-frame))
+				(window (plist-get info :parent-window))
+				(window-left (window-pixel-left window))
+				(window-top (window-pixel-top window))
+				(window-height (window-pixel-height window))
+				(posframe-height (frame-pixel-height posframe))
+				(modeline-height (window-mode-line-height)))
+		(cond
+		(t; (<= (/ window-height posframe-height) 3.0)
+			(if (<= (+ window-top (/ window-height 2.0)) (/ frame-height 2.0))
+				(cons ; bottom
+					window-left
+					(min (- frame-height modeline-height posframe-height)
+						(+ window-top window-height)
+					)
+				)
+				(cons ; top
+					window-left
+					(max 0
+						(- window-top posframe-height)
+					)
+				)
+			)
+		)
+		;; (t
+		;; 	(cons ; window bottom
+		;; 		window-left
+		;; 		(+ window-top window-height (- 0 modeline-height posframe-height)))
+		;; )
+		)))
+(defun ivy-posframe-display-swiper (str)
+  (ivy-posframe--display str #'posframe-poshandler-adaptive-top-bottom t))
+(setq ivy-display-functions-alist
+	  '((counsel-irony . ivy-posframe-display-at-point)
+		(ivy-completion-in-region . ivy-posframe-display-at-point)
+		(swiper . ivy-posframe-display-swiper)
+		(swiper-multi . ivy-posframe-display-swiper)
+		(t . ivy-posframe-display-at-point)))
+(ivy-posframe-enable)
 ; better UI
 (defun ivy-format-function-custom (cands)
   "Transform CANS into a string for minibuffer."
@@ -1025,10 +1066,12 @@
 (evil-define-key 'motion 'global ",,n" 'narrow-to-defun)
 (evil-define-key 'motion 'global ",,N" 'widen)
 ; use enter and S-enter to open blank lines. TODO implement numeric prefix arg
-(evil-define-key 'normal 'global (kbd "RET") (lambda () (interactive) (save-excursion (evil-insert-newline-below))))
-(evil-define-key 'normal 'global (kbd "<return>") (lambda () (interactive) (save-excursion (evil-insert-newline-below))))
+(evil-define-key 'normal 'global (kbd "C-RET") (lambda () (interactive) (save-excursion (evil-insert-newline-below))))
+(evil-define-key 'normal 'global (kbd "<C-return>") (lambda () (interactive) (save-excursion (evil-insert-newline-below))))
 (evil-define-key 'normal 'global (kbd "S-RET") (lambda () (interactive) (save-excursion (evil-insert-newline-above))))
 (evil-define-key 'normal 'global (kbd "<S-return>") (lambda () (interactive) (save-excursion (evil-insert-newline-above))))
+(evil-define-key 'normal 'global (kbd "C-S-RET") (lambda () (interactive) (save-excursion (evil-insert-newline-above)) (save-excursion (evil-insert-newline-below))))
+(evil-define-key 'normal 'global (kbd "<C-S-return>") (lambda () (interactive) (save-excursion (evil-insert-newline-above)) (save-excursion (evil-insert-newline-below))))
 ; switch color scheme
 ;; (evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme light-theme t)))
 ;; (evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme dark-theme t)))
