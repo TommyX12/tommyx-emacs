@@ -210,8 +210,6 @@
 (use-package org-pomodoro :ensure t)
 (use-package org-bullets :ensure t
 	:config
-	(setq org-bullets-bullet-list '("●"))
-	(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
 )
 (use-package load-relative :ensure t)
 (use-package rainbow-mode :ensure t)
@@ -737,7 +735,9 @@ Useful for a search overview popup."
   (git-gutter:update-all-windows)
   (flycheck-buffer)
   (garbage-collect)
+	(yascroll:safe-show-scroll-bar)
   (message "Done.")
+	(beacon-blink)
   )
 
 
@@ -803,7 +803,7 @@ Useful for a search overview popup."
 	"x" '(counsel-M-x
 		:which-key "counsel M-x")
 
-	":" '(eval-expression
+	";" '(eval-expression
 		:which-key "eval lisp")
 
 	"hx" '(helm-M-x
@@ -1066,12 +1066,9 @@ Useful for a search overview popup."
 (evil-define-key 'motion 'global ",,n" 'narrow-to-defun)
 (evil-define-key 'motion 'global ",,N" 'widen)
 ; use enter and S-enter to open blank lines. TODO implement numeric prefix arg
-(evil-define-key 'normal 'global (kbd "C-RET") (lambda () (interactive) (save-excursion (evil-insert-newline-below))))
-(evil-define-key 'normal 'global (kbd "<C-return>") (lambda () (interactive) (save-excursion (evil-insert-newline-below))))
-(evil-define-key 'normal 'global (kbd "S-RET") (lambda () (interactive) (save-excursion (evil-insert-newline-above))))
-(evil-define-key 'normal 'global (kbd "<S-return>") (lambda () (interactive) (save-excursion (evil-insert-newline-above))))
-(evil-define-key 'normal 'global (kbd "C-S-RET") (lambda () (interactive) (save-excursion (evil-insert-newline-above)) (save-excursion (evil-insert-newline-below))))
-(evil-define-key 'normal 'global (kbd "<C-S-return>") (lambda () (interactive) (save-excursion (evil-insert-newline-above)) (save-excursion (evil-insert-newline-below))))
+(evil-define-key 'normal 'global (kbd "C-o") (lambda () (interactive) (save-excursion (evil-insert-newline-below))))
+(evil-define-key 'normal 'global (kbd "M-o") (lambda () (interactive) (save-excursion (evil-insert-newline-above))))
+(evil-define-key 'normal 'global (kbd "C-M-o") (lambda () (interactive) (save-excursion (evil-insert-newline-above)) (save-excursion (evil-insert-newline-below))))
 ; switch color scheme
 ;; (evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme light-theme t)))
 ;; (evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme dark-theme t)))

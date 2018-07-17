@@ -2,10 +2,13 @@
 (require 'evil)
 (require 'org-super-agenda)
 (require 'org-pomodoro)
+(require 'org-bullets)
 
 ;; startup settings
 (add-hook 'org-mode-hook (lambda () (interactive)
 	(setq-local indent-tabs-mode nil) ; use space instead of tabs
+	(setq-local tab-width 2)
+	(setq-local evil-shift-width tab-width)
 ))
 
 ;; use clean (indented) view
@@ -26,9 +29,16 @@
 (setq org-default-priority ?3)
 (setq org-priority-faces '((?1 . (:inherit error :bold t)) (?2 . (:inherit warning :bold t))  (?3 . (:inherit success :bold t))))
 
+;; lists
+(setq org-list-allow-alphabetical t)
+
 ;; ivy integration
 (setq counsel-org-headline-display-style 'path)
 (setq counsel-org-headline-path-separator "/")
+
+;; bullet
+(setq org-bullets-bullet-list '("●"))
+(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
 
 ;; agenda files
 (add-to-list 'org-agenda-files org-directory)
@@ -73,6 +83,12 @@
 		(org-clock-out) t)) ;; only fails on keyboard quit or error
 (add-hook 'kill-emacs-query-functions 'my/org-clock-query-out) ; timeclock.el puts this on the wrong hook!
 
+;; misc
+(setq org-M-RET-may-split-line nil)
+(setq org-fontify-done-headline t)
+(setq org-fontify-whole-heading-line t)
+(setq org-super-agenda-fontify-whole-header-line t) ; this doesn't work
+
 ;; agenda configs
 (setq org-agenda-window-setup 'only-window)
 (setq org-agenda-start-with-clockreport-mode t)
@@ -101,12 +117,6 @@
 
 ;; logging
 (setq org-log-done 'time)
-
-;; misc
-(setq org-M-RET-may-split-line nil)
-(setq org-fontify-done-headline t)
-(setq org-fontify-whole-heading-line t)
-(setq org-super-agenda-fontify-whole-header-line t) ; this doesn't work
 
 ;; capture templates
 (setq org-capture-templates '(
@@ -199,6 +209,8 @@
 		:which-key "org pomo clock in")
 )
 ; org mode
+(evil-define-key 'normal org-mode-map (kbd "TAB") 'org-cycle)
+(evil-define-key 'normal org-mode-map (kbd "<tab>") 'org-cycle)
 (evil-define-key 'insert org-mode-map (kbd "TAB") 'org-cycle)
 (evil-define-key 'insert org-mode-map (kbd "<tab>") 'org-cycle)
 (evil-define-key 'normal org-mode-map
