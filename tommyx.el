@@ -826,9 +826,9 @@ Useful for a search overview popup."
 	"f" '(swiper-movement
 		:which-key "search")
 
-	"t" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
+	"F" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
 		:which-key "search selection")
-	"T" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
+	"t" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
 		:which-key "search selection in all buffers")
 )
 (general-define-key
@@ -838,10 +838,10 @@ Useful for a search overview popup."
 
 	"f" '(swiper
 		:which-key "search")
-	"F" '(swiper-all
+	"t" '(swiper-all
 		:which-key "search in all buffers")
 
-	"t" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
+	"F" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
 		:which-key "search cursor word")
 	"T" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
 		:which-key "search cursor word in all buffers")
@@ -979,9 +979,9 @@ Useful for a search overview popup."
 (evil-define-key 'insert 'global (kbd "TAB") 'tab-to-tab-stop)
 (evil-define-key 'insert 'global (kbd "<tab>") 'tab-to-tab-stop)
 ; use t instead of * for symbol search
-(evil-define-key 'normal 'global "t" 'evil-ex-search-word-forward)
-(evil-define-key 'normal 'global "T" 'evil-ex-search-unbounded-word-forward)
-(evil-define-key 'visual 'global "t" 'evil-visualstar/begin-search-forward)
+(evil-define-key 'normal 'global "F" (lambda () (interactive) (save-excursion (evil-ex-search-word-forward))))
+(evil-define-key 'normal 'global "gF" (lambda () (interactive) (save-excursion (evil-ex-search-unbounded-word-forward))))
+(evil-define-key 'visual 'global "F" 'evil-visualstar/begin-search-forward)
 ; faster surround
 (evil-define-key 'normal 'global "s" 'evil-surround-edit)
 (evil-define-key 'normal 'global "S" 'evil-Surround-edit)
