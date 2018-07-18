@@ -838,12 +838,12 @@ Useful for a search overview popup."
 
 	"f" '(swiper
 		:which-key "search")
-	"t" '(swiper-all
+	"C-f" '(swiper-all
 		:which-key "search in all buffers")
 
 	"F" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
 		:which-key "search cursor word")
-	"T" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
+	"C-S-f" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
 		:which-key "search cursor word in all buffers")
 
 	"wh" '((lambda () (interactive) (evil-window-left 1) (delayed-mode-line-update))
