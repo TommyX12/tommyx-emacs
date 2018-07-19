@@ -1107,9 +1107,9 @@ Useful for a search overview popup."
 	(kbd "<return>") 'neotree-enter
 )
 ; ,<space> no highlight
-(evil-define-key 'motion 'global (kbd ", SPC") (lambda () (interactive) (evil-ex-nohighlight) (beacon-blink)))
+(evil-define-key 'motion 'global (kbd ", SPC") (lambda () (interactive) (evil-ex-nohighlight) (beacon-blink) (mouse-avoidance-banish-mouse)))
 ; easy quit visual mode
-(evil-define-key 'visual 'global (kbd ", SPC") (lambda () (interactive) (evil-exit-visual-state) (beacon-blink)))
+(evil-define-key 'visual 'global (kbd ", SPC") (lambda () (interactive) (evil-exit-visual-state) (beacon-blink) (mouse-avoidance-banish-mouse)))
 ; m and M for jumping
 (evil-define-key 'motion 'global "m" 'evil-jump-backward)
 (evil-define-key 'motion 'global "M" 'evil-jump-forward)
@@ -1494,7 +1494,7 @@ Useful for a search overview popup."
 	(side-pos . -5)
 	(top-or-bottom . top)
 	(top-or-bottom-pos . -5)))
-(mouse-avoidance-mode 'banish)
+;; (mouse-avoidance-mode 'banish)
 
 ;; flyspell
 (setq flyspell-issue-message-flag nil)
