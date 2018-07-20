@@ -270,7 +270,7 @@
 
 ;; dashboard
 (dashboard-setup-startup-hook)
-(add-hook 'dashboard-mode-hook (lambda () (hl-line-mode 1)))
+(add-hook 'dashboard-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
 
 ;; yascroll
 (global-yascroll-bar-mode 1)
@@ -517,7 +517,9 @@
 (setq neo-theme (if (display-graphic-p) 'icons 'nerd))
 ;; (setq neo-theme 'nerd)
 (setq neo-show-hidden-files t)
-(add-hook 'neotree-mode-hook (lambda () (hl-line-mode 1)))
+(add-hook 'neotree-mode-hook (lambda ()
+	(hl-line-mode 1)
+	(setq-local use-line-nav t)))
 (setq neo-confirm-change-root 'off-p)
 (setq neo-banner-message "")
 (setq neo-show-updir-line nil)
@@ -1325,9 +1327,11 @@ Useful for a search overview popup."
 ; (evil-define-key 'normal 'shell-mode-map (kbd "<tab>") 'ace-window)
 
 ;; avy
+(setq-default use-line-nav nil)
 (evil-define-motion adaptive-avy () :type exclusive
-	(if hl-line-mode (evil-avy-goto-line) (evil-avy-goto-word-0 nil)))
+	(if use-line-nav (evil-avy-goto-line) (evil-avy-goto-word-0 nil)))
 (evil-define-key 'motion 'global "f" 'adaptive-avy)
+;; (evil-define-key 'motion 'global "f" 'evil-avy-goto-word-0)
 (evil-define-key 'motion 'global "F" 'evil-avy-goto-char-2)
 
 ;; misc bindings
@@ -1424,8 +1428,13 @@ Useful for a search overview popup."
 (blink-cursor-mode 0)
 
 ;; hl-line-mode for some modes
-(add-hook 'buffer-menu-mode-hook (lambda () (hl-line-mode 1)))
-(add-hook 'profiler-report-mode-hook (lambda () (hl-line-mode 1)))
+(add-hook 'buffer-menu-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
+(add-hook 'profiler-report-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
+; disable in insert mode
+(add-hook 'prog-mode-hook (lambda () (hl-line-mode 1)))
+(add-hook 'text-mode-hook (lambda () (hl-line-mode 1)))
+(add-hook 'evil-insert-state-entry-hook (lambda () (hl-line-mode -1)))
+(add-hook 'evil-insert-state-exit-hook (lambda () (hl-line-mode 1)))
 
 ;; cursor line (right now disabled)
 ;; (global-hl-line-mode 1)
@@ -1494,7 +1503,8 @@ Useful for a search overview popup."
 	(side-pos . -5)
 	(top-or-bottom . top)
 	(top-or-bottom-pos . -5)))
-;; (mouse-avoidance-mode 'banish)
+(mouse-avoidance-mode 'banish)
+(mouse-avoidance-mode 'none)
 
 ;; flyspell
 (setq flyspell-issue-message-flag nil)

@@ -967,7 +967,7 @@
 	`(whitespace-space-after-tab ((,class (:background nil :foreground ,yellow))))
 	`(whitespace-space-before-tab ((,class (:background nil :foreground ,yellow))))
 	;; `(whitespace-tab ((,class (:background nil :foreground ,act2))))
-	`(whitespace-tab ((,class (:background nil :foreground ,bg14)))) ; indentation guide
+	`(whitespace-tab ((,class (:foreground ,bg14)))) ; indentation guide
 	`(whitespace-trailing ((,class (:background ,err :foreground ,war))))
 
 ;;;;; window-divider
