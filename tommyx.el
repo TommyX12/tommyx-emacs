@@ -123,7 +123,7 @@
 	(setq which-key-popup-type 'side-window)
 	(setq which-key-sort-order 'which-key-prefix-then-key-order-reverse)
 	(setq which-key-idle-delay 0.5)
-	(setq which-key-allow-evil-operators t)
+	;; (setq which-key-allow-evil-operators t)
 	(setq which-key-show-operator-state-maps t)
 	(setq which-key-binding-filter-function
 		(lambda (cell prefix)
@@ -462,6 +462,7 @@
 (setq evil-magic nil) ; doesn't work
 ; search highlight persist
 (global-evil-search-highlight-persist) ; doesn't work
+(setq evil-search-highlight-persist-all-windows t)
 ; no echoing
 (setq evil-insert-state-message nil)
 ; custom cursor
@@ -728,6 +729,7 @@ Useful for a search overview popup."
    "\n"))
 (setq ivy-format-function 'ivy-format-function-custom)
 ;; (setq ivy-format-function 'ivy-format-function-default)
+(setq ivy-count-format "%d/%d | ")
 ; misc
 (setq ivy-height 12)
 
@@ -1080,8 +1082,8 @@ Useful for a search overview popup."
 (evil-define-key 'motion 'global ",,n" 'narrow-to-defun)
 (evil-define-key 'motion 'global ",,N" 'widen)
 ; use enter and S-enter to open blank lines. TODO implement numeric prefix arg
-(evil-define-key 'normal 'global (kbd "C-o") (lambda () (interactive) (save-excursion (evil-insert-newline-below))))
-(evil-define-key 'normal 'global (kbd "M-o") (lambda () (interactive) (save-excursion (evil-insert-newline-above))))
+(evil-define-key 'normal 'global (kbd "M-o") (lambda () (interactive) (save-excursion (evil-insert-newline-below))))
+(evil-define-key 'normal 'global (kbd "C-o") (lambda () (interactive) (save-excursion (evil-insert-newline-above))))
 (evil-define-key 'normal 'global (kbd "C-M-o") (lambda () (interactive) (save-excursion (evil-insert-newline-above)) (save-excursion (evil-insert-newline-below))))
 ; switch color scheme
 ;; (evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme light-theme t)))

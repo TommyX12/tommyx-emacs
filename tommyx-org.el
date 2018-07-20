@@ -40,6 +40,9 @@
 (setq org-bullets-bullet-list '("●"))
 (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
 
+;; habit
+(add-to-list 'org-modules 'org-habit)
+
 ;; agenda files
 (add-to-list 'org-agenda-files org-directory)
 
@@ -61,7 +64,7 @@
 		:and (:priority "2")
 	)
 	(:name "Recurring"
-		:and (:tag ("recurring"))
+		:and (:habit t)
 	)
 	(:name "Secondary"
 		:and (:priority "3")
