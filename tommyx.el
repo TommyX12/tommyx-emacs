@@ -25,13 +25,21 @@
 	((find-font (font-spec :name "Consolas"))
 	(setq selected-font "Consolas"))
 )))
-(if (not (boundp 'font-size))
-	(setq font-size 120))
+(if (not (boundp 'font-size-small))
+	(setq font-size-small 120))
+(if (not (boundp 'font-size-big))
+	(setq font-size-big 150))
 (set-face-attribute 'default nil
 					:family selected-font
-					:height font-size
+					:height font-size-small
 					:weight 'normal
 					:width 'normal)
+(defun set-to-small-font ()
+  (interactive)
+	(set-face-attribute 'default nil :height font-size-small))
+(defun set-to-big-font ()
+  (interactive)
+	(set-face-attribute 'default nil :height font-size-big))
 
 ;; full screen automatically
 (toggle-frame-fullscreen)
@@ -214,6 +222,18 @@
 (use-package load-relative :ensure t)
 (use-package rainbow-mode :ensure t)
 (use-package highlight-numbers :ensure t)
+(use-package emmet-mode :ensure t
+	:config
+	(add-hook 'sgml-mode-hook 'emmet-mode)
+	(add-hook 'web-mode-hook 'emmet-mode)
+	(add-hook 'css-mode-hook  'emmet-mode)
+	(setq emmet-move-cursor-after-expanding t)
+	(setq emmet-move-cursor-between-quotes t)
+	(setq emmet-indentation 2)
+	:bind (:map emmet-mode-keymap
+		("C-j" . nil)
+	)
+)
 ; language specific
 (use-package csv-mode :ensure t)
 (use-package json-mode :ensure t)
@@ -243,17 +263,9 @@
 	(add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
 	(setq js2-strict-missing-semi-warning nil)
 )
-(use-package emmet-mode :ensure t
+(use-package counsel-css :ensure t
 	:config
-	(add-hook 'sgml-mode-hook 'emmet-mode)
-	(add-hook 'web-mode-hook 'emmet-mode)
-	(add-hook 'css-mode-hook  'emmet-mode)
-	(setq emmet-move-cursor-after-expanding t)
-	(setq emmet-move-cursor-between-quotes t)
-	(setq emmet-indentation 2)
-	:bind (:map emmet-mode-keymap
-		("C-j" . nil)
-	)
+	(add-hook 'css-mode-hook 'counsel-css-imenu-setup)
 )
 ;; (use-package js2-refactor :ensure t)
 
@@ -788,6 +800,9 @@ Useful for a search overview popup."
 (define-prefix-command 'global-leader-helm)
 (define-prefix-command 'global-leader-ivy)
 (define-prefix-command 'global-leader-org)
+(define-prefix-command 'global-leader-appearance)
+(define-prefix-command 'global-leader-appearance-theme)
+(define-prefix-command 'global-leader-appearance-font)
 (define-prefix-command 'global-leader-mode-specific)
 (general-define-key
 	:keymaps 'override
@@ -804,6 +819,8 @@ Useful for a search overview popup."
 		:which-key "org")
 	"j" '(global-leader-mode-specific
 		:which-key "mode specific")
+	"a" '(global-leader-appearance
+		:which-key "appearance")
 
 	"is" '(counsel-semantic-or-imenu
 		:which-key "counsel semantic")
@@ -820,6 +837,20 @@ Useful for a search overview popup."
 		:which-key "helm occur")
 	"hs" '(helm-swoop
 		:which-key "helm swoop")
+
+	"at" '(global-leader-appearance-theme
+		:which-key "theme")
+	"atl" '((lambda () (interactive) (load-theme light-theme t) (spaceline-compile))
+		:which-key "light theme")
+	"atd" '((lambda () (interactive) (load-theme dark-theme t) (spaceline-compile))
+		:which-key "dark theme")
+	
+	"af" '(global-leader-appearance-font
+		:which-key "font")
+	"afs" '(set-to-small-font
+		:which-key "small font")
+	"afb" '(set-to-big-font
+		:which-key "big font")
 
 )
 (general-define-key
@@ -1085,11 +1116,6 @@ Useful for a search overview popup."
 (evil-define-key 'normal 'global (kbd "M-o") (lambda () (interactive) (save-excursion (evil-insert-newline-below))))
 (evil-define-key 'normal 'global (kbd "C-o") (lambda () (interactive) (save-excursion (evil-insert-newline-above))))
 (evil-define-key 'normal 'global (kbd "C-M-o") (lambda () (interactive) (save-excursion (evil-insert-newline-above)) (save-excursion (evil-insert-newline-below))))
-; switch color scheme
-;; (evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme light-theme t)))
-;; (evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme dark-theme t)))
-(evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme light-theme t) (spaceline-compile)))
-(evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme dark-theme t) (spaceline-compile)))
 ; neo tree
 (evil-define-key 'motion 'global ",n" (lambda () (interactive) (neotree-show)))
 (evil-define-key 'motion 'global ",N" (lambda () (interactive) (neotree-find)))
