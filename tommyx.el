@@ -81,6 +81,8 @@
 
 ;;; install packages
 (require 'font-lock+)
+(require 'hl-line+)
+(require 'info+)
 (use-package emms :ensure t
 	:config 
 	(require 'emms-setup)
@@ -205,6 +207,11 @@
 	(winum-mode)
 )
 (use-package which-func :ensure t)
+(use-package workgroups :ensure t)
+(use-package persp-mode :ensure t
+	:config
+	(persp-mode)
+)
 (use-package git-gutter :ensure t)
 (use-package yascroll :ensure t)
 (use-package color-identifiers-mode :ensure t)
@@ -331,6 +338,7 @@
 (spaceline-toggle-hud-on)
 (spaceline-spacemacs-theme)
 (spaceline-helm-mode)
+(spaceline-info-mode)
 (spaceline-compile)
 ; delayed update trigger for performance
 (setq delayed-mode-line-updating nil)
@@ -798,7 +806,8 @@ Useful for a search overview popup."
 ;; global leader
 (define-prefix-command 'global-leader-window)
 (define-prefix-command 'global-leader-helm)
-(define-prefix-command 'global-leader-ivy)
+(define-prefix-command 'global-leader-navigation)
+(define-prefix-command 'global-leader-project)
 (define-prefix-command 'global-leader-org)
 (define-prefix-command 'global-leader-appearance)
 (define-prefix-command 'global-leader-appearance-theme)
@@ -813,17 +822,19 @@ Useful for a search overview popup."
 		:which-key "window")
 	"h" '(global-leader-helm
 		:which-key "helm")
-	"i" '(global-leader-ivy
-		:which-key "ivy")
+	"i" '(global-leader-navigation
+		:which-key "navigation")
 	"o" '(global-leader-org
 		:which-key "org")
 	"j" '(global-leader-mode-specific
 		:which-key "mode specific")
 	"a" '(global-leader-appearance
 		:which-key "appearance")
+	"p" '(global-leader-project
+		:which-key "project + workspace")
 
 	"is" '(counsel-semantic-or-imenu
-		:which-key "counsel semantic")
+		:which-key "semantic item")
 
 	"x" '(counsel-M-x
 		:which-key "counsel M-x")
@@ -895,6 +906,10 @@ Useful for a search overview popup."
 		:which-key "split window vertically")
 	"wq" '((lambda () (interactive) (evil-quit) (delayed-mode-line-update))
 		:which-key "close window")
+	"wu" '(winner-undo
+		:which-key "undo window config")
+	"wU" '(winner-redo
+		:which-key "redo window config")
 
 	"n" '(ivy-switch-buffer
 		:which-key "switch buffer")
@@ -904,19 +919,26 @@ Useful for a search overview popup."
 	;; "ip" '(counsel-projectile
 	;; 	:which-key "counsel projectile")
 	"ip" '(counsel-projectile-find-file
-		:which-key "counsel projectile files")
+		:which-key "project files")
 	"i <tab>" '(projectile-find-other-file
-		:which-key "counsel projectile other file")
+		:which-key "other file")
 	"i TAB" '(projectile-find-other-file
-		:which-key "counsel projectile other file")
-	"iP" '(counsel-projectile-switch-project
-		:which-key "counsel projectile project")
+		:which-key "other file")
 	"ir" '(counsel-recentf
-		:which-key "counsel recentf")
+		:which-key "recent files")
 	"ig" '(counsel-projectile-grep
-		:which-key "counsel projectile grep")
+		:which-key "project search")
 	"if" '(counsel-find-file
-		:which-key "counsel find files")
+		:which-key "files")
+
+	"pp" '(counsel-projectile-switch-project
+		:which-key "switch project")
+	"pw" '(persp-switch
+		:which-key "switch workspace")
+	"pd" '(persp-kill
+		:which-key "delete workspace")
+	"pr" '(projectile-invalidate-cache
+		:which-key "re-index project files")
 
 	"hh" '(helm-resume
 		:which-key "helm resume")
@@ -1240,6 +1262,7 @@ Useful for a search overview popup."
 	"C-l" 'ivy-done
 	"C-n" 'ivy-call
 	"C-h" 'ivy-backward-kill-word
+	"C-o" 'ivy-occur ; save to temp buffer for manipulation
 
 	"j" (general-key-dispatch 'self-insert-command
 		:timeout 0.25
@@ -1252,6 +1275,10 @@ Useful for a search overview popup."
 (general-define-key
 	:keymaps '(swiper-map)
 	"C-n" 'swiper-query-replace
+)
+(general-define-key
+	:keymaps '(swiper-all-map)
+	"C-n" 'swiper-all-query-replace
 )
 (general-define-key ; use / to enter directory, not ENTER.
 	:keymaps '(counsel-find-file-map)
@@ -1536,6 +1563,9 @@ Useful for a search overview popup."
 
 ;; flyspell
 (setq flyspell-issue-message-flag nil)
+
+;; winner mode (record window config change so can undo)
+(winner-mode 1)
 
 ;; eldoc
 (global-eldoc-mode 1)
