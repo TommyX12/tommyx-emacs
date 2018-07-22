@@ -328,7 +328,7 @@
 ;; which-function
 (add-hook 'prog-mode-hook #'which-function-mode)
 (add-hook 'prog-mode-hook (lambda () (interactive)
-	(setq-default header-line-format '(" - " which-func-format))))
+	(setq-default mode-line-format '(" - " which-func-format))))
 
 ;; powerline and spaceline
 (setq powerline-default-separator 'slant)
@@ -357,7 +357,7 @@
 	(when (and (current-idle-time) (>= (nth 1 (current-idle-time)) 0.5))
 		(delayed-mode-line-update)))
 
-(setq-default mode-line-format '("%e" (:eval (delayed-mode-line-format))))
+(setq-default header-line-format '("%e" (:eval (delayed-mode-line-format))))
 ; update mode line
 (run-with-idle-timer 0.5 t 'delayed-mode-line-update)
 (run-at-time 0 1 'delayed-mode-line-update-if-idle)
@@ -486,7 +486,7 @@
 ; no echoing
 (setq evil-insert-state-message nil)
 ; custom cursor
-(setq evil-insert-state-cursor '(bar . 4))
+(setq evil-insert-state-cursor '((bar . 4)))
 
 ;; rainbow-delimiters
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
