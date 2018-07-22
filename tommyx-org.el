@@ -4,6 +4,9 @@
 (require 'org-pomodoro)
 (require 'org-bullets)
 
+;; org direcotry external config
+(load (expand-file-name "org-config.el" org-directory))
+
 ;; startup settings
 (add-hook 'org-mode-hook (lambda () (interactive)
 	(setq-local indent-tabs-mode nil) ; use space instead of tabs
@@ -16,18 +19,6 @@
 
 ;; check if org-notes-dir exists.
 ;; (when (boundp 'org-agenda-dir)
-
-;; todo
-(setq org-todo-keywords '((sequence "TODO" "DONE")))
-
-;; refiling
-(setq org-refile-targets '((nil . (:level . 1)) (nil . (:level . 2)) (org-agenda-files . (:tag . "target"))))
-
-;; priorities
-(setq org-lowest-priority ?3)
-(setq org-highest-priority ?1)
-(setq org-default-priority ?3)
-(setq org-priority-faces '((?1 . (:inherit error :bold t)) (?2 . (:inherit warning :bold t))  (?3 . (:inherit success :bold t))))
 
 ;; lists
 (setq org-list-allow-alphabetical t)
@@ -42,37 +33,6 @@
 
 ;; habit
 (add-to-list 'org-modules 'org-habit)
-
-;; agenda files
-(add-to-list 'org-agenda-files org-directory)
-
-;; super agenda groups
-(setq org-super-agenda-groups '(
-	(:name "Time Grid"
-		:time-grid t
-	)
-	(:name "Overdue"
-		:deadline past
-	)
-	(:name "Due"
-		:deadline today
-	)
-	(:name "Important + Urgent"
-		:and (:priority "1")
-	)
-	(:name "Primary"
-		:and (:priority "2")
-	)
-	(:name "Recurring"
-		:and (:habit t)
-	)
-	(:name "Secondary"
-		:and (:priority "3")
-	)
-	(:name "Other Items"
-		:anything
-	)
-))
 
 ;; clocking
 ; ask for clock-out on leave
@@ -109,7 +69,6 @@
 (setq org-agenda-move-date-from-past-immediately-to-today t)
 (org-super-agenda-mode)
 (evil-set-initial-state 'org-agenda-mode 'motion)
-(add-hook 'org-agenda-mode-hook (lambda () (hl-line-mode 1)))
 (setq org-agenda-time-grid '((daily today)
  (800 1000 1200 1400 1600 1800 2000)
  "......" "----------------"))
@@ -117,22 +76,6 @@
 ;; entry text filter
 ; remove blank lines and state logs
 (setq org-agenda-entry-text-exclude-regexps '("^- State.*\n" "^[ \t]*\n"))
-
-;; logging
-(setq org-log-done 'time)
-
-;; capture templates
-(setq org-capture-templates '(
-	("I" "Important" entry
-	(file+headline "GTD.org" "Important")
-	"* %?%i")
-	("i" "Not important" entry
-	(file+headline "GTD.org" "Not important")
-	"* %?%i")
-	("m" "Misc TODO" entry
-	(file+headline "GTD.org" "Misc")
-	"* TODO %?%i")
-))
 
 ;; checks if org-notes-dir exists.
 ;; )
@@ -332,25 +275,28 @@
 	:prefix "SPC"
 
 	"jr" '(org-agenda-refile
-		:which-key "org agenda refile")
+		:which-key "agenda refile")
+
+	"jg" '(org-agenda-goto-date
+		:which-key "agenda goto date")
 
 	"jt" '(org-agenda-todo
-		:which-key "org agenda todo")
+		:which-key "agenda todo")
 
 	"js" '(org-agenda-schedule
-		:which-key "org agenda schedule")
+		:which-key "agenda schedule")
 
 	"jd" '(org-agenda-deadline
-		:which-key "org agenda deadline")
+		:which-key "agenda deadline")
 
 	"jp" '(org-agenda-priority
-		:which-key "org agenda priority")
+		:which-key "agenda priority")
 
 	"jq" '(org-agenda-set-tags
-		:which-key "org agenda set tags")
+		:which-key "agenda set tags")
 
 	"ji" '(org-pomodoro
-		:which-key "org pomo clock in")
+		:which-key "clock in")
 )
 (evil-define-key 'motion org-agenda-mode-map
   ;; C-c C-t: make into todo / cycle todo states

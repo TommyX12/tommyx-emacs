@@ -1485,6 +1485,7 @@ Useful for a search overview popup."
 ;; hl-line-mode for some modes
 (add-hook 'buffer-menu-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
 (add-hook 'profiler-report-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
+(add-hook 'org-agenda-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
 ; disable in insert mode
 (add-hook 'prog-mode-hook (lambda () (hl-line-mode 1)))
 (add-hook 'text-mode-hook (lambda () (hl-line-mode 1)))
