@@ -396,7 +396,7 @@
 	(with-current-buffer buffer
 	  (setq-local overriding-local-map company-childframe-active-map))
 	(posframe-show buffer
-				   :override-parameters '((border-width . 1) (internal-border-width . 1))
+				   :override-parameters '((internal-border-width . 2))
 				   :string contents
 				   :position (- (point) (length company-prefix))
 				   :x-pixel-offset (* -1 company-tooltip-margin (default-font-width))
@@ -657,7 +657,7 @@
 ; display functions
 (setq ivy-posframe-parameters '(
 	(width . 50)
-	(border-width . 1) (internal-border-width . 1)
+	(internal-border-width . 2)
 	(min-width . 50)
 	(refresh . 1)
 	))

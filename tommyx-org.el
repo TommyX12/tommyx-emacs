@@ -17,6 +17,9 @@
 ;; use clean (indented) view
 (setq org-startup-indented t)
 
+;; log time when done
+(setq org-log-done 'time)
+
 ;; check if org-notes-dir exists.
 ;; (when (boundp 'org-agenda-dir)
 
