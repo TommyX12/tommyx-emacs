@@ -122,6 +122,10 @@
 (use-package ivy-posframe :ensure t :after ivy)
 (use-package all-the-icons-ivy :ensure t :after ivy
 	:config
+	(setq all-the-icons-ivy-buffer-commands
+				'(ivy-switch-buffer ivy-switch-buffer-other-window counsel-projectile-switch-to-buffer))
+	(setq all-the-icons-ivy-file-commands
+				'(counsel-find-file counsel-file-jump counsel-recentf counsel-projectile-find-file counsel-projectile-find-dir))
 	(all-the-icons-ivy-setup)
 )
 (use-package counsel :ensure t)
