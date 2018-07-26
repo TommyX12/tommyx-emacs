@@ -1035,7 +1035,7 @@ Useful for a search overview popup."
 ; repeat last ex command
 (evil-define-key 'motion 'global ",." "@:")
 ; save all
-(evil-define-key 'motion 'global ",wa" (kbd ";wa RET"))
+(evil-define-key 'motion 'global ",wa" 'evil-write-all)
 ; sane tabbing
 (evil-define-key 'insert 'global (kbd "TAB") 'tab-to-tab-stop)
 (evil-define-key 'insert 'global (kbd "<tab>") 'tab-to-tab-stop)
