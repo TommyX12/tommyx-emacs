@@ -939,6 +939,8 @@ Useful for a search overview popup."
 		:which-key "switch project")
 	"pw" '(persp-switch
 		:which-key "switch workspace")
+	"pn" '(persp-rename
+		:which-key "rename workspace")
 	"pd" '(persp-kill
 		:which-key "delete workspace")
 	"pr" '(projectile-invalidate-cache
@@ -1101,8 +1103,6 @@ Useful for a search overview popup."
 (evil-define-key 'insert 'global (kbd "C-b") (lambda () (interactive) (evil-paste-from-register ?\")))
 (evil-define-key 'insert 'global (kbd "C-v") (lambda () (interactive) (evil-paste-from-register ?\"))) ; TODO need some work
 (evil-define-key 'visual 'global (kbd "C-c") (lambda () (interactive) (evil-yank))) ; TODO need some work
-; copying in visual mode goes to the end of the region
-(evil-define-key 'visual 'global "y" (lambda () (interactive) (call-interactively 'evil-yank) (evil-goto-mark ?>))) ; TODO need some work
 ; search
 ;; (evil-define-key 'motion 'global (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
 ;; (evil-define-key 'normal 'global (kbd "SPC") (lambda () (interactive) (evil-ex-search-forward)))
@@ -1216,7 +1216,23 @@ Useful for a search overview popup."
 			  "\"" (general-simulate-key ('evil-yank "i\""))
 			  "t" (general-simulate-key ('evil-yank "it"))
 ))
-(evil-define-key 'visual 'global "y" 'evil-yank)
+;; (evil-define-key 'visual 'global "y" 'evil-yank)
+(general-nmap "x" (general-key-dispatch 'evil-exchange
+				   :timeout 0.5
+			  "w" (general-simulate-key ('evil-exchange "iw"))
+			  "W" (general-simulate-key ('evil-exchange "iW"))
+			  ")" (general-simulate-key ('evil-exchange "i)"))
+			  "]" (general-simulate-key ('evil-exchange "i]"))
+			  "}" (general-simulate-key ('evil-exchange "i}"))
+			  ">" (general-simulate-key ('evil-exchange "i>"))
+			  "'" (general-simulate-key ('evil-exchange "i'"))
+			  "\"" (general-simulate-key ('evil-exchange "i\""))
+			  "t" (general-simulate-key ('evil-exchange "it"))
+			  "n" (general-simulate-key ('evil-exchange "gn"))
+))
+(evil-define-key 'visual 'global "x" 'evil-exchange)
+; copying in visual mode goes to the end of the region
+(evil-define-key 'visual 'global "y" (lambda () (interactive) (call-interactively 'evil-yank) (evil-goto-mark ?>))) ; TODO need some work
 ; join with ,j
 (evil-define-key 'normal 'global ",j" 'evil-join)
 (evil-define-key 'visual 'global ",j" 'evil-join)

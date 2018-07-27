@@ -157,6 +157,7 @@
 	"ji" '(org-pomodoro
 		:which-key "org pomo clock in")
 )
+
 ; org mode
 (evil-define-key 'normal org-mode-map (kbd "TAB") 'org-cycle)
 (evil-define-key 'normal org-mode-map (kbd "<tab>") 'org-cycle)
@@ -265,6 +266,7 @@
 	(kbd "C-k") 'evil-org-previous-visible-heading
 )
 (evil-define-key 'motion 'org-mode-map ",,n" 'org-narrow-to-subtree)
+
 ; org agenda
 (general-define-key
 	:keymaps 'org-agenda-mode-map
@@ -336,4 +338,20 @@
 	(kbd "C-k") 'org-agenda-previous-date-line
 
 	(kbd "C-c v") 'org-agenda-view-mode-dispatch
+)
+
+; org capture
+(general-define-key
+	:keymaps 'org-capture-mode-map
+	:states '(motion normal)
+	:prefix "SPC"
+
+	"jr" '(org-capture-refile
+		:which-key "capture refile")
+
+	"jk" '(org-capture-kill
+		:which-key "capture discard")
+
+	"jj" '(org-capture-finalize
+		:which-key "capture save")
 )
