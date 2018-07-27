@@ -341,7 +341,7 @@
 )
 
 ; org capture
-(general-define-key
+(general-define-key ; sometimes doesn't work?
 	:keymaps 'org-capture-mode-map
 	:states '(motion normal)
 	:prefix "SPC"

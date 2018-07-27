@@ -188,10 +188,10 @@
 (use-package powerline :ensure t)
 (use-package powerline-evil :ensure t)
 (use-package spaceline :ensure t)
-;; (use-package spaceline-all-the-icons :ensure t :after all-the-icons spaceline
-;; 	:config
-;; 	(spaceline-all-the-icons-theme)
-;; )
+(use-package spaceline-all-the-icons :ensure t :after all-the-icons spaceline
+	:config
+	;; (spaceline-all-the-icons-theme)
+)
 ;; (use-package ecb :ensure t
 ;; 	:config
 ;; 	(require 'ecb)
@@ -330,43 +330,10 @@
 (global-git-gutter-mode +1)
 
 ;; which-function
+(which-function-mode 1)
 (add-hook 'prog-mode-hook #'which-function-mode)
 (add-hook 'prog-mode-hook (lambda () (interactive)
-	(setq-default mode-line-format '(" - " which-func-format))))
-
-;; powerline and spaceline
-(setq powerline-default-separator 'slant)
-(require 'spaceline-config)
-(spaceline-toggle-which-function-off)
-(spaceline-toggle-minor-modes-off)
-(spaceline-toggle-hud-on)
-(spaceline-spacemacs-theme)
-(spaceline-helm-mode)
-(spaceline-info-mode)
-(spaceline-compile)
-; delayed update trigger for performance
-(setq delayed-mode-line-updating nil)
-(defun delayed-mode-line-format ()
-	"The mode-line format function with auto caching."
-	(when delayed-mode-line-updating
-		(set-window-parameter nil 'delayed-mode-line-cache (spaceline-ml-main)))
-	(window-parameter nil 'delayed-mode-line-cache))
-(defun delayed-mode-line-update (&rest _)
-	"Update the mode-line."
-	(setq delayed-mode-line-updating t)
-		(force-mode-line-update t)
-		(run-at-time 0.01 nil (lambda () (setq delayed-mode-line-updating nil))))
-(defun delayed-mode-line-update-if-idle (&rest _)
-	"Update the mode-line if idling."
-	(when (and (current-idle-time) (>= (nth 1 (current-idle-time)) 0.5))
-		(delayed-mode-line-update)))
-
-(setq-default header-line-format '("%e" (:eval (delayed-mode-line-format))))
-; update mode line
-(run-with-idle-timer 0.5 t 'delayed-mode-line-update)
-(run-at-time 0 1 'delayed-mode-line-update-if-idle)
-(add-hook 'window-configuration-change-hook 'delayed-mode-line-update)
-;; (advice-add 'select-window :after #'delayed-mode-line-update) ; TODO avy-jump calls this too much
+	))
 
 ;; dashboard
 (setq dashboard-items '((recents  . 5)
@@ -773,7 +740,7 @@ Useful for a search overview popup."
   )
 
 
-;;; key bindings util functions and motion
+;;; key bindings util / helper functions and motion
 (defun selection-or-word-at-point ()
   (cond
    ;; If there is selection use it
@@ -790,6 +757,10 @@ Useful for a search overview popup."
 				  "")))))
 (evil-define-motion swiper-movement () :type exclusive
 	(swiper))
+(defun change-theme (theme)
+	"Change to a new theme."
+	(interactive)
+	(load-theme theme t) (spaceline-compile))
 
 
 ;;; key bindings
@@ -855,9 +826,9 @@ Useful for a search overview popup."
 
 	"at" '(global-leader-appearance-theme
 		:which-key "theme")
-	"atl" '((lambda () (interactive) (load-theme light-theme t) (spaceline-compile))
+	"atl" '((lambda () (interactive) (change-theme light-theme))
 		:which-key "light theme")
-	"atd" '((lambda () (interactive) (load-theme dark-theme t) (spaceline-compile))
+	"atd" '((lambda () (interactive) (change-theme dark-theme))
 		:which-key "dark theme")
 	
 	"af" '(global-leader-appearance-font
@@ -1603,5 +1574,8 @@ Useful for a search overview popup."
 	(add-hook hook (lambda () (flyspell-mode -1))))
 
 
-;;; org
+;;; external configs
+;; org
 (load-relative "./tommyx-org.el")
+;; status lines
+(load-relative "./tommyx-status-lines.el")
