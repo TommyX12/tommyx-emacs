@@ -36,10 +36,12 @@
 					:width 'normal)
 (defun set-to-small-font ()
   (interactive)
-	(set-face-attribute 'default nil :height font-size-small))
+	(set-face-attribute 'default nil :height font-size-small)
+	(status-lines-compile))
 (defun set-to-big-font ()
   (interactive)
-	(set-face-attribute 'default nil :height font-size-big))
+	(set-face-attribute 'default nil :height font-size-big)
+	(status-lines-compile))
 
 ;; full screen automatically
 (toggle-frame-fullscreen)
@@ -86,8 +88,10 @@
 (use-package emms :ensure t
 	:config 
 	(require 'emms-setup)
+	(require 'emms-player-simple)
 	(emms-all)
-	(emms-default-players))
+	(emms-default-players)
+)
 (use-package undo-tree :ensure t)
 (use-package all-the-icons :ensure t)
 (use-package evil :ensure t)
@@ -760,7 +764,7 @@ Useful for a search overview popup."
 (defun change-theme (theme)
 	"Change to a new theme."
 	(interactive)
-	(load-theme theme t) (spaceline-compile))
+	(load-theme theme t) (status-lines-compile))
 
 
 ;;; key bindings

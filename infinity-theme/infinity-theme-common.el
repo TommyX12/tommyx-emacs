@@ -77,7 +77,7 @@
 	(dark          (if (eq theme 'dark) (if (has-true-color) "#111111" "#b2b2b2") (if (has-true-color) "#111111" "#5f5f87")))
 	(act1          (if (eq theme 'dark) (if (has-true-color) "#222226" "#121212") (if (has-true-color) "#e7e7e7" "#d7dfff")))
 	(act2          (if (eq theme 'dark) (if (has-true-color) "#1c48ad" "#444444") (if (has-true-color) "#bcdfff" "#afafd7")))
-	(base          (if (eq theme 'dark) (if (has-true-color) "#b2b2b2" "#b2b2b2") (if (has-true-color) "#555555" "#5f5f87")))
+	(base          (if (eq theme 'dark) (if (has-true-color) "#b8b8b8" "#b2b2b2") (if (has-true-color) "#555555" "#5f5f87")))
 	(base-dim      (if (eq theme 'dark) (if (has-true-color) "#686868" "#585858") (if (has-true-color) "#a094a2" "#afafd7")))
 	(bg1           (if (eq theme 'dark) (if (has-true-color) "#2B2C30" "#262626") (if (has-true-color) "#f4f4f4" "#ffffff")))
 	(bg11          (if (eq theme 'dark) (if (has-true-color) "#303136" "#262626") (if (has-true-color) "#EBEBEB" "#ffffff")))
@@ -956,7 +956,7 @@
 	`(which-key-special-key-face ((,class (:background ,func :foreground ,bg1))))
 
 ;;;;; which-function-mode
-	`(which-func ((,class (:foreground ,func))))
+	`(which-func ((,class (:foreground ,base))))
 
 ;;;;; whitespace-mode
 	`(whitespace-empty ((,class (:background nil :foreground ,yellow))))

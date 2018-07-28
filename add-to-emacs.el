@@ -8,3 +8,6 @@
 ;; post-load configurations
 ; add things to org agenda files
 (setq org-agenda-files (append org-agenda-files '()))
+
+; emms
+(setq mpg123-path "D:/data/projects/new/Tools/tommyx-emacs/third_party/mpg123/mpg123.exe")
