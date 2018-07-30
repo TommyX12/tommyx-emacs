@@ -235,6 +235,7 @@
 	:config
 )
 (use-package load-relative :ensure t)
+;; (use-package fancy-battery :ensure t)
 (use-package rainbow-mode :ensure t)
 (use-package highlight-numbers :ensure t)
 (use-package emmet-mode :ensure t
@@ -764,7 +765,7 @@ Useful for a search overview popup."
 (defun change-theme (theme)
 	"Change to a new theme."
 	(interactive)
-	(load-theme theme t) (status-lines-compile))
+	(load-theme theme t) (status-lines-compile) (posframe-delete-all))
 
 
 ;;; key bindings
@@ -1024,9 +1025,6 @@ Useful for a search overview popup."
 (evil-define-key 'normal 'global "s" 'evil-surround-edit)
 (evil-define-key 'normal 'global "S" 'evil-Surround-edit)
 (evil-define-key 'visual 'global "s" 'evil-surround-region)
-; scrolling
-(evil-define-key 'motion 'global (kbd "M-j") 'evil-scroll-down)
-(evil-define-key 'motion 'global (kbd "M-k") 'evil-scroll-up)
 ; change to last buffer
 (evil-define-key 'motion 'global (kbd ", TAB") 'evil-buffer)
 (evil-define-key 'motion 'global (kbd ", <tab>") 'evil-buffer)
@@ -1067,8 +1065,12 @@ Useful for a search overview popup."
 (evil-define-key 'visual 'global "L" 'fast-move-right)
 (evil-define-key 'visual 'global "G" 'evil-first-non-blank)
 (evil-define-key 'visual 'global ":" (lambda () (interactive) (evil-end-of-line)))
-; use gG to go to bottom
-(evil-define-key 'motion 'global "gG" 'evil-goto-line)
+; scrolling
+(evil-define-key 'motion 'global (kbd "M-j") 'evil-scroll-down)
+(evil-define-key 'motion 'global (kbd "M-k") 'evil-scroll-up)
+; use M-S-j/k to go to top bottom
+(evil-define-key 'motion 'global (kbd "M-J") 'evil-goto-line)
+(evil-define-key 'motion 'global (kbd "M-K") 'evil-goto-first-line)
 ; evil numbers
 (evil-define-key 'normal 'global "=" 'evil-numbers/inc-at-pt)
 (evil-define-key 'normal 'global "-" 'evil-numbers/dec-at-pt)
@@ -1205,9 +1207,13 @@ Useful for a search overview popup."
 			  "t" (general-simulate-key ('evil-exchange "it"))
 			  "n" (general-simulate-key ('evil-exchange "gn"))
 ))
-(evil-define-key 'visual 'global "x" 'evil-exchange)
+;; (evil-define-key 'visual 'global "x" 'evil-exchange)
 ; copying in visual mode goes to the end of the region
-(evil-define-key 'visual 'global "y" (lambda () (interactive) (call-interactively 'evil-yank) (evil-goto-mark ?>))) ; TODO need some work
+(evil-define-key 'visual 'global "y" (lambda () (interactive) (call-interactively 'evil-yank) (evil-goto-mark ?>)))
+(evil-define-key 'visual 'global "Y" 'evil-yank)
+; same for exchange
+(evil-define-key 'visual 'global "x" (lambda () (interactive) (call-interactively 'evil-exchange) (evil-goto-mark ?>)))
+(evil-define-key 'visual 'global "X" 'evil-exchange)
 ; join with ,j
 (evil-define-key 'normal 'global ",j" 'evil-join)
 (evil-define-key 'visual 'global ",j" 'evil-join)
@@ -1412,6 +1418,7 @@ Useful for a search overview popup."
 (setq-default evil-shift-width tab-width)
 (setq-default python-indent 4)
 (setq-default c-basic-offset 4)
+(setq-default backward-delete-char-untabify-method 'nil)
 (add-hook 'prog-mode-hook (lambda () (setq evil-shift-width tab-width)))
 (add-hook 'python-mode-hook (lambda ()
 	(setq-local tab-width 4)
@@ -1439,11 +1446,16 @@ Useful for a search overview popup."
 (setq-default bidi-display-reordering nil)
 
 ;; UTF-8 as default encoding
-(set-language-environment "UTF-8")
-(prefer-coding-system 'utf-8)
-(set-default-coding-systems 'utf-8)
+(setq utf-translate-cjk-mode nil) ; disable CJK coding/encoding (Chinese/Japanese/Korean characters)
 (set-language-environment 'utf-8)
-(set-selection-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8-mac) ; For old Carbon emacs on OS X only
+(setq locale-coding-system 'utf-8)
+(set-default-coding-systems 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(if (eq system-type 'windows-nt)
+	(set-selection-coding-system 'utf-16-le) ; fix inability to paste non-ascii char
+	(set-selection-coding-system 'utf-8))
+(prefer-coding-system 'utf-8)
 
 ;; scroll-off emulation
 (setq scroll-margin (/ (* (window-total-height) 2) 7))
@@ -1504,9 +1516,9 @@ Useful for a search overview popup."
 (add-hook 'sgml-mode-hook (lambda () (toggle-word-wrap 1)))
 
 ;; window divider
-(setq window-divider-default-places 'right-only)
+(setq window-divider-default-places t)
 (setq window-divider-default-right-width 2)
-(setq window-divider-default-bottom-width 2)
+(setq window-divider-default-bottom-width 1)
 (window-divider-mode 1)
 
 ;; fringe margin

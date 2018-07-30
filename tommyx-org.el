@@ -142,6 +142,9 @@
 	"jT" '(org-shiftleft
 		:which-key "org todo back")
 
+	"jx" '(org-ctrl-c-ctrl-c
+		:which-key "org update")
+
 	"js" '(org-schedule
 		:which-key "org schedule")
 

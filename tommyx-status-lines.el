@@ -1,4 +1,5 @@
 ;; imports
+(require 'cl-lib)
 (require 'powerline)
 (require 'powerline-evil)
 (require 'spaceline)
@@ -40,7 +41,35 @@
 (add-hook 'window-configuration-change-hook 'delayed-mode-line-update)
 ;; (advice-add 'select-window :after #'delayed-mode-line-update) ; TODO avy-jump calls this too much
 
+
+;; helper functions
+(defun status-lines--git-stats (icon text face)
+  "Wrapper to render git statistics ICON with TEXT using FACE.
+When FAMILY is provided, put `:family' property into face."
+  (let* ((family (all-the-icons-icon-family icon))
+         (height 1.0)
+         (icon-face `(:foreground ,(spaceline-all-the-icons--face-foreground face)
+                      :height ,(spaceline-all-the-icons--height height))))
+
+    (when family (setq icon-face (append `(:family ,family) icon-face)))
+    (concat
+     ;; (propertize icon 'face icon-face)
+		 ;; (format "%s" text)
+     (propertize (format "%s" text)
+                 'face `(:foreground ,(spaceline-all-the-icons--face-foreground face)
+												:height 1.0))
+		 )))
+
+
 ;; segment definition
+(spaceline-define-segment status-lines-mode-icon-colored
+  "A segment indicating the current buffer's mode with an icon"
+  (let ((icon (all-the-icons-icon-for-mode major-mode)))
+    (unless (symbolp icon)
+      (propertize icon
+                  ;; 'help-echo (format "Major-mode: `%s'" major-mode)
+                  'display '(raise 0)))))
+
 (spaceline-define-segment status-lines-mode-icon
   "A segment indicating the current buffer's mode with an icon"
   (let ((icon (all-the-icons-icon-for-mode major-mode)))
@@ -52,10 +81,31 @@
                           :family ,(all-the-icons-icon-family-for-mode major-mode)
                           :inherit)))))
 
+(spaceline-define-segment status-lines-git-status
+  "A segment to display Added/Removed stats for files under git VC."
+  (cl-destructuring-bind (added removed modified) (spaceline-all-the-icons--git-statistics)
+    (cl-destructuring-bind (added-icon removed-icon modified-icon) (spaceline-all-the-icons-icon-set-git-stats)
+      (let* ((space "|")
+             (icons (list
+                     (unless (zerop added) (status-lines--git-stats added-icon added 'success))
+                     (unless (zerop removed) (status-lines--git-stats removed-icon removed 'error))
+                     (unless (zerop modified) (status-lines--git-stats modified-icon modified 'warning)))))
+        (propertize
+         (mapconcat 'identity (cl-remove-if 'not icons) space)
+					'display '(raise 0)
+         ;; 'help-echo "View Diff of current file"
+         ;; 'mouse-face (spaceline-all-the-icons--highlight)
+         ;; 'local-map (make-mode-line-mouse-map 'mouse-1 'vc-ediff
+				))))
+
+  :face mode-line
+  :when (not (equal '(0 0 0) (spaceline-all-the-icons--git-statistics))))
+
+
 ;; header line definition
 (setq status-lines-header-segments-left `(
   (window-number :face highlight-face :priority 99)
-  (buffer-modified status-lines-mode-icon buffer-id remote-host)
+  ((buffer-modified status-lines-mode-icon-colored buffer-id remote-host) :face mode-line)
   (persp-name)
   (workspace-number)
   (purpose :priority 94)
@@ -70,7 +120,6 @@
   ((point-position
     line-column)
 	  :separator " | " :priority 99)
-  (global :when active)
   (buffer-position)
   (hud :priority 99)
 ))
@@ -87,11 +136,13 @@
   (python-pyvenv :fallback python-pyenv)
   (mu4e-alert-segment :when active)
   (erc-track :when active)
+  (global :when active)
   (org-pomodoro :when active)
   (org-clock :when active)
   (auto-compile)
   (process :when active)
-  (version-control :when active :priority 78)
+  ;; (version-control :when active :priority 78)
+  (status-lines-git-status :priority 78)
   (buffer-size)
   (buffer-encoding-abbrev)
 ))
