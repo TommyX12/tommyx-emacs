@@ -42,6 +42,13 @@
   (interactive)
 	(set-face-attribute 'default nil :height font-size-big)
 	(status-lines-compile))
+(defun toggle-readable-buffer-font ()
+	(interactive)
+	(if buffer-face-mode
+		(buffer-face-mode -1)
+		(buffer-face-set '(:family "Arial"))
+	)
+)
 
 ;; full screen automatically
 (toggle-frame-fullscreen)
@@ -766,6 +773,13 @@ Useful for a search overview popup."
 	"Change to a new theme."
 	(interactive)
 	(load-theme theme t) (status-lines-compile) (posframe-delete-all))
+(defun pop-kill-ring ()
+  "Remove most recent entry from kill-ring"
+	(when kill-ring
+		(setq kill-ring (cdr kill-ring)))
+	(when kill-ring-yank-pointer
+		(setq kill-ring-yank-pointer kill-ring))
+)
 
 
 ;;; key bindings
@@ -842,6 +856,8 @@ Useful for a search overview popup."
 		:which-key "small font")
 	"afb" '(set-to-big-font
 		:which-key "big font")
+	"afr" '(toggle-readable-buffer-font
+		:which-key "toggle readable buffer font")
 
 )
 (general-define-key
@@ -1107,6 +1123,8 @@ Useful for a search overview popup."
 (evil-define-key 'visual 'global ")" 'move-to-next-parens)
 ; move cursor to comfortable reading position
 (evil-define-key 'motion 'global ",z" (lambda () (interactive) (recenter-top-bottom (/ (* (window-total-height) 2) 7))))
+; do not re-copy when pasting in visual mode
+(evil-define-key 'visual 'global "p" (lambda () (interactive) (call-interactively 'evil-visual-paste) (pop-kill-ring)))
 ; substitute command
 (evil-define-key 'normal 'global ",s" (lambda () (interactive) (evil-ex "s/")))
 (evil-define-key 'normal 'global ",S" (lambda () (interactive) (evil-ex "%s/")))

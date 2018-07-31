@@ -20,6 +20,9 @@
 ;; log time when done
 (setq org-log-done 'time)
 
+;; use readable font in org mode
+;; (add-hook 'org-mode-hook #'enable-readable-buffer-font)
+
 ;; check if org-notes-dir exists.
 ;; (when (boundp 'org-agenda-dir)
 

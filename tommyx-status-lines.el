@@ -87,9 +87,9 @@ When FAMILY is provided, put `:family' property into face."
     (cl-destructuring-bind (added-icon removed-icon modified-icon) (spaceline-all-the-icons-icon-set-git-stats)
       (let* ((space "|")
              (icons (list
-                     (unless (zerop added) (status-lines--git-stats added-icon added 'success))
-                     (unless (zerop removed) (status-lines--git-stats removed-icon removed 'error))
-                     (unless (zerop modified) (status-lines--git-stats modified-icon modified 'warning)))))
+                     (unless (zerop added) (status-lines--git-stats added-icon added 'git-gutter:added))
+                     (unless (zerop removed) (status-lines--git-stats removed-icon removed 'git-gutter:deleted))
+                     (unless (zerop modified) (status-lines--git-stats modified-icon modified 'git-gutter:modified)))))
         (propertize
          (mapconcat 'identity (cl-remove-if 'not icons) space)
 					'display '(raise 0)
