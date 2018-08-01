@@ -149,14 +149,20 @@ When FAMILY is provided, put `:family' property into face."
 
 ;; compilation function definition
 (defun status-lines-compile-header ()
+	(let ((powerline-default-separator 'slant)
+				(spaceline-separator-dir-left '(left . right))
+				(spaceline-separator-dir-right '(left . right)))
   (spaceline-compile 'status-header
     status-lines-header-segments-left
-    status-lines-header-segments-right)
+    status-lines-header-segments-right))
 )
 (defun status-lines-compile-footer ()
-  (spaceline-compile 'status-footer
-    status-lines-footer-segments-left
-    status-lines-footer-segments-right)
+	(let ((powerline-default-separator 'slant)
+				(spaceline-separator-dir-left '(left . left))
+				(spaceline-separator-dir-right '(right . right)))
+		(spaceline-compile 'status-footer
+			status-lines-footer-segments-left
+			status-lines-footer-segments-right))
 )
 (defun status-lines-compile ()
 	(status-lines-compile-header)

@@ -393,6 +393,9 @@
 ;; (company-quickhelp-mode)
 (eval-after-load 'company
   '(progn
+	 (define-key company-active-map (kbd "C-h") nil)
+	 (define-key company-active-map (kbd "C-z") 'company-show-doc-buffer)
+		; C-z when company open will show help for that symbol in another window.
 	 (define-key company-active-map (kbd "S-TAB") 'company-select-previous)
 	 (define-key company-active-map (kbd "<S-tab>") 'company-select-previous)))
 (setq company-frontends
@@ -470,6 +473,8 @@
 (setq evil-insert-state-message nil)
 ; custom cursor
 (setq evil-insert-state-cursor '((bar . 4)))
+; push jump list every time entering insert mode
+(add-hook 'evil-insert-state-entry-hook 'evil--jumps-push)
 
 ;; rainbow-delimiters
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
@@ -1229,6 +1234,8 @@ Useful for a search overview popup."
 ; copying in visual mode goes to the end of the region
 (evil-define-key 'visual 'global "y" (lambda () (interactive) (call-interactively 'evil-yank) (evil-goto-mark ?>)))
 (evil-define-key 'visual 'global "Y" 'evil-yank)
+; pasting goes to the end of the region
+(evil-define-key 'normal 'global "p" (lambda () (interactive) (call-interactively 'evil-paste-after) (evil-goto-mark ?\])))
 ; same for exchange
 (evil-define-key 'visual 'global "x" (lambda () (interactive) (call-interactively 'evil-exchange) (evil-goto-mark ?>)))
 (evil-define-key 'visual 'global "X" 'evil-exchange)
@@ -1349,9 +1356,17 @@ Useful for a search overview popup."
 (evil-define-key 'insert emmet-mode-keymap (kbd "C-k") 'emmet-prev-edit-point)
 (evil-define-key 'insert emmet-mode-keymap (kbd "C-l") 'emmet-expand-line)
 (evil-define-key 'visual emmet-mode-keymap (kbd "C-l") 'emmet-wrap-with-markup)
-
+; spell correction
 (evil-define-key 'insert 'global (kbd "S-SPC S-SPC") (lambda () (interactive) (save-excursion (flyspell-lazy-check-pending) (flyspell-auto-correct-previous-word (point)))))
 (evil-define-key 'insert 'global (kbd "<S-space> <S-space>") (lambda () (interactive) (save-excursion (flyspell-lazy-check-pending) (flyspell-auto-correct-previous-word (point)))))
+; use c-hjkl to move around
+(evil-define-key 'insert 'global (kbd "C-g") 'evil-first-non-blank)
+(evil-define-key 'insert 'global (kbd "C-h") 'left-word)
+(evil-define-key 'insert 'global (kbd "C-j") 'next-line)
+(evil-define-key 'insert 'global (kbd "C-k") 'previous-line)
+(evil-define-key 'insert 'global (kbd "C-l") 'right-word)
+(evil-define-key 'insert 'global (kbd "C-;") 'end-of-line)
+; j mappings
 (general-imap "j" (general-key-dispatch 'self-insert-command
 				   :timeout 0.25
 			  "j" 'self-insert-command
@@ -1364,10 +1379,9 @@ Useful for a search overview popup."
 			  "[" 'evil-complete-next ; j[ context complete (TODO)
 			  "v" (lambda () (interactive) (evil-paste-from-register ?\")) ; jv to paste from default register
 ))
-(eval-after-load 'company
-  '(progn
-	 (define-key company-active-map (kbd "C-z") 'company-quickhelp-manual-begin)))
-; note that C-h when company open will show help for that symbol in another window.
+;; (eval-after-load 'company
+;;   '(progn
+;; 	 (define-key company-active-map (kbd "C-z") 'company-quickhelp-manual-begin)))
 
 ;; window management
 (evil-define-key 'motion 'global (kbd "C-w C-h") (lambda () (interactive) (evil-window-left 1) (delayed-mode-line-update)))
@@ -1404,7 +1418,7 @@ Useful for a search overview popup."
 
 ;; avy
 (setq-default use-line-nav nil)
-(evil-define-motion adaptive-avy () :type exclusive
+(evil-define-motion adaptive-avy () :type exclusive :repeat
 	(if use-line-nav (evil-avy-goto-line) (evil-avy-goto-word-0 nil)))
 (evil-define-key 'motion 'global "f" 'adaptive-avy)
 ;; (evil-define-key 'motion 'global "f" 'evil-avy-goto-word-0)
