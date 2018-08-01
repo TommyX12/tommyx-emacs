@@ -740,6 +740,7 @@ Useful for a search overview popup."
 (setq ivy-count-format "%d/%d | ")
 ; misc
 (setq ivy-height 12)
+(setq ivy-height-alist nil) ; all ivy should have same height
 
 
 ;;; heavy tasks
@@ -1236,6 +1237,10 @@ Useful for a search overview popup."
 (evil-define-key 'visual 'global "Y" 'evil-yank)
 ; pasting goes to the end of the region
 (evil-define-key 'normal 'global "p" (lambda () (interactive) (call-interactively 'evil-paste-after) (evil-goto-mark ?\])))
+; C-p paste then select region (for easy replace)
+(evil-define-key 'normal 'global (kbd "C-p") (lambda () (interactive) (call-interactively 'evil-paste-after) (evil-goto-mark ?\[) (evil-visual-char) (evil-goto-mark ?\])))
+; use ivy to select kill ring
+(evil-define-key 'normal 'global (kbd ",p") 'counsel-yank-pop)
 ; same for exchange
 (evil-define-key 'visual 'global "x" (lambda () (interactive) (call-interactively 'evil-exchange) (evil-goto-mark ?>)))
 (evil-define-key 'visual 'global "X" 'evil-exchange)
@@ -1378,6 +1383,7 @@ Useful for a search overview popup."
 			  "p" 'company-complete-common-or-cycle ; jp complete
 			  "[" 'evil-complete-next ; j[ context complete (TODO)
 			  "v" (lambda () (interactive) (evil-paste-from-register ?\")) ; jv to paste from default register
+			  "V" 'counsel-yank-pop ; jV to use counsel yank-pop
 ))
 ;; (eval-after-load 'company
 ;;   '(progn

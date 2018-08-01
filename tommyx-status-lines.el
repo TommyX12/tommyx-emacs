@@ -158,8 +158,10 @@ When FAMILY is provided, put `:family' property into face."
 )
 (defun status-lines-compile-footer ()
 	(let ((powerline-default-separator 'slant)
-				(spaceline-separator-dir-left '(left . left))
-				(spaceline-separator-dir-right '(right . right)))
+				;; (spaceline-separator-dir-left '(left . left))
+				;; (spaceline-separator-dir-right '(right . right)))
+				(spaceline-separator-dir-left '(left . right))
+				(spaceline-separator-dir-right '(right . left)))
 		(spaceline-compile 'status-footer
 			status-lines-footer-segments-left
 			status-lines-footer-segments-right))
