@@ -1366,10 +1366,10 @@ Useful for a search overview popup."
 (evil-define-key 'insert 'global (kbd "<S-space> <S-space>") (lambda () (interactive) (save-excursion (flyspell-lazy-check-pending) (flyspell-auto-correct-previous-word (point)))))
 ; use c-hjkl to move around
 (evil-define-key 'insert 'global (kbd "C-g") 'evil-first-non-blank)
-(evil-define-key 'insert 'global (kbd "C-h") 'left-word)
-(evil-define-key 'insert 'global (kbd "C-j") 'next-line)
-(evil-define-key 'insert 'global (kbd "C-k") 'previous-line)
-(evil-define-key 'insert 'global (kbd "C-l") 'right-word)
+;; (evil-define-key 'insert 'global (kbd "C-h") 'left-word)
+;; (evil-define-key 'insert 'global (kbd "C-j") 'next-line)
+;; (evil-define-key 'insert 'global (kbd "C-k") 'previous-line)
+;; (evil-define-key 'insert 'global (kbd "C-l") 'right-word)
 (evil-define-key 'insert 'global (kbd "C-;") 'end-of-line)
 ; j mappings
 (general-imap "j" (general-key-dispatch 'self-insert-command

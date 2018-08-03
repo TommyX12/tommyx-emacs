@@ -108,8 +108,8 @@
 	"oa" '(org-agenda
 		:which-key "org agenda")
 
-	"oi" '(org-pomodoro
-		:which-key "org pomo clock in")
+	"oi" '((lambda () (interactive) (org-pomodoro '(4)))
+		:which-key "org clock in recent")
 )
 ; org mode leader
 (general-define-key
@@ -161,7 +161,7 @@
 		:which-key "org set tags")
 
 	"ji" '(org-pomodoro
-		:which-key "org pomo clock in")
+		:which-key "org clock in")
 )
 
 ; org mode
