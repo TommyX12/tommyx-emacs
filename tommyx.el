@@ -44,7 +44,7 @@
 	(status-lines-compile))
 (defun toggle-readable-buffer-font ()
 	(interactive)
-	(if buffer-face-mode
+	(if (bound-and-true-p buffer-face-mode)
 		(buffer-face-mode -1)
 		(buffer-face-set '(:family "Arial"))
 	)
@@ -718,6 +718,7 @@ Useful for a search overview popup."
 		)))
 (defun ivy-posframe-display-swiper (str)
   (ivy-posframe--display str #'posframe-poshandler-adaptive-top-bottom t))
+(setq ivy-display-function nil)
 (setq ivy-display-functions-alist
 	  '((counsel-irony . ivy-posframe-display-at-point)
 		(ivy-completion-in-region . ivy-posframe-display-at-point)
@@ -1424,7 +1425,7 @@ Useful for a search overview popup."
 
 ;; avy
 (setq-default use-line-nav nil)
-(evil-define-motion adaptive-avy () :type exclusive :repeat
+(evil-define-motion adaptive-avy () :type exclusive :repeat nil
 	(if use-line-nav (evil-avy-goto-line) (evil-avy-goto-word-0 nil)))
 (evil-define-key 'motion 'global "f" 'adaptive-avy)
 ;; (evil-define-key 'motion 'global "f" 'evil-avy-goto-word-0)

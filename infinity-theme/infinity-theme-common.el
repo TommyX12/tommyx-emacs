@@ -871,6 +871,7 @@
 
 ;;;;; smartparens
 	`(sp-pair-overlay-face ((,class (:background ,bg13))))
+	;; `(sp-show-pair-match-face ((,class (:foreground ,green :background ,green-bg :bold t :underline t))))
 	`(sp-show-pair-match-face ((,class (:foreground ,green :background ,green-bg :bold t :underline t))))
 
 ;;;;; smerge
