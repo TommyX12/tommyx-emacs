@@ -326,7 +326,11 @@ Companion buffer is BUFFER."
 
 (spaceline-define-segment companion-time
   "A spaceline segment to display date and time."
-	(concat (format-time-string " %Y-%m-%d %H:%M "))
+	(concat
+		(format-time-string " %Y-%m-%d")
+		(propertize
+			(format-time-string " %H:%M ")
+			'face 'mode-line-buffer-id))
   :when active)
 
 (setq companion-segments-left `(
@@ -336,7 +340,7 @@ Companion buffer is BUFFER."
   (org-pomodoro :when active)
   (org-clock :when active)
   (battery :when active)
-	("|" :tight-right t :face mode-line)
+	("|" :tight t :face mode-line)
 	(companion-time :when active :tight-left t :face mode-line)
 ))
 (companion--compile-header)
