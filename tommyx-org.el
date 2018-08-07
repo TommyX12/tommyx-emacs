@@ -157,6 +157,9 @@
 	"jp" '(org-priority
 		:which-key "org priority")
 
+	"jP" '(org-set-property
+		:which-key "org set property")
+
 	"jq" '(org-set-tags-command
 		:which-key "org set tags")
 
@@ -302,6 +305,9 @@
 
 	"jp" '(org-agenda-priority
 		:which-key "agenda priority")
+
+	"jP" '(org-agenda-set-property
+		:which-key "agenda set property")
 
 	"jq" '(org-agenda-set-tags
 		:which-key "agenda set tags")

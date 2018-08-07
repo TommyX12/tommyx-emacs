@@ -34,14 +34,17 @@
 					:height font-size-small
 					:weight 'normal
 					:width 'normal)
+(defun set-font-size (size)
+	(set-face-attribute 'default nil :height size)
+	(status-lines-compile)
+	(when (fboundp 'companion-reopen)
+		(companion-reopen)))
 (defun set-to-small-font ()
   (interactive)
-	(set-face-attribute 'default nil :height font-size-small)
-	(status-lines-compile))
+	(set-font-size font-size-small))
 (defun set-to-big-font ()
   (interactive)
-	(set-face-attribute 'default nil :height font-size-big)
-	(status-lines-compile))
+	(set-font-size font-size-big))
 (defun toggle-readable-buffer-font ()
 	(interactive)
 	(if (bound-and-true-p buffer-face-mode)
@@ -89,6 +92,7 @@
 
 
 ;;; install packages
+(require 'companion)
 (require 'font-lock+)
 (require 'hl-line+)
 (require 'info+)
@@ -181,6 +185,7 @@
 (use-package company-childframe :ensure t)
 (use-package company-quickhelp :ensure t)
 (use-package company-flx :ensure t)
+;; (use-package company-lsp :ensure t)
 (use-package yasnippet :ensure t
   :bind (:map yas-minor-mode-map
 	("TAB" . nil)
@@ -223,10 +228,10 @@
 )
 (use-package which-func :ensure t)
 (use-package workgroups :ensure t)
-(use-package persp-mode :ensure t
-	:config
-	(persp-mode)
-)
+;; (use-package persp-mode :ensure t
+;; 	:config
+;; 	(persp-mode)
+;; )
 (use-package git-gutter :ensure t)
 (use-package yascroll :ensure t)
 (use-package color-identifiers-mode :ensure t)
@@ -327,10 +332,10 @@
 (setq beacon-blink-delay 0.15)
 (setq beacon-size 15)
 (setq beacon-color "#2499ff")
-(beacon-mode 1)
+;; (beacon-mode 1)
 ; disable in insert mode
-(add-hook 'evil-insert-state-entry-hook (lambda () (beacon-mode -1)))
-(add-hook 'evil-insert-state-exit-hook (lambda () (beacon-mode 1)))
+;; (add-hook 'evil-insert-state-entry-hook (lambda () (beacon-mode -1)))
+;; (add-hook 'evil-insert-state-exit-hook (lambda () (beacon-mode 1)))
 
 ;; git gutter
 (setq
