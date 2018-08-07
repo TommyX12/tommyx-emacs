@@ -17,20 +17,20 @@
 (spaceline-compile)
 
 ;; delayed update trigger for performance
-(setq delayed-mode-line-updating nil)
+(setq delayed-mode-line--updating nil)
 (setq delayed-mode-line--temp-var nil)
 (put 'delayed-mode-line--temp-var 'risky-local-variable t)
 (defun delayed-mode-line-format (func cache-name)
   "The mode-line format function with auto caching."
-  (when delayed-mode-line-updating
+  (when delayed-mode-line--updating
     (set-window-parameter nil cache-name (format-mode-line (funcall func))))
 	(setq delayed-mode-line--temp-var (window-parameter nil cache-name))
   'delayed-mode-line--temp-var)
 (defun delayed-mode-line-update (&rest _)
   "Update the mode-line."
-  (setq delayed-mode-line-updating t)
+  (setq delayed-mode-line--updating t)
     (force-mode-line-update t)
-    (run-at-time 0.01 nil (lambda () (setq delayed-mode-line-updating nil))))
+    (run-at-time 0.01 nil (lambda () (setq delayed-mode-line--updating nil))))
 (defun delayed-mode-line-update-if-idle (&rest _)
   "Update the mode-line if idling."
   (when (and (current-idle-time) (>= (nth 1 (current-idle-time)) 0.5))

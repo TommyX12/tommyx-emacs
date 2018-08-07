@@ -117,6 +117,18 @@
 	:states '(motion normal visual)
 	:prefix "SPC"
 
+	"jh" '(org-toggle-heading
+		:which-key "org toggle heading/text")
+
+	"j-" '(org-toggle-item
+		:which-key "org toggle item type")
+
+	"j[" '(org-toggle-checkbox
+		:which-key "org toggle checkbox")
+
+	"j]" '((lambda () (interactive) (org-toggle-checkbox '(4)))
+		:which-key "org toggle checkbox presence")
+
 	"jf" '(counsel-org-goto
 		:which-key "org goto")
 )
@@ -150,6 +162,9 @@
 
 	"js" '(org-schedule
 		:which-key "org schedule")
+
+	"jS" '((lambda () (interactive) (org-schedule nil "."))
+		:which-key "org schedule to today")
 
 	"jd" '(org-deadline
 		:which-key "org deadline")
@@ -299,6 +314,9 @@
 
 	"js" '(org-agenda-schedule
 		:which-key "agenda schedule")
+
+	"jS" '((lambda () (interactive) (org-agenda-schedule nil "."))
+		:which-key "agenda schedule to today")
 
 	"jd" '(org-agenda-deadline
 		:which-key "agenda deadline")

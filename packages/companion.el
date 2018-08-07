@@ -10,11 +10,19 @@
 ;;; Code:
 
 ;;
+;; Dependencies
+;;
+
+(require 'companion-segments)
+(require 'spaceline)
+(require 'all-the-icons)
+
+;;
 ;; Constants
 ;;
 
-(defconst companion-buffer-name " *Companion*"
-  "Name of the buffer where companion shows directory contents.")
+(defconst companion-buffer-name " *companion*"
+  "Name of the buffer.")
 
 ;;
 ;; Macros
@@ -98,7 +106,8 @@
   "The major mode for companion."
   (setq indent-tabs-mode nil
         buffer-read-only t
-        truncate-lines -1))
+        ;; truncate-lines t
+	))
 
 ;;
 ;; Global methods
@@ -199,7 +208,7 @@ Companion buffer is BUFFER."
 (defun companion--render ()
 	(companion--with-editing-buffer
 		(erase-buffer)
-		(insert "test")
+		(insert (format-mode-line (spaceline-ml-companion)))
 	))
 
 (defun companion--create-window ()
@@ -231,6 +240,19 @@ Companion buffer is BUFFER."
 (defun companion-buffer--unlock-height ()
   "Unlock the height for Companion window."
   (setq window-size-fixed nil))
+
+(defun companion--idle-update (&rest _)
+  "Update the mode-line if idling."
+  (when (and (current-idle-time) (>= (nth 1 (current-idle-time)) 0.5))
+    (companion-update)))
+
+(defun companion--compile-header ()
+	(let ((powerline-default-separator 'alternate)
+				(spaceline-separator-dir-left '(left . left))
+				(spaceline-separator-dir-right '(right . right)))
+  (spaceline-compile 'companion
+    companion-segments-left
+    companion-segments-right)))
 
 ;;
 ;; Advices
@@ -292,6 +314,40 @@ Companion buffer is BUFFER."
 	(when (companion--window-exists-p)
 		(companion-close)
 		(companion-open)))
+
+(defun companion-update()
+	"Update the companion buffer."
+	(interactive)
+	(companion--render))
+
+;;
+;; Segments definition
+;;
+
+(spaceline-define-segment companion-time
+  "A spaceline segment to display date and time."
+	(concat (format-time-string " %Y-%m-%d %H:%M "))
+  :when active)
+
+(setq companion-segments-left `(
+  (persp-name)
+))
+(setq companion-segments-right `(
+  (org-pomodoro :when active)
+  (org-clock :when active)
+  (battery :when active)
+	("|" :tight-right t :face mode-line)
+	(companion-time :when active :tight-left t :face mode-line)
+))
+(companion--compile-header)
+
+;;
+;; Setup
+;; 
+
+(run-with-idle-timer 0.5 t 'companion-update)
+(run-at-time 0 1 'companion--idle-update)
+
 
 (provide 'companion)
 ;;; companion.el ends here
