@@ -36,7 +36,7 @@
 					:width 'normal)
 (defun set-font-size (size)
 	(set-face-attribute 'default nil :height size)
-	(status-lines-compile)
+	(status-lines-compile) ; should be before companion
 	(when (fboundp 'companion-reopen)
 		(companion-reopen)))
 (defun set-to-small-font ()
@@ -300,6 +300,9 @@
 
 ;;; package settings
 
+;; status lines
+(load-relative "./tommyx-status-lines.el")
+
 ;; color-identifiers-mode
 (setq color-identifiers-coloring-method 'sequential)
 (setq color-identifiers:max-color-saturation 0.3)
@@ -336,6 +339,9 @@
 ; disable in insert mode
 ;; (add-hook 'evil-insert-state-entry-hook (lambda () (beacon-mode -1)))
 ;; (add-hook 'evil-insert-state-exit-hook (lambda () (beacon-mode 1)))
+
+;; companion
+(companion-open)
 
 ;; git gutter
 (setq
@@ -784,7 +790,11 @@ Useful for a search overview popup."
 (defun change-theme (theme)
 	"Change to a new theme."
 	(interactive)
-	(load-theme theme t) (status-lines-compile) (posframe-delete-all))
+	(load-theme theme t)
+	(status-lines-compile)
+	(when (fboundp 'companion-reopen)
+		(companion-reopen))
+	(posframe-delete-all))
 (defun pop-kill-ring ()
   "Remove most recent entry from kill-ring"
 	(when kill-ring
@@ -1634,8 +1644,5 @@ Useful for a search overview popup."
 	(add-hook hook (lambda () (flyspell-mode -1))))
 
 
-;;; external configs
-;; org
+;;; org
 (load-relative "./tommyx-org.el")
-;; status lines
-(load-relative "./tommyx-status-lines.el")

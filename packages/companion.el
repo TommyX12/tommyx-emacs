@@ -106,7 +106,7 @@
   "The major mode for companion."
   (setq indent-tabs-mode nil
         buffer-read-only t
-        ;; truncate-lines t
+        truncate-lines t
 	))
 
 ;;
@@ -122,7 +122,7 @@
 (defun companion--window-exists-p ()
   "Return non-nil if companion window exists."
   (and (not (null (window-buffer companion--window)))
-       (eql (window-buffer companion--window) (companion--get-buffer))))
+       (eql (window-buffer companion--window) (companion--get-buffer t))))
 
 (defun companion--get-window ()
   "Return the companion window if it exists, else return nil.
@@ -157,13 +157,13 @@ The root window is the root window of the selected frame.
 _ALIST is ignored."
 	(display-buffer-in-side-window buffer '((side . top))))
 
-(defun companion--get-buffer ()
+(defun companion--get-buffer (&optional inhibit-creation)
   "Return the global companion buffer if it exists.
 If global companion buffer not exists, create it."
   (unless (equal (buffer-name companion--buffer)
                  companion-buffer-name)
     (setq companion--buffer nil))
-  (when (null companion--buffer)
+  (when (and (null companion--buffer) (null inhibit-creation))
     (save-window-excursion
       (setq companion--buffer
             (companion-buffer--create))))
@@ -178,7 +178,7 @@ Companion buffer is BUFFER."
 	(set-window-parameter window 'no-delete-other-windows t)
 	(set-window-parameter window 'no-other-window t)
 	(set-window-margins window 0 0)
-	(set-window-fringes window 0 0)
+	(set-window-fringes window 1 1)
 	(set-window-dedicated-p window t)
 	(set-window-scroll-bars window 0 nil 0 nil)
 	(setq-local window-min-height 1)
@@ -193,7 +193,7 @@ Companion buffer is BUFFER."
 	window)
 
 (defun companion--attach ()
-  "Attach the global companion buffer"
+  "Attach the global companion buffer."
   (setq companion--buffer (get-buffer companion-buffer-name))
   (setq companion--window (get-buffer-window
                             companion--buffer))
@@ -206,10 +206,15 @@ Companion buffer is BUFFER."
     (companion-buffer--lock-height)))
 
 (defun companion--render ()
+	"Renders the companion buffer."
 	(companion--with-editing-buffer
-		(erase-buffer)
-		(insert (format-mode-line (spaceline-ml-companion)))
-	))
+	 (let
+			 ((content
+				 (format-mode-line (let ((powerline-selected-window (selected-window)))
+						(spaceline-ml-companion)))))
+			(when (> (length content) 0)
+				(erase-buffer)
+				(insert content)))))
 
 (defun companion--create-window ()
   "Create global companion window."
@@ -246,8 +251,9 @@ Companion buffer is BUFFER."
   (when (and (current-idle-time) (>= (nth 1 (current-idle-time)) 0.5))
     (companion-update)))
 
-(defun companion--compile-header ()
-	(let ((powerline-default-separator 'alternate)
+(defun companion-compile ()
+	"Compiles the companion spaceline segments."
+	(let ((powerline-default-separator 'bar)
 				(spaceline-separator-dir-left '(left . left))
 				(spaceline-separator-dir-right '(right . right)))
   (spaceline-compile 'companion
@@ -274,8 +280,9 @@ Companion buffer is BUFFER."
 
 (defun companion-util--set-window-height (n)
   "Make selected window N row height."
-	(let ((window-safe-min-height 0))
-		(window-resize (selected-window) (- n (window-height)) nil 'safe)))
+	(let ((window-safe-min-height 0) (window-resize-pixelwise t))
+		(message (number-to-string (* n (or powerline-height (frame-char-height)))))
+		(window-resize (selected-window) (round (- (* n (or powerline-height (frame-char-height))) (window-pixel-height) -2)) nil 'safe t)))
 
 ;;
 ;; Buffer methods
@@ -305,6 +312,7 @@ Companion buffer is BUFFER."
   (interactive)
 	(let ((cw (selected-window)))
 	(companion--get-window)
+	(companion-compile)
 	(companion--render)
 	(select-window cw)))
 
@@ -318,32 +326,47 @@ Companion buffer is BUFFER."
 (defun companion-update()
 	"Update the companion buffer."
 	(interactive)
-	(companion--render))
+	(when (companion--window-exists-p)
+		(companion--render)))
 
 ;;
 ;; Segments definition
 ;;
 
+(spaceline-define-segment companion-emacs-version
+  "A spaceline segment to display emacs version."
+	(concat
+	 (propertize (all-the-icons-fileicon "elisp") 'face `(:height 0.8 :inherit mode-line-buffer-id :family ,(all-the-icons-fileicon-family)) 'display '(raise 0))
+	 (propertize (concat " GNU Emacs " emacs-version) 'face 'bold)))
+
 (spaceline-define-segment companion-time
   "A spaceline segment to display date and time."
 	(concat
-		(format-time-string " %Y-%m-%d")
+		(format-time-string "%Y-%m-%d")
 		(propertize
-			(format-time-string " %H:%M ")
-			'face 'mode-line-buffer-id))
-  :when active)
+			(format-time-string " %H:%M")
+			'face 'mode-line-buffer-id)))
+
+(spaceline-define-segment companion-system-load
+  "A spaceline segment to display system load."
+	(let ((value (car (load-average))))
+		(if value (format "%3d" value) "--")))
 
 (setq companion-segments-left `(
+	(companion-emacs-version :face companion-face)
   (persp-name)
+  (workspace-number)
 ))
 (setq companion-segments-right `(
-  (org-pomodoro :when active)
-  (org-clock :when active)
-  (battery :when active)
-	("|" :tight t :face mode-line)
-	(companion-time :when active :tight-left t :face mode-line)
+  (org-pomodoro)
+  (org-clock)
+  (battery)
+	(companion-system-load :face companion-face :tight-right t)
+	(" | " :tight t :face companion-face)
+	(companion-time :face companion-face :tight t)
+	(" " :face companion-face :tight t)
 ))
-(companion--compile-header)
+(companion-compile)
 
 ;;
 ;; Setup
@@ -351,6 +374,7 @@ Companion buffer is BUFFER."
 
 (run-with-idle-timer 0.5 t 'companion-update)
 (run-at-time 0 1 'companion--idle-update)
+(add-hook 'window-configuration-change-hook 'companion-update)
 
 
 (provide 'companion)

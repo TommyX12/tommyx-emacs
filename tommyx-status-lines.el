@@ -15,6 +15,7 @@
 (spaceline-helm-mode)
 (spaceline-info-mode)
 (spaceline-compile)
+(setq status-lines-scale 1.15)
 
 ;; delayed update trigger for performance
 (setq delayed-mode-line--updating nil)
@@ -43,6 +44,9 @@
 
 
 ;; helper functions
+(defun set-powerline-scale (scale)
+	(setq powerline-height (round (* (frame-char-height) scale))))
+
 (defun status-lines--git-stats (icon text face)
   "Wrapper to render git statistics ICON with TEXT using FACE.
 When FAMILY is provided, put `:family' property into face."
@@ -62,6 +66,17 @@ When FAMILY is provided, put `:family' property into face."
 
 
 ;; segment definition
+(spaceline-define-segment status-lines-line-column
+  "The current line and column numbers, or `(current page/number of pages)`
+in pdf-view mode (enabled by the `pdf-tools' package)."
+  (if (eq major-mode 'pdf-view-mode)
+		(spaceline--pdfview-page-number)
+		(concat
+		 (propertize (format-mode-line "%l") 'face 'bold)
+		 ":%2c")))
+(spaceline-define-segment status-lines-major-mode
+  "The name of the major mode."
+  (propertize (powerline-major-mode) 'face 'bold))
 (spaceline-define-segment status-lines-mode-icon-colored
   "A segment indicating the current buffer's mode with an icon"
   (let ((icon (all-the-icons-icon-for-mode major-mode)))
@@ -106,20 +121,15 @@ When FAMILY is provided, put `:family' property into face."
 (setq status-lines-header-segments-left `(
   (window-number :face highlight-face :priority 99)
   ((buffer-modified status-lines-mode-icon-colored buffer-id remote-host) :face mode-line)
-  (persp-name)
-  (workspace-number)
   (purpose :priority 94)
 ))
 (setq status-lines-header-segments-right `(
   (anzu :priority 95)
   (nyan-cat)
-  (battery :when active)
   (selection-info :priority 95)
   (input-method)
 	(which-function)
-  ((point-position
-    line-column)
-	  :separator " | " :priority 99)
+  (status-lines-line-column :priority 99)
   (buffer-position)
   (hud :priority 99)
 ))
@@ -127,20 +137,16 @@ When FAMILY is provided, put `:family' property into face."
 ;; footer line definition
 (setq status-lines-footer-segments-left `(
   (status-lines-mode-icon)
-  (major-mode :priority 99)
-  ((flycheck-error flycheck-warning flycheck-info)
-    :when active
-    :priority 89)
+  (status-lines-major-mode :priority 99)
+  ((flycheck-error flycheck-warning flycheck-info) :priority 89)
 ))
 (setq status-lines-footer-segments-right `(
   (python-pyvenv :fallback python-pyenv)
   (mu4e-alert-segment :when active)
   (erc-track :when active)
-  (global :when active)
-  (org-pomodoro :when active)
-  (org-clock :when active)
+  ;; (global :when active)
   (auto-compile)
-  (process :when active)
+  (process)
   ;; (version-control :when active :priority 78)
   (status-lines-git-status :priority 78)
   (buffer-size)
@@ -154,8 +160,7 @@ When FAMILY is provided, put `:family' property into face."
 				(spaceline-separator-dir-right '(left . right)))
   (spaceline-compile 'status-header
     status-lines-header-segments-left
-    status-lines-header-segments-right))
-)
+    status-lines-header-segments-right)))
 (defun status-lines-compile-footer ()
 	(let ((powerline-default-separator 'slant)
 				;; (spaceline-separator-dir-left '(left . left))
@@ -164,12 +169,11 @@ When FAMILY is provided, put `:family' property into face."
 				(spaceline-separator-dir-right '(right . left)))
 		(spaceline-compile 'status-footer
 			status-lines-footer-segments-left
-			status-lines-footer-segments-right))
-)
+			status-lines-footer-segments-right)))
 (defun status-lines-compile ()
+	(set-powerline-scale status-lines-scale)
 	(status-lines-compile-header)
-	(status-lines-compile-footer)
-)
+	(status-lines-compile-footer))
 (status-lines-compile)
 
 ;; header line setup
