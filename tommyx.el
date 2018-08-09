@@ -1182,9 +1182,11 @@ Useful for a search overview popup."
 	(kbd "<return>") 'neotree-enter
 )
 ; ,<space> no highlight
-(evil-define-key 'motion 'global (kbd ", SPC") (lambda () (interactive) (evil-ex-nohighlight) (beacon-blink) (mouse-avoidance-banish-mouse)))
+;; (evil-define-key 'motion 'global (kbd ", SPC") (lambda () (interactive) (evil-ex-nohighlight) (beacon-blink) (mouse-avoidance-banish-mouse)))
+(evil-define-key 'motion 'global (kbd ", SPC") (lambda () (interactive) (evil-ex-nohighlight) (beacon-blink)))
 ; easy quit visual mode
-(evil-define-key 'visual 'global (kbd ", SPC") (lambda () (interactive) (evil-exit-visual-state) (beacon-blink) (mouse-avoidance-banish-mouse)))
+;; (evil-define-key 'visual 'global (kbd ", SPC") (lambda () (interactive) (evil-exit-visual-state) (beacon-blink) (mouse-avoidance-banish-mouse)))
+(evil-define-key 'visual 'global (kbd ", SPC") (lambda () (interactive) (evil-exit-visual-state) (beacon-blink)))
 ; m and M for jumping
 (evil-define-key 'motion 'global "m" 'evil-jump-backward)
 (evil-define-key 'motion 'global "M" 'evil-jump-forward)
@@ -1616,14 +1618,15 @@ Useful for a search overview popup."
 (setq tabify-regexp "^\t* [ \t]+")
 
 ;; mouse avoidance (move to top right corner)
-(setq mouse-avoidance-banish-position
-	'((frame-or-window . frame)
-	(side . right)
-	(side-pos . -5)
-	(top-or-bottom . top)
-	(top-or-bottom-pos . -5)))
-(mouse-avoidance-mode 'banish)
-(mouse-avoidance-mode 'none)
+(setq make-pointer-invisible t)
+;; (setq mouse-avoidance-banish-position
+;; 	'((frame-or-window . frame)
+;; 	(side . right)
+;; 	(side-pos . -5)
+;; 	(top-or-bottom . top)
+;; 	(top-or-bottom-pos . -5)))
+;; (mouse-avoidance-mode 'banish)
+;; (mouse-avoidance-mode 'none)
 
 ;; flyspell
 (setq flyspell-issue-message-flag nil)
