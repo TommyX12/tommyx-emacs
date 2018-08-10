@@ -149,6 +149,7 @@ in pdf-view mode (enabled by the `pdf-tools' package)."
   (process)
   ;; (version-control :when active :priority 78)
   (status-lines-git-status :priority 78)
+	(projectile-root)
   (buffer-size)
   (buffer-encoding-abbrev)
 ))

@@ -149,6 +149,7 @@ But when the companion window does not exist, it will create the companion windo
 	(setq-local cursor-type nil)
 	(setq-local cursor-in-non-selected-windows nil)
 	(setq-local word-wrap nil)
+	(setq-local scroll-margin 0)
   (current-buffer))
 
 (defun companion-default-display-fn (buffer _alist)
@@ -207,14 +208,17 @@ Companion buffer is BUFFER."
 
 (defun companion--render ()
 	"Renders the companion buffer."
+	(companion--with-window
 	(companion--with-editing-buffer
 	 (let
 			 ((content
 				 (format-mode-line (let ((powerline-selected-window (selected-window)))
 						(spaceline-ml-companion)))))
 			(when (> (length content) 0)
-				(erase-buffer)
-				(insert content)))))
+				(goto-char 0)
+				(save-excursion
+				 (erase-buffer)
+				 (insert content)))))))
 
 (defun companion--create-window ()
   "Create global companion window."
