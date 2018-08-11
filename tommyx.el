@@ -1492,6 +1492,9 @@ Useful for a search overview popup."
 	(setq-local evil-shift-width tab-width)
 ))
 
+;; set frame title
+(setq frame-title-format (concat "TommyX's GNU Emacs " emacs-version))
+
 ;; attempt to improve font-lock performance
 ;; (setq jit-lock-defer-time 0)
 
@@ -1565,6 +1568,73 @@ Useful for a search overview popup."
 (setq gc-cons-threshold 200000000)
 (run-with-idle-timer 5 t (lambda () (garbage-collect)))
 (add-hook 'focus-out-hook (lambda () (garbage-collect)))
+
+;; save clipboard onto kill ring
+(setq save-interprogram-paste-before-kill t)
+
+;; fringe bitmap
+(define-fringe-bitmap 'flycheck-fringe-bitmap-double-arrow
+  [#b00000000
+   #b00000000
+   #b00001110
+   #b00011111
+   #b00011111
+   #b00011111
+   #b00001110
+   #b00000000
+   #b00000000])
+(define-fringe-bitmap 'right-arrow
+  [#b00111000
+   #b00011100
+   #b00001110
+   #b00000111
+   #b00000111
+   #b00001110
+   #b00011100
+   #b00111000])
+(define-fringe-bitmap 'right-arrow
+  [#b00011100
+   #b00111000
+   #b01110000
+   #b11100000
+   #b11100000
+   #b01110000
+   #b00111000
+   #b00011100])
+(define-fringe-bitmap 'right-curly-arrow
+  [#b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000])
+(define-fringe-bitmap 'left-curly-arrow
+  [#b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011])
 
 ;; word wrap
 (add-hook 'prog-mode-hook (lambda () (toggle-word-wrap 1)))
