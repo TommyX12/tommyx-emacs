@@ -17,6 +17,10 @@
 ;; use clean (indented) view
 (setq org-startup-indented t)
 
+;; use full path in refile (TODO buggy)
+;; (setq org-refile-use-outline-path t)
+;; (setq org-outline-path-complete-in-steps t)
+
 ;; log time when done
 (setq org-log-done 'time)
 
@@ -101,6 +105,9 @@
 
 	"of" '(counsel-org-goto-all ; go to heading of opened org files
 		:which-key "org goto all")
+
+	"or" '((lambda () (interactive) (org-refile '(4)))
+		:which-key "org goto refile targets")
 
 	"oc" '(org-capture
 		:which-key "org capture")

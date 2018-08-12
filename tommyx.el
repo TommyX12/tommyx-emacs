@@ -1584,23 +1584,23 @@ Useful for a search overview popup."
    #b00000000
    #b00000000])
 (define-fringe-bitmap 'right-arrow
-  [#b00111000
+  [#b01110000
+   #b00111000
    #b00011100
    #b00001110
-   #b00000111
-   #b00000111
    #b00001110
    #b00011100
-   #b00111000])
-(define-fringe-bitmap 'right-arrow
-  [#b00011100
+   #b00111000
+   #b01110000])
+(define-fringe-bitmap 'left-arrow
+  [#b00001110
+   #b00011100
    #b00111000
    #b01110000
-   #b11100000
-   #b11100000
    #b01110000
    #b00111000
-   #b00011100])
+   #b00011100
+   #b00001110])
 (define-fringe-bitmap 'right-curly-arrow
   [#b11000000
    #b11000000
@@ -1650,6 +1650,10 @@ Useful for a search overview popup."
 ;; fringe margin
 (setq-default left-fringe-width 16)
 (setq-default right-fringe-width 10)
+
+;; open buffer performance
+;; (add-hook 'find-file-hooks 'vc-find-file-hook)
+;; (setq vc-handled-backends nil)
 
 ;; input response (experimental)
 ;; (setq input-feedback-ov nil)
