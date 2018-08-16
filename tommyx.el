@@ -1052,6 +1052,8 @@ Useful for a search overview popup."
 (evil-define-key 'motion 'global ",." "@:")
 ; save all
 (evil-define-key 'motion 'global ",wa" 'evil-write-all)
+; start cmd
+(evil-define-key 'motion 'global ",;" (lambda () (interactive) (start-process-shell-command (format "cmd(%s)" default-directory) nil "start cmd")))
 ; sane tabbing
 (evil-define-key 'insert 'global (kbd "TAB") 'tab-to-tab-stop)
 (evil-define-key 'insert 'global (kbd "<tab>") 'tab-to-tab-stop)
