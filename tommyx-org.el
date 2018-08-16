@@ -75,7 +75,7 @@
 (setq org-agenda-skip-deadline-if-done t)
 (setq org-agenda-skip-scheduled-if-done t)
 (setq org-agenda-skip-scheduled-if-done t)
-(setq org-agenda-skip-scheduled-if-deadline-is-shown t)
+(setq org-agenda-skip-scheduled-if-deadline-is-shown nil)
 (setq org-agenda-move-date-from-past-immediately-to-today t)
 (org-super-agenda-mode)
 (evil-set-initial-state 'org-agenda-mode 'motion)
