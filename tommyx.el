@@ -181,11 +181,19 @@
 (use-package smartparens :ensure t
 		 ; don't show in mode display
 		 :diminish smartparens-mode)
+(use-package lsp-mode :ensure t)
+(use-package lsp-ui :ensure t :after lsp-mode
+	:config
+	;; (add-hook 'lsp-mode-hook 'lsp-ui-mode) ; TODO disabled for performance reasons
+)
 (use-package company :ensure t)
 (use-package company-childframe :ensure t)
 (use-package company-quickhelp :ensure t)
 (use-package company-flx :ensure t)
-;; (use-package company-lsp :ensure t)
+(use-package company-lsp :ensure t :after lsp-mode
+	:config
+	(push 'company-lsp company-backends)
+)
 (use-package yasnippet :ensure t
   :bind (:map yas-minor-mode-map
 	("TAB" . nil)
@@ -294,6 +302,18 @@
 (use-package counsel-css :ensure t
 	:config
 	(add-hook 'css-mode-hook 'counsel-css-imenu-setup)
+)
+(use-package lsp-python :ensure t :after lsp-mode
+	:config
+	(add-hook 'python-mode-hook #'lsp-python-enable)
+)
+(use-package lsp-javascript-typescript :ensure t :after lsp-mode
+	:config
+	(add-hook 'js-mode-hook #'lsp-javascript-typescript-enable)
+	(add-hook 'typescript-mode-hook #'lsp-javascript-typescript-enable) ;; for typescript support
+	(add-hook 'js2-mode-hook #'lsp-javascript-typescript-enable) ;; for js2-mode support
+	(add-hook 'js3-mode-hook #'lsp-javascript-typescript-enable) ;; for js3-mode support
+	(add-hook 'rjsx-mode #'lsp-javascript-typescript-enable) ;; for rjsx-mode support
 )
 ;; (use-package js2-refactor :ensure t)
 
@@ -411,9 +431,12 @@
 	 (define-key company-active-map (kbd "<S-tab>") 'company-select-previous)))
 (setq company-frontends
 	  '(company-pseudo-tooltip-unless-just-one-frontend
-		;; company-preview-frontend
 		company-tng-frontend
 		company-echo-metadata-frontend))
+;; (setq company-frontends
+;; 	  '(company-pseudo-tooltip-unless-just-one-frontend
+;; 		company-preview-frontend
+;; 		company-echo-metadata-frontend))
 (setq company-idle-delay 0.2)
 (setq company-quickhelp-delay nil) ; we will manually trigger the help
 (setq company-require-match 'never)
@@ -421,11 +444,10 @@
   (company-flx-mode +1))
 
 ;; ycmd
-(setq fuck (expand-file-name "third_party/ycmd/ycmd/"
-	(file-name-directory load-file-name)))
 (setq ycmd-server-command `("python" "-u" ,(expand-file-name "third_party/ycmd/ycmd/"
 	(file-name-directory load-file-name))))
-(add-hook 'ycmd-mode-hook 'company-ycmd-setup)
+; TODO disabled
+;; (add-hook 'ycmd-mode-hook 'company-ycmd-setup) ; TODO disabled
 (add-hook 'ycmd-mode-hook 'flycheck-ycmd-setup)
 (add-hook 'ycmd-mode-hook 'ycmd-eldoc-setup)
 ; attempt to improve performance
@@ -501,6 +523,7 @@
 ;; avy
 (setq avy-keys '(?w ?e ?r ?u ?i ?o ?p ?a ?s ?d ?g ?h ?j ?k ?l ?v ?n))
 (setq avy-all-windows nil)
+(setq avy-goto-word-0-regexp "\\(\\<\\sw\\|\n\\)")
 
 ;; undo-tree
 ; attempt to fix bug
@@ -1386,10 +1409,10 @@ Useful for a search overview popup."
 (evil-define-key 'insert 'global (kbd "<S-space> <S-space>") (lambda () (interactive) (save-excursion (flyspell-lazy-check-pending) (flyspell-auto-correct-previous-word (point)))))
 ; use c-hjkl to move around
 (evil-define-key 'insert 'global (kbd "C-g") 'evil-first-non-blank)
-;; (evil-define-key 'insert 'global (kbd "C-h") 'left-word)
-;; (evil-define-key 'insert 'global (kbd "C-j") 'next-line)
-;; (evil-define-key 'insert 'global (kbd "C-k") 'previous-line)
-;; (evil-define-key 'insert 'global (kbd "C-l") 'right-word)
+(evil-define-key 'insert 'global (kbd "M-h") 'left-word)
+(evil-define-key 'insert 'global (kbd "M-j") 'next-line)
+(evil-define-key 'insert 'global (kbd "M-k") 'previous-line)
+(evil-define-key 'insert 'global (kbd "M-l") 'right-word)
 (evil-define-key 'insert 'global (kbd "C-;") 'end-of-line)
 ; j mappings
 (general-imap "j" (general-key-dispatch 'self-insert-command
@@ -1452,8 +1475,8 @@ Useful for a search overview popup."
 
 ;; misc bindings
 ; use alt-h for help instead of ctrl-h
-(bind-key* (kbd "M-h") help-map)
-(bind-key* (kbd "M-h M-h") 'counsel-apropos)
+(bind-key* (kbd "C-M-h") help-map)
+(bind-key* (kbd "C-M-h C-M-h") 'counsel-apropos)
 
 
 ;;; misc settings

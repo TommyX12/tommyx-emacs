@@ -75,7 +75,7 @@
 (setq org-agenda-skip-deadline-if-done t)
 (setq org-agenda-skip-scheduled-if-done t)
 (setq org-agenda-skip-scheduled-if-done t)
-(setq org-agenda-skip-scheduled-if-deadline-is-shown nil)
+(setq org-agenda-skip-scheduled-if-deadline-is-shown t)
 (setq org-agenda-move-date-from-past-immediately-to-today t)
 (org-super-agenda-mode)
 (evil-set-initial-state 'org-agenda-mode 'motion)
@@ -240,7 +240,6 @@
 	(kbd "C-S-j") 'org-metadown ; move down
 	(kbd "C-S-k") 'org-metaup ; move up
 	(kbd "C-S-l") 'org-shiftmetaright ; demote/indent
-	(kbd "M-h") help-map
 
 	(kbd "C-RET") 'org-insert-heading-respect-content
 	(kbd "C-S-RET") 'org-insert-todo-heading-respect-content
@@ -281,8 +280,6 @@
 	(kbd "<C-S-return>") 'org-insert-todo-heading-respect-content
 	(kbd "<M-return>") 'org-insert-subheading
 	(kbd "<M-S-return>") 'org-insert-todo-subheading
-
-	(kbd "M-h") help-map
 )
 (evil-define-motion evil-org-next-visible-heading () :type exclusive
 	(org-next-visible-heading 1))
@@ -291,7 +288,6 @@
 (evil-define-key 'visual org-mode-map
 	(kbd "C-S-h") (lambda () (interactive) (org-metaleft) (evil-visual-restore)) ; promote/outdent
 	(kbd "C-S-l") (lambda () (interactive) (org-metaright) (evil-visual-restore)) ; demote/indent
-	(kbd "M-h") help-map
 
 	(kbd "C-j") 'evil-org-next-visible-heading
 	(kbd "C-k") 'evil-org-previous-visible-heading
@@ -355,8 +351,6 @@
 
 	"Z" (lambda () (interactive) (when org-agenda-entry-text-mode (org-agenda-entry-text-mode)))
 	"X" (lambda () (interactive) (when (not org-agenda-entry-text-mode) (org-agenda-entry-text-mode)))
-
-	(kbd "M-h") help-map
 
 	(kbd "C--") 'org-agenda-do-date-earlier
 	(kbd "C-=") 'org-agenda-do-date-later
