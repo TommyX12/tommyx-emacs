@@ -92,10 +92,12 @@
 
 
 ;;; install packages
-(require 'companion)
 (require 'font-lock+)
 (require 'hl-line+)
 (require 'info+)
+(use-package dash :ensure t)
+(use-package s :ensure t)
+(use-package cl-lib :ensure t)
 (use-package emms :ensure t
 	:config 
 	(require 'emms-setup)
@@ -270,6 +272,7 @@
 		("C-j" . nil)
 	)
 )
+(require 'companion)
 ; language specific
 (use-package csv-mode :ensure t)
 (use-package json-mode :ensure t)
