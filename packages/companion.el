@@ -89,6 +89,11 @@
   "*Face used for the banner in companion buffer."
   :group 'companion :group 'font-lock-highlighting-faces)
 (defvar companion-face 'companion-face)
+(defface companion-notif-icon-face
+  '((t (:foreground "#67b11d" :inherit companion-face)))
+  "*Face used for the notification icon in companion buffer."
+  :group 'companion :group 'font-lock-highlighting-faces)
+(defvar companion-notif-icon-face 'companion-notif-icon-face)
 
 ;;
 ;; Variables
@@ -97,6 +102,8 @@
 (defvar companion--buffer nil)
 
 (defvar companion--window nil)
+
+(defvar companion-notif--current nil)
 
 ;;
 ;; Major mode definition
@@ -351,19 +358,31 @@ Companion buffer is BUFFER."
 			(format-time-string " %H:%M")
 			'face 'mode-line-buffer-id)))
 
+(spaceline-define-segment companion-notification
+  "A spaceline segment to display notifications."
+	(concat
+	 (propertize "●" 'face 'companion-notif-icon-warn)
+	 " "
+	 companion-notif--current
+	 ))
+
 (spaceline-define-segment companion-system-load
   "A spaceline segment to display system load."
 	(let ((value (car (load-average))))
 		(if value (format "%3d" value) "--")))
 
 (setq companion-segments-left `(
-	(companion-emacs-version :face companion-face)
-  (persp-name)
-  (workspace-number)
+	((companion-emacs-version
+	 companion-notification)
+	 :separator " | "
+	 :face companion-face
+	)
 ))
 (setq companion-segments-right `(
   (org-pomodoro)
   (org-clock)
+  (persp-name)
+  (workspace-number)
   (battery)
 	(companion-system-load :face companion-face :tight-right t)
 	(" | " :tight t :face companion-face)
