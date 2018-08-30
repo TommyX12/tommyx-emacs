@@ -92,6 +92,7 @@
 
 
 ;;; install packages
+(require 'redo+)
 (require 'font-lock+)
 (require 'hl-line+)
 (require 'info+)
@@ -413,7 +414,7 @@
 	(with-current-buffer buffer
 	  (setq-local overriding-local-map company-childframe-active-map))
 	(posframe-show buffer
-				   :override-parameters '((internal-border-width . 2))
+				   :override-parameters '((border-width . 1) (internal-border-width . 1))
 				   :string contents
 				   :position (- (point) (length company-prefix))
 				   :x-pixel-offset (* -1 company-tooltip-margin (default-font-width))
@@ -682,7 +683,8 @@
 ; display functions
 (setq ivy-posframe-parameters '(
 	(width . 50)
-	(internal-border-width . 2)
+	(border-width . 1)
+	(internal-border-width . 1)
 	(min-width . 50)
 	(refresh . 1)
 	))
@@ -1070,8 +1072,10 @@ Useful for a search overview popup."
 (evil-define-key 'insert 'global (kbd "<S-return>") 'smart-open-line-above)
 ; macro in visual mode
 (evil-define-key 'visual 'global "q" (lambda () (interactive) (evil-ex "'<,'>norm @")))
-; use U for redo
-(evil-define-key 'normal 'global "U" 'undo-tree-redo)
+; undo redo
+(evil-define-key 'normal 'global "u" 'undo)
+(evil-define-key 'normal 'global "U" 'redo)
+;; (evil-define-key 'normal 'global "U" 'undo-tree-redo)
 ; use ; for :
 (evil-define-key 'motion 'global ";" 'evil-ex)
 ; repeat last ex command
