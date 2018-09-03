@@ -115,8 +115,14 @@
 	"oa" '(org-agenda
 		:which-key "org agenda")
 
-	"oi" '((lambda () (interactive) (org-pomodoro '(4)))
+	"oi" '((lambda () (interactive) (org-clock-in '(4))) ; (lambda () (interactive) (org-pomodoro '(4)))
 		:which-key "org clock in recent")
+
+	"oo" '(org-clock-out
+		:which-key "org clock out")
+
+	"oO" '(org-clock-cancel
+		:which-key "org clock cancel")
 )
 ; org mode leader
 (general-define-key
@@ -185,7 +191,7 @@
 	"jq" '(org-set-tags-command
 		:which-key "org set tags")
 
-	"ji" '(org-pomodoro
+	"ji" '(org-clock-in ; org-pomodoro
 		:which-key "org clock in")
 )
 
@@ -333,7 +339,7 @@
 	"jq" '(org-agenda-set-tags
 		:which-key "agenda set tags")
 
-	"ji" '(org-pomodoro
+	"ji" '(org-clock-in
 		:which-key "clock in")
 )
 (evil-define-key 'motion org-agenda-mode-map
