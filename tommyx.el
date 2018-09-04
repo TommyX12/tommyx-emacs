@@ -1416,12 +1416,12 @@ Useful for a search overview popup."
 (evil-define-key 'insert 'global (kbd "S-SPC S-SPC") (lambda () (interactive) (save-excursion (flyspell-lazy-check-pending) (flyspell-auto-correct-previous-word (point)))))
 (evil-define-key 'insert 'global (kbd "<S-space> <S-space>") (lambda () (interactive) (save-excursion (flyspell-lazy-check-pending) (flyspell-auto-correct-previous-word (point)))))
 ; use c-hjkl to move around
-(evil-define-key 'insert 'global (kbd "C-g") 'evil-first-non-blank)
+(evil-define-key 'insert 'global (kbd "M-g") 'evil-first-non-blank)
 (evil-define-key 'insert 'global (kbd "M-h") 'left-word)
 (evil-define-key 'insert 'global (kbd "M-j") 'next-line)
 (evil-define-key 'insert 'global (kbd "M-k") 'previous-line)
 (evil-define-key 'insert 'global (kbd "M-l") 'right-word)
-(evil-define-key 'insert 'global (kbd "C-;") 'end-of-line)
+(evil-define-key 'insert 'global (kbd "M-;") 'end-of-line)
 ; j mappings
 (general-imap "j" (general-key-dispatch 'self-insert-command
 				   :timeout 0.25
@@ -1679,6 +1679,10 @@ Useful for a search overview popup."
 (setq window-divider-default-right-width 2)
 (setq window-divider-default-bottom-width 1)
 (window-divider-mode 1)
+
+;; undo limits
+(setq undo-limit 1000000)
+(setq undo-strong-limit 1000000)
 
 ;; fringe margin
 (setq-default left-fringe-width 16)

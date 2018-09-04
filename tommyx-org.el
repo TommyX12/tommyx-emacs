@@ -118,6 +118,9 @@
 	"oi" '((lambda () (interactive) (org-clock-in '(4))) ; (lambda () (interactive) (org-pomodoro '(4)))
 		:which-key "org clock in recent")
 
+	"oI" '(org-clock-goto
+		:which-key "org clock goto")
+
 	"oo" '(org-clock-out
 		:which-key "org clock out")
 
