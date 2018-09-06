@@ -89,11 +89,16 @@
   "*Face used for the banner in companion buffer."
   :group 'companion :group 'font-lock-highlighting-faces)
 (defvar companion-face 'companion-face)
-(defface companion-notif-icon-face
+(defface companion-notif-icon-info
   '((t (:foreground "#67b11d" :inherit companion-face)))
-  "*Face used for the notification icon in companion buffer."
+  "*Face used for the icon in companion buffer for info notifications."
   :group 'companion :group 'font-lock-highlighting-faces)
-(defvar companion-notif-icon-face 'companion-notif-icon-face)
+(defvar companion-notif-icon-info 'companion-notif-icon-info)
+(defface companion-notif-icon-warn
+  '((t (:foreground "#67b11d" :inherit companion-face)))
+  "*Face used for the icon in companion buffer for warning notifications."
+  :group 'companion :group 'font-lock-highlighting-faces)
+(defvar companion-notif-icon-warn 'companion-notif-icon-warn)
 
 ;;
 ;; Variables
@@ -360,11 +365,12 @@ Companion buffer is BUFFER."
 
 (spaceline-define-segment companion-notification
   "A spaceline segment to display notifications."
-	(concat
-	 (propertize "●" 'face 'companion-notif-icon-warn)
-	 " "
-	 companion-notif--current
-	 ))
+	(when companion-notif--current
+		(concat
+			(propertize "●" 'face 'companion-notif-icon-warn)
+			" "
+			companion-notif--current
+	)))
 
 (spaceline-define-segment companion-system-load
   "A spaceline segment to display system load."
