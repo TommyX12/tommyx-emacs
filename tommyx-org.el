@@ -21,8 +21,9 @@
 ;; (setq org-refile-use-outline-path t)
 ;; (setq org-outline-path-complete-in-steps t)
 
-;; log time when done
+;; logging
 (setq org-log-done 'time)
+(setq org-log-into-drawer t)
 
 ;; use readable font in org mode
 ;; (add-hook 'org-mode-hook #'enable-readable-buffer-font)
