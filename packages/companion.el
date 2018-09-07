@@ -109,6 +109,7 @@
 (defvar companion--window nil)
 
 (defvar companion-notif--current nil)
+(defvar companion-notif--current-type nil)
 
 ;;
 ;; Major mode definition
@@ -276,6 +277,12 @@ Companion buffer is BUFFER."
     companion-segments-left
     companion-segments-right)))
 
+(defun companion-show-notif (notif type)
+	"Show one notification with text NOTIF and type TYPE."
+
+	(setq companion-notif--current notif)
+	(setq companion-notif--current-type type))
+
 ;;
 ;; Advices
 ;;
@@ -345,6 +352,11 @@ Companion buffer is BUFFER."
 	(when (companion--window-exists-p)
 		(companion--render)))
 
+(defun companion-notif-dismiss()
+	"Dismiss one active notification in the companion buffer."
+	(interactive)
+	)
+
 ;;
 ;; Segments definition
 ;;
@@ -365,12 +377,15 @@ Companion buffer is BUFFER."
 
 (spaceline-define-segment companion-notification
   "A spaceline segment to display notifications."
-	(when companion-notif--current
-		(concat
-			(propertize "●" 'face 'companion-notif-icon-warn)
-			" "
-			companion-notif--current
-	)))
+	(let
+		((icon-face (if (eq companion-notif--current-type 'info) 'companion-notif-icon-info 'companion-notif-icon-warn)))
+
+		(when companion-notif--current
+			(concat
+				(propertize "●" 'face icon-face)
+				" "
+				companion-notif--current
+	))))
 
 (spaceline-define-segment companion-system-load
   "A spaceline segment to display system load."

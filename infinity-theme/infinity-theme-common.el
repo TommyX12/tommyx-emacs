@@ -310,7 +310,7 @@
 	`(cider-traced-face ((,class :box (:color ,cyan :line-width -1 :style nil))))
 
 ;;;;; companion
-	`(companion-notif-icon-info ((,class (:foreground ,err :inherit companion-face))))
+	`(companion-notif-icon-info ((,class (:foreground ,suc :inherit companion-face))))
 	`(companion-notif-icon-warn ((,class (:foreground ,err :inherit companion-face))))
 
 ;;;;; company
