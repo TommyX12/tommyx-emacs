@@ -387,6 +387,15 @@ Companion buffer is BUFFER."
 				companion-notif--current
 	))))
 
+(spaceline-define-segment companion-battery
+  "A spaceline segment to display battery status."
+	(if battery-status-function
+		(propertize
+			(battery-format "[%b%p] %t"
+			(funcall battery-status-function))
+		'face 'bold)
+	nil))
+
 (spaceline-define-segment companion-system-load
   "A spaceline segment to display system load."
 	(let ((value (car (load-average))))
@@ -404,8 +413,9 @@ Companion buffer is BUFFER."
   (org-clock)
   (persp-name)
   (workspace-number)
-  (battery)
-	(companion-system-load :face companion-face :tight-right t)
+  (companion-battery :tight-right t :face companion-face)
+	(" | " :tight t :face companion-face)
+	(companion-system-load :face companion-face :tight t)
 	(" | " :tight t :face companion-face)
 	(companion-time :face companion-face :tight t)
 	(" " :face companion-face :tight t)
