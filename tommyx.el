@@ -99,6 +99,7 @@
 (use-package dash :ensure t)
 (use-package s :ensure t)
 (use-package cl-lib :ensure t)
+(use-package request :ensure t)
 (use-package emms :ensure t
 	:config 
 	(require 'emms-setup)
@@ -184,19 +185,19 @@
 (use-package smartparens :ensure t
 		 ; don't show in mode display
 		 :diminish smartparens-mode)
-(use-package lsp-mode :ensure t)
-(use-package lsp-ui :ensure t :after lsp-mode
-	:config
-	;; (add-hook 'lsp-mode-hook 'lsp-ui-mode) ; TODO disabled for performance reasons
-)
+;; (use-package lsp-mode :ensure t)
+;; (use-package lsp-ui :ensure t :after lsp-mode
+;; 	:config
+;; 	;; (add-hook 'lsp-mode-hook 'lsp-ui-mode) ; TODO disabled for performance reasons
+;; )
 (use-package company :ensure t)
 (use-package company-childframe :ensure t)
 (use-package company-quickhelp :ensure t)
 (use-package company-flx :ensure t)
-(use-package company-lsp :ensure t :after lsp-mode
-	:config
-	(push 'company-lsp company-backends)
-)
+;; (use-package company-lsp :ensure t :after lsp-mode
+;; 	:config
+;; 	(push 'company-lsp company-backends)
+;; )
 (use-package yasnippet :ensure t
   :bind (:map yas-minor-mode-map
 	("TAB" . nil)
@@ -307,18 +308,18 @@
 	:config
 	(add-hook 'css-mode-hook 'counsel-css-imenu-setup)
 )
-(use-package lsp-python :ensure t :after lsp-mode
-	:config
-	(add-hook 'python-mode-hook #'lsp-python-enable)
-)
-(use-package lsp-javascript-typescript :ensure t :after lsp-mode
-	:config
-	(add-hook 'js-mode-hook #'lsp-javascript-typescript-enable)
-	(add-hook 'typescript-mode-hook #'lsp-javascript-typescript-enable) ;; for typescript support
-	(add-hook 'js2-mode-hook #'lsp-javascript-typescript-enable) ;; for js2-mode support
-	(add-hook 'js3-mode-hook #'lsp-javascript-typescript-enable) ;; for js3-mode support
-	(add-hook 'rjsx-mode #'lsp-javascript-typescript-enable) ;; for rjsx-mode support
-)
+;; (use-package lsp-python :ensure t :after lsp-mode
+;; 	:config
+;; 	(add-hook 'python-mode-hook #'lsp-python-enable)
+;; )
+;; (use-package lsp-javascript-typescript :ensure t :after lsp-mode
+;; 	:config
+;; 	(add-hook 'js-mode-hook #'lsp-javascript-typescript-enable)
+;; 	(add-hook 'typescript-mode-hook #'lsp-javascript-typescript-enable) ;; for typescript support
+;; 	(add-hook 'js2-mode-hook #'lsp-javascript-typescript-enable) ;; for js2-mode support
+;; 	(add-hook 'js3-mode-hook #'lsp-javascript-typescript-enable) ;; for js3-mode support
+;; 	(add-hook 'rjsx-mode #'lsp-javascript-typescript-enable) ;; for rjsx-mode support
+;; )
 ;; (use-package js2-refactor :ensure t)
 
 
@@ -448,10 +449,12 @@
   (company-flx-mode +1))
 
 ;; ycmd
+(setq ycmd-global-config (expand-file-name "third_party/ycmd/.ycm_extra_conf.py"
+	(file-name-directory load-file-name)))
 (setq ycmd-server-command `("python" "-u" ,(expand-file-name "third_party/ycmd/ycmd/"
 	(file-name-directory load-file-name))))
 ; TODO disabled
-;; (add-hook 'ycmd-mode-hook 'company-ycmd-setup) ; TODO disabled
+(add-hook 'ycmd-mode-hook 'company-ycmd-setup)
 (add-hook 'ycmd-mode-hook 'flycheck-ycmd-setup)
 (add-hook 'ycmd-mode-hook 'ycmd-eldoc-setup)
 ; attempt to improve performance
@@ -459,6 +462,7 @@
 ; generic file types
 (add-hook 'prog-mode-hook (lambda () (ycmd-mode 1)))
 (add-hook 'text-mode-hook (lambda () (ycmd-mode 1)))
+(add-hook 'org-mode-hook (lambda () (ycmd-eldoc-mode -1))) ; ycmd freezes
 ; java
 (add-to-list 'ycmd-file-type-map '(java-mode "java")) ; file type detection
 (evil-define-key 'normal java-mode-map (kbd "C-]") 'ycmd-goto) ; goto

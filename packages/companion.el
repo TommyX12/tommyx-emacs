@@ -13,6 +13,7 @@
 ;; Dependencies
 ;;
 
+(require 'battery)
 (require 'companion-segments)
 (require 'spaceline)
 (require 'all-the-icons)
@@ -277,7 +278,7 @@ Companion buffer is BUFFER."
     companion-segments-left
     companion-segments-right)))
 
-(defun companion-show-notif (notif type)
+(defun companion-show-notif (notif &optional type)
 	"Show one notification with text NOTIF and type TYPE."
 
 	(setq companion-notif--current notif)
@@ -378,7 +379,7 @@ Companion buffer is BUFFER."
 (spaceline-define-segment companion-notification
   "A spaceline segment to display notifications."
 	(let
-		((icon-face (if (eq companion-notif--current-type 'info) 'companion-notif-icon-info 'companion-notif-icon-warn)))
+		((icon-face (if (eq companion-notif--current-type 'warning) 'companion-notif-icon-warn 'companion-notif-icon-info)))
 
 		(when companion-notif--current
 			(concat
@@ -391,7 +392,7 @@ Companion buffer is BUFFER."
   "A spaceline segment to display battery status."
 	(if battery-status-function
 		(propertize
-			(battery-format "[%b%p] %t"
+			(battery-format "[%p]%b %t"
 			(funcall battery-status-function))
 		'face 'bold)
 	nil))

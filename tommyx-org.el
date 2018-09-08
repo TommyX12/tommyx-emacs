@@ -57,6 +57,10 @@
 		(org-clock-out) t)) ;; only fails on keyboard quit or error
 (add-hook 'kill-emacs-query-functions 'my/org-clock-query-out) ; timeclock.el puts this on the wrong hook!
 
+;; todo dependencies
+(setq org-enforce-todo-dependencies t)
+(setq org-enforce-todo-checkbox-dependencies t)
+
 ;; misc
 (setq org-M-RET-may-split-line nil)
 (setq org-fontify-done-headline t)
@@ -64,6 +68,7 @@
 (setq org-super-agenda-fontify-whole-header-line t) ; this doesn't work
 
 ;; agenda configs
+(setq org-agenda-dim-blocked-tasks t)
 (setq org-agenda-window-setup 'only-window)
 (setq org-agenda-start-with-clockreport-mode t)
 (setq org-clock-report-include-clocking-task t)

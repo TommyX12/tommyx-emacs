@@ -25,13 +25,33 @@
 	((find-font (font-spec :name "Consolas"))
 	(setq selected-font "Consolas"))
 )))
-(if (not (boundp 'font-size))
-	(setq font-size 120))
+(if (not (boundp 'font-size-small))
+	(setq font-size-small 120))
+(if (not (boundp 'font-size-big))
+	(setq font-size-big 150))
 (set-face-attribute 'default nil
 					:family selected-font
-					:height font-size
+					:height font-size-small
 					:weight 'normal
 					:width 'normal)
+(defun set-font-size (size)
+	(set-face-attribute 'default nil :height size)
+	(status-lines-compile) ; should be before companion
+	(when (fboundp 'companion-reopen)
+		(companion-reopen)))
+(defun set-to-small-font ()
+  (interactive)
+	(set-font-size font-size-small))
+(defun set-to-big-font ()
+  (interactive)
+	(set-font-size font-size-big))
+(defun toggle-readable-buffer-font ()
+	(interactive)
+	(if (bound-and-true-p buffer-face-mode)
+		(buffer-face-mode -1)
+		(buffer-face-set '(:family "Arial"))
+	)
+)
 
 ;; full screen automatically
 (toggle-frame-fullscreen)
@@ -72,12 +92,22 @@
 
 
 ;;; install packages
+(require 'redo+)
+(require 'font-lock+)
+(require 'hl-line+)
+(require 'info+)
+(use-package dash :ensure t)
+(use-package s :ensure t)
+(use-package cl-lib :ensure t)
 (use-package emms :ensure t
 	:config 
 	(require 'emms-setup)
+	(require 'emms-player-simple)
 	(emms-all)
-	(emms-default-players))
-(use-package undo-tree :ensure t)
+	(emms-default-players)
+)
+;; (use-package undo-tree :ensure t)
+(use-package all-the-icons :ensure t)
 (use-package evil :ensure t)
 (use-package evil-collection :ensure t :after evil)
 (use-package evil-visualstar :ensure t)
@@ -87,13 +117,14 @@
 (use-package evil-numbers :ensure t)
 (use-package evil-exchange :ensure t
 	:config
-	(setq evil-exchange-key (kbd ",x"))
-	(setq evil-exchange-cancel-key (kbd ",X"))
+	(setq evil-exchange-key (kbd "x"))
+	(setq evil-exchange-cancel-key (kbd ",x"))
 	(evil-exchange-install)
 )
 (use-package evil-search-highlight-persist :ensure t)
 (use-package evil-nerd-commenter :ensure t)
 (use-package projectile :ensure t)
+(require 'per-frame-header-mode-line)
 (use-package smex :ensure t)
 (use-package helm :ensure t)
 (use-package helm-flx :ensure t)
@@ -106,7 +137,15 @@
 (use-package helm-projectile :ensure t :after projectile)
 (use-package swiper-helm :ensure t)
 (use-package ivy :ensure t)
-(use-package ivy-posframe :ensure t)
+(use-package ivy-posframe :ensure t :after ivy)
+(use-package all-the-icons-ivy :ensure t :after ivy
+	:config
+	(setq all-the-icons-ivy-buffer-commands
+				'(ivy-switch-buffer ivy-switch-buffer-other-window counsel-projectile-switch-to-buffer))
+	(setq all-the-icons-ivy-file-commands
+				'(counsel-find-file counsel-file-jump counsel-recentf counsel-projectile-find-file counsel-projectile-find-dir))
+	(all-the-icons-ivy-setup)
+)
 (use-package counsel :ensure t)
 (use-package counsel-projectile :ensure t)
 (use-package swiper :ensure t)
@@ -116,7 +155,7 @@
 	(setq which-key-popup-type 'side-window)
 	(setq which-key-sort-order 'which-key-prefix-then-key-order-reverse)
 	(setq which-key-idle-delay 0.5)
-	(setq which-key-allow-evil-operators t)
+	;; (setq which-key-allow-evil-operators t)
 	(setq which-key-show-operator-state-maps t)
 	(setq which-key-binding-filter-function
 		(lambda (cell prefix)
@@ -145,10 +184,19 @@
 (use-package smartparens :ensure t
 		 ; don't show in mode display
 		 :diminish smartparens-mode)
+;; (use-package lsp-mode :ensure t)
+;; (use-package lsp-ui :ensure t :after lsp-mode
+;; 	:config
+;; 	;; (add-hook 'lsp-mode-hook 'lsp-ui-mode) ; TODO disabled for performance reasons
+;; )
 (use-package company :ensure t)
 (use-package company-childframe :ensure t)
 (use-package company-quickhelp :ensure t)
 (use-package company-flx :ensure t)
+;; (use-package company-lsp :ensure t :after lsp-mode
+;; 	:config
+;; 	(push 'company-lsp company-backends)
+;; )
 (use-package yasnippet :ensure t
   :bind (:map yas-minor-mode-map
 	("TAB" . nil)
@@ -167,11 +215,34 @@
 (use-package powerline :ensure t)
 (use-package powerline-evil :ensure t)
 (use-package spaceline :ensure t)
+(use-package spaceline-all-the-icons :ensure t :after all-the-icons spaceline
+	:config
+	;; (spaceline-all-the-icons-theme)
+)
+;; (use-package ecb :ensure t
+;; 	:config
+;; 	(require 'ecb)
+;; 	(setq ecb-layout-name "right1")
+;; )
+;; (use-package sublimity :ensure t
+;; 	:config
+;; 	(require 'sublimity-scroll
+;; 	(require 'sublimity-map)
+;; 	(require 'sublimity-attractive)
+;; )
+;; (use-package minimap :ensure t
+;; 	:config
+;; )
 (use-package winum :ensure t
 	:config
 	(winum-mode)
 )
 (use-package which-func :ensure t)
+(use-package workgroups :ensure t)
+;; (use-package persp-mode :ensure t
+;; 	:config
+;; 	(persp-mode)
+;; )
 (use-package git-gutter :ensure t)
 (use-package yascroll :ensure t)
 (use-package color-identifiers-mode :ensure t)
@@ -183,9 +254,26 @@
 (use-package org-super-agenda :ensure t)
 (use-package org-journal :ensure t)
 (use-package org-pomodoro :ensure t)
+(use-package org-bullets :ensure t
+	:config
+)
 (use-package load-relative :ensure t)
+;; (use-package fancy-battery :ensure t)
 (use-package rainbow-mode :ensure t)
 (use-package highlight-numbers :ensure t)
+(use-package emmet-mode :ensure t
+	:config
+	(add-hook 'sgml-mode-hook 'emmet-mode)
+	(add-hook 'web-mode-hook 'emmet-mode)
+	(add-hook 'css-mode-hook  'emmet-mode)
+	(setq emmet-move-cursor-after-expanding t)
+	(setq emmet-move-cursor-between-quotes t)
+	(setq emmet-indentation 2)
+	:bind (:map emmet-mode-keymap
+		("C-j" . nil)
+	)
+)
+(require 'companion)
 ; language specific
 (use-package csv-mode :ensure t)
 (use-package json-mode :ensure t)
@@ -215,22 +303,29 @@
 	(add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
 	(setq js2-strict-missing-semi-warning nil)
 )
-(use-package emmet-mode :ensure t
+(use-package counsel-css :ensure t
 	:config
-	(add-hook 'sgml-mode-hook 'emmet-mode)
-	(add-hook 'web-mode-hook 'emmet-mode)
-	(add-hook 'css-mode-hook  'emmet-mode)
-	(setq emmet-move-cursor-after-expanding t)
-	(setq emmet-move-cursor-between-quotes t)
-	(setq emmet-indentation 2)
-	:bind (:map emmet-mode-keymap
-		("C-j" . nil)
-	)
+	(add-hook 'css-mode-hook 'counsel-css-imenu-setup)
 )
+;; (use-package lsp-python :ensure t :after lsp-mode
+;; 	:config
+;; 	(add-hook 'python-mode-hook #'lsp-python-enable)
+;; )
+;; (use-package lsp-javascript-typescript :ensure t :after lsp-mode
+;; 	:config
+;; 	(add-hook 'js-mode-hook #'lsp-javascript-typescript-enable)
+;; 	(add-hook 'typescript-mode-hook #'lsp-javascript-typescript-enable) ;; for typescript support
+;; 	(add-hook 'js2-mode-hook #'lsp-javascript-typescript-enable) ;; for js2-mode support
+;; 	(add-hook 'js3-mode-hook #'lsp-javascript-typescript-enable) ;; for js3-mode support
+;; 	(add-hook 'rjsx-mode #'lsp-javascript-typescript-enable) ;; for rjsx-mode support
+;; )
 ;; (use-package js2-refactor :ensure t)
 
 
 ;;; package settings
+
+;; status lines
+(load-relative "./tommyx-status-lines.el")
 
 ;; color-identifiers-mode
 (setq color-identifiers-coloring-method 'sequential)
@@ -242,14 +337,18 @@
 
 ;; dashboard
 (dashboard-setup-startup-hook)
-(add-hook 'dashboard-mode-hook (lambda () (hl-line-mode 1)))
+(add-hook 'dashboard-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
 
 ;; yascroll
 (global-yascroll-bar-mode 1)
 (setq yascroll:delay-to-hide nil)
+(setq yascroll:scroll-bar '(right-fringe left-fringe text-area))
 ; disable in insert mode
 (add-hook 'evil-insert-state-entry-hook (lambda () (yascroll-bar-mode -1)))
 (add-hook 'evil-insert-state-exit-hook (lambda () (yascroll-bar-mode 1)))
+; auto run on idle timer
+(run-with-idle-timer 0.5 t (lambda ()
+	(when (not (eq evil-state 'insert)) (yascroll:safe-show-scroll-bar))))
 
 ;; beacon
 (setq beacon-blink-when-focused nil) ; may cause problem
@@ -260,10 +359,13 @@
 (setq beacon-blink-delay 0.15)
 (setq beacon-size 15)
 (setq beacon-color "#2499ff")
-(beacon-mode 1)
+;; (beacon-mode 1)
 ; disable in insert mode
-(add-hook 'evil-insert-state-entry-hook (lambda () (beacon-mode -1)))
-(add-hook 'evil-insert-state-exit-hook (lambda () (beacon-mode 1)))
+;; (add-hook 'evil-insert-state-entry-hook (lambda () (beacon-mode -1)))
+;; (add-hook 'evil-insert-state-exit-hook (lambda () (beacon-mode 1)))
+
+;; companion
+(companion-open)
 
 ;; git gutter
 (setq
@@ -275,42 +377,10 @@
 (global-git-gutter-mode +1)
 
 ;; which-function
+(which-function-mode 1)
 (add-hook 'prog-mode-hook #'which-function-mode)
 (add-hook 'prog-mode-hook (lambda () (interactive)
-	(setq-default header-line-format '(" - " which-func-format))))
-
-;; powerline and spaceline
-(setq powerline-default-separator 'slant)
-(require 'spaceline-config)
-(spaceline-toggle-which-function-off)
-(spaceline-toggle-minor-modes-off)
-(spaceline-toggle-hud-on)
-(spaceline-spacemacs-theme)
-(spaceline-helm-mode)
-(spaceline-compile)
-; delayed update trigger for performance
-(setq delayed-mode-line-updating nil)
-(defun delayed-mode-line-format ()
-	"The mode-line format function with auto caching."
-	(when delayed-mode-line-updating
-		(set-window-parameter nil 'delayed-mode-line-cache (spaceline-ml-main)))
-	(window-parameter nil 'delayed-mode-line-cache))
-(defun delayed-mode-line-update (&rest _)
-	"Update the mode-line."
-	(setq delayed-mode-line-updating t)
-		(force-mode-line-update t)
-		(run-at-time 0.01 nil (lambda () (setq delayed-mode-line-updating nil))))
-(defun delayed-mode-line-update-if-idle (&rest _)
-	"Update the mode-line if idling."
-	(when (and (current-idle-time) (>= (nth 1 (current-idle-time)) 0.5))
-		(delayed-mode-line-update)))
-
-(setq-default mode-line-format '("%e" (:eval (delayed-mode-line-format))))
-; update mode line
-(run-with-idle-timer 0.5 t 'delayed-mode-line-update)
-(run-at-time 0 1 'delayed-mode-line-update-if-idle)
-(add-hook 'window-configuration-change-hook 'delayed-mode-line-update)
-;; (advice-add 'select-window :after #'delayed-mode-line-update) ; TODO avy-jump calls this too much
+	))
 
 ;; dashboard
 (setq dashboard-items '((recents  . 5)
@@ -358,13 +428,19 @@
 ;; (company-quickhelp-mode)
 (eval-after-load 'company
   '(progn
+	 (define-key company-active-map (kbd "C-h") nil)
+	 (define-key company-active-map (kbd "C-z") 'company-show-doc-buffer)
+		; C-z when company open will show help for that symbol in another window.
 	 (define-key company-active-map (kbd "S-TAB") 'company-select-previous)
 	 (define-key company-active-map (kbd "<S-tab>") 'company-select-previous)))
 (setq company-frontends
 	  '(company-pseudo-tooltip-unless-just-one-frontend
-		;; company-preview-frontend
 		company-tng-frontend
 		company-echo-metadata-frontend))
+;; (setq company-frontends
+;; 	  '(company-pseudo-tooltip-unless-just-one-frontend
+;; 		company-preview-frontend
+;; 		company-echo-metadata-frontend))
 (setq company-idle-delay 0.2)
 (setq company-quickhelp-delay nil) ; we will manually trigger the help
 (setq company-require-match 'never)
@@ -372,13 +448,14 @@
   (company-flx-mode +1))
 
 ;; ycmd
-(setq fuck (expand-file-name "third_party/ycmd/ycmd/"
-	(file-name-directory load-file-name)))
 (setq ycmd-server-command `("python" "-u" ,(expand-file-name "third_party/ycmd/ycmd/"
 	(file-name-directory load-file-name))))
-(add-hook 'ycmd-mode-hook 'company-ycmd-setup)
+; TODO disabled
+;; (add-hook 'ycmd-mode-hook 'company-ycmd-setup) ; TODO disabled
 (add-hook 'ycmd-mode-hook 'flycheck-ycmd-setup)
 (add-hook 'ycmd-mode-hook 'ycmd-eldoc-setup)
+; attempt to improve performance
+(setq company-ycmd-request-sync-timeout 0)
 ; generic file types
 (add-hook 'prog-mode-hook (lambda () (ycmd-mode 1)))
 (add-hook 'text-mode-hook (lambda () (ycmd-mode 1)))
@@ -396,6 +473,7 @@
 (show-smartparens-global-mode 1)
 (setq sp-show-pair-from-inside t)
 (setq smartparens-strict-mode nil)
+(setq sp-cancel-autoskip-on-backward-movement nil)
 ; auto expanison of brackets
 (sp-local-pair 'prog-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
 (sp-local-pair 'text-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
@@ -403,9 +481,12 @@
 (sp-local-pair 'text-mode "[" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
 (sp-local-pair 'prog-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
 (sp-local-pair 'text-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
+(defun remove-parens-overlay (&rest _) (sp-remove-active-pair-overlay))
+(advice-add 'evil-normal-state :after #'remove-parens-overlay)
 
 ;; evil
 (evil-mode 1) ; use evil-mode at startup
+(global-undo-tree-mode -1) ; do not use unto tree due to bugs
 ; split to the right and below
 (setq evil-split-window-below t)
 (setq evil-vsplit-window-right t)
@@ -415,6 +496,7 @@
 ;; (advice-add 'evil-ex-search-next :after #'my-center-line)
 ;; (advice-add 'evil-ex-search-previous :after #'my-center-line)
 (advice-add 'evil-ex-search-word-forward :after #'evil-ex-search-previous)
+(advice-add 'evil-ex-search-unbounded-word-forward :after #'evil-ex-search-previous)
 (advice-add 'evil-ex-search-word-backward :after #'evil-ex-search-next)
 (defun my-search-previous (&rest _) (evil-ex-search-previous))
 (defun my-search-next (&rest _) (evil-ex-search-next))
@@ -424,10 +506,13 @@
 (setq evil-magic nil) ; doesn't work
 ; search highlight persist
 (global-evil-search-highlight-persist) ; doesn't work
+(setq evil-search-highlight-persist-all-windows t)
 ; no echoing
 (setq evil-insert-state-message nil)
 ; custom cursor
-(setq evil-insert-state-cursor '(bar . 4))
+(setq evil-insert-state-cursor '((bar . 4)))
+; push jump list every time entering insert mode
+(add-hook 'evil-insert-state-entry-hook 'evil--jumps-push)
 
 ;; rainbow-delimiters
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
@@ -443,6 +528,7 @@
 ;; avy
 (setq avy-keys '(?w ?e ?r ?u ?i ?o ?p ?a ?s ?d ?g ?h ?j ?k ?l ?v ?n))
 (setq avy-all-windows nil)
+(setq avy-goto-word-0-regexp "\\(\\<\\sw\\|\n\\)")
 
 ;; undo-tree
 ; attempt to fix bug
@@ -476,10 +562,12 @@
 (evil-goggles-mode)
 
 ;; neotree
-; (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
-(setq neo-theme 'nerd)
+(setq neo-theme (if (display-graphic-p) 'icons 'nerd))
+;; (setq neo-theme 'nerd)
 (setq neo-show-hidden-files t)
-(add-hook 'neotree-mode-hook (lambda () (hl-line-mode 1)))
+(add-hook 'neotree-mode-hook (lambda ()
+	(hl-line-mode 1)
+	(setq-local use-line-nav t)))
 (setq neo-confirm-change-root 'off-p)
 (setq neo-banner-message "")
 (setq neo-show-updir-line nil)
@@ -487,6 +575,7 @@
 (setq neo-window-width 30)
 (setq neo-vc-integration '(face))
 (add-hook 'after-init-hook (lambda () (neotree-show)))
+(setq neo-mode-line-type 'default) ; for performance reason
 
 ;; evil-collection
 (delete 'neotree evil-collection-mode-list)
@@ -522,6 +611,9 @@
 ;; projectile
 (setq projectile-enable-caching t)
 (projectile-mode)
+; neotree integration
+(setq projectile-switch-project-action 'neotree-projectile-action)
+(setq projectile-globally-ignored-directories (append '("node_modules" "dist" "bin" "build") projectile-globally-ignored-directories))
 
 ;; helm
 (require 'helm-config)
@@ -592,22 +684,19 @@
 ; display functions
 (setq ivy-posframe-parameters '(
 	(width . 50)
-	(border-width . 1) (internal-border-width . 1)
+	(border-width . 1)
+	(internal-border-width . 1)
 	(min-width . 50)
 	(refresh . 1)
 	))
-(setq ivy-display-functions-alist
-	  '((counsel-irony . ivy-posframe-display-at-point)
-		(ivy-completion-in-region . ivy-posframe-display-at-point)
-		(swiper . ivy-posframe-display-at-window-bottom-left)
-		(swiper-multi . ivy-posframe-display-at-window-bottom-left)
-		(t . ivy-posframe-display-at-point)))
-(ivy-posframe-enable)
-(defun ivy-posframe--display (str &optional poshandler) ; override function
+(defun ivy-posframe--display (str &optional poshandler full-width) ; override
   "Show STR in ivy's posframe."
   (if (not (ivy-posframe-workable-p))
 	  (ivy-display-function-fallback str)
 	(with-selected-window (ivy--get-window ivy-last)
+	  (when (get-buffer ivy-posframe-buffer)
+      (with-current-buffer ivy-posframe-buffer
+      (setq-local tab-width 2)))
 	  (posframe-show
 	   ivy-posframe-buffer
 	   :font ivy-posframe-font
@@ -624,10 +713,59 @@
 	   :background-color (face-attribute 'ivy-posframe :background)
 	   :foreground-color (face-attribute 'ivy-posframe :foreground)
 	   :height (truncate (* 1.1 ivy-height))
-	   :width (window-width)
+	   :width (window-width) ; (if full-width (window-width) nil)
 	   :min-height 10
 	   :min-width 50
 	   :override-parameters ivy-posframe-parameters))))
+(defun posframe-poshandler-adaptive-top-bottom (info)
+  "Posframe's position handler.
+
+Get a position which let posframe stay onto current window's
+top or bottom side without blocking center content.
+Useful for a search overview popup."
+  (let* (
+				(posframe (plist-get info :posframe))
+				(parent-frame (plist-get info :parent-frame))
+				(frame-height (frame-pixel-height parent-frame))
+				(window (plist-get info :parent-window))
+				(window-left (window-pixel-left window))
+				(window-top (window-pixel-top window))
+				(window-height (window-pixel-height window))
+				(posframe-height (frame-pixel-height posframe))
+				(modeline-height (window-mode-line-height)))
+		(cond
+		(t; (<= (/ window-height posframe-height) 3.0)
+			(if (<= (+ window-top (/ window-height 2.0)) (/ frame-height 2.0))
+				(cons ; bottom
+					window-left
+					(min (- frame-height modeline-height posframe-height)
+						(+ window-top window-height)
+					)
+				)
+				(cons ; top
+					window-left
+					(max 0
+						(- window-top posframe-height)
+					)
+				)
+			)
+		)
+		;; (t
+		;; 	(cons ; window bottom
+		;; 		window-left
+		;; 		(+ window-top window-height (- 0 modeline-height posframe-height)))
+		;; )
+		)))
+(defun ivy-posframe-display-swiper (str)
+  (ivy-posframe--display str #'posframe-poshandler-adaptive-top-bottom t))
+(setq ivy-display-function nil)
+(setq ivy-display-functions-alist
+	  '((counsel-irony . ivy-posframe-display-at-point)
+		(ivy-completion-in-region . ivy-posframe-display-at-point)
+		(swiper . ivy-posframe-display-swiper)
+		(swiper-multi . ivy-posframe-display-swiper)
+		(t . ivy-posframe-display-at-point)))
+(ivy-posframe-enable)
 ; better UI
 (defun ivy-format-function-custom (cands)
   "Transform CANS into a string for minibuffer."
@@ -640,8 +778,10 @@
    "\n"))
 (setq ivy-format-function 'ivy-format-function-custom)
 ;; (setq ivy-format-function 'ivy-format-function-default)
+(setq ivy-count-format "%d/%d | ")
 ; misc
 (setq ivy-height 12)
+(setq ivy-height-alist nil) ; all ivy should have same height
 
 
 ;;; heavy tasks
@@ -653,11 +793,13 @@
   (git-gutter:update-all-windows)
   (flycheck-buffer)
   (garbage-collect)
+	(yascroll:safe-show-scroll-bar)
   (message "Done.")
+	(beacon-blink)
   )
 
 
-;;; key bindings util functions and motion
+;;; key bindings util / helper functions and motion
 (defun selection-or-word-at-point ()
   (cond
    ;; If there is selection use it
@@ -674,9 +816,33 @@
 				  "")))))
 (evil-define-motion swiper-movement () :type exclusive
 	(swiper))
+(defun change-theme (theme)
+	"Change to a new theme."
+	(interactive)
+	(load-theme theme t)
+	(status-lines-compile)
+	(when (fboundp 'companion-reopen)
+		(companion-reopen))
+	(posframe-delete-all))
+(defun pop-kill-ring ()
+  "Remove most recent entry from kill-ring"
+	(when kill-ring
+		(setq kill-ring (cdr kill-ring)))
+	(when kill-ring-yank-pointer
+		(setq kill-ring-yank-pointer kill-ring))
+)
 
 
 ;;; key bindings
+
+;; profiler
+(general-define-key
+	:keymaps 'override
+
+	"C-M-p" (lambda () (interactive) (profiler-start 'cpu+mem))
+	"C-M-S-p" (lambda () (interactive)
+		(profiler-report) (profiler-stop) (profiler-reset))
+)
 
 ;; use esc (same as "C-[") for escape
 (global-set-key (kbd "ESC") 'keyboard-escape-quit)
@@ -685,8 +851,12 @@
 ;; global leader
 (define-prefix-command 'global-leader-window)
 (define-prefix-command 'global-leader-helm)
-(define-prefix-command 'global-leader-ivy)
+(define-prefix-command 'global-leader-navigation)
+(define-prefix-command 'global-leader-project)
 (define-prefix-command 'global-leader-org)
+(define-prefix-command 'global-leader-appearance)
+(define-prefix-command 'global-leader-appearance-theme)
+(define-prefix-command 'global-leader-appearance-font)
 (define-prefix-command 'global-leader-mode-specific)
 (general-define-key
 	:keymaps 'override
@@ -697,15 +867,25 @@
 		:which-key "window")
 	"h" '(global-leader-helm
 		:which-key "helm")
-	"i" '(global-leader-ivy
-		:which-key "ivy")
+	"i" '(global-leader-navigation
+		:which-key "navigation")
 	"o" '(global-leader-org
 		:which-key "org")
 	"j" '(global-leader-mode-specific
 		:which-key "mode specific")
+	"a" '(global-leader-appearance
+		:which-key "appearance")
+	"p" '(global-leader-project
+		:which-key "project + workspace")
+
+	"is" '(counsel-semantic-or-imenu
+		:which-key "semantic item")
 
 	"x" '(counsel-M-x
 		:which-key "counsel M-x")
+
+	";" '(eval-expression
+		:which-key "eval lisp")
 
 	"hx" '(helm-M-x
 		:which-key "helm M-x")
@@ -713,6 +893,22 @@
 		:which-key "helm occur")
 	"hs" '(helm-swoop
 		:which-key "helm swoop")
+
+	"at" '(global-leader-appearance-theme
+		:which-key "theme")
+	"atl" '((lambda () (interactive) (change-theme light-theme))
+		:which-key "light theme")
+	"atd" '((lambda () (interactive) (change-theme dark-theme))
+		:which-key "dark theme")
+	
+	"af" '(global-leader-appearance-font
+		:which-key "font")
+	"afs" '(set-to-small-font
+		:which-key "small font")
+	"afb" '(set-to-big-font
+		:which-key "big font")
+	"afr" '(toggle-readable-buffer-font
+		:which-key "toggle readable buffer font")
 
 )
 (general-define-key
@@ -723,9 +919,9 @@
 	"f" '(swiper-movement
 		:which-key "search")
 
-	"*" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
+	"F" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
 		:which-key "search selection")
-	"C-*" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
+	"t" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
 		:which-key "search selection in all buffers")
 )
 (general-define-key
@@ -735,12 +931,12 @@
 
 	"f" '(swiper
 		:which-key "search")
-	"F" '(swiper-all
+	"C-f" '(swiper-all
 		:which-key "search in all buffers")
 
-	"*" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
+	"F" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
 		:which-key "search cursor word")
-	"C-*" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
+	"C-S-f" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
 		:which-key "search cursor word in all buffers")
 
 	"wh" '((lambda () (interactive) (evil-window-left 1) (delayed-mode-line-update))
@@ -757,26 +953,41 @@
 		:which-key "split window vertically")
 	"wq" '((lambda () (interactive) (evil-quit) (delayed-mode-line-update))
 		:which-key "close window")
+	"wu" '(winner-undo
+		:which-key "undo window config")
+	"wU" '(winner-redo
+		:which-key "redo window config")
 
 	"n" '(ivy-switch-buffer
 		:which-key "switch buffer")
 
 	"ii" '(ivy-resume
 		:which-key "ivy resume")
-	"ip" '(counsel-projectile
-		:which-key "counsel projectile")
+	;; "ip" '(counsel-projectile
+	;; 	:which-key "counsel projectile")
+	"ip" '(counsel-projectile-find-file
+		:which-key "project files")
 	"i <tab>" '(projectile-find-other-file
-		:which-key "counsel projectile other file")
+		:which-key "other file")
 	"i TAB" '(projectile-find-other-file
-		:which-key "counsel projectile other file")
-	"iP" '(counsel-projectile-switch-project
-		:which-key "counsel projectile project")
+		:which-key "other file")
 	"ir" '(counsel-recentf
-		:which-key "counsel recentf")
+		:which-key "recent files")
 	"ig" '(counsel-projectile-grep
-		:which-key "counsel projectile grep")
+		:which-key "project search")
 	"if" '(counsel-find-file
-		:which-key "counsel find files")
+		:which-key "files")
+
+	"pp" '(counsel-projectile-switch-project
+		:which-key "switch project")
+	"pw" '(persp-switch
+		:which-key "switch workspace")
+	"pn" '(persp-rename
+		:which-key "rename workspace")
+	"pd" '(persp-kill
+		:which-key "delete workspace")
+	"pr" '(projectile-invalidate-cache
+		:which-key "re-index project files")
 
 	"hh" '(helm-resume
 		:which-key "helm resume")
@@ -862,20 +1073,29 @@
 (evil-define-key 'insert 'global (kbd "<S-return>") 'smart-open-line-above)
 ; macro in visual mode
 (evil-define-key 'visual 'global "q" (lambda () (interactive) (evil-ex "'<,'>norm @")))
-; use U for redo
-(evil-define-key 'normal 'global "U" 'undo-tree-redo)
+; undo redo
+(evil-define-key 'normal 'global "u" 'undo)
+(evil-define-key 'normal 'global "U" 'redo)
+;; (evil-define-key 'normal 'global "U" 'undo-tree-redo)
 ; use ; for :
 (evil-define-key 'motion 'global ";" 'evil-ex)
 ; repeat last ex command
 (evil-define-key 'motion 'global ",." "@:")
 ; save all
-(evil-define-key 'motion 'global ",wa" (kbd ";wa RET"))
+(evil-define-key 'motion 'global ",wa" 'evil-write-all)
+; start cmd
+(evil-define-key 'motion 'global ",;" (lambda () (interactive) (start-process-shell-command (format "cmd(%s)" default-directory) nil "start cmd")))
 ; sane tabbing
 (evil-define-key 'insert 'global (kbd "TAB") 'tab-to-tab-stop)
 (evil-define-key 'insert 'global (kbd "<tab>") 'tab-to-tab-stop)
-; scrolling
-(evil-define-key 'motion 'global (kbd "M-j") 'evil-scroll-down)
-(evil-define-key 'motion 'global (kbd "M-k") 'evil-scroll-up)
+; use t instead of * for symbol search
+(evil-define-key 'normal 'global "F" (lambda () (interactive) (save-excursion (evil-ex-search-word-forward))))
+(evil-define-key 'normal 'global "gF" (lambda () (interactive) (save-excursion (evil-ex-search-unbounded-word-forward))))
+(evil-define-key 'visual 'global "F" 'evil-visualstar/begin-search-forward)
+; faster surround
+(evil-define-key 'normal 'global "s" 'evil-surround-edit)
+(evil-define-key 'normal 'global "S" 'evil-Surround-edit)
+(evil-define-key 'visual 'global "s" 'evil-surround-region)
 ; change to last buffer
 (evil-define-key 'motion 'global (kbd ", TAB") 'evil-buffer)
 (evil-define-key 'motion 'global (kbd ", <tab>") 'evil-buffer)
@@ -916,8 +1136,12 @@
 (evil-define-key 'visual 'global "L" 'fast-move-right)
 (evil-define-key 'visual 'global "G" 'evil-first-non-blank)
 (evil-define-key 'visual 'global ":" (lambda () (interactive) (evil-end-of-line)))
-; use gG to go to bottom
-(evil-define-key 'motion 'global "gG" 'evil-goto-line)
+; scrolling
+(evil-define-key 'motion 'global (kbd "M-j") 'evil-scroll-down)
+(evil-define-key 'motion 'global (kbd "M-k") 'evil-scroll-up)
+; use M-S-j/k to go to top bottom
+(evil-define-key 'motion 'global (kbd "M-J") 'evil-goto-line)
+(evil-define-key 'motion 'global (kbd "M-K") 'evil-goto-first-line)
 ; evil numbers
 (evil-define-key 'normal 'global "=" 'evil-numbers/inc-at-pt)
 (evil-define-key 'normal 'global "-" 'evil-numbers/dec-at-pt)
@@ -943,8 +1167,19 @@
 (evil-define-key 'normal 'global "}" (lambda () (interactive) (evil-shift-right-line 1)))
 (evil-define-key 'visual 'global "{" "<gv")
 (evil-define-key 'visual 'global "}" ">gv")
+; use ( and ) to do parenthesis motion
+(evil-define-motion move-to-next-parens () :type exclusive
+	(down-list))
+(evil-define-motion move-to-prev-parens () :type exclusive
+	(backward-up-list))
+(evil-define-key 'normal 'global "(" 'move-to-prev-parens)
+(evil-define-key 'normal 'global ")" 'move-to-next-parens)
+(evil-define-key 'visual 'global "(" 'move-to-prev-parens)
+(evil-define-key 'visual 'global ")" 'move-to-next-parens)
 ; move cursor to comfortable reading position
 (evil-define-key 'motion 'global ",z" (lambda () (interactive) (recenter-top-bottom (/ (* (window-total-height) 2) 7))))
+; do not re-copy when pasting in visual mode
+(evil-define-key 'visual 'global "p" (lambda () (interactive) (call-interactively 'evil-visual-paste) (pop-kill-ring)))
 ; substitute command
 (evil-define-key 'normal 'global ",s" (lambda () (interactive) (evil-ex "s/")))
 (evil-define-key 'normal 'global ",S" (lambda () (interactive) (evil-ex "%s/")))
@@ -955,18 +1190,17 @@
 ; narrowing
 (evil-define-key 'motion 'global ",,n" 'narrow-to-defun)
 (evil-define-key 'motion 'global ",,N" 'widen)
-; switch color scheme
-;; (evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme light-theme t)))
-;; (evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme dark-theme t)))
-(evil-define-key 'motion 'global ",CL" (lambda () (interactive) (load-theme light-theme t) (spaceline-compile)))
-(evil-define-key 'motion 'global ",CD" (lambda () (interactive) (load-theme dark-theme t) (spaceline-compile)))
+; use enter and S-enter to open blank lines. TODO implement numeric prefix arg
+(evil-define-key 'normal 'global (kbd "M-o") (lambda () (interactive) (save-excursion (evil-insert-newline-below))))
+(evil-define-key 'normal 'global (kbd "C-o") (lambda () (interactive) (save-excursion (evil-insert-newline-above))))
+(evil-define-key 'normal 'global (kbd "C-M-o") (lambda () (interactive) (save-excursion (evil-insert-newline-above)) (save-excursion (evil-insert-newline-below))))
 ; neo tree
 (evil-define-key 'motion 'global ",n" (lambda () (interactive) (neotree-show)))
 (evil-define-key 'motion 'global ",N" (lambda () (interactive) (neotree-find)))
 (evil-define-key 'normal neotree-mode-map
 	; apparently writing neotree-mode-map instead of 'neotree-mode-map works
-	"h" (neotree-make-executor :dir-fn 'neo-open-dir)
-	"l" (neotree-make-executor :dir-fn 'neo-open-dir)
+	;; "h" (neotree-make-executor :dir-fn 'neo-open-dir)
+	;; "l" (neotree-make-executor :dir-fn 'neo-open-dir)
 	"R" 'neotree-refresh
 	"r" 'neotree-refresh
 	"u" 'neotree-select-up-node
@@ -981,8 +1215,10 @@
 	(kbd "<return>") 'neotree-enter
 )
 ; ,<space> no highlight
+;; (evil-define-key 'motion 'global (kbd ", SPC") (lambda () (interactive) (evil-ex-nohighlight) (beacon-blink) (mouse-avoidance-banish-mouse)))
 (evil-define-key 'motion 'global (kbd ", SPC") (lambda () (interactive) (evil-ex-nohighlight) (beacon-blink)))
 ; easy quit visual mode
+;; (evil-define-key 'visual 'global (kbd ", SPC") (lambda () (interactive) (evil-exit-visual-state) (beacon-blink) (mouse-avoidance-banish-mouse)))
 (evil-define-key 'visual 'global (kbd ", SPC") (lambda () (interactive) (evil-exit-visual-state) (beacon-blink)))
 ; m and M for jumping
 (evil-define-key 'motion 'global "m" 'evil-jump-backward)
@@ -1032,12 +1268,38 @@
 			  "\"" (general-simulate-key ('evil-yank "i\""))
 			  "t" (general-simulate-key ('evil-yank "it"))
 ))
-(evil-define-key 'visual 'global "y" 'evil-yank)
+;; (evil-define-key 'visual 'global "y" 'evil-yank)
+(general-nmap "x" (general-key-dispatch 'evil-exchange
+				   :timeout 0.5
+			  "w" (general-simulate-key ('evil-exchange "iw"))
+			  "W" (general-simulate-key ('evil-exchange "iW"))
+			  ")" (general-simulate-key ('evil-exchange "i)"))
+			  "]" (general-simulate-key ('evil-exchange "i]"))
+			  "}" (general-simulate-key ('evil-exchange "i}"))
+			  ">" (general-simulate-key ('evil-exchange "i>"))
+			  "'" (general-simulate-key ('evil-exchange "i'"))
+			  "\"" (general-simulate-key ('evil-exchange "i\""))
+			  "t" (general-simulate-key ('evil-exchange "it"))
+			  "n" (general-simulate-key ('evil-exchange "gn"))
+))
+;; (evil-define-key 'visual 'global "x" 'evil-exchange)
+; copying in visual mode goes to the end of the region
+(evil-define-key 'visual 'global "y" (lambda () (interactive) (call-interactively 'evil-yank) (evil-goto-mark ?>)))
+(evil-define-key 'visual 'global "Y" 'evil-yank)
+; pasting goes to the end of the region
+(evil-define-key 'normal 'global "p" (lambda () (interactive) (call-interactively 'evil-paste-after) (evil-goto-mark ?\])))
+; C-p paste then select region (for easy replace)
+(evil-define-key 'normal 'global (kbd "C-p") (lambda () (interactive) (call-interactively 'evil-paste-after) (evil-goto-mark ?\[) (evil-visual-char) (evil-goto-mark ?\])))
+; use ivy to select kill ring
+(evil-define-key 'normal 'global (kbd ",p") 'counsel-yank-pop)
+; same for exchange
+(evil-define-key 'visual 'global "x" (lambda () (interactive) (call-interactively 'evil-exchange) (evil-goto-mark ?>)))
+(evil-define-key 'visual 'global "X" 'evil-exchange)
 ; join with ,j
 (evil-define-key 'normal 'global ",j" 'evil-join)
 (evil-define-key 'visual 'global ",j" 'evil-join)
-; break with ,k
-(evil-define-key 'normal 'global ",k" 'newline)
+; break with ,h
+(evil-define-key 'normal 'global ",h" 'newline)
 
 ;; helm
 ;; (global-set-key (kbd "M-x") 'helm-M-x)
@@ -1067,7 +1329,7 @@
 
 ;; ivy, counsel and swiper
 (general-define-key
-	:keymaps '(swiper-map ivy-minibuffer-map)
+	:keymaps '(swiper-map ivy-minibuffer-map counsel-imenu-map)
 	"C-j" 'ivy-next-line
 	"C-k" 'ivy-previous-line
 	"C-S-j" 'ivy-scroll-up-command
@@ -1077,10 +1339,14 @@
 	"M-k" 'ivy-previous-history-element
 	"C-RET" 'ivy-dispatching-done
 	"<C-return>" 'ivy-dispatching-done
+	"C-S-RET" 'ivy-dispatching-call ; do not exit after. useful for copy.
+	"<C-S-return>" 'ivy-dispatching-call
 	"S-RET" 'ivy-immediate-done ; use exact input, not candidate
 	"<S-return>" 'ivy-immediate-done
 	"C-l" 'ivy-done
+	"C-n" 'ivy-call
 	"C-h" 'ivy-backward-kill-word
+	"C-o" 'ivy-occur ; save to temp buffer for manipulation
 
 	"j" (general-key-dispatch 'self-insert-command
 		:timeout 0.25
@@ -1089,6 +1355,14 @@
 		"h" 'ivy-backward-kill-word
 		"p" 'ivy-partial ; complete text
 	)
+)
+(general-define-key
+	:keymaps '(swiper-map)
+	"C-n" 'swiper-query-replace
+)
+(general-define-key
+	:keymaps '(swiper-all-map)
+	"C-n" 'swiper-all-query-replace
 )
 (general-define-key ; use / to enter directory, not ENTER.
 	:keymaps '(counsel-find-file-map)
@@ -1118,7 +1392,7 @@
 (evil-define-key 'normal 'global (kbd "C-k") 'origami-previous-fold)
 (evil-define-key 'normal 'global (kbd "C-l") 'origami-recursively-toggle-node)
 (evil-define-key 'normal 'global "Z" 'origami-close-all-nodes)
-(evil-define-key 'normal 'global "X" 'origami-open-all-nodes)
+(evil-define-key 'normal 'global "X" (lambda () (interactive) (origami-open-all-nodes (current-buffer)) (origami-mode -1) (origami-mode 1)))
 (evil-define-key 'normal 'global "zx" (lambda () (interactive)
 	(origami-show-only-node (current-buffer) (point))
 	(origami-open-node-recursively (current-buffer) (point))))
@@ -1138,9 +1412,17 @@
 (evil-define-key 'insert emmet-mode-keymap (kbd "C-k") 'emmet-prev-edit-point)
 (evil-define-key 'insert emmet-mode-keymap (kbd "C-l") 'emmet-expand-line)
 (evil-define-key 'visual emmet-mode-keymap (kbd "C-l") 'emmet-wrap-with-markup)
-
+; spell correction
 (evil-define-key 'insert 'global (kbd "S-SPC S-SPC") (lambda () (interactive) (save-excursion (flyspell-lazy-check-pending) (flyspell-auto-correct-previous-word (point)))))
 (evil-define-key 'insert 'global (kbd "<S-space> <S-space>") (lambda () (interactive) (save-excursion (flyspell-lazy-check-pending) (flyspell-auto-correct-previous-word (point)))))
+; use c-hjkl to move around
+(evil-define-key 'insert 'global (kbd "M-g") 'evil-first-non-blank)
+(evil-define-key 'insert 'global (kbd "M-h") 'left-word)
+(evil-define-key 'insert 'global (kbd "M-j") 'next-line)
+(evil-define-key 'insert 'global (kbd "M-k") 'previous-line)
+(evil-define-key 'insert 'global (kbd "M-l") 'right-word)
+(evil-define-key 'insert 'global (kbd "M-;") 'end-of-line)
+; j mappings
 (general-imap "j" (general-key-dispatch 'self-insert-command
 				   :timeout 0.25
 			  "j" 'self-insert-command
@@ -1152,11 +1434,11 @@
 			  "p" 'company-complete-common-or-cycle ; jp complete
 			  "[" 'evil-complete-next ; j[ context complete (TODO)
 			  "v" (lambda () (interactive) (evil-paste-from-register ?\")) ; jv to paste from default register
+			  "V" 'counsel-yank-pop ; jV to use counsel yank-pop
 ))
-(eval-after-load 'company
-  '(progn
-	 (define-key company-active-map (kbd "C-z") 'company-quickhelp-manual-begin)))
-; note that C-h when company open will show help for that symbol in another window.
+;; (eval-after-load 'company
+;;   '(progn
+;; 	 (define-key company-active-map (kbd "C-z") 'company-quickhelp-manual-begin)))
 
 ;; window management
 (evil-define-key 'motion 'global (kbd "C-w C-h") (lambda () (interactive) (evil-window-left 1) (delayed-mode-line-update)))
@@ -1192,23 +1474,23 @@
 ; (evil-define-key 'normal 'shell-mode-map (kbd "<tab>") 'ace-window)
 
 ;; avy
-(evil-define-motion adaptive-avy () :type exclusive
-	(if hl-line-mode (evil-avy-goto-line) (evil-avy-goto-word-0 nil)))
+(setq-default use-line-nav nil)
+(evil-define-motion adaptive-avy () :type exclusive :repeat nil
+	(if use-line-nav (evil-avy-goto-line) (evil-avy-goto-word-0 nil)))
 (evil-define-key 'motion 'global "f" 'adaptive-avy)
+;; (evil-define-key 'motion 'global "f" 'evil-avy-goto-word-0)
 (evil-define-key 'motion 'global "F" 'evil-avy-goto-char-2)
 
 ;; misc bindings
 ; use alt-h for help instead of ctrl-h
-(bind-key* (kbd "M-h") help-map)
-(bind-key* (kbd "M-h M-h") 'counsel-apropos)
+(bind-key* (kbd "C-M-h") help-map)
+(bind-key* (kbd "C-M-h C-M-h") 'counsel-apropos)
 
 
 ;;; misc settings
 
 ;; no alert sounds
 (setq ring-bell-function 'ignore)
-
-
 
 ;; file-type based syntax entry
 (add-hook 'prog-mode-hook (lambda () (modify-syntax-entry ?_ "w")))
@@ -1225,6 +1507,7 @@
 (setq-default evil-shift-width tab-width)
 (setq-default python-indent 4)
 (setq-default c-basic-offset 4)
+(setq-default backward-delete-char-untabify-method 'nil)
 (add-hook 'prog-mode-hook (lambda () (setq evil-shift-width tab-width)))
 (add-hook 'python-mode-hook (lambda ()
 	(setq-local tab-width 4)
@@ -1234,22 +1517,37 @@
 	(setq-local evil-shift-width tab-width)
 ))
 (add-hook 'web-mode-hook (lambda ()
+  (setq-local tab-width 2)
+  (setq-local evil-shift-width tab-width)
+))
+(add-hook 'emacs-lisp-mode-hook (lambda ()
 	(setq-local tab-width 2)
 	(setq-local evil-shift-width tab-width)
 ))
 
+;; set frame title
+(setq frame-title-format (concat "TommyX's GNU Emacs " emacs-version))
+
 ;; attempt to improve font-lock performance
-(setq jit-lock-defer-time 0)
+;; (setq jit-lock-defer-time 0)
+
+;; attempt to improve font performance
+(setq inhibit-compacting-font-caches t)
 
 ;; attempt to improve long line performance
 (setq-default bidi-display-reordering nil)
 
 ;; UTF-8 as default encoding
-(set-language-environment "UTF-8")
-(prefer-coding-system 'utf-8)
-(set-default-coding-systems 'utf-8)
+(setq utf-translate-cjk-mode nil) ; disable CJK coding/encoding (Chinese/Japanese/Korean characters)
 (set-language-environment 'utf-8)
-(set-selection-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8-mac) ; For old Carbon emacs on OS X only
+(setq locale-coding-system 'utf-8)
+(set-default-coding-systems 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(if (eq system-type 'windows-nt)
+	(set-selection-coding-system 'utf-16-le) ; fix inability to paste non-ascii char
+	(set-selection-coding-system 'utf-8))
+(prefer-coding-system 'utf-8)
 
 ;; scroll-off emulation
 (setq scroll-margin (/ (* (window-total-height) 2) 7))
@@ -1274,9 +1572,9 @@
 ;; no backup file
 (setq make-backup-files nil)
 
-;; auto display line numbers
-(add-hook 'prog-mode-hook (lambda () (display-line-numbers-mode)))
-(add-hook 'sgml-mode-hook (lambda () (display-line-numbers-mode)))
+;; auto display line numbers (turned off for performance)
+;; (add-hook 'prog-mode-hook (lambda () (display-line-numbers-mode)))
+;; (add-hook 'sgml-mode-hook (lambda () (display-line-numbers-mode)))
 
 ;; indicate end of buffer
 (add-hook 'prog-mode-hook (lambda () (setq indicate-buffer-boundaries t)))
@@ -1286,8 +1584,14 @@
 (blink-cursor-mode 0)
 
 ;; hl-line-mode for some modes
-(add-hook 'buffer-menu-mode-hook (lambda () (hl-line-mode 1)))
-(add-hook 'profiler-report-mode-hook (lambda () (hl-line-mode 1)))
+(add-hook 'buffer-menu-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
+(add-hook 'profiler-report-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
+(add-hook 'org-agenda-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
+; disable in insert mode
+(add-hook 'prog-mode-hook (lambda () (hl-line-mode 1)))
+(add-hook 'text-mode-hook (lambda () (hl-line-mode 1)))
+(add-hook 'evil-insert-state-entry-hook (lambda () (hl-line-mode -1)))
+(add-hook 'evil-insert-state-exit-hook (lambda () (hl-line-mode 1)))
 
 ;; cursor line (right now disabled)
 ;; (global-hl-line-mode 1)
@@ -1298,16 +1602,119 @@
 (run-with-idle-timer 5 t (lambda () (garbage-collect)))
 (add-hook 'focus-out-hook (lambda () (garbage-collect)))
 
+;; save clipboard onto kill ring
+(setq save-interprogram-paste-before-kill t)
+
+;; fringe bitmap
+(define-fringe-bitmap 'flycheck-fringe-bitmap-double-arrow
+  [#b00000000
+   #b00000000
+   #b00001110
+   #b00011111
+   #b00011111
+   #b00011111
+   #b00001110
+   #b00000000
+   #b00000000])
+(define-fringe-bitmap 'right-arrow
+  [#b01110000
+   #b00111000
+   #b00011100
+   #b00001110
+   #b00001110
+   #b00011100
+   #b00111000
+   #b01110000])
+(define-fringe-bitmap 'left-arrow
+  [#b00001110
+   #b00011100
+   #b00111000
+   #b01110000
+   #b01110000
+   #b00111000
+   #b00011100
+   #b00001110])
+(define-fringe-bitmap 'right-curly-arrow
+  [#b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000
+   #b11000000])
+(define-fringe-bitmap 'left-curly-arrow
+  [#b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011])
+
 ;; word wrap
 (add-hook 'prog-mode-hook (lambda () (toggle-word-wrap 1)))
 (add-hook 'text-mode-hook (lambda () (toggle-word-wrap 1)))
 (add-hook 'sgml-mode-hook (lambda () (toggle-word-wrap 1)))
 
 ;; window divider
-(setq window-divider-default-places 'right-only)
+(setq window-divider-default-places t)
 (setq window-divider-default-right-width 2)
-(setq window-divider-default-bottom-width 2)
+(setq window-divider-default-bottom-width 1)
 (window-divider-mode 1)
+
+;; undo limits
+(setq undo-limit 1000000)
+(setq undo-strong-limit 1000000)
+
+;; fringe margin
+(setq-default left-fringe-width 16)
+(setq-default right-fringe-width 10)
+
+;; open buffer performance
+;; (add-hook 'find-file-hooks 'vc-find-file-hook)
+;; (setq vc-handled-backends nil)
+
+;; input response (experimental)
+;; (setq input-feedback-ov nil)
+;; (defun before-insert-advice (&rest _)
+;; 	"Flash input feedback."
+;; 	;; (when input-feedback-ov
+;; 	;; 	(delete-overlay input-feedback-ov)
+;; 	;; )
+;; 	;; (when (eq evil-state 'insert)
+;; 	;; 	(setq input-feedback-ov (make-overlay (point) (- (point) 1)))
+;; 	;; 	(overlay-put input-feedback-ov 'priority 9999)
+;; 	;; 	(overlay-put input-feedback-ov 'window (selected-window))
+;; 	;; 	(overlay-put input-feedback-ov 'face 'evil-goggles-yank-face)
+;; 	;; 	(redisplay)
+;; 	;; )
+;; )
+(defun after-insert-advice (&rest _)
+	;; (redisplay t)
+	; change to the following if any problem arises.
+	(when (eq evil-state 'insert)
+		(redisplay t))
+)
+;; (advice-add 'self-insert-command :before #'before-insert-advice)
+(advice-add 'self-insert-command :after #'after-insert-advice)
 
 ;; indentation guide using whitespace mode
 (setq whitespace-style '(
@@ -1322,16 +1729,21 @@
 (setq tabify-regexp "^\t* [ \t]+")
 
 ;; mouse avoidance (move to top right corner)
-(setq mouse-avoidance-banish-position
-	'((frame-or-window . frame)
-	(side . right)
-	(side-pos . -5)
-	(top-or-bottom . top)
-	(top-or-bottom-pos . -5)))
-(mouse-avoidance-mode 'banish)
+(setq make-pointer-invisible t)
+;; (setq mouse-avoidance-banish-position
+;; 	'((frame-or-window . frame)
+;; 	(side . right)
+;; 	(side-pos . -5)
+;; 	(top-or-bottom . top)
+;; 	(top-or-bottom-pos . -5)))
+;; (mouse-avoidance-mode 'banish)
+;; (mouse-avoidance-mode 'none)
 
 ;; flyspell
 (setq flyspell-issue-message-flag nil)
+
+;; winner mode (record window config change so can undo)
+(winner-mode 1)
 
 ;; eldoc
 (global-eldoc-mode 1)
