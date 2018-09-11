@@ -287,12 +287,12 @@
 
 	(kbd "C-c C-.") 'org-time-stamp-inactive ; with C-u as previx also add time.
 
-	(kbd "C-RET") 'org-insert-heading-respect-content
-	(kbd "C-S-RET") 'org-insert-todo-heading-respect-content
+	(kbd "C-RET") 'org-meta-return
+	(kbd "C-S-RET") 'org-insert-todo-heading
 	(kbd "M-RET") 'org-insert-subheading
 	(kbd "M-S-RET") 'org-insert-todo-subheading
-	(kbd "<C-return>") 'org-insert-heading-respect-content
-	(kbd "<C-S-return>") 'org-insert-todo-heading-respect-content
+	(kbd "<C-return>") 'org-meta-return
+	(kbd "<C-S-return>") 'org-insert-todo-heading
 	(kbd "<M-return>") 'org-insert-subheading
 	(kbd "<M-S-return>") 'org-insert-todo-subheading
 )

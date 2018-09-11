@@ -149,6 +149,7 @@
 )
 (use-package counsel :ensure t)
 (use-package counsel-projectile :ensure t)
+(use-package google-this :ensure t)
 (use-package swiper :ensure t)
 (use-package which-key :ensure t
 	:config
@@ -276,6 +277,7 @@
 )
 (require 'companion)
 ; language specific
+(use-package racket-mode :ensure t)
 (use-package csv-mode :ensure t)
 (use-package json-mode :ensure t)
 ;; (use-package vue-mode :ensure t
@@ -462,7 +464,9 @@
 ; generic file types
 (add-hook 'prog-mode-hook (lambda () (ycmd-mode 1)))
 (add-hook 'text-mode-hook (lambda () (ycmd-mode 1)))
-(add-hook 'org-mode-hook (lambda () (ycmd-eldoc-mode -1))) ; ycmd freezes
+; BUG: remove eldoc mode from certain other modes. (ycmd freezes)
+(add-hook 'org-mode-hook (lambda () (ycmd-eldoc-mode -1)))
+(add-hook 'racket-mode-hook (lambda () (ycmd-eldoc-mode -1)))
 ; java
 (add-to-list 'ycmd-file-type-map '(java-mode "java")) ; file type detection
 (evil-define-key 'normal java-mode-map (kbd "C-]") 'ycmd-goto) ; goto
@@ -887,6 +891,9 @@ Useful for a search overview popup."
 
 	"x" '(counsel-M-x
 		:which-key "counsel M-x")
+
+	"g" '(google-this-search
+		:which-key "Google")
 
 	";" '(eval-expression
 		:which-key "eval lisp")
