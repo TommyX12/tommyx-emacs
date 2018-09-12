@@ -13,6 +13,7 @@
 ;; Dependencies
 ;;
 
+(require 'dash)
 (require 'battery)
 (require 'companion-segments)
 (require 'spaceline)
@@ -97,7 +98,7 @@
 (defvar companion-notif-icon-info 'companion-notif-icon-info)
 (defface companion-notif-icon-warn
   '((t (:foreground "#67b11d" :inherit companion-face)))
-  "*Face used for the icon in companion buffer for warning notifications."
+  "*Face used for the icon in companion buffer for critical notifications."
   :group 'companion :group 'font-lock-highlighting-faces)
 (defvar companion-notif-icon-warn 'companion-notif-icon-warn)
 
@@ -110,7 +111,7 @@
 (defvar companion--window nil)
 
 (defvar companion-notif--current nil)
-(defvar companion-notif--current-type nil)
+(defvar companion-notif--stack nil)
 
 ;;
 ;; Major mode definition
@@ -278,11 +279,22 @@ Companion buffer is BUFFER."
     companion-segments-left
     companion-segments-right)))
 
-(defun companion-show-notif (notif &optional type)
-	"Show one notification with text NOTIF and type TYPE."
+(defun companion-notif-push (content &optional type duration group)
+	"Push new notification to the stack."
 
-	(setq companion-notif--current notif)
-	(setq companion-notif--current-type type))
+	(push
+	 `((content . ,content)
+		(type . ,type)
+		(duration . ,duration)
+		(group . ,group))
+	companion-notif--stack)
+
+	(companion-notif--update)
+)
+
+(defun companion-notif--update ()
+	"Update shown notification."
+	(setq companion-notif--current (car companion-notif--stack)))
 
 ;;
 ;; Advices
@@ -356,7 +368,11 @@ Companion buffer is BUFFER."
 (defun companion-notif-dismiss()
 	"Dismiss one active notification in the companion buffer."
 	(interactive)
-	)
+	; TODO
+	(setq companion-notif--stack (cdr companion-notif--stack))
+
+	(companion-notif--update)
+)
 
 ;;
 ;; Segments definition
@@ -378,14 +394,17 @@ Companion buffer is BUFFER."
 
 (spaceline-define-segment companion-notification
   "A spaceline segment to display notifications."
+	(when companion-notif--current
 	(let
-		((icon-face (if (eq companion-notif--current-type 'warning) 'companion-notif-icon-warn 'companion-notif-icon-info)))
+		((icon-face
+			(if (eq (assq 'type companion-notif--current) 'critical)
+				'companion-notif-icon-warn
+				'companion-notif-icon-info)))
 
-		(when companion-notif--current
-			(concat
-				(propertize "●" 'face icon-face)
-				" "
-				companion-notif--current
+		(concat
+			(propertize "●" 'face icon-face)
+			" "
+			(assq 'content companion-notif--current)
 	))))
 
 (spaceline-define-segment companion-battery
