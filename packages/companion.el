@@ -118,6 +118,7 @@
 
 (defvar companion-notif--current nil)
 (defvar companion-notif--stack nil)
+(defvar companion-notif--streams nil)
 (defvar companion-notif--screen-time 0)
 
 ;;
@@ -278,13 +279,115 @@ Companion buffer is BUFFER."
     (companion-update)))
 
 (defun companion-compile ()
-	"Compiles the companion spaceline segments."
+	"Compile the companion spaceline segments."
 	(let ((powerline-default-separator 'bar)
 				(spaceline-separator-dir-left '(left . left))
 				(spaceline-separator-dir-right '(right . right)))
   (spaceline-compile 'companion
     companion-segments-left
     companion-segments-right)))
+
+(defun companion-notif--stream-update (name)
+	"Updates a notification stream."
+	(let* (
+		(stream (plist-get companion-notif--streams name))
+		(queue (plist-get stream :queue))
+	)
+		(when-let ((notif (car queue)))
+			(companion-notif--alert-notifier notif)
+			(setq companion-notif--streams (plist-put companion-notif--streams name (plist-put stream :queue (cdr queue))))
+		)
+	)
+)
+
+(defun companion-notif-create-stream (name interval)
+	"Create a new notification stream."
+
+	;; delete when stream exists
+	(when (plist-get companion-notif--streams name)
+		(companion-notif--delete-stream name)
+	)
+
+	(let ((stream `(
+			:timer
+			,(run-at-time 0 interval 'companion-notif--stream-update name)
+			:queue
+			nil
+		)))
+		(setq companion-notif--streams (plist-put companion-notif--streams name stream))
+	)
+)
+
+(defun companion-notif-delete-stream (name)
+	"Delete a notification stream."
+	(when-let ((stream (plist-get companion-notif--streams name)))
+		(cancel-timer (plist-get stream :timer))
+		(setq companion-notif--streams (plist-put companion-notif--streams name nil))
+	)
+)
+
+(defun companion-notif--alert-notifier (info)
+	"Notifier function for alert.el using companion's notification system."
+	;; The message text is :message
+	;; (plist-get info :message)
+	;; The :title of the alert
+	;; (plist-get info :title)
+	;; The :category of the alert
+	;; (plist-get info :category)
+	;; The major-mode this alert relates to
+	;; (plist-get info :mode)
+	;; The buffer the alert relates to
+	;; (plist-get info :buffer)
+	;; Severity of the alert.  It is one of:
+	;;   `urgent'
+	;;   `high'
+	;;   `moderate'
+	;;   `normal'
+	;;   `low'
+	;;   `trivial'
+	;; (plist-get info :severity)
+	;; Whether this alert should persist, or fade away
+	;; (plist-get info :persistent)
+	;; Data which was passed to `alert'.  Can be
+	;; anything.
+	;; (plist-get info :data)
+
+	(let* (
+		(content (plist-get info :message))
+		(severity (plist-get info :severity))
+		(data (plist-get info :data))
+		(duration (and (not (plist-get info :persistent)) (or
+			(when (listp data) (plist-get data :duration))
+			companion-notif-default-duration)))
+		(id (plist-get info :id))
+		(stream-name (when (listp data) (plist-get data :stream)))
+		(stream (when stream-name (plist-get companion-notif--streams stream-name)))
+		(queue (when stream (plist-get stream :queue)))
+	)
+		(if stream
+			(progn
+				; remove :stream attribute
+				(setq info (plist-put info :data (plist-put data :stream nil)))
+				; add to notification stream
+				(setq companion-notif--streams (plist-put companion-notif--streams stream-name (plist-put stream :queue (-snoc queue info))))
+			)
+			; show notification
+			(progn
+				(when id (companion-notif--dismiss-id id))
+				(push
+					`(
+						:content ,content
+						:severity ,severity
+						:duration ,duration
+						:id ,id
+					)
+					companion-notif--stack)
+				(companion-notif--update)
+			)
+		)
+	)
+)
+
 
 (defun companion-notif--update ()
 	"Update shown notification."
@@ -303,12 +406,15 @@ Companion buffer is BUFFER."
 
 (defun companion-notif--tick ()
 	"Called periodically to perform tasks related to notification, such as timing."
-	(when-let ((duration (plist-get companion-notif--current :duration)))
-		(if (> companion-notif--screen-time duration)
-			(companion-notif-dismiss)
-			(setq companion-notif--screen-time (1+ companion-notif--screen-time))
+	(let ((duration (plist-get companion-notif--current :duration)))
+		(when (and duration (> duration 0))
+			(if (> companion-notif--screen-time duration)
+				(companion-notif-dismiss)
+				(setq companion-notif--screen-time (1+ companion-notif--screen-time))
+			)
 		)
-	))
+	)
+)
 
 ;;
 ;; Advices
@@ -459,56 +565,13 @@ Companion buffer is BUFFER."
 ))
 (companion-compile)
 
+;;
 ;; alert.el integration
+;; 
+
 (alert-define-style 'companion :title "Companion"
 	:notifier
-	(lambda (info)
-		;; The message text is :message
-		;; (plist-get info :message)
-		;; The :title of the alert
-		;; (plist-get info :title)
-		;; The :category of the alert
-		;; (plist-get info :category)
-		;; The major-mode this alert relates to
-		;; (plist-get info :mode)
-		;; The buffer the alert relates to
-		;; (plist-get info :buffer)
-		;; Severity of the alert.  It is one of:
-		;;   `urgent'
-		;;   `high'
-		;;   `moderate'
-		;;   `normal'
-		;;   `low'
-		;;   `trivial'
-		;; (plist-get info :severity)
-		;; Whether this alert should persist, or fade away
-		;; (plist-get info :persistent)
-		;; Data which was passed to `alert'.  Can be
-		;; anything.
-		;; (plist-get info :data)
-
-		(let* (
-			(content (plist-get info :message))
-			(severity (plist-get info :severity))
-			(data (plist-get info :data))
-			(duration (and (not (plist-get info :persistent)) (or
-				(when (listp data) (plist-get data :duration))
-				companion-notif-default-duration)))
-			(id (plist-get info :id))
-		)
-			(when id (companion-notif--dismiss-id id))
-			(push
-				`(
-					:content ,content
-					:severity ,severity
-					:duration ,duration
-					:id ,id
-				)
-				companion-notif--stack)
-
-			(companion-notif--update)
-		)
-	)
+	#'companion-notif--alert-notifier
 
 	;; Removers are optional.  Their job is to remove
 	;; the visual or auditory effect of the alert.

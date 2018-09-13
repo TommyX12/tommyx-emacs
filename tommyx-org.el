@@ -104,7 +104,7 @@
   "Create one todo item."
   (cl-macrolet ((get (k) `(plist-get list ,k))
              (pr (k v) `(setq result (plist-put result ,k ,v))))
-    (let* ((list (nth 1 heading))      (notify (or (get :NOTIFY) (plist-get (get :priority) org-notify-priority-map) "default"))
+    (let* ((list (nth 1 heading))      (notify (or (get :NOTIFY) (plist-get org-notify-priority-map (get :priority)) "default"))
            (deadline (org-notify-convert-deadline (get :deadline)))
 	   (heading (get :raw-value))
            result)
@@ -116,16 +116,21 @@
         (pr :deadline (- (org-time-string-to-seconds deadline)
                          (float-time))))
       result)))
+(companion-notif-create-stream 'slow 120)
+(companion-notif-create-stream 'normal 60)
+(companion-notif-create-stream 'fast 30)
 (defun org-notify-action-alert (plist)
 	"A org-notify action for showing notification using alert.el."
 	(alert
 		(plist-get plist :heading)
 		:severity (plist-get plist :severity)
-		:persistent (null (plist-get plist :duration))
-		:data `(:duration ,(plist-get plist :duration))
+		:data `(:duration ,(plist-get plist :duration)
+			:stream ,(plist-get plist :stream)
+		)
 		:id (plist-get plist :id)
 	)
 )
+(org-notify-add 'default '(:time "1h" :actions nil :period "2m" :duration 60))
 
 ;; key bindings
 ; global leader
