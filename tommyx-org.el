@@ -116,9 +116,7 @@
         (pr :deadline (- (org-time-string-to-seconds deadline)
                          (float-time))))
       result)))
-(companion-notif-create-stream 'slow 120)
-(companion-notif-create-stream 'normal 60)
-(companion-notif-create-stream 'fast 30)
+(companion-notif-create-stream 'org-notify 200)
 (defun org-notify-action-alert (plist)
 	"A org-notify action for showing notification using alert.el."
 	(alert

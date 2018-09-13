@@ -305,7 +305,7 @@ Companion buffer is BUFFER."
 
 	;; delete when stream exists
 	(when (plist-get companion-notif--streams name)
-		(companion-notif--delete-stream name)
+		(companion-notif-delete-stream name)
 	)
 
 	(let ((stream `(
@@ -368,6 +368,10 @@ Companion buffer is BUFFER."
 			(progn
 				; remove :stream attribute
 				(setq info (plist-put info :data (plist-put data :stream nil)))
+				; set :id to stream-id if :id is 'stream
+				(when (eq id 'stream)
+					(setq info (plist-put info :id stream-name))
+				)
 				; add to notification stream
 				(setq companion-notif--streams (plist-put companion-notif--streams stream-name (plist-put stream :queue (-snoc queue info))))
 			)
