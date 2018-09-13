@@ -100,6 +100,10 @@
 (use-package s :ensure t)
 (use-package cl-lib :ensure t)
 (use-package request :ensure t)
+(use-package alert :ensure t
+	:config
+	(setq alert-default-style 'companion)
+)
 (use-package emms :ensure t
 	:config 
 	(require 'emms-setup)
@@ -252,7 +256,7 @@
 (use-package magit :ensure t)
 (use-package page-break-lines :ensure t)
 (use-package dashboard :ensure t :after page-break-lines)
-(use-package org :ensure t)
+(use-package org :ensure org-plus-contrib)
 (use-package org-super-agenda :ensure t)
 (use-package org-journal :ensure t)
 (use-package org-pomodoro :ensure t)
@@ -274,6 +278,10 @@
 	:bind (:map emmet-mode-keymap
 		("C-j" . nil)
 	)
+)
+(use-package imenu-list :ensure t
+	:config
+
 )
 (require 'companion)
 ; language specific
@@ -866,6 +874,7 @@ Useful for a search overview popup."
 (define-prefix-command 'global-leader-appearance-theme)
 (define-prefix-command 'global-leader-appearance-font)
 (define-prefix-command 'global-leader-mode-specific)
+(define-prefix-command 'global-leader-companion)
 (general-define-key
 	:keymaps 'override
 	:states '(motion normal visual)
@@ -888,6 +897,9 @@ Useful for a search overview popup."
 
 	"is" '(counsel-semantic-or-imenu
 		:which-key "semantic item")
+
+	"iS" '(imenu
+		:which-key "semantic item tree")
 
 	"x" '(counsel-M-x
 		:which-key "counsel M-x")
@@ -920,6 +932,12 @@ Useful for a search overview popup."
 		:which-key "big font")
 	"afr" '(toggle-readable-buffer-font
 		:which-key "toggle readable buffer font")
+
+	"c" '(global-leader-companion
+		:which-key "companion")
+
+	"cd" '(companion-notif-dismiss
+		:which-key "dismiss notification")
 
 )
 (general-define-key

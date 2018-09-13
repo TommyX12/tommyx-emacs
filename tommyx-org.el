@@ -1,11 +1,11 @@
 ;; requires
 (require 'evil)
+(require 'alert)
 (require 'org-super-agenda)
 (require 'org-pomodoro)
 (require 'org-bullets)
-
-;; org direcotry external config
-(load (expand-file-name "org-config.el" org-directory))
+(require 'org-notify)
+(require 'companion)
 
 ;; startup settings
 (add-hook 'org-mode-hook (lambda () (interactive)
@@ -66,6 +66,7 @@
 (setq org-fontify-done-headline t)
 (setq org-fontify-whole-heading-line t)
 (setq org-super-agenda-fontify-whole-header-line t) ; this doesn't work
+(setq org-imenu-depth 4)
 
 ;; agenda configs
 (setq org-agenda-dim-blocked-tasks t)
@@ -95,6 +96,36 @@
 
 ;; checks if org-notes-dir exists.
 ;; )
+
+;; agenda notification for companion
+; patch org-notify to allow notification type determined by priority
+(defvar org-notify-priority-map nil) ; plist map from priority to notify type
+(defun org-notify-make-todo (heading &rest ignored)
+  "Create one todo item."
+  (cl-macrolet ((get (k) `(plist-get list ,k))
+             (pr (k v) `(setq result (plist-put result ,k ,v))))
+    (let* ((list (nth 1 heading))      (notify (or (get :NOTIFY) (plist-get (get :priority) org-notify-priority-map) "default"))
+           (deadline (org-notify-convert-deadline (get :deadline)))
+	   (heading (get :raw-value))
+           result)
+      (when (and (eq (get :todo-type) 'todo) heading deadline)
+        (pr :heading heading)     (pr :notify (intern notify))
+        (pr :begin (get :begin))
+        (pr :file (nth org-notify-parse-file (org-agenda-files 'unrestricted)))
+        (pr :timestamp deadline)  (pr :uid (md5 (concat heading deadline)))
+        (pr :deadline (- (org-time-string-to-seconds deadline)
+                         (float-time))))
+      result)))
+(defun org-notify-action-alert (plist)
+	"A org-notify action for showing notification using alert.el."
+	(alert
+		(plist-get plist :heading)
+		:severity (plist-get plist :severity)
+		:persistent (null (plist-get plist :duration))
+		:data `(:duration ,(plist-get plist :duration))
+		:id (plist-get plist :id)
+	)
+)
 
 ;; key bindings
 ; global leader
@@ -401,3 +432,10 @@
 	"jj" '(org-capture-finalize
 		:which-key "capture save")
 )
+
+;; org directory external config
+(load (expand-file-name "org-config.el" org-directory))
+
+
+;; start notification server
+(org-notify-start) 

@@ -13,11 +13,12 @@
 ;; Dependencies
 ;;
 
-(require 'dash)
+(require 'alert)
+(require 'all-the-icons)
 (require 'battery)
 (require 'companion-segments)
+(require 'dash)
 (require 'spaceline)
-(require 'all-the-icons)
 
 ;;
 ;; Constants
@@ -82,6 +83,11 @@
   :type 'sexp
   :group 'companion)
 
+(defcustom companion-notif-default-duration 10
+  "*The default notification duration."
+  :type 'integer
+  :group 'companion)
+
 ;;
 ;; Faces
 ;;
@@ -112,6 +118,7 @@
 
 (defvar companion-notif--current nil)
 (defvar companion-notif--stack nil)
+(defvar companion-notif--screen-time 0)
 
 ;;
 ;; Major mode definition
@@ -279,22 +286,29 @@ Companion buffer is BUFFER."
     companion-segments-left
     companion-segments-right)))
 
-(defun companion-notif-push (content &optional type duration group)
-	"Push new notification to the stack."
-
-	(push
-	 `((content . ,content)
-		(type . ,type)
-		(duration . ,duration)
-		(group . ,group))
-	companion-notif--stack)
-
-	(companion-notif--update)
-)
-
 (defun companion-notif--update ()
 	"Update shown notification."
-	(setq companion-notif--current (car companion-notif--stack)))
+	(setq companion-notif--screen-time 0)
+	(setq companion-notif--current (car companion-notif--stack))
+	(companion-update)
+)
+
+(defun companion-notif--dismiss-id (id)
+	"Dismiss all notifications with id ID."
+	(setq companion-notif--stack
+		(-remove
+			(lambda (item) (eq (plist-get item :id) id))
+			companion-notif--stack))
+)
+
+(defun companion-notif--tick ()
+	"Called periodically to perform tasks related to notification, such as timing."
+	(when-let ((duration (plist-get companion-notif--current :duration)))
+		(if (> companion-notif--screen-time duration)
+			(companion-notif-dismiss)
+			(setq companion-notif--screen-time (1+ companion-notif--screen-time))
+		)
+	))
 
 ;;
 ;; Advices
@@ -362,14 +376,14 @@ Companion buffer is BUFFER."
 (defun companion-update()
 	"Update the companion buffer."
 	(interactive)
-	(when (companion--window-exists-p)
-		(companion--render)))
+	(with-demoted-errors "Compaion error: %S" (when (companion--window-exists-p)
+		(companion--render))))
 
 (defun companion-notif-dismiss()
 	"Dismiss one active notification in the companion buffer."
 	(interactive)
 	; TODO
-	(setq companion-notif--stack (cdr companion-notif--stack))
+	(pop companion-notif--stack)
 
 	(companion-notif--update)
 )
@@ -397,14 +411,17 @@ Companion buffer is BUFFER."
 	(when companion-notif--current
 	(let
 		((icon-face
-			(if (eq (assq 'type companion-notif--current) 'critical)
-				'companion-notif-icon-warn
-				'companion-notif-icon-info)))
+			(if (or
+				(eq (plist-get companion-notif--current :severity) 'low)
+				(eq (plist-get companion-notif--current :severity) 'trivial)
+				)
+				'companion-notif-icon-info
+				'companion-notif-icon-warn)))
 
 		(concat
 			(propertize "●" 'face icon-face)
 			" "
-			(assq 'content companion-notif--current)
+			(plist-get companion-notif--current :content)
 	))))
 
 (spaceline-define-segment companion-battery
@@ -442,6 +459,65 @@ Companion buffer is BUFFER."
 ))
 (companion-compile)
 
+;; alert.el integration
+(alert-define-style 'companion :title "Companion"
+	:notifier
+	(lambda (info)
+		;; The message text is :message
+		;; (plist-get info :message)
+		;; The :title of the alert
+		;; (plist-get info :title)
+		;; The :category of the alert
+		;; (plist-get info :category)
+		;; The major-mode this alert relates to
+		;; (plist-get info :mode)
+		;; The buffer the alert relates to
+		;; (plist-get info :buffer)
+		;; Severity of the alert.  It is one of:
+		;;   `urgent'
+		;;   `high'
+		;;   `moderate'
+		;;   `normal'
+		;;   `low'
+		;;   `trivial'
+		;; (plist-get info :severity)
+		;; Whether this alert should persist, or fade away
+		;; (plist-get info :persistent)
+		;; Data which was passed to `alert'.  Can be
+		;; anything.
+		;; (plist-get info :data)
+
+		(let* (
+			(content (plist-get info :message))
+			(severity (plist-get info :severity))
+			(data (plist-get info :data))
+			(duration (and (not (plist-get info :persistent)) (or
+				(when (listp data) (plist-get data :duration))
+				companion-notif-default-duration)))
+			(id (plist-get info :id))
+		)
+			(when id (companion-notif--dismiss-id id))
+			(push
+				`(
+					:content ,content
+					:severity ,severity
+					:duration ,duration
+					:id ,id
+				)
+				companion-notif--stack)
+
+			(companion-notif--update)
+		)
+	)
+
+	;; Removers are optional.  Their job is to remove
+	;; the visual or auditory effect of the alert.
+	:remover
+	(lambda (info)
+		;; It is the same property list that was passed to
+		;; the notifier function.
+	))
+
 ;;
 ;; Setup
 ;; 
@@ -449,6 +525,8 @@ Companion buffer is BUFFER."
 (run-with-idle-timer 0.5 t 'companion-update)
 (run-at-time 0 1 'companion--idle-update)
 (add-hook 'window-configuration-change-hook 'companion-update)
+
+(run-at-time 0 1 'companion-notif--tick)
 
 
 (provide 'companion)
