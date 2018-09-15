@@ -603,6 +603,17 @@
 	`(ido-subdir ((,class (:foreground ,keyword))))
 	`(ido-vertical-match-face ((,class (:foreground ,comp :underline nil))))
 
+;;;;; imenu-list
+	`(imenu-list-entry-face ((,class (:inherit default))))
+	`(imenu-list-entry-face-0 ((,class (:inherit org-level-5))))
+	`(imenu-list-entry-face-1 ((,class (:inherit org-level-6))))
+	`(imenu-list-entry-face-2 ((,class (:inherit org-level-7))))
+	`(imenu-list-entry-face-3 ((,class (:inherit org-level-8))))
+	`(imenu-list-entry-subalist-face-0 ((,class (:inherit imenu-list-entry-face-0 :bold t))))
+	`(imenu-list-entry-subalist-face-1 ((,class (:inherit imenu-list-entry-face-1 :bold t))))
+	`(imenu-list-entry-subalist-face-2 ((,class (:inherit imenu-list-entry-face-2 :bold t))))
+	`(imenu-list-entry-subalist-face-3 ((,class (:inherit imenu-list-entry-face-3 :bold t))))
+
 ;;;;; info
 	`(info-header-xref ((,class (:foreground ,func :underline t))))
 	`(info-menu ((,class (:foreground ,suc))))

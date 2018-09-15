@@ -151,6 +151,11 @@
 				'(counsel-find-file counsel-file-jump counsel-recentf counsel-projectile-find-file counsel-projectile-find-dir))
 	(all-the-icons-ivy-setup)
 )
+(use-package popwin :ensure t
+	:config
+	(popwin-mode 1)
+	(add-hook 'popwin:after-popup-hook (lambda () (run-at-time 0.2 nil 'delayed-mode-line-update)))
+)
 (use-package counsel :ensure t)
 (use-package counsel-projectile :ensure t)
 (use-package google-this :ensure t)
@@ -252,7 +257,24 @@
 (use-package git-gutter :ensure t)
 (use-package yascroll :ensure t)
 (use-package color-identifiers-mode :ensure t)
-(use-package neotree :ensure t)
+(use-package neotree :ensure t
+	:config
+	
+	(setq neo-buffer-name "*Files*")
+	(setq neo-theme (if (display-graphic-p) 'icons 'nerd))
+	;; (setq neo-theme 'nerd)
+	(setq neo-show-hidden-files t)
+	(add-hook 'neotree-mode-hook (lambda ()
+		(hl-line-mode 1)
+		(setq-local use-line-nav t)))
+	(setq neo-confirm-change-root 'off-p)
+	(setq neo-banner-message "")
+	(setq neo-show-updir-line nil)
+	(setq neo-toggle-window-keep-p t)
+	(setq neo-window-width 30)
+	(setq neo-vc-integration '(face))
+	(setq neo-mode-line-type 'default) ; for performance reason
+)
 (use-package magit :ensure t)
 (use-package page-break-lines :ensure t)
 (use-package dashboard :ensure t :after page-break-lines)
@@ -279,13 +301,57 @@
 		("C-j" . nil)
 	)
 )
-(use-package imenu-list :ensure t
+(use-package imenu-list :ensure t :after neotree
 	:config
-
+	(setq imenu-list-position 'right)
+	(setq imenu-list-size 30)
+	(setq imenu-list-idle-update-delay 1)
+	(setq imenu-list-buffer-name "*Outline*")
+	(add-hook 'imenu-list-major-mode-hook (lambda ()
+		(hl-line-mode 1)
+		(setq tab-width 2)
+		(whitespace-mode 1)
+		(setq-local use-line-nav t)))
+	(add-hook 'after-init-hook (lambda ()
+		(setq imenu-list-mode-line-format mode-line-format)
+		(imenu-list-get-buffer-create)
+		(imenu-list-start-timer)
+		(imenu-list-update nil t)
+		(neotree-show)
+		(display-buffer-in-side-window (get-buffer imenu-list-buffer-name) '((side . left)))))
+	; patch to change appearance
+	(defun imenu-list--depth-string (depth)
+		"Return a prefix string representing an entry's DEPTH."
+		(let ((indents (cl-loop for i from 1 to depth collect "\t")))
+			(mapconcat #'identity indents "")))
+	(defun imenu-list--insert-entry (entry depth)
+  "Insert a line for ENTRY with DEPTH."
+  (if (imenu--subalist-p entry)
+      (progn
+        (insert (imenu-list--depth-string depth))
+        (insert-button (format "+ %s" (car entry))
+                       'face (imenu-list--get-face depth t)
+                       'help-echo (format "Toggle: %s"
+                                          (car entry))
+                       'follow-link t
+                       'action ;; #'imenu-list--action-goto-entry
+                       #'imenu-list--action-toggle-hs
+                       )
+        (insert "\n"))
+    (insert (imenu-list--depth-string depth))
+    (insert-button (format "● %s" (car entry))
+                   'face (imenu-list--get-face depth nil)
+                   'help-echo (format "Go to: %s"
+                                      (car entry))
+                   'follow-link t
+                   'action #'imenu-list--action-goto-entry)
+    (insert "\n")))
 )
 (require 'companion)
 ; language specific
 (use-package racket-mode :ensure t)
+(use-package haskell-mode :ensure t)
+(use-package haskell-snippets :ensure t)
 (use-package csv-mode :ensure t)
 (use-package json-mode :ensure t)
 ;; (use-package vue-mode :ensure t
@@ -473,8 +539,10 @@
 (add-hook 'prog-mode-hook (lambda () (ycmd-mode 1)))
 (add-hook 'text-mode-hook (lambda () (ycmd-mode 1)))
 ; BUG: remove eldoc mode from certain other modes. (ycmd freezes)
+(add-hook 'text-mode-hook (lambda () (ycmd-eldoc-mode -1)))
 (add-hook 'org-mode-hook (lambda () (ycmd-eldoc-mode -1)))
 (add-hook 'racket-mode-hook (lambda () (ycmd-eldoc-mode -1)))
+(add-hook 'haskell-mode-hook (lambda () (ycmd-eldoc-mode -1)))
 ; java
 (add-to-list 'ycmd-file-type-map '(java-mode "java")) ; file type detection
 (evil-define-key 'normal java-mode-map (kbd "C-]") 'ycmd-goto) ; goto
@@ -577,22 +645,6 @@
 (setq evil-goggles-blocking-duration 0.1)
 (evil-goggles-mode)
 
-;; neotree
-(setq neo-theme (if (display-graphic-p) 'icons 'nerd))
-;; (setq neo-theme 'nerd)
-(setq neo-show-hidden-files t)
-(add-hook 'neotree-mode-hook (lambda ()
-	(hl-line-mode 1)
-	(setq-local use-line-nav t)))
-(setq neo-confirm-change-root 'off-p)
-(setq neo-banner-message "")
-(setq neo-show-updir-line nil)
-(setq neo-toggle-window-keep-p t)
-(setq neo-window-width 30)
-(setq neo-vc-integration '(face))
-(add-hook 'after-init-hook (lambda () (neotree-show)))
-(setq neo-mode-line-type 'default) ; for performance reason
-
 ;; evil-collection
 (delete 'neotree evil-collection-mode-list)
 (delete 'company evil-collection-mode-list)
@@ -623,6 +675,8 @@
 
 ;; flycheck
 (global-flycheck-mode)
+; BUG: temporarily disable for some modes
+(add-hook 'haskell-mode-hook (lambda () (flycheck-mode -1)))
 
 ;; projectile
 (setq projectile-enable-caching t)
@@ -875,6 +929,7 @@ Useful for a search overview popup."
 (define-prefix-command 'global-leader-appearance-font)
 (define-prefix-command 'global-leader-mode-specific)
 (define-prefix-command 'global-leader-companion)
+(define-prefix-command 'global-leader-sidebar)
 (general-define-key
 	:keymaps 'override
 	:states '(motion normal visual)
@@ -938,6 +993,17 @@ Useful for a search overview popup."
 
 	"cd" '(companion-notif-dismiss
 		:which-key "dismiss notification")
+
+	"s" '(global-leader-sidebar
+		:which-key "side bar")
+
+	"sf" '((lambda () (interactive)
+		(display-buffer-in-side-window (get-buffer neo-buffer-name) '((side . left))))
+		:which-key "files")
+
+	"so" '((lambda () (interactive)
+		(display-buffer-in-side-window (get-buffer imenu-list-buffer-name) '((side . left))))
+		:which-key "outline")
 
 )
 (general-define-key
@@ -1510,6 +1576,11 @@ Useful for a search overview popup."
 ;; (evil-define-key 'motion 'global "f" 'evil-avy-goto-word-0)
 (evil-define-key 'motion 'global "F" 'evil-avy-goto-char-2)
 
+;; imenu-list
+(evil-define-key 'normal imenu-list-major-mode-map "o" 'imenu-list-goto-entry)
+(evil-define-key 'normal imenu-list-major-mode-map (kbd "TAB") 'imenu-list-display-entry)
+(evil-define-key 'normal imenu-list-major-mode-map (kbd "<tab>") 'imenu-list-display-entry)
+
 ;; misc bindings
 ; use alt-h for help instead of ctrl-h
 (bind-key* (kbd "C-M-h") help-map)
@@ -1525,6 +1596,7 @@ Useful for a search overview popup."
 (add-hook 'prog-mode-hook (lambda () (modify-syntax-entry ?_ "w")))
 (add-hook 'lisp-mode-hook (lambda () (modify-syntax-entry ?- "w")))
 (add-hook 'emacs-lisp-mode-hook (lambda () (modify-syntax-entry ?- "w")))
+(add-hook 'racket-mode-hook (lambda () (modify-syntax-entry ?- "w")))
 (add-hook 'html-mode-hook (lambda () (modify-syntax-entry ?- "w") (modify-syntax-entry ?_ "w")))
 (add-hook 'web-mode-hook (lambda () (modify-syntax-entry ?- "w") (modify-syntax-entry ?_ "w")))
 (add-hook 'nxml-mode-hook (lambda () (modify-syntax-entry ?- "w") (modify-syntax-entry ?_ "w")))
@@ -1552,6 +1624,13 @@ Useful for a search overview popup."
 (add-hook 'emacs-lisp-mode-hook (lambda ()
 	(setq-local tab-width 2)
 	(setq-local evil-shift-width tab-width)
+))
+(add-hook 'haskell-mode-hook (lambda ()
+	(setq-local tab-width 4)
+	(setq-local evil-shift-width tab-width)
+	(setq-local haskell-indentation-starter-offset tab-width)
+	(setq-local haskell-indentation-left-offset tab-width)
+	(setq-local haskell-indentation-layout-offset tab-width)
 ))
 
 ;; set frame title

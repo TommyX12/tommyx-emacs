@@ -553,6 +553,7 @@ Companion buffer is BUFFER."
 	 companion-notification)
 	 :separator " | "
 	 :face companion-face
+	 :priority 1
 	)
 ))
 (setq companion-segments-right `(

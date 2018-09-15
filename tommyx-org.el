@@ -89,6 +89,11 @@
 (setq org-agenda-time-grid '((daily today)
  (800 1000 1200 1400 1600 1800 2000)
  "......" "----------------"))
+(setq org-agenda-entry-text-leaders "    > ")
+(setq org-agenda-timerange-leaders '("" "(%d/%d): "))
+(setq org-agenda-scheduled-leaders '("[S]    : " "[S] -%2d: "))
+(setq org-agenda-inactive-leader "[")
+(setq org-agenda-deadline-leaders '("[D]    : " "[D]  %2d: " "[D] -%2d: "))
 
 ;; entry text filter
 ; remove blank lines and state logs
@@ -116,7 +121,7 @@
         (pr :deadline (- (org-time-string-to-seconds deadline)
                          (float-time))))
       result)))
-(companion-notif-create-stream 'org-notify 200)
+(companion-notif-create-stream 'org-notify 120)
 (defun org-notify-action-alert (plist)
 	"A org-notify action for showing notification using alert.el."
 	(alert
@@ -159,7 +164,7 @@
 		:which-key "org clock in recent")
 
 	"oI" '(org-clock-goto
-		:which-key "org clock goto")
+		:which-key "org goto clock")
 
 	"oo" '(org-clock-out
 		:which-key "org clock out")
@@ -382,7 +387,7 @@
 	"jq" '(org-agenda-set-tags
 		:which-key "agenda set tags")
 
-	"ji" '(org-clock-in
+	"ji" '(org-agenda-clock-in
 		:which-key "clock in")
 )
 (evil-define-key 'motion org-agenda-mode-map
@@ -441,4 +446,4 @@
 
 
 ;; start notification server
-(org-notify-start) 
+(org-notify-start 60)
