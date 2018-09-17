@@ -151,11 +151,12 @@
 				'(counsel-find-file counsel-file-jump counsel-recentf counsel-projectile-find-file counsel-projectile-find-dir))
 	(all-the-icons-ivy-setup)
 )
-(use-package popwin :ensure t
-	:config
-	(popwin-mode 1)
-	(add-hook 'popwin:after-popup-hook (lambda () (run-at-time 0.2 nil 'delayed-mode-line-update)))
-)
+;; (use-package popwin :ensure t
+;; 	:config
+;; 	(setq popwin:adjust-other-windows t)
+;; 	(popwin-mode 1)
+;; 	(add-hook 'popwin:after-popup-hook (lambda () (run-at-time 0.2 nil 'delayed-mode-line-update)))
+;; )
 (use-package counsel :ensure t)
 (use-package counsel-projectile :ensure t)
 (use-package google-this :ensure t)
@@ -347,6 +348,10 @@
                    'action #'imenu-list--action-goto-entry)
     (insert "\n")))
 )
+;; (use-package window-purpose :ensure t :after neotree imenu-list
+;; 	:config
+;; 	(purpose-mode)
+;; )
 (require 'companion)
 ; language specific
 (use-package racket-mode :ensure t)
