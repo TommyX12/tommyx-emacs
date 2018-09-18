@@ -7,12 +7,12 @@
 (add-to-list 'load-path
 	(expand-file-name "packages" (file-name-directory load-file-name)))
 
-
 ;;; themes
 ; (load-theme 'spacemacs-dark t)
 (setq doom-themes-enable-bold t
 	  doom-themes-enable-italic t)
 (setq dark-theme 'infinity-dark)
+
 (setq light-theme 'infinity-light)
 (if (and (boundp 'use-light-theme) use-light-theme)
 	(load-theme light-theme t)
@@ -508,26 +508,46 @@
   (push '(company-childframe-mode . nil)
 	  desktop-minor-mode-table))
 ;; (company-quickhelp-mode)
+
 (eval-after-load 'company
   '(progn
-	 (define-key company-active-map (kbd "C-h") nil)
-	 (define-key company-active-map (kbd "C-z") 'company-show-doc-buffer)
-		; C-z when company open will show help for that symbol in another window.
-	 (define-key company-active-map (kbd "S-TAB") 'company-select-previous)
-	 (define-key company-active-map (kbd "<S-tab>") 'company-select-previous)))
+		(global-set-key (kbd "M-1") (lambda (interactive) (company-complete-number 1)))
+		(global-set-key (kbd "M-2") (lambda (interactive) (company-complete-number 2)))
+		(global-set-key (kbd "M-3") (lambda (interactive) (company-complete-number 3)))
+		(global-set-key (kbd "M-4") (lambda (interactive) (company-complete-number 4)))
+		(global-set-key (kbd "M-5") (lambda (interactive) (company-complete-number 5)))
+		(global-set-key (kbd "M-6") (lambda (interactive) (company-complete-number 6)))
+		(global-set-key (kbd "M-7") (lambda (interactive) (company-complete-number 7)))
+		(global-set-key (kbd "M-8") (lambda (interactive) (company-complete-number 8)))
+		(global-set-key (kbd "M-9") (lambda (interactive) (company-complete-number 9)))
+		(global-set-key (kbd "M-0") (lambda (interactive) (company-complete-number 0)))
+		(define-key company-active-map (kbd "C-h") nil)
+		(define-key company-active-map (kbd "C-z") 'company-show-doc-buffer)
+			; C-z when company open will show help for that symbol in another window.
+		(define-key company-active-map (kbd "S-TAB") 'company-select-previous)
+		(define-key company-active-map (kbd "<S-tab>") 'company-select-previous)
+		(define-key company-active-map (kbd "M-j") 'company-select-next)
+		(define-key company-active-map (kbd "M-k") 'company-select-previous)
+		(define-key company-active-map (kbd "M-l") 'company-complete-selection)))
 (setq company-frontends
-	  '(company-pseudo-tooltip-unless-just-one-frontend
+	  '(company-pseudo-tooltip-frontend
 		company-tng-frontend
 		company-echo-metadata-frontend))
 ;; (setq company-frontends
 ;; 	  '(company-pseudo-tooltip-unless-just-one-frontend
 ;; 		company-preview-frontend
 ;; 		company-echo-metadata-frontend))
+;; (setq company-idle-delay 0)
+(setq company-selection-wrap-around t)
+(setq company-show-numbers t)
 (setq company-idle-delay 0.2)
 (setq company-quickhelp-delay nil) ; we will manually trigger the help
 (setq company-require-match 'never)
+(setq company-dabbrev-downcase nil)
+(setq company-dabbrev-other-buffers t)
 (with-eval-after-load 'company
   (company-flx-mode +1))
+(setq company-flx-limit 256)
 
 ;; ycmd
 (setq ycmd-global-config (expand-file-name "third_party/ycmd/.ycm_extra_conf.py"
@@ -920,7 +940,7 @@ Useful for a search overview popup."
 )
 
 ;; use esc (same as "C-[") for escape
-(global-set-key (kbd "ESC") 'keyboard-escape-quit)
+(global-set-key (kbd "C-[") 'keyboard-escape-quit)
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
 ;; global leader
@@ -1516,12 +1536,16 @@ Useful for a search overview popup."
 (evil-define-key 'insert 'global (kbd "S-SPC S-SPC") (lambda () (interactive) (save-excursion (flyspell-lazy-check-pending) (flyspell-auto-correct-previous-word (point)))))
 (evil-define-key 'insert 'global (kbd "<S-space> <S-space>") (lambda () (interactive) (save-excursion (flyspell-lazy-check-pending) (flyspell-auto-correct-previous-word (point)))))
 ; use c-hjkl to move around
-(evil-define-key 'insert 'global (kbd "M-g") 'evil-first-non-blank)
-(evil-define-key 'insert 'global (kbd "M-h") 'left-word)
-(evil-define-key 'insert 'global (kbd "M-j") 'next-line)
-(evil-define-key 'insert 'global (kbd "M-k") 'previous-line)
-(evil-define-key 'insert 'global (kbd "M-l") 'right-word)
-(evil-define-key 'insert 'global (kbd "M-;") 'end-of-line)
+(evil-define-key 'insert 'global (kbd "M-S-g") 'evil-first-non-blank)
+(evil-define-key 'insert 'global (kbd "M-S-h") 'left-word)
+(evil-define-key 'insert 'global (kbd "M-S-j") 'next-line)
+(evil-define-key 'insert 'global (kbd "M-S-k") 'previous-line)
+(evil-define-key 'insert 'global (kbd "M-S-l") 'right-word)
+(evil-define-key 'insert 'global (kbd "M-S-;") 'end-of-line)
+; use M-j/k/l to do completion
+(evil-define-key 'insert 'global (kbd "M-j") 'company-select-next)
+(evil-define-key 'insert 'global (kbd "M-k") 'company-select-previous)
+(evil-define-key 'insert 'global (kbd "M-l") 'company-complete-selection)
 ; j mappings
 (general-imap "j" (general-key-dispatch 'self-insert-command
 				   :timeout 0.25
@@ -1532,9 +1556,14 @@ Useful for a search overview popup."
 			  "h" 'evil-delete-backward-word ; jh delete word
 			  "l" 'move-end-of-line ; jl move to end of line
 			  "p" 'company-complete-common-or-cycle ; jp complete
-			  "[" 'evil-complete-next ; j[ context complete (TODO)
+			  ;; "[" 'evil-complete-next ; j[ context complete (TODO)
+			  "[" 'yas-insert-snippet ; j[ insert snippet
 			  "v" (lambda () (interactive) (evil-paste-from-register ?\")) ; jv to paste from default register
-			  "V" 'counsel-yank-pop ; jV to use counsel yank-pop
+))
+(general-imap "J" (general-key-dispatch 'self-insert-command
+				   :timeout 0.25
+			  "J" 'self-insert-command
+			  "V" 'counsel-yank-pop ; JV to use counsel yank-pop
 ))
 ;; (eval-after-load 'company
 ;;   '(progn
@@ -1643,6 +1672,9 @@ Useful for a search overview popup."
 
 ;; attempt to improve font-lock performance
 ;; (setq jit-lock-defer-time 0)
+
+;; attempt to improve subprocess performance
+(setq process-adaptive-read-buffering nil)
 
 ;; attempt to improve font performance
 (setq inhibit-compacting-font-caches t)
@@ -1828,6 +1860,7 @@ Useful for a search overview popup."
 )
 ;; (advice-add 'self-insert-command :before #'before-insert-advice)
 (advice-add 'self-insert-command :after #'after-insert-advice)
+;; (advice-remove 'self-insert-command #'after-insert-advice)
 
 ;; indentation guide using whitespace mode
 (setq whitespace-style '(
