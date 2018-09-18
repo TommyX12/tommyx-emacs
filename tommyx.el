@@ -479,6 +479,7 @@
 (add-hook 'after-init-hook 'yas-global-mode)
 (add-to-list 'yas-snippet-dirs (expand-file-name "snippets"
 	(file-name-directory load-file-name)))
+(setq company-continue-commands (-snoc company-continue-commands 'yas-insert-snippet)) ; make company break completion
 
 ;; company
 (add-hook 'after-init-hook 'global-company-mode)
@@ -508,10 +509,20 @@
   (push '(company-childframe-mode . nil)
 	  desktop-minor-mode-table))
 ;; (company-quickhelp-mode)
+(setq my-company--company-command-p-override nil)
 (defun my-company--company-command-p (func &rest args)
-	(let ((return (apply func args)))
-		(message (concat "fuck: " (prin1-to-string company-selection-changed) " " (prin1-to-string return) " " (prin1-to-string (and return (not (numberp return)))) " " (prin1-to-string args)))
-		(and return (not (numberp return)))))
+	(if my-company--company-command-p-override
+		nil ; treat all command as breaking company completion
+		(let ((return (apply func args)))
+
+			(message
+				(concat "debug: "
+								(prin1-to-string company-selection-changed) " "
+								(prin1-to-string return) " "
+								(prin1-to-string (and return (not (numberp return)))) " "
+								(prin1-to-string args)))
+
+			(and return (not (numberp return))))))
 (advice-add #'company--company-command-p :around #'my-company--company-command-p)
 
 (eval-after-load 'company
@@ -929,15 +940,11 @@ Useful for a search overview popup."
 	(when kill-ring-yank-pointer
 		(setq kill-ring-yank-pointer kill-ring))
 )
-(defun call-with-command-hooks (command)
+(defun call-with-command-hooks (command &optional )
 	(let ((old-command this-command))
 		(setq this-command command)
 		(run-hooks 'pre-command-hook)
-		(unless (eq this-command command)
-			(call-interactively this-command)
-			(setq this-command command))
-		;; (message (this-command-keys))
-		(call-interactively command)
+		(call-interactively this-command)
 		(run-hooks 'post-command-hook)
 		(setq this-command old-command)
 	))
@@ -1545,11 +1552,13 @@ Useful for a search overview popup."
 ; yas
 (evil-define-key 'insert 'global (kbd "C-j") 'yas-next-field)
 (evil-define-key 'insert 'global (kbd "C-k") 'yas-prev-field)
-(evil-define-key 'insert 'global (kbd "C-l") 'yas-expand)
+(evil-define-key 'insert 'global (kbd "C-l") 'yas-insert-snippet)
+(evil-define-key 'insert yas-minor-mode-map (kbd "C-l") yas-maybe-expand)
 ; emmet
 (evil-define-key 'insert emmet-mode-keymap (kbd "C-S-j") 'yas-next-field)
 (evil-define-key 'insert emmet-mode-keymap (kbd "C-S-k") 'yas-prev-field)
-(evil-define-key 'insert emmet-mode-keymap (kbd "C-S-l") 'yas-expand)
+(evil-define-key 'insert emmet-mode-keymap (kbd "C-S-l") 'yas-insert-snippet)
+(evil-define-key 'insert yas-minor-mode-map (kbd "C-S-l") yas-maybe-expand)
 (evil-define-key 'insert emmet-mode-keymap (kbd "C-j") 'emmet-next-edit-point)
 (evil-define-key 'insert emmet-mode-keymap (kbd "C-k") 'emmet-prev-edit-point)
 (evil-define-key 'insert emmet-mode-keymap (kbd "C-l") 'emmet-expand-line)
@@ -1572,11 +1581,15 @@ Useful for a search overview popup."
 (define-key company-active-map (kbd "M-k") 'company-select-previous)
 (define-key company-active-map (kbd "M-l") 'company-complete-selection)
 ; j mappings
-(setq insert-mode-j-mapping-func (general-key-dispatch 'self-insert-command
+(setq insert-mode-j-mapping-func (general-key-dispatch
+	; fallback
+	(lambda () (interactive)
+		(let ((my-company--company-command-p-override t))
+			(call-with-command-hooks 'self-insert-command)))
 	:timeout 0.25
-	"j" 'self-insert-command
-	"t" 'insert-todo
-	"f" 'insert-backslash
+	"j" (lambda () (interactive) (call-with-command-hooks 'self-insert-command))
+	"t" (lambda () (interactive) (call-with-command-hooks 'insert-todo))
+	"f" (lambda () (interactive) (call-with-command-hooks 'insert-backslash))
 	; jk quit insert mode
 	"k" (lambda () (interactive) (call-with-command-hooks 'evil-normal-state))
 	; jh delete word
@@ -1584,11 +1597,14 @@ Useful for a search overview popup."
 	; jl move to end of line
 	"l" (lambda () (interactive) (call-with-command-hooks 'move-end-of-line))
 	; jp complete
-	"p" 'company-complete-common-or-cycle
+	"p" (lambda () (interactive)
+				(if company-selection-changed
+					(company-complete-selection)
+					(company-complete-common-or-cycle)))
 	; j[ context complete (TODO)
 	;; "[" 'evil-complete-next
 	; j[ insert snippet
-	"[" (lambda () (interactive) (call-with-command-hooks 'yas-insert-snippet))
+	;; "[" (lambda () (interactive) (call-with-command-hooks 'yas-insert-snippet))
 	; jv to paste from default register
 	"v" (lambda () (interactive) (call-with-command-hooks 'paste-from-default-register))
 ))
@@ -1600,10 +1616,10 @@ Useful for a search overview popup."
 ))
 (defun insert-mode-j-mapping () (interactive)
 	(call-interactively insert-mode-j-mapping-func))
-(push 'insert-mode-j-mapping company-continue-commands) ; company-mode compatibility
+;; make sure company-continue-commands allow insert-mode-j-mapping (maybe having not at first)
 (defun insert-mode-J-mapping () (interactive)
 	(call-interactively insert-mode-J-mapping-func))
-(push 'insert-mode-J-mapping company-continue-commands) ; company-mode compatibility
+;; make sure company-continue-commands allow insert-mode-J-mapping (maybe having not at first)
 (general-imap "j" 'insert-mode-j-mapping)
 (general-imap "J" 'insert-mode-J-mapping)
 (define-key company-active-map "j" 'insert-mode-j-mapping)
