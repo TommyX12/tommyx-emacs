@@ -508,6 +508,11 @@
   (push '(company-childframe-mode . nil)
 	  desktop-minor-mode-table))
 ;; (company-quickhelp-mode)
+(defun my-company--company-command-p (func &rest args)
+	(let ((return (apply func args)))
+		(message (concat "fuck: " (prin1-to-string company-selection-changed) " " (prin1-to-string return) " " (prin1-to-string (and return (not (numberp return)))) " " (prin1-to-string args)))
+		(and return (not (numberp return)))))
+(advice-add #'company--company-command-p :around #'my-company--company-command-p)
 
 (eval-after-load 'company
   '(progn
@@ -525,13 +530,11 @@
 		(define-key company-active-map (kbd "C-z") 'company-show-doc-buffer)
 			; C-z when company open will show help for that symbol in another window.
 		(define-key company-active-map (kbd "S-TAB") 'company-select-previous)
-		(define-key company-active-map (kbd "<S-tab>") 'company-select-previous)
-		(define-key company-active-map (kbd "M-j") 'company-select-next)
-		(define-key company-active-map (kbd "M-k") 'company-select-previous)
-		(define-key company-active-map (kbd "M-l") 'company-complete-selection)))
+		(define-key company-active-map (kbd "<S-tab>") 'company-select-previous)))
 (setq company-frontends
-	  '(company-pseudo-tooltip-frontend
-		company-tng-frontend
+	  '(company-tng-frontend
+		company-pseudo-tooltip-frontend
+		;; company-preview-frontend
 		company-echo-metadata-frontend))
 ;; (setq company-frontends
 ;; 	  '(company-pseudo-tooltip-unless-just-one-frontend
@@ -557,7 +560,7 @@
 ; TODO disabled
 (add-hook 'ycmd-mode-hook 'company-ycmd-setup)
 (add-hook 'ycmd-mode-hook 'flycheck-ycmd-setup)
-(add-hook 'ycmd-mode-hook 'ycmd-eldoc-setup)
+(add-hook 'ycmd-mode-hook (lambda () (interactive) (when (ycmd-major-mode-to-file-types major-mode) (ycmd-eldoc-setup))))
 ; attempt to improve performance
 (setq company-ycmd-request-sync-timeout 0)
 ; generic file types
@@ -926,6 +929,25 @@ Useful for a search overview popup."
 	(when kill-ring-yank-pointer
 		(setq kill-ring-yank-pointer kill-ring))
 )
+(defun call-with-command-hooks (command)
+	(let ((old-command this-command))
+		(setq this-command command)
+		(run-hooks 'pre-command-hook)
+		(unless (eq this-command command)
+			(call-interactively this-command)
+			(setq this-command command))
+		;; (message (this-command-keys))
+		(call-interactively command)
+		(run-hooks 'post-command-hook)
+		(setq this-command old-command)
+	))
+
+(defun insert-todo () (interactive)
+	(insert "TODO"))
+(defun insert-backslash () (interactive)
+	(insert "\\"))
+(defun paste-from-default-register () (interactive)
+	(evil-paste-from-register ?\"))
 
 
 ;;; key bindings
@@ -1543,28 +1565,49 @@ Useful for a search overview popup."
 (evil-define-key 'insert 'global (kbd "M-S-l") 'right-word)
 (evil-define-key 'insert 'global (kbd "M-S-;") 'end-of-line)
 ; use M-j/k/l to do completion
-(evil-define-key 'insert 'global (kbd "M-j") 'company-select-next)
+(evil-define-key 'insert 'global (kbd "M-j") 'company-complete-common-or-cycle)
 (evil-define-key 'insert 'global (kbd "M-k") 'company-select-previous)
 (evil-define-key 'insert 'global (kbd "M-l") 'company-complete-selection)
+(define-key company-active-map (kbd "M-j") 'company-complete-common-or-cycle)
+(define-key company-active-map (kbd "M-k") 'company-select-previous)
+(define-key company-active-map (kbd "M-l") 'company-complete-selection)
 ; j mappings
-(general-imap "j" (general-key-dispatch 'self-insert-command
-				   :timeout 0.25
-			  "j" 'self-insert-command
-			  "t" (lambda () (interactive) (insert "TODO"))
-			  "f" (lambda () (interactive) (insert "\\"))
-			  "k" 'evil-normal-state ; jk quit insert mode
-			  "h" 'evil-delete-backward-word ; jh delete word
-			  "l" 'move-end-of-line ; jl move to end of line
-			  "p" 'company-complete-common-or-cycle ; jp complete
-			  ;; "[" 'evil-complete-next ; j[ context complete (TODO)
-			  "[" 'yas-insert-snippet ; j[ insert snippet
-			  "v" (lambda () (interactive) (evil-paste-from-register ?\")) ; jv to paste from default register
+(setq insert-mode-j-mapping-func (general-key-dispatch 'self-insert-command
+	:timeout 0.25
+	"j" 'self-insert-command
+	"t" 'insert-todo
+	"f" 'insert-backslash
+	; jk quit insert mode
+	"k" (lambda () (interactive) (call-with-command-hooks 'evil-normal-state))
+	; jh delete word
+	"h" (lambda () (interactive) (call-with-command-hooks 'evil-delete-backward-word))
+	; jl move to end of line
+	"l" (lambda () (interactive) (call-with-command-hooks 'move-end-of-line))
+	; jp complete
+	"p" 'company-complete-common-or-cycle
+	; j[ context complete (TODO)
+	;; "[" 'evil-complete-next
+	; j[ insert snippet
+	"[" (lambda () (interactive) (call-with-command-hooks 'yas-insert-snippet))
+	; jv to paste from default register
+	"v" (lambda () (interactive) (call-with-command-hooks 'paste-from-default-register))
 ))
-(general-imap "J" (general-key-dispatch 'self-insert-command
-				   :timeout 0.25
-			  "J" 'self-insert-command
-			  "V" 'counsel-yank-pop ; JV to use counsel yank-pop
+(setq insert-mode-J-mapping-func (general-key-dispatch 'self-insert-command
+	:timeout 0.25
+	"J" (lambda () (interactive) (call-with-command-hooks 'self-insert-command))
+	; JV to use counsel yank-pop
+	"V" (lambda () (interactive) (call-with-command-hooks 'counsel-yank-pop))
 ))
+(defun insert-mode-j-mapping () (interactive)
+	(call-interactively insert-mode-j-mapping-func))
+(push 'insert-mode-j-mapping company-continue-commands) ; company-mode compatibility
+(defun insert-mode-J-mapping () (interactive)
+	(call-interactively insert-mode-J-mapping-func))
+(push 'insert-mode-J-mapping company-continue-commands) ; company-mode compatibility
+(general-imap "j" 'insert-mode-j-mapping)
+(general-imap "J" 'insert-mode-J-mapping)
+(define-key company-active-map "j" 'insert-mode-j-mapping)
+(define-key company-active-map "J" 'insert-mode-J-mapping)
 ;; (eval-after-load 'company
 ;;   '(progn
 ;; 	 (define-key company-active-map (kbd "C-z") 'company-quickhelp-manual-begin)))
