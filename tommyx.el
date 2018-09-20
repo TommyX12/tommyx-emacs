@@ -511,6 +511,12 @@
 ;; (company-quickhelp-mode)
 (setq my-company--company-command-p-override nil)
 (defun my-company--company-command-p (func &rest args)
+	"Patch company-mode to treat key sequences like \"jp\" not a company-mode command.
+
+Since company-tng-frontend only complete selection when pressing any key that isn't
+a company-mode command (checked with this function), and we want general-key-dispatch
+to have \"j\" as a company-mode command (so do not complete) but not to have
+\"jp\" as one (so do completion)."
 	(if my-company--company-command-p-override
 		nil ; treat all command as breaking company completion
 		(let ((return (apply func args)))
@@ -682,7 +688,24 @@
 (setq evil-goggles-duration 0.1)
 (setq evil-goggles-async-duration 0.2)
 (setq evil-goggles-blocking-duration 0.1)
-(evil-goggles-mode)
+(setq evil-goggles--commands
+	'((evil-yank                  :face evil-goggles-yank-face                  :switch evil-goggles-enable-yank                  :advice evil-goggles--generic-async-advice)
+    (evil-join                  :face evil-goggles-join-face                  :switch evil-goggles-enable-join                  :advice evil-goggles--join-advice)
+    (evil-join-whitespace       :face evil-goggles-join-face                  :switch evil-goggles-enable-join                  :advice evil-goggles--join-advice)
+    (evil-fill-and-move         :face evil-goggles-fill-and-move-face         :switch evil-goggles-enable-fill-and-move         :advice evil-goggles--generic-async-advice)
+		(evil-shift-left            :face evil-goggles-shift-face                 :switch evil-goggles-enable-shift                 :advice evil-goggles--generic-async-advice)
+    (evil-shift-right           :face evil-goggles-shift-face                 :switch evil-goggles-enable-shift                 :advice evil-goggles--generic-async-advice)
+    (evil-org-<                 :face evil-goggles-shift-face                 :switch evil-goggles-enable-shift                 :advice evil-goggles--generic-async-advice)
+    (evil-org->                 :face evil-goggles-shift-face                 :switch evil-goggles-enable-shift                 :advice evil-goggles--generic-async-advice)
+    (evil-surround-region       :face evil-goggles-surround-face              :switch evil-goggles-enable-surround              :advice evil-goggles--generic-async-advice)
+    (evil-commentary            :face evil-goggles-commentary-face            :switch evil-goggles-enable-commentary            :advice evil-goggles--generic-async-advice)
+    (evilnc-comment-operator    :face evil-goggles-nerd-commenter-face        :switch evil-goggles-enable-nerd-commenter        :advice evil-goggles--generic-async-advice)
+    (evil-replace-with-register :face evil-goggles-replace-with-register-face :switch evil-goggles-enable-replace-with-register :advice evil-goggles--generic-async-advice-1)
+    (evil-set-marker            :face evil-goggles-set-marker-face            :switch evil-goggles-enable-set-marker            :advice evil-goggles--set-marker-advice)
+    (evil-record-macro          :face evil-goggles-record-macro-face          :switch evil-goggles-enable-record-macro          :advice evil-goggles--record-macro-advice)
+    (evil-paste-before          :face evil-goggles-paste-face                 :switch evil-goggles-enable-paste                 :advice evil-goggles--paste-advice :after t)
+    (evil-paste-after           :face evil-goggles-paste-face                 :switch evil-goggles-enable-paste                 :advice evil-goggles--paste-advice :after t)))
+(evil-goggles-mode 1)
 
 ;; evil-collection
 (delete 'neotree evil-collection-mode-list)
@@ -940,7 +963,15 @@ Useful for a search overview popup."
 	(when kill-ring-yank-pointer
 		(setq kill-ring-yank-pointer kill-ring))
 )
-(defun call-with-command-hooks (command &optional )
+(defun call-with-command-hooks (command)
+	"Call command, invoking pre-command and post-command hooks.
+
+company-tng-frontend only update on pre-command-hook,
+so this is used to make dispatched commands triggered by
+general-key-dispatch also trigger a pre-command-hook.
+Since company-tng-frontend modifies this-command to complete selection,
+this function also makes sure if pre-command-hook modifies this-command,
+the new command is called instead."
 	(let ((old-command this-command))
 		(setq this-command command)
 		(run-hooks 'pre-command-hook)
@@ -1601,6 +1632,16 @@ Useful for a search overview popup."
 				(if company-selection-changed
 					(company-complete-selection)
 					(company-complete-common-or-cycle)))
+	"0" (lambda () (interactive) (company-complete-number 0))
+	"1" (lambda () (interactive) (company-complete-number 1))
+	"2" (lambda () (interactive) (company-complete-number 2))
+	"3" (lambda () (interactive) (company-complete-number 3))
+	"4" (lambda () (interactive) (company-complete-number 4))
+	"5" (lambda () (interactive) (company-complete-number 5))
+	"6" (lambda () (interactive) (company-complete-number 6))
+	"7" (lambda () (interactive) (company-complete-number 7))
+	"8" (lambda () (interactive) (company-complete-number 8))
+	"9" (lambda () (interactive) (company-complete-number 9))
 	; j[ context complete (TODO)
 	;; "[" 'evil-complete-next
 	; j[ insert snippet
@@ -1624,6 +1665,10 @@ Useful for a search overview popup."
 (general-imap "J" 'insert-mode-J-mapping)
 (define-key company-active-map "j" 'insert-mode-j-mapping)
 (define-key company-active-map "J" 'insert-mode-J-mapping)
+"Since company-tng-frontend only complete selection when pressing any key that isn't
+a company-mode command (checked with this function), and we want general-key-dispatch
+to have \"j\" as a company-mode command (so do not complete) but not to have
+\"jp\" as one (so do completion)."
 ;; (eval-after-load 'company
 ;;   '(progn
 ;; 	 (define-key company-active-map (kbd "C-z") 'company-quickhelp-manual-begin)))
