@@ -553,14 +553,10 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 		company-pseudo-tooltip-frontend
 		;; company-preview-frontend
 		company-echo-metadata-frontend))
-;; (setq company-frontends
-;; 	  '(company-pseudo-tooltip-unless-just-one-frontend
-;; 		company-preview-frontend
-;; 		company-echo-metadata-frontend))
 ;; (setq company-idle-delay 0)
+(setq company-idle-delay 0.2)
 (setq company-selection-wrap-around t)
 (setq company-show-numbers t)
-(setq company-idle-delay 0.2)
 (setq company-quickhelp-delay nil) ; we will manually trigger the help
 (setq company-require-match 'never)
 (setq company-dabbrev-downcase nil)
@@ -1502,35 +1498,36 @@ the new command is called instead."
 ;; (evil-define-key 'motion 'global (kbd "C-p C-f") 'helm-projectile-grep)
 ;; (evil-define-key 'motion 'global (kbd "C-p f") 'helm-find-files)
 ; in helm window move using j and k
-(define-key helm-map (kbd "C-j") 'helm-next-line)
-(define-key helm-map (kbd "C-k") 'helm-previous-line)
+(define-key helm-map (kbd "M-j") 'helm-next-line)
+(define-key helm-map (kbd "M-k") 'helm-previous-line)
 ; in file window, move up one level using C-h
 (define-key helm-find-files-map (kbd "C-h") 'helm-find-files-up-one-level)
 
 ;; ivy, counsel and swiper
 (general-define-key
 	:keymaps '(swiper-map ivy-minibuffer-map counsel-imenu-map)
-	"C-j" 'ivy-next-line
-	"C-k" 'ivy-previous-line
-	"C-S-j" 'ivy-scroll-up-command
-	"C-S-k" 'ivy-scroll-down-command
+	"M-j" 'ivy-next-line
+	"M-k" 'ivy-previous-line
+	"M-S-j" 'ivy-scroll-up-command
+	"M-S-k" 'ivy-scroll-down-command
 	; ivy-next-history-element allows inserting cursor symbol.
-	"M-j" 'ivy-next-history-element
-	"M-k" 'ivy-previous-history-element
-	"C-RET" 'ivy-dispatching-done
-	"<C-return>" 'ivy-dispatching-done
-	"C-S-RET" 'ivy-dispatching-call ; do not exit after. useful for copy.
-	"<C-S-return>" 'ivy-dispatching-call
+	"C-j" 'ivy-next-history-element
+	"C-k" 'ivy-previous-history-element
+	"M-RET" 'ivy-dispatching-done
+	"<M-return>" 'ivy-dispatching-done
+	"M-S-RET" 'ivy-dispatching-call ; do not exit after. useful for copy.
+	"<M-S-return>" 'ivy-dispatching-call
 	"S-RET" 'ivy-immediate-done ; use exact input, not candidate
 	"<S-return>" 'ivy-immediate-done
-	"C-l" 'ivy-done
-	"C-n" 'ivy-call
-	"C-h" 'ivy-backward-kill-word
-	"C-o" 'ivy-occur ; save to temp buffer for manipulation
+	"M-l" 'ivy-done
+	"M-n" 'ivy-call
+	"M-h" 'ivy-backward-kill-word
+	"M-o" 'ivy-occur ; save to temp buffer for manipulation
 
 	"j" (general-key-dispatch 'self-insert-command
 		:timeout 0.25
 		"j" 'self-insert-command
+		;; "l" 'ivy-done
 		"k" 'minibuffer-keyboard-quit
 		"h" 'ivy-backward-kill-word
 		"p" 'ivy-partial ; complete text
@@ -1538,11 +1535,11 @@ the new command is called instead."
 )
 (general-define-key
 	:keymaps '(swiper-map)
-	"C-n" 'swiper-query-replace
+	"M-n" 'swiper-query-replace
 )
 (general-define-key
 	:keymaps '(swiper-all-map)
-	"C-n" 'swiper-all-query-replace
+	"M-n" 'swiper-all-query-replace
 )
 (general-define-key ; use / to enter directory, not ENTER.
 	:keymaps '(counsel-find-file-map)
@@ -1551,7 +1548,7 @@ the new command is called instead."
 	"<return>" 'ivy-alt-done
 	"S-RET" 'ivy-immediate-done ; use exact input, not candidate
 	"<S-return>" 'ivy-immediate-done
-	"C-l" 'ivy-alt-done
+	"M-l" 'ivy-alt-done
 )
 
 ;; help mode
