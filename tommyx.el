@@ -99,7 +99,10 @@
 (use-package dash :ensure t)
 (use-package s :ensure t)
 (use-package cl-lib :ensure t)
-(use-package request :ensure t)
+(use-package request :ensure t
+	:config
+	(setq request-backend 'url-retrieve) ; curl is slow on windows
+)
 (use-package alert :ensure t
 	:config
 	(setq alert-default-style 'companion)
@@ -560,6 +563,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq company-quickhelp-delay nil) ; we will manually trigger the help
 (setq company-require-match 'never)
 (setq company-dabbrev-downcase nil)
+(setq company-dabbrev-ignore-case nil)
 (setq company-dabbrev-other-buffers t)
 (with-eval-after-load 'company
   (company-flx-mode +1))
