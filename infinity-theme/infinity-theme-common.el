@@ -229,9 +229,9 @@
 	`(aw-leading-char-face ((,class (:foreground ,func :weight bold :height 2.0 :box (:line-width 1 :color ,keyword :style released-button)))))
 
 ;;;;; ahs
-	`(ahs-face ((,class (:background ,blue-bg-s))))
-	`(ahs-plugin-defalt-face ((,class (:background ,green-bg-s))))
-	`(ahs-definition-face ((,class (:background ,blue-bg-s :underline t))))
+	`(ahs-face ((,class (:background ,highlight))))
+	`(ahs-plugin-defalt-face ((,class (:background ,blue-bg :underline (:color ,blue :style line)))))
+	`(ahs-definition-face ((,class (:background ,green-bg-s))))
 	`(ahs-plugin-whole-buffer-face ((,class (:background ,mat :foreground ,bg1))))
 
 ;;;;; all the icons

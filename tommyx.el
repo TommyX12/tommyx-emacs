@@ -263,11 +263,44 @@
 (use-package color-identifiers-mode :ensure t)
 (use-package auto-highlight-symbol :ensure t
 	:config
-	;; (global-auto-highlight-symbol-mode 1)
+	(global-auto-highlight-symbol-mode 1)
 	;; (add-hook 'prog-mode-hook (auto-highlight-symbol-mode 1))
 	;; (add-hook 'html-mode-hook (auto-highlight-symbol-mode 1))
 	;; (add-hook 'nxml-mode-hook (auto-highlight-symbol-mode 1))
 	(setq ahs-idle-interval 0.3)
+
+	; patch to not clear highlight when moving
+	(defun ahs-highlight (symbol beg end)
+  "Highlight"
+  (setq ahs-search-work  nil
+        ahs-need-fontify nil)
+  (let ((search-range (ahs-prepare-highlight symbol)))
+    (when (consp search-range)
+      ;;(msell-bench
+       (ahs-search-symbol symbol search-range)
+       (when ahs-need-fontify
+         (ahs-fontify))
+       (ahs-light-up)
+      ;;)
+      (when ahs-overlay-list
+        (ahs-highlight-current-symbol beg end)
+        (setq ahs-highlighted  t
+              ahs-start-point  beg
+              ahs-search-work  nil
+              ahs-need-fontify nil) t))))
+
+	; patch to fix avy bug
+	(defun ahs-idle-function ()
+  "Idle function. Called by `ahs-idle-timer'."
+  (when (and auto-highlight-symbol-mode)
+		(when ahs-highlighted
+			(ahs-unhighlight))
+    (let ((hl (ahs-highlight-p)))
+      (when hl
+        (ahs-highlight (nth 0 hl)
+                       (nth 1 hl)
+                       (nth 2 hl))))))
+
 )
 (use-package neotree :ensure t
 	:config
@@ -628,6 +661,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq evil-split-window-below t)
 (setq evil-vsplit-window-right t)
 (setq evil-ex-substitute-global t)
+(setq-default evil-symbol-word-search t)
 ; auto center after search
 (defun my-center-line (&rest _) (evil-scroll-line-to-center nil))
 ;; (advice-add 'evil-ex-search-next :after #'my-center-line)
@@ -1833,6 +1867,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; auto display line numbers (turned off for performance)
 ;; (add-hook 'prog-mode-hook (lambda () (display-line-numbers-mode)))
 ;; (add-hook 'sgml-mode-hook (lambda () (display-line-numbers-mode)))
+(setq display-line-numbers-grow-only t)
 
 ;; indicate end of buffer
 (add-hook 'prog-mode-hook (lambda () (setq indicate-buffer-boundaries t)))
@@ -2015,7 +2050,6 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 	(add-hook hook (lambda () (flyspell-mode 1))))
 (dolist (hook '(change-log-mode-hook log-edit-mode-hook))
 	(add-hook hook (lambda () (flyspell-mode -1))))
-
 
 ;;; org
 (load-relative "./tommyx-org.el")
