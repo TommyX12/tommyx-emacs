@@ -397,6 +397,7 @@
 ;; 	(purpose-mode)
 ;; )
 (require 'companion)
+(require 'smart-completer)
 ; language specific
 (use-package racket-mode :ensure t)
 (use-package haskell-mode :ensure t)
@@ -2000,15 +2001,26 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; 	;; 	(redisplay)
 ;; 	;; )
 ;; )
-(defun after-insert-advice (&rest _)
+(defun eager-redisplay-advice (&rest _)
 	;; (redisplay t)
 	; change to the following if any problem arises.
 	(when (eq evil-state 'insert)
 		(redisplay t))
 )
 ;; (advice-add 'self-insert-command :before #'before-insert-advice)
-(advice-add 'self-insert-command :after #'after-insert-advice)
-;; (advice-remove 'self-insert-command #'after-insert-advice)
+(defvar eager-redisplay-mode-on nil)
+(defun eager-redisplay-mode ()
+	(interactive)
+	(if eager-redisplay-mode-on
+		(progn
+			(setq eager-redisplay-mode-on t)
+			(advice-add 'self-insert-command :after #'eager-redisplay-advice)
+			(message "eager-redisplay mode enabled."))
+		(progn
+			(setq eager-redisplay-mode-on nil)
+			(advice-remove 'self-insert-command #'eager-redisplay-advice)
+			(message "eager-redisplay mode disabled."))))
+(eager-redisplay-mode)
 
 ;; indentation guide using whitespace mode
 (setq whitespace-style '(
