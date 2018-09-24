@@ -261,6 +261,14 @@
 (use-package git-gutter :ensure t)
 (use-package yascroll :ensure t)
 (use-package color-identifiers-mode :ensure t)
+(use-package auto-highlight-symbol :ensure t
+	:config
+	;; (global-auto-highlight-symbol-mode 1)
+	;; (add-hook 'prog-mode-hook (auto-highlight-symbol-mode 1))
+	;; (add-hook 'html-mode-hook (auto-highlight-symbol-mode 1))
+	;; (add-hook 'nxml-mode-hook (auto-highlight-symbol-mode 1))
+	(setq ahs-idle-interval 0.3)
+)
 (use-package neotree :ensure t
 	:config
 	

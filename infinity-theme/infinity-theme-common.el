@@ -209,7 +209,7 @@
 	`(highlight ((,class (:foreground ,base :background ,highlight))))
 	`(hl-line ((,class (:background ,bg2))))
 	`(isearch ((,class (:foreground ,bg1 :background ,mat))))
-	`(lazy-highlight ((,class (:background ,blue-bg-s))))
+	`(lazy-highlight ((,class (:background ,blue-bg-s :underline t))))
 	`(link ((,class (:foreground ,comment :underline t))))
 	`(link-visited ((,class (:foreground ,comp :underline t))))
 	`(match ((,class (:background ,highlight :foreground ,mat))))
@@ -229,7 +229,9 @@
 	`(aw-leading-char-face ((,class (:foreground ,func :weight bold :height 2.0 :box (:line-width 1 :color ,keyword :style released-button)))))
 
 ;;;;; ahs
-	`(ahs-face ((,class (:background ,highlight))))
+	`(ahs-face ((,class (:background ,blue-bg-s))))
+	`(ahs-plugin-defalt-face ((,class (:background ,green-bg-s))))
+	`(ahs-definition-face ((,class (:background ,blue-bg-s :underline t))))
 	`(ahs-plugin-whole-buffer-face ((,class (:background ,mat :foreground ,bg1))))
 
 ;;;;; all the icons
