@@ -640,8 +640,12 @@
 	`(ivy-posframe ((,class (:inherit default :background ,bg2))))
 
 ;;;;; latex
-	`(font-latex-bold-face ((,class (:foreground ,comp))))
-	`(font-latex-italic-face ((,class (:foreground ,keyword :italic t))))
+	`(font-latex-bold-face ((,class (:bold t))))
+	`(font-latex-italic-face ((,class (:italic t))))
+	`(font-latex-math-face ((,class (:foreground ,comp))))
+	`(font-latex-verbatim-face ((,class (:inherit org-verbatim))))
+	`(font-latex-script-char-face ((,class (:foreground ,keyword))))
+	`(font-latex-warning-face ((,class (:foreground ,war))))
 	`(font-latex-match-reference-keywords ((,class (:foreground ,const))))
 	`(font-latex-match-variable-keywords ((,class (:foreground ,var))))
 	`(font-latex-sectioning-0-face ((,class (:inherit bold :foreground ,head3 :height 1.3 :background ,head3-bg))))

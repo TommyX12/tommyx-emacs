@@ -1,4 +1,5 @@
 ;; requires
+(require 's)
 (require 'evil)
 (require 'alert)
 (require 'org-super-agenda)
@@ -90,10 +91,35 @@
  (800 1000 1200 1400 1600 1800 2000)
  "......" "----------------"))
 (setq org-agenda-entry-text-leaders "    > ")
+(defun org-agenda-special-prefix ()
+	; extra is the agenda deadline / scheduled leader string
+	(if (string-match "^@\\(.*\\)$" extra)
+		(progn
+			(let*
+					((days-string (match-string 1 extra))
+					 (days (string-to-number days-string))
+					 (blocks (min 8 (max 0 (- 8 (/ days 2)))))
+					 (spaces (- 8 blocks)))
+				(concat
+					days-string
+					"|"
+					(s-repeat blocks (if (>= days 0) "-" "="))
+					(s-repeat spaces " ")
+					"●")))
+		extra)
+)
+(setq org-agenda-prefix-format
+	'(
+		(agenda  . " %i %?-12t %(org-agenda-special-prefix) %-12:c")
+		;; (agenda  . " %i %?-12t % s %-12:c")
+		(todo  . " %i %-12:c")
+		(tags  . " %i %-12:c")
+		(search . " %i %-12:c")))
 (setq org-agenda-timerange-leaders '("" "(%d/%d): "))
-(setq org-agenda-scheduled-leaders '("[S]    : " "[S] -%2d: "))
+(setq org-agenda-scheduled-leaders '("[S]        : " "[S]     -%2d: "))
+;; (setq org-agenda-deadline-leaders '("[D]      : " "[D]    %2d: " "[D]   -%2d: "))
+(setq org-agenda-deadline-leaders '("@0  " "@%-3d" "@-%-2d"))
 (setq org-agenda-inactive-leader "[")
-(setq org-agenda-deadline-leaders '("[D]    : " "[D]  %2d: " "[D] -%2d: "))
 
 ;; entry text filter
 ; remove blank lines and state logs

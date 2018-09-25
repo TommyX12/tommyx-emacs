@@ -399,6 +399,9 @@
 (require 'companion)
 (require 'smart-completer)
 ; language specific
+(use-package auctex :ensure t
+	:config
+)
 (use-package racket-mode :ensure t)
 (use-package haskell-mode :ensure t)
 (use-package haskell-snippets :ensure t)
@@ -1524,6 +1527,26 @@ the new command is called instead."
 ; break with ,h
 (evil-define-key 'normal 'global ",h" 'newline)
 
+;; latex
+(general-define-key
+	:keymaps '(latex-mode-map TeX-mode-map)
+	:states '(motion normal)
+	:prefix "SPC"
+
+	"jp" '(preview-buffer
+		:which-key "preview buffer")
+
+	"jP" '(preview-clearout-buffer
+		:which-key "clear preview buffer")
+)
+
+;; eshell
+;; TODO apparently not working
+(evil-define-key 'normal eshell-mode-map (kbd "C-j") 'eshell-previous-prompt)
+(evil-define-key 'normal eshell-mode-map (kbd "C-k") 'eshell-next-prompt)
+(evil-define-key 'insert eshell-mode-map (kbd "C-j") 'eshell-previous-matching-input-from-input)
+(evil-define-key 'insert eshell-mode-map (kbd "C-k") 'eshell-next-matching-input-from-input)
+
 ;; helm
 ;; (global-set-key (kbd "M-x") 'helm-M-x)
 (evil-define-key 'motion 'global (kbd ", C-x") 'helm-resume)
@@ -1801,6 +1824,16 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ))
 (add-hook 'web-mode-hook (lambda ()
   (setq-local tab-width 2)
+  (setq-local evil-shift-width tab-width)
+))
+(add-hook 'latex-mode-hook (lambda ()
+  (setq-local tab-width 2)
+	(setq-local indent-tabs-mode t)
+  (setq-local evil-shift-width tab-width)
+))
+(add-hook 'TeX-mode-hook (lambda ()
+  (setq-local tab-width 2)
+	(setq-local indent-tabs-mode t)
   (setq-local evil-shift-width tab-width)
 ))
 (add-hook 'emacs-lisp-mode-hook (lambda ()
