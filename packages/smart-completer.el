@@ -14,6 +14,9 @@
 ;; Dependencies
 ;;
 
+(require 'cl-lib)
+(require 's)
+
 ;;
 ;; Constants
 ;;
@@ -47,6 +50,11 @@
 
 (defvar smart-completer-process nil)
 
+(defvar smart-completer-process-return nil)
+
+(defvar smart-completer-async-callback nil)
+(defvar smart-completer-async-arg nil)
+
 ;;
 ;; Major mode definition
 ;;
@@ -54,9 +62,6 @@
 ;;
 ;; Global methods
 ;;
-
-(defun smart-completer-process-filter (process output)
-	(message output))
 
 (defun smart-completer-enable ()
 	"Enable smart-completer."
@@ -74,11 +79,48 @@
 		(delete-process smart-completer-process)
 		(setq smart-completer-process nil)))
 
-(defun smart-completer-send-string (string)
+;; sync
+;; (defun smart-completer-query (prefix)
+;; 	"TODO"
+;; 	(when smart-completer-process
+;; 		(setq smart-completer-process-return nil)
+;; 		(process-send-string smart-completer-process (concat prefix "\n"))
+;; 		(accept-process-output smart-completer-process 1)
+;; 		smart-completer-process-return))
+
+(defun smart-completer-query (prefix)
 	"TODO"
 	(when smart-completer-process
-		(process-send-string smart-completer-process string)
-		(accept-process-output smart-completer-process 1)))
+		(setq smart-completer-process-return nil)
+		(process-send-string smart-completer-process (concat prefix "\n"))))
+
+;; sync
+;; (defun smart-completer-process-filter (process output)
+;; 	(setq smart-completer-process-return output))
+
+(defun smart-completer-process-filter (process output)
+	(when smart-completer-async-callback
+		(funcall smart-completer-async-callback (s-split "\t" output t))
+		(setq smart-completer-async-callback nil)))
+
+(defun company-smart-completer (command &optional arg &rest ignored)
+  (interactive (list 'interactive))
+  (cl-case command
+    (interactive (company-begin-backend 'company-smart-completer))
+    (prefix (company-grab-symbol))
+    (candidates
+			(setq smart-completer-async-arg arg)
+			'(:async . (lambda (callback)
+				(setq smart-completer-async-callback callback)
+				(smart-completer-query smart-completer-async-arg)
+			)))
+		;; sync
+    ;; (candidates (when-let ((response (smart-completer-query arg)))
+		;; 	(s-split "\t" response t)))
+    (meta (format "This value is named %s" arg))
+		;; (no-cache t)
+		(sorted t)
+		))
 
 ;;
 ;; Interactive functions
@@ -95,10 +137,6 @@
 ;;
 ;; Segments definition
 ;;
-
-;;
-;; alert.el integration
-;; 
 
 ;;
 ;; Setup
