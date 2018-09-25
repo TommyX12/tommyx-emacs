@@ -51,9 +51,10 @@
 (defvar smart-completer-process nil)
 
 (defvar smart-completer-process-return nil)
+(defvar smart-completer-process-processing nil)
 
 (defvar smart-completer-async-callback nil)
-(defvar smart-completer-async-arg nil)
+(defvar smart-completer-async-prefix nil)
 
 ;;
 ;; Major mode definition
@@ -91,7 +92,7 @@
 (defun smart-completer-query (prefix)
 	"TODO"
 	(when smart-completer-process
-		(setq smart-completer-process-return nil)
+		(setq smart-completer-processing t)
 		(process-send-string smart-completer-process (concat prefix "\n"))))
 
 ;; sync
@@ -100,8 +101,11 @@
 
 (defun smart-completer-process-filter (process output)
 	(when smart-completer-async-callback
-		(funcall smart-completer-async-callback (s-split "\t" output t))
-		(setq smart-completer-async-callback nil)))
+		(setq output (s-split "\n" output t))
+		(dolist (chunk output)
+			(funcall smart-completer-async-callback (s-split "\t" chunk t)))
+		(setq smart-completer-async-callback nil)
+		(setq smart-completer-processing nil)))
 
 (defun company-smart-completer (command &optional arg &rest ignored)
   (interactive (list 'interactive))
@@ -109,17 +113,18 @@
     (interactive (company-begin-backend 'company-smart-completer))
     (prefix (company-grab-symbol))
     (candidates
-			(setq smart-completer-async-arg arg)
+			(smart-completer-query arg)
+			(setq smart-completer-async-prefix arg)
 			'(:async . (lambda (callback)
 				(setq smart-completer-async-callback callback)
-				(smart-completer-query smart-completer-async-arg)
 			)))
+
 		;; sync
     ;; (candidates (when-let ((response (smart-completer-query arg)))
 		;; 	(s-split "\t" response t)))
     (meta (format "This value is named %s" arg))
 		;; (no-cache t)
-		(sorted t)
+		;; (sorted t)
 		))
 
 ;;
