@@ -41,11 +41,17 @@
 ;; Variables
 ;;
 
-(defvar smart-completer-executable-path
-	(expand-file-name
-	 (if (eq system-type 'windows-nt)
-		"smart-completer/smart-completer.exe"
-		"smart-completer/smart-completer")
+;; (defvar smart-completer-executable-command
+;; 	(expand-file-name
+;; 	 (if (eq system-type 'windows-nt)
+;; 		"smart-completer/smart-completer.exe"
+;; 		"smart-completer/smart-completer")
+;; 	 (file-name-directory load-file-name)))
+
+(defvar smart-completer-executable-command "python")
+
+(defvar smart-completer-executable-arg
+	(expand-file-name "smart-completer/smart-completer.py"
 	 (file-name-directory load-file-name)))
 
 (defvar smart-completer-process nil)
@@ -69,7 +75,7 @@
 	(smart-completer-disable)
 	(let ((process-connection-type nil))
 		(setq smart-completer-process
-					(start-process "smart-completer-process" nil smart-completer-executable-path))
+					(start-process "smart-completer-process" nil smart-completer-executable-command smart-completer-executable-arg))
 		(set-process-filter smart-completer-process
 												'smart-completer-process-filter)
 	))

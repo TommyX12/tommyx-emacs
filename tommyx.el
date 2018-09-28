@@ -252,6 +252,10 @@
 	:config
 	(winum-mode)
 )
+;; (use-package symon :ensure t
+;; 	:config
+;; 	(symon-mode)
+;; )
 (use-package which-func :ensure t)
 (use-package workgroups :ensure t)
 ;; (use-package persp-mode :ensure t
