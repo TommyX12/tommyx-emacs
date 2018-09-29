@@ -131,6 +131,11 @@
 )
 (use-package evil-search-highlight-persist :ensure t)
 (use-package evil-nerd-commenter :ensure t)
+(use-package hydra :ensure t
+	:config
+	(setq lv-use-separator t)
+	(setq hydra-lv nil)
+)
 (use-package projectile :ensure t)
 (require 'per-frame-header-mode-line)
 (use-package smex :ensure t)
@@ -1053,6 +1058,12 @@ the new command is called instead."
 (global-set-key (kbd "C-[") 'keyboard-escape-quit)
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
+;; hydra
+(defhydra hydra-zoom ()
+  "zoom"
+  ("=" text-scale-increase "in")
+  ("-" text-scale-decrease "out"))
+
 ;; global leader
 (define-prefix-command 'global-leader-window)
 (define-prefix-command 'global-leader-helm)
@@ -1065,6 +1076,7 @@ the new command is called instead."
 (define-prefix-command 'global-leader-mode-specific)
 (define-prefix-command 'global-leader-companion)
 (define-prefix-command 'global-leader-sidebar)
+; prefix keys
 (general-define-key
 	:keymaps 'override
 	:states '(motion normal visual)
@@ -1082,8 +1094,21 @@ the new command is called instead."
 		:which-key "mode specific")
 	"a" '(global-leader-appearance
 		:which-key "appearance")
+	"at" '(global-leader-appearance-theme
+		:which-key "theme")
+	"af" '(global-leader-appearance-font
+		:which-key "font")
 	"p" '(global-leader-project
 		:which-key "project + workspace")
+	"c" '(global-leader-companion
+		:which-key "companion")
+	"s" '(global-leader-sidebar
+		:which-key "side bar")
+)
+(general-define-key
+	:keymaps 'override
+	:states '(motion normal visual)
+	:prefix "SPC"
 
 	"is" '(counsel-semantic-or-imenu
 		:which-key "semantic item")
@@ -1107,30 +1132,22 @@ the new command is called instead."
 	"hs" '(helm-swoop
 		:which-key "helm swoop")
 
-	"at" '(global-leader-appearance-theme
-		:which-key "theme")
 	"atl" '((lambda () (interactive) (change-theme light-theme))
 		:which-key "light theme")
 	"atd" '((lambda () (interactive) (change-theme dark-theme))
 		:which-key "dark theme")
 	
-	"af" '(global-leader-appearance-font
-		:which-key "font")
 	"afs" '(set-to-small-font
 		:which-key "small font")
 	"afb" '(set-to-big-font
 		:which-key "big font")
+	"afz" '(hydra-zoom/body
+		:which-key "zoom buffer font")
 	"afr" '(toggle-readable-buffer-font
 		:which-key "toggle readable buffer font")
 
-	"c" '(global-leader-companion
-		:which-key "companion")
-
 	"cd" '(companion-notif-dismiss
 		:which-key "dismiss notification")
-
-	"s" '(global-leader-sidebar
-		:which-key "side bar")
 
 	"sf" '((lambda () (interactive)
 		(display-buffer-in-side-window (get-buffer neo-buffer-name) '((side . left))))
