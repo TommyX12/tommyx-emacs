@@ -272,6 +272,8 @@
 (use-package color-identifiers-mode :ensure t)
 (use-package auto-highlight-symbol :ensure t
 	:config
+	(push 'racket-mode ahs-modes)
+	(push 'web-mode ahs-modes)
 	(global-auto-highlight-symbol-mode 1)
 	;; (add-hook 'prog-mode-hook (auto-highlight-symbol-mode 1))
 	;; (add-hook 'html-mode-hook (auto-highlight-symbol-mode 1))
@@ -664,8 +666,8 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (sp-local-pair 'text-mode "[" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
 (sp-local-pair 'prog-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
 (sp-local-pair 'text-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
-(defun remove-parens-overlay (&rest _) (sp-remove-active-pair-overlay))
-(advice-add 'evil-normal-state :after #'remove-parens-overlay)
+;; (defun remove-parens-overlay (&rest _) (sp-remove-active-pair-overlay))
+;; (advice-add 'evil-normal-state :after #'remove-parens-overlay)
 
 ;; evil
 (evil-mode 1) ; use evil-mode at startup
