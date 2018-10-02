@@ -81,7 +81,7 @@
 	(base-dim      (if (eq theme 'dark) (if (has-true-color) "#686868" "#585858") (if (has-true-color) "#9a9a9a" "#afafd7")))
 	(bg1           (if (eq theme 'dark) (if (has-true-color) "#2B2C30" "#262626") (if (has-true-color) "#f4f4f4" "#ffffff")))
 	(bg11          (if (eq theme 'dark) (if (has-true-color) "#303136" "#262626") (if (has-true-color) "#EBEBEB" "#ffffff")))
-	(bg12          (if (eq theme 'dark) (if (has-true-color) "#37383D" "#262626") (if (has-true-color) "#E0E0E0" "#ffffff")))
+	(bg12          (if (eq theme 'dark) (if (has-true-color) "#35363B" "#262626") (if (has-true-color) "#E0E0E0" "#ffffff")))
 	(bg13          (if (eq theme 'dark) (if (has-true-color) "#1B1C1F" "#262626") (if (has-true-color) "#D4D4D4" "#ffffff")))
 	(bg14          (if (eq theme 'dark) (if (has-true-color) "#404147" "#262626") (if (has-true-color) "#C7C7C7" "#ffffff")))
 	(bg2           (if (eq theme 'dark) (if (has-true-color) "#222329" "#1c1c1c") (if (has-true-color) "#e9e9e9" "#e4e4e4")))
@@ -733,9 +733,9 @@
 	`(markdown-table-face ((,class (:foreground ,base :background ,head1-bg))))
 
 ;;;;; mode-line
-	`(mode-line           ((,class (:foreground ,base :background ,secondary-4 :box (:color ,border :line-width 1)))))
+	`(mode-line           ((,class (:foreground ,base :background ,secondary-4 :box (:color ,border :line-width 1 :style ,(if (eq theme 'dark) 'released-button nil))))))
 	`(mode-line-buffer-id ((,class (:inherit bold :foreground ,func))))
-	`(mode-line-inactive  ((,class (:foreground ,base :background ,secondary-4 :box (:color ,border :line-width 1)))))
+	`(mode-line-inactive  ((,class (:foreground ,base :background ,secondary-4 :box (:color ,border :line-width 1 :style ,(if (eq theme 'dark) 'released-button nil))))))
 
 ;;;;; mu4e
 	`(mu4e-attach-number-face ((,class (:foreground ,var))))
@@ -871,8 +871,8 @@
 	`(rainbow-delimiters-depth-6-face ((,class :foreground ,keyword)))
 	`(rainbow-delimiters-depth-7-face ((,class :foreground ,func)))
 	`(rainbow-delimiters-depth-8-face ((,class :foreground ,str)))
-	`(rainbow-delimiters-mismatched-face ((,class :foreground ,err :overline t)))
-	`(rainbow-delimiters-unmatched-face ((,class :foreground ,err :overline t)))
+	`(rainbow-delimiters-mismatched-face ((,class :foreground ,err)))
+	`(rainbow-delimiters-unmatched-face ((,class :foreground ,err)))
 
 ;;;;; rcirc
 	`(rcirc-bright-nick ((,class (:background ,aqua-bg :foreground ,cyan))))
@@ -888,13 +888,14 @@
 
 ;;;;; show-paren
 	`(show-paren-match ((,class (:foreground ,mat :inherit bold  :underline t))))
-	`(show-paren-match-expression ((,class (:background ,green-bg-s))))
+	`(show-paren-match-expression ((,class (:background ,bg12))))
 	`(show-paren-mismatch ((,class (:foreground ,err :inherit bold :underline t))))
 
 ;;;;; smartparens
 	`(sp-pair-overlay-face ((,class (:background ,bg13))))
 	;; `(sp-show-pair-match-face ((,class (:foreground ,green :background ,green-bg :bold t :underline t))))
 	`(sp-show-pair-match-face ((,class (:foreground ,green :background ,green-bg :bold t :underline t))))
+	`(sp-show-pair-match-content-face ((,class (:background ,bg12))))
 
 ;;;;; smerge
 	`(smerge-base ((,class (:background ,yellow-bg))))

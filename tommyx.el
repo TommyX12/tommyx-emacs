@@ -580,18 +580,19 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 		nil ; treat all command as breaking company completion
 		(let ((return (apply func args)))
 
-			(message
-				(concat "debug: "
-								(prin1-to-string company-selection-changed) " "
-								(prin1-to-string return) " "
-								(prin1-to-string (and return (not (numberp return)))) " "
-								(prin1-to-string args)))
+			;; (message
+			;; 	(concat "debug: "
+			;; 					(prin1-to-string company-selection-changed) " "
+			;; 					(prin1-to-string return) " "
+			;; 					(prin1-to-string (and return (not (numberp return)))) " "
+			;; 					(prin1-to-string args)))
 
 			(and return (not (numberp return))))))
 (advice-add #'company--company-command-p :around #'my-company--company-command-p)
 
 (eval-after-load 'company
   '(progn
+		 
 		(global-set-key (kbd "M-1") (lambda (interactive) (company-complete-number 1)))
 		(global-set-key (kbd "M-2") (lambda (interactive) (company-complete-number 2)))
 		(global-set-key (kbd "M-3") (lambda (interactive) (company-complete-number 3)))
@@ -659,6 +660,8 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq sp-show-pair-from-inside t)
 (setq smartparens-strict-mode nil)
 (setq sp-cancel-autoskip-on-backward-movement nil)
+(setq show-paren-style 'expression)
+(show-paren-mode 1)
 ; auto expanison of brackets
 (sp-local-pair 'prog-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
 (sp-local-pair 'text-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
@@ -1021,7 +1024,7 @@ Useful for a search overview popup."
 		(setq kill-ring-yank-pointer kill-ring))
 )
 (defun call-with-command-hooks (command)
-	"Call command, invoking pre-command and post-command hooks.
+	"Call command, invoking pre-command and post-command hooks of company.
 
 company-tng-frontend only update on pre-command-hook,
 so this is used to make dispatched commands triggered by
@@ -1031,10 +1034,12 @@ this function also makes sure if pre-command-hook modifies this-command,
 the new command is called instead."
 	(let ((old-command this-command))
 		(setq this-command command)
+		(setq last-command old-command)
 		(run-hooks 'pre-command-hook)
 		(call-interactively this-command)
 		(run-hooks 'post-command-hook)
 		(setq this-command old-command)
+		(setq last-command this-command)
 	))
 
 (defun insert-todo () (interactive)
@@ -1354,7 +1359,8 @@ the new command is called instead."
 (evil-define-key 'normal 'global ",f" 'flyspell-auto-correct-word)
 (evil-define-key 'normal 'global ",F" (lambda () (interactive) (flyspell-lazy-check-visible) (flyspell-auto-correct-previous-word (point))))
 ; ,v select line content
-(evil-define-key 'normal 'global ",v" (lambda () (interactive) (evil-first-non-blank) (evil-visual-char) (evil-last-non-blank)))
+;; (evil-define-key 'normal 'global ",v" (lambda () (interactive) (evil-first-non-blank) (evil-visual-char) (evil-last-non-blank)))
+(evil-define-key 'normal 'global ",v" 'evil-visual-restore)
 ; use visual line
 (evil-define-key 'motion 'global "j" 'evil-next-visual-line)
 (evil-define-key 'motion 'global "k" 'evil-previous-visual-line)
@@ -1745,12 +1751,12 @@ the new command is called instead."
 	; JV to use counsel yank-pop
 	"V" (lambda () (interactive) (call-with-command-hooks 'counsel-yank-pop))
 ))
-(defun insert-mode-j-mapping () (interactive)
+(evil-define-command insert-mode-j-mapping () :repeat nil (interactive)
 	(call-interactively insert-mode-j-mapping-func))
-;; make sure company-continue-commands allow insert-mode-j-mapping (maybe having not at first)
-(defun insert-mode-J-mapping () (interactive)
+(evil-define-command insert-mode-J-mapping () :repeat nil (interactive)
 	(call-interactively insert-mode-J-mapping-func))
-;; make sure company-continue-commands allow insert-mode-J-mapping (maybe having not at first)
+;; make sure company-continue-commands allow insert-mode-j-mapping (such as having 'not at first)
+;; setting :repeat to nil because we don't want the "j" part to be repeatable, only the actual commands invoked afterwards.
 (general-imap "j" 'insert-mode-j-mapping)
 (general-imap "J" 'insert-mode-J-mapping)
 (define-key company-active-map "j" 'insert-mode-j-mapping)
@@ -2025,7 +2031,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (add-hook 'sgml-mode-hook (lambda () (toggle-word-wrap 1)))
 
 ;; window divider
-(setq window-divider-default-places t)
+(setq window-divider-default-places 'right-only)
 (setq window-divider-default-right-width 2)
 (setq window-divider-default-bottom-width 1)
 (window-divider-mode 1)

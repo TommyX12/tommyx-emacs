@@ -17,6 +17,7 @@
 
 ;; use clean (indented) view
 (setq org-startup-indented t)
+(setq org-startup-folded nil)
 
 ;; use full path in refile (TODO buggy)
 ;; (setq org-refile-use-outline-path t)
