@@ -254,8 +254,14 @@
 	"jS" '((lambda () (interactive) (org-schedule nil "."))
 		:which-key "org schedule to today")
 
+	(kbd "j C-s") '((lambda () (interactive) (org-schedule nil "+1d"))
+		:which-key "org schedule to tomorrow")
+
 	"jd" '(org-deadline
 		:which-key "org deadline")
+
+	"jD" '((lambda () (interactive) (org-deadline nil "+1w"))
+		:which-key "org deadline to 1w")
 
 	"jp" '(org-priority
 		:which-key "org priority")
@@ -402,8 +408,14 @@
 	"jS" '((lambda () (interactive) (org-agenda-schedule nil "."))
 		:which-key "agenda schedule to today")
 
+	(kbd "j C-s") '((lambda () (interactive) (org-agenda-schedule nil "+1d"))
+		:which-key "agenda schedule to tomorrow")
+
 	"jd" '(org-agenda-deadline
 		:which-key "agenda deadline")
+
+	"jD" '((lambda () (interactive) (org-agenda-deadline nil "+1w"))
+		:which-key "agenda deadline to 1w")
 
 	"jp" '(org-agenda-priority
 		:which-key "agenda priority")
