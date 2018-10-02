@@ -19,7 +19,7 @@
 (require 'companion-segments)
 (require 'dash)
 (require 'spaceline)
-(require 'symon)
+;; (require 'symon)
 
 ;;
 ;; Constants
@@ -549,11 +549,11 @@ Companion buffer is BUFFER."
 	(let ((value (car (load-average))))
 		(if value (format "%3d" value) "--")))
 
-(spaceline-define-segment companion-symon
-  "A spaceline segment to display symon system monitor."
-	(when-let ((display-fn (car symon--display-fns)))
-		(replace-regexp-in-string "%" "%%" (apply 'concat (mapcar 'funcall display-fn))))
-)
+;; (spaceline-define-segment companion-symon
+;;   "A spaceline segment to display symon system monitor."
+;; 	(when-let ((display-fn (car symon--display-fns)))
+;; 		(replace-regexp-in-string "%" "%%" (apply 'concat (mapcar 'funcall display-fn))))
+;; )
 
 (setq companion-segments-left `(
 	((companion-emacs-version

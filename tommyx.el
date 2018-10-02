@@ -1609,6 +1609,8 @@ the new command is called instead."
 	"M-k" 'ivy-previous-line
 	"M-S-j" 'ivy-scroll-up-command
 	"M-S-k" 'ivy-scroll-down-command
+	"M-J" 'ivy-scroll-up-command
+	"M-K" 'ivy-scroll-down-command
 	; ivy-next-history-element allows inserting cursor symbol.
 	"C-j" 'ivy-next-history-element
 	"C-k" 'ivy-previous-history-element
