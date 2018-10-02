@@ -892,7 +892,7 @@
 	`(show-paren-mismatch ((,class (:foreground ,err :inherit bold :underline t))))
 
 ;;;;; smartparens
-	`(sp-pair-overlay-face ((,class (:background ,bg13))))
+	`(sp-pair-overlay-face ((,class (:background ,bg12))))
 	;; `(sp-show-pair-match-face ((,class (:foreground ,green :background ,green-bg :bold t :underline t))))
 	`(sp-show-pair-match-face ((,class (:foreground ,green :background ,green-bg :bold t :underline t))))
 	`(sp-show-pair-match-content-face ((,class (:background ,bg12))))

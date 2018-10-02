@@ -23,7 +23,7 @@
 ;; (add-to-list 'ispell-extra-args "--sug-mode=ultra")
 
 ;; curl (windows)
-(setq request-curl (expand-file-name "third_party/curl/curl.exe" tommyx-config-path))
+;; (setq request-curl (expand-file-name "third_party/curl/curl.exe" tommyx-config-path))
 
 ;; org
 (setq org-agenda-files (append org-agenda-files '()))

@@ -657,11 +657,11 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (require 'smartparens-config)
 (smartparens-global-mode 1)
 (show-smartparens-global-mode 1)
-(setq sp-show-pair-from-inside t)
+(setq sp-show-pair-from-inside t) ; TODO can set to false if overlay problem concerns us
 (setq smartparens-strict-mode nil)
 (setq sp-cancel-autoskip-on-backward-movement nil)
-(setq show-paren-style 'expression)
-(show-paren-mode 1)
+;; (setq show-paren-style 'expression)
+;; (show-paren-mode 1)
 ; auto expanison of brackets
 (sp-local-pair 'prog-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
 (sp-local-pair 'text-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
