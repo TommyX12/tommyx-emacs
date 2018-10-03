@@ -1023,20 +1023,28 @@ Useful for a search overview popup."
 	(when kill-ring-yank-pointer
 		(setq kill-ring-yank-pointer kill-ring))
 )
-(defun call-with-command-hooks (command)
+(defun call-with-command-hooks (command &optional enforce-keys)
 	"Call command, invoking pre-command and post-command hooks of company.
 
-company-tng-frontend only update on pre-command-hook,
+company-tng-frontend only update on 'pre-command-hook',
 so this is used to make dispatched commands triggered by
-general-key-dispatch also trigger a pre-command-hook.
-Since company-tng-frontend modifies this-command to complete selection,
-this function also makes sure if pre-command-hook modifies this-command,
-the new command is called instead."
+general-key-dispatch also trigger a 'pre-command-hook'.
+Since company-tng-frontend modifies 'this-command' to complete selection,
+this function also makes sure if 'pre-command-hook' modifies 'this-command',
+the new command is called instead.
+
+ENFORCE-KEYS is set to the key sequence for this command to enforce
+the value of 'this-command-keys' for general-key-dispatch key sequence
+during 'post-command-hook'.  It is observed that, when company-tng unreads
+key sequence to complete selection, 'this-command-keys' for the actual
+command (ran after) is mysteriously incorrect."
 	(let ((old-command this-command))
 		(setq this-command command)
 		(setq last-command old-command)
 		(run-hooks 'pre-command-hook)
 		(call-interactively this-command)
+		(when (and (eq command this-command) enforce-keys)
+			(set--this-command-keys enforce-keys))
 		(run-hooks 'post-command-hook)
 		(setq this-command old-command)
 		(setq last-command this-command)
@@ -1716,15 +1724,15 @@ the new command is called instead."
 		(let ((my-company--company-command-p-override t))
 			(call-with-command-hooks 'self-insert-command)))
 	:timeout 0.25
-	"j" (lambda () (interactive) (call-with-command-hooks 'self-insert-command))
-	"t" (lambda () (interactive) (call-with-command-hooks 'insert-todo))
-	"f" (lambda () (interactive) (call-with-command-hooks 'insert-backslash))
+	"j" (lambda () (interactive) (call-with-command-hooks 'self-insert-command "jj"))
+	"t" (lambda () (interactive) (call-with-command-hooks 'insert-todo "jt"))
+	"f" (lambda () (interactive) (call-with-command-hooks 'insert-backslash "jf"))
 	; jk quit insert mode
-	"k" (lambda () (interactive) (call-with-command-hooks 'evil-normal-state))
+	"k" (lambda () (interactive) (call-with-command-hooks 'evil-normal-state "jk"))
 	; jh delete word
-	"h" (lambda () (interactive) (call-with-command-hooks 'evil-delete-backward-word))
+	"h" (lambda () (interactive) (call-with-command-hooks 'evil-delete-backward-word "jh"))
 	; jl move to end of line
-	"l" (lambda () (interactive) (call-with-command-hooks 'move-end-of-line))
+	"l" (lambda () (interactive) (call-with-command-hooks 'move-end-of-line "jl"))
 	; jp complete
 	"p" (lambda () (interactive)
 				(if company-selection-changed
@@ -1745,13 +1753,13 @@ the new command is called instead."
 	; j[ insert snippet
 	;; "[" (lambda () (interactive) (call-with-command-hooks 'yas-insert-snippet))
 	; jv to paste from default register
-	"v" (lambda () (interactive) (call-with-command-hooks 'paste-from-default-register))
+	"v" (lambda () (interactive) (call-with-command-hooks 'paste-from-default-register "jv"))
 ))
 (setq insert-mode-J-mapping-func (general-key-dispatch 'self-insert-command
 	:timeout 0.25
-	"J" (lambda () (interactive) (call-with-command-hooks 'self-insert-command))
+	"J" (lambda () (interactive) (call-with-command-hooks 'self-insert-command "JJ"))
 	; JV to use counsel yank-pop
-	"V" (lambda () (interactive) (call-with-command-hooks 'counsel-yank-pop))
+	"V" (lambda () (interactive) (call-with-command-hooks 'counsel-yank-pop "JV"))
 ))
 (evil-define-command insert-mode-j-mapping () :repeat nil (interactive)
 	(call-interactively insert-mode-j-mapping-func))
