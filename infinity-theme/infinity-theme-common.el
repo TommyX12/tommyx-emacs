@@ -1002,6 +1002,9 @@
 ;;;;; yascroll
 	`(yascroll:thumb-fringe ((,class (:background ,secondary-2 :foreground ,secondary-2))))
 
+;;;;; yasnippet
+	`(yas-field-highlight-face ((,class (:background ,bg13))))
+
 ;;;;; other, need more work
 	`(ac-completion-face ((,class (:underline t :foreground ,keyword))))
 	`(ffap ((,class (:foreground ,base))))

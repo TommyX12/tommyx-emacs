@@ -168,12 +168,14 @@
 	:keymaps 'override
 	:states '(motion normal visual)
 	:prefix "SPC"
+	:non-normal-prefix "M-SPC"
 
 )
 (general-define-key
 	:keymaps 'override
 	:states '(motion normal)
 	:prefix "SPC"
+	:non-normal-prefix "M-SPC"
 
 	"of" '(counsel-org-goto-all ; go to heading of opened org files
 		:which-key "org goto all")
@@ -204,6 +206,7 @@
 	:keymaps 'org-mode-map
 	:states '(motion normal visual)
 	:prefix "SPC"
+	:non-normal-prefix "M-SPC"
 
 	"jh" '(org-toggle-heading
 		:which-key "org toggle heading/text")
@@ -224,6 +227,7 @@
 	:keymaps 'org-mode-map
 	:states '(visual)
 	:prefix "SPC"
+	:non-normal-prefix "M-SPC"
 
 	"js" '(org-sort
 		:which-key "org sort")
@@ -232,6 +236,7 @@
 	:keymaps 'org-mode-map
 	:states '(motion normal)
 	:prefix "SPC"
+	:non-normal-prefix "M-SPC"
 
 	"jr" '(org-refile
 		:which-key "org refile")
@@ -386,12 +391,14 @@
 	:keymaps 'org-agenda-mode-map
 	:states '(motion normal visual)
 	:prefix "SPC"
+	:non-normal-prefix "M-SPC"
 
 )
 (general-define-key
 	:keymaps 'org-agenda-mode-map
 	:states '(motion normal)
 	:prefix "SPC"
+	:non-normal-prefix "M-SPC"
 
 	"jr" '(org-agenda-refile
 		:which-key "agenda refile")
@@ -469,6 +476,7 @@
 	:keymaps 'org-capture-mode-map
 	:states '(motion normal)
 	:prefix "SPC"
+	:non-normal-prefix "M-SPC"
 
 	"jr" '(org-capture-refile
 		:which-key "capture refile")

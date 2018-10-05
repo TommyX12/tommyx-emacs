@@ -279,6 +279,7 @@
 	;; (add-hook 'html-mode-hook (auto-highlight-symbol-mode 1))
 	;; (add-hook 'nxml-mode-hook (auto-highlight-symbol-mode 1))
 	(setq ahs-idle-interval 0.3)
+	(setq ahs-case-fold-search nil)
 
 	; patch to not clear highlight when moving
 	(defun ahs-highlight (symbol beg end)
@@ -1096,6 +1097,7 @@ command (ran after) is mysteriously incorrect."
 	:keymaps 'override
 	:states '(motion normal visual)
 	:prefix "SPC"
+	:non-normal-prefix "M-SPC"
 
 	"w" '(global-leader-window
 		:which-key "window")
@@ -1124,6 +1126,7 @@ command (ran after) is mysteriously incorrect."
 	:keymaps 'override
 	:states '(motion normal visual)
 	:prefix "SPC"
+	:non-normal-prefix "M-SPC"
 
 	"is" '(counsel-semantic-or-imenu
 		:which-key "semantic item")
@@ -1177,6 +1180,7 @@ command (ran after) is mysteriously incorrect."
 	:keymaps 'override
 	:states '(visual)
 	:prefix "SPC"
+	:non-normal-prefix "M-SPC"
 
 	"f" '(swiper-movement
 		:which-key "search")
@@ -1190,6 +1194,7 @@ command (ran after) is mysteriously incorrect."
 	:keymaps 'override
 	:states '(motion normal)
 	:prefix "SPC"
+	:non-normal-prefix "M-SPC"
 
 	"f" '(swiper
 		:which-key "search")
@@ -1569,6 +1574,7 @@ command (ran after) is mysteriously incorrect."
 	:keymaps '(latex-mode-map TeX-mode-map)
 	:states '(motion normal)
 	:prefix "SPC"
+	:non-normal-prefix "M-SPC"
 
 	"jp" '(preview-buffer
 		:which-key "preview buffer")
@@ -1860,7 +1866,8 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 	(setq-local python-indent-offset tab-width)
 	(setq-local python-indent tab-width)
 	(setq-local evil-shift-width tab-width)
-))
+	(setq-local yas-indent-line 'auto)
+) t)
 (add-hook 'web-mode-hook (lambda ()
   (setq-local tab-width 2)
   (setq-local evil-shift-width tab-width)
@@ -1953,11 +1960,13 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (add-hook 'buffer-menu-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
 (add-hook 'profiler-report-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
 (add-hook 'org-agenda-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
-; disable in insert mode
+; disable in insert and visual mode
 (add-hook 'prog-mode-hook (lambda () (hl-line-mode 1)))
 (add-hook 'text-mode-hook (lambda () (hl-line-mode 1)))
 (add-hook 'evil-insert-state-entry-hook (lambda () (hl-line-mode -1)))
 (add-hook 'evil-insert-state-exit-hook (lambda () (hl-line-mode 1)))
+(add-hook 'evil-visual-state-entry-hook (lambda () (hl-line-mode -1)))
+(add-hook 'evil-visual-state-exit-hook (lambda () (hl-line-mode 1)))
 
 ;; cursor line (right now disabled)
 ;; (global-hl-line-mode 1)
