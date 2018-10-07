@@ -699,8 +699,11 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq evil-search-highlight-persist-all-windows t)
 ; no echoing
 (setq evil-insert-state-message nil)
+(setq evil-visual-state-message nil)
+(setq evil-replace-state-message nil)
 ; custom cursor
-(setq evil-insert-state-cursor '((bar . 4)))
+;; (setq evil-insert-state-cursor '((bar . 4)))
+;; moved to theme definition
 ; push jump list every time entering insert mode
 (add-hook 'evil-insert-state-entry-hook 'evil--jumps-push)
 
@@ -800,13 +803,6 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (global-flycheck-mode)
 ; BUG: temporarily disable for some modes
 (add-hook 'haskell-mode-hook (lambda () (flycheck-mode -1)))
-
-;; projectile
-(setq projectile-enable-caching t)
-(projectile-mode)
-; neotree integration
-(setq projectile-switch-project-action 'neotree-projectile-action)
-(setq projectile-globally-ignored-directories (append '("node_modules" "dist" "bin" "build") projectile-globally-ignored-directories))
 
 ;; helm
 (require 'helm-config)
@@ -1092,6 +1088,7 @@ command (ran after) is mysteriously incorrect."
 (define-prefix-command 'global-leader-mode-specific)
 (define-prefix-command 'global-leader-companion)
 (define-prefix-command 'global-leader-sidebar)
+(define-prefix-command 'global-leader-templates)
 ; prefix keys
 (general-define-key
 	:keymaps 'override
@@ -1121,6 +1118,8 @@ command (ran after) is mysteriously incorrect."
 		:which-key "companion")
 	"s" '(global-leader-sidebar
 		:which-key "side bar")
+	"t" '(global-leader-templates
+		:which-key "template")
 )
 (general-define-key
 	:keymaps 'override
@@ -1174,6 +1173,15 @@ command (ran after) is mysteriously incorrect."
 	"so" '((lambda () (interactive)
 		(display-buffer-in-side-window (get-buffer imenu-list-buffer-name) '((side . left))))
 		:which-key "outline")
+
+	"tn" '(yas-new-snippet
+		:which-key "new")
+
+	"te" '(yas-visit-snippet-file
+		:which-key "edit")
+
+	"tr" '(yas-reload-all
+		:which-key "reload")
 
 )
 (general-define-key
@@ -1244,17 +1252,6 @@ command (ran after) is mysteriously incorrect."
 		:which-key "project search")
 	"if" '(counsel-find-file
 		:which-key "files")
-
-	"pp" '(counsel-projectile-switch-project
-		:which-key "switch project")
-	"pw" '(persp-switch
-		:which-key "switch workspace")
-	"pn" '(persp-rename
-		:which-key "rename workspace")
-	"pd" '(persp-kill
-		:which-key "delete workspace")
-	"pr" '(projectile-invalidate-cache
-		:which-key "re-index project files")
 
 	"hh" '(helm-resume
 		:which-key "helm resume")
@@ -2146,3 +2143,6 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 ;;; org
 (load-relative "./tommyx-org.el")
+
+;;; project + workspace
+(load-relative "./tommyx-project.el")

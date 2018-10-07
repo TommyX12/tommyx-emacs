@@ -94,6 +94,7 @@
 	(cblk-ln-bg    (if (eq theme 'dark) (if (has-true-color) "#303440" "#333333") (if (has-true-color) "#D8DCEB" "#dfdfff")))
 	(cursor        (if (eq theme 'dark) (if (has-true-color) "#e3dedd" "#d0d0d0") (if (has-true-color) "#100a14" "#121212")))
 	(const         (if (eq theme 'dark) (if (has-true-color) "#a45bad" "#d75fd7") (if (has-true-color) "#4e3163" "#8700af")))
+	(emacs         (if (eq theme 'dark) (if (has-true-color) "#a45bad" "#d75fd7") (if (has-true-color) "#4e3163" "#8700af")))
 	(comment       (if (eq theme 'dark) (if (has-true-color) "#2aa1ae" "#008787") (if (has-true-color) "#2aa1ae" "#008787")))
 	(comment-light (if (eq theme 'dark) (if (has-true-color) "#2aa1ae" "#008787") (if (has-true-color) "#a49da5" "#008787")))
 	(comment-bg    (if (eq theme 'dark) (if (has-true-color) "#292e34" "#262626") (if (has-true-color) "#ecf3ec" "#ffffff")))
@@ -180,11 +181,21 @@
 	(ati-lsilver (if (eq theme 'dark) "#B9B6AA" "#7F7869"))
 	(ati-dsilver (if (eq theme 'dark) "#838484" "#838484"))
 )
+
+	(setq evil-normal-state-cursor `(box ,primary+1))
+	(setq evil-insert-state-cursor `(box ,suc))
+	(setq evil-emacs-state-cursor `(box ,emacs))
+	(setq evil-replace-state-cursor `(box ,war))
+	(setq evil-visual-state-cursor `(box ,secondary+1))
+
 (custom-theme-set-faces
 	name
 
 ;;;;; basics
 	`(cursor ((,class (:background ,primary+1))))
+	`(cursor-insert ((,class (:background ,primary+1))))
+	`(cursor-visual ((,class (:background ,primary+1))))
+	`(cursor-replace ((,class (:background ,primary+1))))
 	`(custom-button ((,class :background ,bg2 :foreground ,base :box (:line-width 2 :style released-button))))
 	`(default ((,class (:background ,bg1 :foreground ,base))))
 	`(default-italic ((,class (:italic t))))
@@ -1039,3 +1050,4 @@
 )
 
 (provide 'infinity-theme-common)
+
