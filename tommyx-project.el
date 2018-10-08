@@ -15,7 +15,7 @@
 									buffer-file-name (projectile-project-root))))
 
 ;; project definitions
-(defun project/cp/run ()
+(defun project-cp-run ()
   "Return a String representing the compile command to run for the given context."
   (cond
    ((eq major-mode 'c++-mode)
@@ -24,8 +24,8 @@
     (concat "python " (project/project-relative-name)))
    ))
 (projectile-register-project-type 'cp '("cp.txt")
-	:compile 'project/cp/run
-	:run 'project/cp/run
+	:compile #'project-cp-run
+	:run #'project-cp-run
 )
 
 ;; key bindings

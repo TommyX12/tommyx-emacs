@@ -166,7 +166,7 @@
 ;; 	(add-hook 'popwin:after-popup-hook (lambda () (run-at-time 0.2 nil 'delayed-mode-line-update)))
 ;; )
 (use-package counsel :ensure t)
-(use-package counsel-projectile :ensure t)
+(use-package counsel-projectile :ensure t :after projectile)
 (use-package google-this :ensure t)
 (use-package swiper :ensure t)
 (use-package which-key :ensure t
