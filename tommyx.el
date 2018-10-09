@@ -590,6 +590,9 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 			(and return (not (numberp return))))))
 (advice-add #'company--company-command-p :around #'my-company--company-command-p)
+;; make evil-normal-state abort completion. note that this works only if 'not is the
+;; first element in company-continue-commands.
+(setq company-continue-commands (-snoc company-continue-commands 'evil-normal-state))
 
 (eval-after-load 'company
   '(progn
@@ -1038,14 +1041,12 @@ key sequence to complete selection, 'this-command-keys' for the actual
 command (ran after) is mysteriously incorrect."
 	(let ((old-command this-command))
 		(setq this-command command)
-		(setq last-command old-command)
 		(run-hooks 'pre-command-hook)
 		(call-interactively this-command)
 		(when (and (eq command this-command) enforce-keys)
 			(set--this-command-keys enforce-keys))
 		(run-hooks 'post-command-hook)
 		(setq this-command old-command)
-		(setq last-command this-command)
 	))
 
 (defun insert-todo () (interactive)
@@ -1090,6 +1091,7 @@ command (ran after) is mysteriously incorrect."
 (define-prefix-command 'global-leader-companion)
 (define-prefix-command 'global-leader-sidebar)
 (define-prefix-command 'global-leader-templates)
+(define-prefix-command 'global-leader-files)
 ; prefix keys
 (general-define-key
 	:keymaps 'override
@@ -1120,7 +1122,9 @@ command (ran after) is mysteriously incorrect."
 	"s" '(global-leader-sidebar
 		:which-key "side bar")
 	"t" '(global-leader-templates
-		:which-key "template")
+		:which-key "templates")
+	"e" '(global-leader-files
+		:which-key "files")
 )
 (general-define-key
 	:keymaps 'override
@@ -1177,12 +1181,15 @@ command (ran after) is mysteriously incorrect."
 
 	"tn" '(yas-new-snippet
 		:which-key "new")
-
 	"te" '(yas-visit-snippet-file
 		:which-key "edit")
-
 	"tr" '(yas-reload-all
 		:which-key "reload")
+
+	"ew" '(write-file
+		:which-key "write file")
+	"ea" '(evil-write-all
+		:which-key "write all files")
 
 )
 (general-define-key
@@ -1378,6 +1385,13 @@ command (ran after) is mysteriously incorrect."
 ; use visual line
 (evil-define-key 'motion 'global "j" 'evil-next-visual-line)
 (evil-define-key 'motion 'global "k" 'evil-previous-visual-line)
+; more comfortable word movement
+(evil-define-key 'motion 'global "w" 'evil-backward-word-begin)
+(evil-define-key 'motion 'global "e" 'evil-forward-word-end)
+(evil-define-key 'motion 'global "b" 'evil-forward-word-begin)
+(evil-define-key 'motion 'global "W" 'evil-backward-WORD-begin)
+(evil-define-key 'motion 'global "E" 'evil-forward-WORD-end)
+(evil-define-key 'motion 'global "B" 'evil-forward-WORD-begin)
 ; faster movement
 (evil-define-motion fast-move-up () :type exclusive
 	(evil-previous-visual-line 5))
@@ -1441,10 +1455,10 @@ command (ran after) is mysteriously incorrect."
 	(down-list))
 (evil-define-motion move-to-prev-parens () :type exclusive
 	(backward-up-list))
-(evil-define-key 'normal 'global "(" 'sp-previous-sexp)
-(evil-define-key 'normal 'global ")" 'sp-next-sexp)
-(evil-define-key 'visual 'global "(" 'sp-previous-sexp)
-(evil-define-key 'visual 'global ")" 'sp-next-sexp)
+(evil-define-key 'normal 'global "(" 'sp-backward-sexp)
+(evil-define-key 'normal 'global ")" 'sp-forward-sexp)
+(evil-define-key 'visual 'global "(" 'sp-backward-sexp)
+(evil-define-key 'visual 'global ")" 'sp-forward-sexp)
 ; move cursor to comfortable reading position
 (evil-define-key 'motion 'global ",z" (lambda () (interactive) (recenter-top-bottom (/ (* (window-total-height) 2) 7))))
 ; do not re-copy when pasting in visual mode
