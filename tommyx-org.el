@@ -256,8 +256,8 @@
 	"js" '(org-schedule
 		:which-key "org schedule")
 
-	"jS" '((lambda () (interactive) (org-schedule nil "."))
-		:which-key "org schedule to today")
+	"jS" '((lambda () (interactive) (org-todo "TODAY"))
+		:which-key "org do today")
 
 	(kbd "j C-s") '((lambda () (interactive) (org-schedule nil "+1d"))
 		:which-key "org schedule to tomorrow")
@@ -412,8 +412,8 @@
 	"js" '(org-agenda-schedule
 		:which-key "agenda schedule")
 
-	"jS" '((lambda () (interactive) (org-agenda-schedule nil "."))
-		:which-key "agenda schedule to today")
+	"jS" '((lambda () (interactive) (org-agenda-todo "TODAY"))
+		:which-key "agenda do today")
 
 	(kbd "j C-s") '((lambda () (interactive) (org-agenda-schedule nil "+1d"))
 		:which-key "agenda schedule to tomorrow")

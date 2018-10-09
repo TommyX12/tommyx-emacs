@@ -1323,8 +1323,13 @@ command (ran after) is mysteriously incorrect."
 (evil-define-key 'motion 'global ",r" #'update-heavy-tasks)
 ; use Q for macro record and q for playback
 (evil-define-key 'normal 'global "q" 'evil-execute-macro)
+(evil-define-key 'visual 'global "q" (lambda () (interactive) (evil-ex "'<,'>norm @")))
 (evil-define-key 'motion 'global "Q" 'evil-record-macro)
 (evil-define-key 'visual 'global "Q" 'evil-record-macro)
+(evil-define-key 'normal 'global ",q" (lambda () (interactive) (evil-execute-macro 1 (evil-get-register ?q t))))
+(evil-define-key 'visual 'global ",q" (lambda () (interactive) (evil-ex "'<,'>norm @q")))
+(evil-define-key 'motion 'global ",Q" (lambda () (interactive) (evil-record-macro ?q)))
+(evil-define-key 'visual 'global ",Q" (lambda () (interactive) (evil-record-macro ?q)))
 ; allow repeat in visual mode
 (evil-define-key 'visual 'global "." (kbd ";norm . RET"))
 ; open line above
@@ -1335,8 +1340,6 @@ command (ran after) is mysteriously incorrect."
   (indent-according-to-mode))
 (evil-define-key 'insert 'global (kbd "S-RET") 'smart-open-line-above)
 (evil-define-key 'insert 'global (kbd "<S-return>") 'smart-open-line-above)
-; macro in visual mode
-(evil-define-key 'visual 'global "q" (lambda () (interactive) (evil-ex "'<,'>norm @")))
 ; undo redo
 (evil-define-key 'normal 'global "u" 'undo)
 (evil-define-key 'normal 'global "U" 'redo)
@@ -1818,6 +1821,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; avy
 (setq-default use-line-nav nil)
 (evil-define-motion adaptive-avy () :type exclusive :repeat nil
+	(evil--jumps-push)
 	(if use-line-nav (evil-avy-goto-line) (evil-avy-goto-word-0 nil)))
 (evil-define-key 'motion 'global "f" 'adaptive-avy)
 ;; (evil-define-key 'motion 'global "f" 'evil-avy-goto-word-0)

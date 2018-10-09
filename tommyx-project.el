@@ -19,9 +19,13 @@
   "Return a String representing the compile command to run for the given context."
   (cond
    ((eq major-mode 'c++-mode)
-    (concat "g++ -Wall -std=c++11 -o a.exe " (project/project-relative-name)))
+    (concat "g++ -Wall -std=c++11 -o a.exe \""
+						(project/project-relative-name)
+						"\""))
    ((eq major-mode 'python-mode)
-    (concat "python " (project/project-relative-name)))
+    (concat "python \""
+						(project/project-relative-name)
+						"\""))
    ))
 (projectile-register-project-type 'cp '("cp.txt")
 	:compile #'project-cp-run
@@ -43,7 +47,12 @@
 		:which-key "rename workspace")
 	"pd" '(persp-kill
 		:which-key "delete workspace")
-	"pr" '(projectile-invalidate-cache
+	"pR" '(projectile-invalidate-cache
 		:which-key "re-index project files")
+
+	"pr" '(projectile-run-project
+		:which-key "run project")
+	"pc" '(projectile-compile-project
+		:which-key "compile project")
 
 )
