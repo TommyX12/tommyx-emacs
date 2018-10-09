@@ -680,6 +680,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq evil-split-window-below t)
 (setq evil-vsplit-window-right t)
 (setq evil-ex-substitute-global t)
+(setq evil-move-cursor-back nil)
 (setq-default evil-symbol-word-search t)
 ; auto center after search
 (defun my-center-line (&rest _) (evil-scroll-line-to-center nil))
@@ -1440,10 +1441,10 @@ command (ran after) is mysteriously incorrect."
 	(down-list))
 (evil-define-motion move-to-prev-parens () :type exclusive
 	(backward-up-list))
-(evil-define-key 'normal 'global "(" 'move-to-prev-parens)
-(evil-define-key 'normal 'global ")" 'move-to-next-parens)
-(evil-define-key 'visual 'global "(" 'move-to-prev-parens)
-(evil-define-key 'visual 'global ")" 'move-to-next-parens)
+(evil-define-key 'normal 'global "(" 'sp-previous-sexp)
+(evil-define-key 'normal 'global ")" 'sp-next-sexp)
+(evil-define-key 'visual 'global "(" 'sp-previous-sexp)
+(evil-define-key 'visual 'global ")" 'sp-next-sexp)
 ; move cursor to comfortable reading position
 (evil-define-key 'motion 'global ",z" (lambda () (interactive) (recenter-top-bottom (/ (* (window-total-height) 2) 7))))
 ; do not re-copy when pasting in visual mode
