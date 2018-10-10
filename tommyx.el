@@ -1203,7 +1203,7 @@ command (ran after) is mysteriously incorrect."
 
 	"F" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
 		:which-key "search selection")
-	"t" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
+	"C-f" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
 		:which-key "search selection in all buffers")
 )
 (general-define-key
