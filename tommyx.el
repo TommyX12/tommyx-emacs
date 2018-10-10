@@ -684,6 +684,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq evil-vsplit-window-right t)
 (setq evil-ex-substitute-global t)
 (setq evil-move-cursor-back nil)
+(setq evil-move-beyond-eol t)
 (setq-default evil-symbol-word-search t)
 ; auto center after search
 (defun my-center-line (&rest _) (evil-scroll-line-to-center nil))
@@ -1054,7 +1055,8 @@ command (ran after) is mysteriously incorrect."
 (defun insert-backslash () (interactive)
 	(insert "\\"))
 (defun paste-from-default-register () (interactive)
-	(evil-paste-from-register ?\"))
+	;; (evil-paste-from-register ?\")
+	(yank))
 
 
 ;;; key bindings

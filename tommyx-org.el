@@ -256,10 +256,13 @@
 	"js" '(org-schedule
 		:which-key "org schedule")
 
-	"jS" '((lambda () (interactive) (org-todo "TODAY"))
-		:which-key "org do today")
+	(kbd "j C-s") '((lambda () (interactive) (org-todo "TODAY"))
+		:which-key "org set TODAY")
 
-	(kbd "j C-s") '((lambda () (interactive) (org-schedule nil "+1d"))
+	(kbd "j C-S-s") '((lambda () (interactive) (org-todo "TODO"))
+		:which-key "org remove TODAY")
+
+	"jS" '((lambda () (interactive) (org-schedule nil "+1d"))
 		:which-key "org schedule to tomorrow")
 
 	"jd" '(org-deadline
@@ -412,10 +415,13 @@
 	"js" '(org-agenda-schedule
 		:which-key "agenda schedule")
 
-	"jS" '((lambda () (interactive) (org-agenda-todo "TODAY"))
-		:which-key "agenda do today")
+	(kbd "j C-s") '((lambda () (interactive) (org-agenda-todo "TODAY"))
+		:which-key "agenda set TODAY")
 
-	(kbd "j C-s") '((lambda () (interactive) (org-agenda-schedule nil "+1d"))
+	(kbd "j C-S-s") '((lambda () (interactive) (org-agenda-todo "TODO"))
+		:which-key "agenda remove TODAY")
+
+	"jS" '((lambda () (interactive) (org-agenda-schedule nil "+1d"))
 		:which-key "agenda schedule to tomorrow")
 
 	"jd" '(org-agenda-deadline
