@@ -328,8 +328,8 @@
 
 	(kbd "C-c C-.") 'org-time-stamp-inactive ; with C-u as previx also add time.
 
-	(kbd "C--") 'org-shiftdown ; change date like speed-dating
-	(kbd "C-=") 'org-shiftup
+	"_" 'org-shiftdown ; change date like speed-dating
+	"+" 'org-shiftup
 
 	(kbd "C-S-h") 'org-shiftmetaleft ; promote/outdent
 	(kbd "C-S-j") 'org-metadown ; move down

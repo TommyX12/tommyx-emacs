@@ -8,6 +8,9 @@
 (setq projectile-switch-project-action 'neotree-projectile-action)
 (setq projectile-globally-ignored-directories (append '("node_modules" "dist" "bin" "build") projectile-globally-ignored-directories))
 
+;; bug fix
+(setq projectile-project-compilation-cmd "")
+
 ;; helper functions
 (defun project/project-relative-name ()
 	"Return the project-relative file name of 'buffer-file-name'."
@@ -54,5 +57,7 @@
 		:which-key "run project")
 	"pc" '(projectile-compile-project
 		:which-key "compile project")
+	"pC" '(compile
+		:which-key "compile")
 
 )

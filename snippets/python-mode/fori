@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: for ... in range
+# key: fori
+# --
+for ${1:i} in range(${3:len(${2:arr})}):
+	$0

@@ -1326,6 +1326,9 @@ command (ran after) is mysteriously incorrect."
 (evil-define-key 'normal 'global (kbd "C-z") nil)
 (evil-define-key 'visual 'global (kbd "C-z") nil)
 (evil-define-key 'insert 'global (kbd "C-z") nil)
+; text zooming
+(evil-define-key 'motion 'global (kbd "C--") 'text-scale-decrease)
+(evil-define-key 'motion 'global (kbd "C-=") 'text-scale-increase)
 ; leader
 (define-prefix-command 'leader-map)
 (evil-define-key 'motion 'global "," 'leader-map)
