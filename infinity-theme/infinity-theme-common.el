@@ -606,6 +606,9 @@
 ;;;;; highlight-symbol
 	`(highlight-symbol-face ((,class (:background ,bg2))))
 
+;;;;; hl-todo
+	`(hl-todo ((,class (:foreground ,war))))
+
 ;;;;; hydra
 	`(hydra-face-blue ((,class (:foreground ,blue))))
 	`(hydra-face-red ((,class (:foreground ,red))))

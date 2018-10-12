@@ -346,6 +346,9 @@
 ;; (use-package fancy-battery :ensure t)
 (use-package rainbow-mode :ensure t)
 (use-package highlight-numbers :ensure t)
+(use-package hl-todo :ensure t
+	:config
+	(global-hl-todo-mode)) ; TODO 
 (use-package emmet-mode :ensure t
 	:config
 	(add-hook 'sgml-mode-hook 'emmet-mode)
