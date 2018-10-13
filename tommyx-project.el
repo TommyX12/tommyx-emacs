@@ -9,7 +9,7 @@
 (setq projectile-globally-ignored-directories (append '("node_modules" "dist" "bin" "build") projectile-globally-ignored-directories))
 
 ;; bug fix
-(setq projectile-project-compilation-cmd "")
+;; (setq projectile-project-compilation-cmd "")
 
 ;; helper functions
 (defun project/project-relative-name ()

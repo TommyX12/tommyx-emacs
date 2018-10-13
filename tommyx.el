@@ -2127,6 +2127,9 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 			(message "eager-redisplay mode disabled."))))
 (eager-redisplay-mode)
 
+;; compilation
+(setq compilation-scroll-output 'first-error)
+
 ;; indentation guide using whitespace mode
 (setq whitespace-style '(
 	tab-mark face tabs
