@@ -458,8 +458,8 @@
 	"Z" (lambda () (interactive) (when org-agenda-entry-text-mode (org-agenda-entry-text-mode)))
 	"X" (lambda () (interactive) (when (not org-agenda-entry-text-mode) (org-agenda-entry-text-mode)))
 
-	(kbd "C--") 'org-agenda-do-date-earlier
-	(kbd "C-=") 'org-agenda-do-date-later
+	"_" 'org-agenda-do-date-earlier
+	"+" 'org-agenda-do-date-later
 
 	(kbd "C-h") 'org-agenda-earlier
 	(kbd "C-l") 'org-agenda-later

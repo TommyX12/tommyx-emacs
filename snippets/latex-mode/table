@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: table
+# key: table
+# --
+\begin{center}
+\begin{tabular}{${1:|c|c|}}
+$0
+\end{tabular}
+\end{center}
