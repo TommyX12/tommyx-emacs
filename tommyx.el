@@ -274,6 +274,7 @@
 	:config
 	(push 'racket-mode ahs-modes)
 	(push 'web-mode ahs-modes)
+	(push 'js2-mode ahs-modes)
 	(global-auto-highlight-symbol-mode 1)
 	;; (add-hook 'prog-mode-hook (auto-highlight-symbol-mode 1))
 	;; (add-hook 'html-mode-hook (auto-highlight-symbol-mode 1))
