@@ -215,6 +215,7 @@
 	`(font-lock-type-face ((,class (:foreground ,type))))
 	`(font-lock-variable-name-face ((,class (:foreground ,var))))
 	`(font-lock-warning-face ((,class (:foreground ,war :background ,bg1))))
+	`(fixed-pitch ((,class (:family nil))))
 	`(fringe ((,class (:background ,bg1 :foreground ,lnum))))
 	`(header-line ((,class :inherit (mode-line))))
 	`(highlight ((,class (:foreground ,base :background ,highlight))))
@@ -799,7 +800,7 @@
 	`(neo-vc-user-face ((,class (:background ,aqua-bg))))
 	`(neo-vc-unregistered-face ((,class (:background ,green-bg))))
 	`(neo-vc-removed-face ((,class (:background ,red-bg-s))))
-	`(neo-root-dir-face ((,class (:foreground ,func :inherit bold :height 1.0 :background ,bg11 :box (:line-width 1 :color ,border :style nil)))))
+	`(neo-root-dir-face ((,class (:foreground ,func :inherit bold :height 1.0 :underline (:color ,border :style line)))))
 
 ;;;;; org
 	`(org-agenda-clocking ((,class (:background ,green-bg-s :inherit bold :foreground ,comp))))

@@ -332,6 +332,7 @@
 	(setq neo-window-width 30)
 	(setq neo-vc-integration '(face))
 	(setq neo-mode-line-type 'default) ; for performance reason
+	(setq neo-auto-indent-point t)
 )
 (use-package magit :ensure t)
 (use-package page-break-lines :ensure t)
@@ -660,6 +661,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (evil-define-key 'normal python-mode-map (kbd "C-]") 'ycmd-goto) ; goto
 ; elisp
 (add-hook 'emacs-lisp-mode-hook (lambda () (ycmd-mode -1))) ; disable ycm
+(add-hook 'java-mode-hook (lambda () (ycmd-mode -1))) ; TODO bug
 
 ;; smartparens
 (require 'smartparens-config)
@@ -998,6 +1000,9 @@ Useful for a search overview popup."
 
 
 ;;; key bindings util / helper functions and motion
+;; (defun fit-window-to-region ()
+;; 	(interactive)
+;; 	TODO)
 (defun selection-or-word-at-point ()
   (cond
    ;; If there is selection use it
