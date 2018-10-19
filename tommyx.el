@@ -1003,6 +1003,10 @@ Useful for a search overview popup."
 ;; (defun fit-window-to-region ()
 ;; 	(interactive)
 ;; 	TODO)
+(defun indent-buffer ()
+	(interactive)
+	(save-excursion
+    (indent-region (point-min) (point-max) nil)))
 (defun selection-or-word-at-point ()
   (cond
    ;; If there is selection use it
@@ -1419,9 +1423,14 @@ command (ran after) is mysteriously incorrect."
 (evil-define-key 'normal 'global "s" 'evil-surround-edit)
 (evil-define-key 'normal 'global "S" 'evil-Surround-edit)
 (evil-define-key 'visual 'global "s" 'evil-surround-region)
+; reindent region
+(evil-define-key 'visual 'global (kbd ", <tab>")'indent-region)
+(evil-define-key 'visual 'global (kbd ", TAB")'indent-region)
+(evil-define-key 'normal 'global (kbd ", <tab>") 'indent-buffer)
+(evil-define-key 'normal 'global (kbd ", TAB") 'indent-buffer)
 ; change to last buffer
-(evil-define-key 'motion 'global (kbd ", TAB") 'evil-buffer)
-(evil-define-key 'motion 'global (kbd ", <tab>") 'evil-buffer)
+;; (evil-define-key 'motion 'global (kbd ", TAB") 'evil-buffer)
+;; (evil-define-key 'motion 'global (kbd ", <tab>") 'evil-buffer)
 ; ,d delete line content
 (evil-define-key 'normal 'global ",d" (lambda () (interactive) (evil-first-non-blank) (kill-line)))
 ; ,f fix spelling
@@ -2146,10 +2155,17 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; 	;; 	(redisplay)
 ;; 	;; )
 ;; )
+(setq input-feedback-ov nil)
 (defun eager-redisplay-advice (&rest _)
 	;; (redisplay t)
 	; change to the following if any problem arises.
 	(when (eq evil-state 'insert)
+		;; (when input-feedback-ov
+		;; 	(delete-overlay input-feedback-ov))
+		;; (setq input-feedback-ov (make-overlay (point) (- (point) 2)))
+		;; (overlay-put input-feedback-ov 'priority 9999)
+		;; (overlay-put input-feedback-ov 'window (selected-window))
+		;; (overlay-put input-feedback-ov 'face 'evil-goggles-yank-face)
 		(redisplay t))
 )
 ;; (advice-add 'self-insert-command :before #'before-insert-advice)
