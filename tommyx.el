@@ -273,6 +273,7 @@
 (use-package auto-highlight-symbol :ensure t
 	:config
 	(push 'racket-mode ahs-modes)
+	(push 'haskell-mode ahs-modes)
 	(push 'web-mode ahs-modes)
 	(push 'js2-mode ahs-modes)
 	(global-auto-highlight-symbol-mode 1)
@@ -2100,22 +2101,22 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
    #b11000000
    #b11000000])
 (define-fringe-bitmap 'left-curly-arrow
-  [#b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011])
+  [#b00111111
+   #b00111111
+   #b00111111
+   #b00111111
+   #b00111111
+   #b00111111
+   #b00111111
+   #b00111111
+   #b00111111
+   #b00111111
+   #b00111111
+   #b00111111
+   #b00111111
+   #b00111111
+   #b00111111
+   #b00111111])
 
 ;; word wrap
 (add-hook 'prog-mode-hook (lambda () (toggle-word-wrap 1)))
@@ -2155,33 +2156,50 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; 	;; 	(redisplay)
 ;; 	;; )
 ;; )
-(setq input-feedback-ov nil)
 (defun eager-redisplay-advice (&rest _)
 	;; (redisplay t)
 	; change to the following if any problem arises.
 	(when (eq evil-state 'insert)
-		;; (when input-feedback-ov
-		;; 	(delete-overlay input-feedback-ov))
-		;; (setq input-feedback-ov (make-overlay (point) (- (point) 2)))
-		;; (overlay-put input-feedback-ov 'priority 9999)
-		;; (overlay-put input-feedback-ov 'window (selected-window))
-		;; (overlay-put input-feedback-ov 'face 'evil-goggles-yank-face)
-		(redisplay t))
-)
+		(redisplay t)))
 ;; (advice-add 'self-insert-command :before #'before-insert-advice)
 (defvar eager-redisplay-mode-on nil)
 (defun eager-redisplay-mode ()
 	(interactive)
 	(if eager-redisplay-mode-on
 		(progn
-			(setq eager-redisplay-mode-on t)
-			(advice-add 'self-insert-command :after #'eager-redisplay-advice)
-			(message "eager-redisplay mode enabled."))
-		(progn
 			(setq eager-redisplay-mode-on nil)
 			(advice-remove 'self-insert-command #'eager-redisplay-advice)
-			(message "eager-redisplay mode disabled."))))
+			(message "eager-redisplay mode disabled."))
+		(progn
+			(setq eager-redisplay-mode-on t)
+			(advice-add 'self-insert-command :after #'eager-redisplay-advice)
+			(message "eager-redisplay mode enabled."))))
 (eager-redisplay-mode)
+
+(setq hl-insert-region-ov nil)
+(defun hl-insert-region-insert-entry ()
+	(setq hl-insert-region-ov (make-overlay (point) (point) nil nil t))
+	(overlay-put hl-insert-region-ov 'priority 99)
+	(overlay-put hl-insert-region-ov 'window (selected-window))
+	(overlay-put hl-insert-region-ov 'face 'vhl/default-face))
+(defun hl-insert-region-insert-exit ()
+	(when hl-insert-region-ov
+		(delete-overlay hl-insert-region-ov)))
+(defvar hl-insert-region-mode-on nil)
+(defun hl-insert-region-mode ()
+	(interactive)
+	(if hl-insert-region-mode-on
+		(progn
+			(setq hl-insert-region-mode-on nil)
+			(remove-hook 'evil-insert-state-entry-hook 'hl-insert-region-insert-entry)
+			(remove-hook 'evil-insert-state-exit-hook 'hl-insert-region-insert-exit)
+			(message "hl-insert-region mode disabled."))
+		(progn
+			(setq hl-insert-region-mode-on t)
+			(add-hook 'evil-insert-state-entry-hook 'hl-insert-region-insert-entry)
+			(add-hook 'evil-insert-state-exit-hook 'hl-insert-region-insert-exit)
+			(message "hl-insert-region mode enabled."))))
+;; (hl-insert-region-mode)
 
 ;; compilation
 (setq compilation-scroll-output 'first-error)
