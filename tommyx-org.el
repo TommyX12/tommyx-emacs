@@ -406,7 +406,7 @@
 	"jr" '(org-agenda-refile
 		:which-key "agenda refile")
 
-	"jg" '(org-agenda-goto-date
+	"jf" '(org-agenda-goto-date
 		:which-key "agenda goto date")
 
 	"jt" '(org-agenda-todo
