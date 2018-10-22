@@ -2156,23 +2156,37 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; 	;; 	(redisplay)
 ;; 	;; )
 ;; )
-(defun eager-redisplay-advice (&rest _)
-	;; (redisplay t)
-	; change to the following if any problem arises.
-	(when (eq evil-state 'insert)
+(setq eager-redisplay-allowed t)
+;; (defun eager-redisplay-insert-advice (&rest _)
+;; 	(when (and (eq evil-state 'insert) eager-redisplay-allowed)
+;; 		(redisplay t)))
+(defun eager-redisplay-post-command (&rest _)
+	(when (and (eq this-command 'self-insert-command) eager-redisplay-allowed)
 		(redisplay t)))
+(defun eager-redisplay-inhibit-advice (func &rest args)
+	(let ((eager-redisplay-allowed nil))
+		(apply func args)))
 ;; (advice-add 'self-insert-command :before #'before-insert-advice)
 (defvar eager-redisplay-mode-on nil)
+(defvar eager-redisplay-inhibit-cmd
+	'(evil-repeat
+		yas-expand))
 (defun eager-redisplay-mode ()
 	(interactive)
 	(if eager-redisplay-mode-on
 		(progn
 			(setq eager-redisplay-mode-on nil)
-			(advice-remove 'self-insert-command #'eager-redisplay-advice)
+			;; (advice-remove 'self-insert-command #'eager-redisplay-insert-advice)
+			(remove-hook 'post-command-hook #'eager-redisplay-post-command)
+			(dolist (cmd eager-redisplay-inhibit-cmd)
+				(advice-remove cmd #'eager-redisplay-inhibit-advice))
 			(message "eager-redisplay mode disabled."))
 		(progn
 			(setq eager-redisplay-mode-on t)
-			(advice-add 'self-insert-command :after #'eager-redisplay-advice)
+			;; (advice-add 'self-insert-command :after #'eager-redisplay-insert-advice)
+			(add-hook 'post-command-hook #'eager-redisplay-post-command)
+			(dolist (cmd eager-redisplay-inhibit-cmd)
+				(advice-add cmd :around #'eager-redisplay-inhibit-advice))
 			(message "eager-redisplay mode enabled."))))
 (eager-redisplay-mode)
 
@@ -2232,6 +2246,12 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 ;; winner mode (record window config change so can undo)
 (winner-mode 1)
+
+;; encourage taking a break
+(setq type-break-interval 1800)
+(setq type-break-good-rest-interval 300)
+(type-break-mode 1)
+(type-break-query-mode 1)
 
 ;; eldoc
 (global-eldoc-mode 1)

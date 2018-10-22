@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: for .. in
+# key: forin
+# --
+for (${3:auto} ${1:i} : ${2:iterable}) {
+	$0
+}

@@ -331,6 +331,9 @@
 	"_" 'org-shiftdown ; change date like speed-dating
 	"+" 'org-shiftup
 
+	(kbd "C-_") 'org-shiftleft
+	(kbd "C-+")'org-shiftright
+
 	(kbd "C-S-h") 'org-shiftmetaleft ; promote/outdent
 	(kbd "C-S-j") 'org-metadown ; move down
 	(kbd "C-S-k") 'org-metaup ; move up
