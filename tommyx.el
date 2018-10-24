@@ -210,7 +210,34 @@
 ;; 	;; (add-hook 'lsp-mode-hook 'lsp-ui-mode) ; TODO disabled for performance reasons
 ;; )
 (use-package company :ensure t)
-(use-package company-childframe :ensure t)
+(use-package company-childframe :ensure t :after company
+	:config
+	; company posframe (childframe)
+	(company-childframe-mode 1)
+	(defun company-childframe-show () ; override function
+		"Show company-childframe candidate menu."
+		(let* ((height (min company-tooltip-limit company-candidates-length))
+			(lines (company--create-lines company-selection height))
+			(contents (mapconcat #'identity lines "\n"))
+			(buffer (get-buffer-create company-childframe-buffer)))
+		(setq contents (copy-sequence contents))
+		(remove-text-properties 0 (length contents) '(mouse-face nil) contents)
+		(with-current-buffer buffer
+			(setq-local overriding-local-map company-childframe-active-map))
+		(posframe-show buffer
+						:override-parameters '((border-width . 1) (internal-border-width . 1))
+						:string contents
+						:position (- (point) (length company-prefix))
+						:x-pixel-offset (* -1 company-tooltip-margin (default-font-width))
+						:font company-childframe-font
+						:min-width company-tooltip-minimum-width
+						:background-color (face-attribute 'company-tooltip :background))))
+	; integration with desktop package if installed
+	(when (require 'desktop nil 'noerror)
+		(push '(company-childframe-mode . nil)
+			desktop-minor-mode-table)))
+;; (use-package company-box :ensure t :after company
+;; 	:hook (company-mode-hook . company-box-mode))
 (use-package company-quickhelp :ensure t)
 (use-package company-flx :ensure t)
 ;; (use-package company-lsp :ensure t :after lsp-mode
@@ -551,30 +578,6 @@
 ;; company
 (add-hook 'after-init-hook 'global-company-mode)
 (company-tng-configure-default)
-; company posframe (childframe)
-(company-childframe-mode 1)
-(defun company-childframe-show () ; override function
-  "Show company-childframe candidate menu."
-  (let* ((height (min company-tooltip-limit company-candidates-length))
-		 (lines (company--create-lines company-selection height))
-		 (contents (mapconcat #'identity lines "\n"))
-		 (buffer (get-buffer-create company-childframe-buffer)))
-	(setq contents (copy-sequence contents))
-	(remove-text-properties 0 (length contents) '(mouse-face nil) contents)
-	(with-current-buffer buffer
-	  (setq-local overriding-local-map company-childframe-active-map))
-	(posframe-show buffer
-				   :override-parameters '((border-width . 1) (internal-border-width . 1))
-				   :string contents
-				   :position (- (point) (length company-prefix))
-				   :x-pixel-offset (* -1 company-tooltip-margin (default-font-width))
-				   :font company-childframe-font
-				   :min-width company-tooltip-minimum-width
-				   :background-color (face-attribute 'company-tooltip :background))))
-; integration with desktop package if installed
-(when (require 'desktop nil 'noerror)
-  (push '(company-childframe-mode . nil)
-	  desktop-minor-mode-table))
 ;; (company-quickhelp-mode)
 (setq my-company--company-command-p-override nil)
 (defun my-company--company-command-p (func &rest args)
@@ -2255,6 +2258,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq type-break-good-rest-interval 300)
 (setq type-break-demo-boring-stats t)
 (setq type-break-keystroke-threshold '(nil . nil))
+(setq type-break-demo-functions '(type-break-demo-boring))
 (type-break-mode 1)
 (type-break-query-mode 1)
 
