@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: reversed for
+# key: rfor
+# --
+for (int i = ${2:${1:arr}.size() - 1}; i >= 0; --i) {
+	$0
+}

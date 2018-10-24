@@ -22,7 +22,9 @@
   "Return a String representing the compile command to run for the given context."
   (cond
    ((eq major-mode 'c++-mode)
-    (concat "g++ -Wall -std=c++11 -o a.exe \""
+    (concat (if (eq system-type 'windows-nt)
+								"cl /EHsc /W4 /out:a.exe \""
+								"g++ -Wall -std=c++11 -o a.exe \"")
 						(project/project-relative-name)
 						"\""))
    ((eq major-mode 'python-mode)

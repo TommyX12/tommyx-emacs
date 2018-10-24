@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: debug print
+# key: dp
+# --
+printf("$1 = ${2:%d}\n", ${1:a});$0

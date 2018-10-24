@@ -1025,6 +1025,8 @@ Useful for a search overview popup."
 				  "")))))
 (evil-define-motion swiper-movement () :type exclusive
 	(swiper))
+(evil-define-command evil-noh-blink () :repeat nil (interactive)
+	(evil-ex-nohighlight) (beacon-blink))
 (defun change-theme (theme)
 	"Change to a new theme."
 	(interactive)
@@ -1558,7 +1560,7 @@ command (ran after) is mysteriously incorrect."
 )
 ; ,<space> no highlight
 ;; (evil-define-key 'motion 'global (kbd ", SPC") (lambda () (interactive) (evil-ex-nohighlight) (beacon-blink) (mouse-avoidance-banish-mouse)))
-(evil-define-key 'motion 'global (kbd ", SPC") (lambda () (interactive) (evil-ex-nohighlight) (beacon-blink)))
+(evil-define-key 'motion 'global (kbd ", SPC") 'evil-noh-blink)
 ; easy quit visual mode
 ;; (evil-define-key 'visual 'global (kbd ", SPC") (lambda () (interactive) (evil-exit-visual-state) (beacon-blink) (mouse-avoidance-banish-mouse)))
 (evil-define-key 'visual 'global (kbd ", SPC") (lambda () (interactive) (evil-exit-visual-state) (beacon-blink)))
@@ -2251,6 +2253,8 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; encourage taking a break
 (setq type-break-interval 1800)
 (setq type-break-good-rest-interval 300)
+(setq type-break-demo-boring-stats t)
+(setq type-break-keystroke-threshold '(nil . nil))
 (type-break-mode 1)
 (type-break-query-mode 1)
 
