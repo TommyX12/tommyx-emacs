@@ -1,5 +1,3 @@
-
-
 ;;; smart-completer.el --- TODO description
 
 ;; TODO license here
@@ -15,6 +13,7 @@
 ;;
 
 (require 'cl-lib)
+(require 'json)
 (require 's)
 
 ;;
@@ -99,7 +98,8 @@
 	"TODO"
 	(when smart-completer-process
 		(setq smart-completer-processing t)
-		(process-send-string smart-completer-process (concat prefix "\n"))))
+		(let ((encoded (concat (json-encode `(:prefix ,prefix)) "\n")))
+			(process-send-string smart-completer-process encoded))))
 
 ;; sync
 ;; (defun smart-completer-process-filter (process output)
