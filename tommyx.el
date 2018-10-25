@@ -1965,6 +1965,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   (setq-local evil-shift-width tab-width)
 ))
 (add-hook 'emacs-lisp-mode-hook (lambda ()
+	(setq-local indent-tabs-mode nil)
 	(setq-local tab-width 2)
 	(setq-local evil-shift-width tab-width)
 ))

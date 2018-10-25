@@ -21,4 +21,5 @@ class STDIOServer(Server):
 			data = self.protocol.decode(request)
 			response = self.handler(data)
 			message = self.protocol.encode(response)
-			print(message)
+			if message is not None:
+				print(message)

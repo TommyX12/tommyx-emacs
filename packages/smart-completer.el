@@ -22,7 +22,11 @@
 ;;
 
 (defconst smart-completer--process-name "smart-completer-process")
+
 (defconst smart-completer--buffer-name "*smart-completer-log*")
+
+(defconst smart-completer--hooks-alist
+	'((after-save-hook . smart-completer--on-save)))
 
 ;;
 ;; Macros
@@ -66,6 +70,8 @@
 
 (defvar smart-completer-async-callback nil)
 (defvar smart-completer-async-prefix nil)
+
+(defvar smart-completer-max-parse-radius 80000)
 
 ;;
 ;; Major mode definition
@@ -111,7 +117,10 @@
 		;;  (car smart-completer-executable-args))
 		;; (set-process-filter smart-completer-process
 		;; 										'smart-completer-process-filter)
-	))
+		)
+	; hook setup
+	(dolist (hook smart-completer--hooks-alist)
+		(add-hook (car hook) (cdr hook))))
 
 (defun smart-completer-disable ()
 	"Disable smart-completer."
@@ -120,7 +129,9 @@
 		(setq smart-completer-process nil))
 	(when smart-completer-log-process
 		(delete-process smart-completer-log-process)
-		(setq smart-completer-log-process nil)))
+		(setq smart-completer-log-process nil))
+	(dolist (hook smart-completer--hooks-alist)
+		(remove-hook (car hook) (cdr hook))))
 
 ;; sync
 ;; (defun smart-completer-query (prefix)
@@ -131,19 +142,36 @@
 ;; 		(accept-process-output smart-completer-process 1)
 ;; 		smart-completer-process-return))
 
-(defun smart-completer-query (prefix)
+(defun smart-completer-send-command (command)
 	"TODO"
 	(when smart-completer-process
 		(setq smart-completer-processing t)
-		(let* ((json-null nil)
-					 (json-encoding-pretty-print nil)
-					 (message (list
-										 :command "complete"
-										 :args (list
-														:prefix prefix
-														:context "test")))
-					 (encoded (concat (unicode-escape* (json-encode-plist message)) "\n")))
+		(let ((json-null nil)
+					(json-encoding-pretty-print nil)
+					(encoded (concat (unicode-escape* (json-encode-plist command)) "\n")))
 			(process-send-string smart-completer-process encoded))))
+
+(defun smart-completer-query (prefix)
+	"TODO"
+	(smart-completer-send-command
+	 (list
+		:command "complete"
+		:args (list
+					:prefix prefix
+					:context "test"))))
+
+(defun smart-completer--on-save ()
+	"TODO"
+	(smart-completer-send-command
+	 (list
+		:command "parse"
+		:args (list
+					:file_name (or (buffer-file-name) nil)
+					:content (buffer-substring-no-properties
+										(max (point-min) (- (point)
+																				smart-completer-max-parse-radius))
+										(min (point-max) (+ (point)
+																				smart-completer-max-parse-radius)))))))
 
 (defun smart-completer--decode (msg)
 	(alist-get 'candidates
@@ -178,7 +206,7 @@
 		;; sync
     ;; (candidates (when-let ((response (smart-completer-query arg)))
 		;; 	(s-split "\t" response t)))
-    (meta (format "This value is named %s" arg))
+    ;; (meta (format "This value is named %s" arg))
 		(no-cache t)
 		;; (sorted t)
 		))

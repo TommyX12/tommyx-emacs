@@ -13,7 +13,8 @@ class CompleterInterface(object):
 			),
 			'parse': (
 				lambda args: self.completer.parse(
-					args['corpus'],
+					args['file_name'],
+					args['content'],
 				)
 			),
 		}

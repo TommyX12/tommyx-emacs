@@ -1,3 +1,4 @@
+import util
 
 class Completer(object):
 
@@ -21,3 +22,7 @@ class SmartCompleter(Completer):
 				context + ' thing2',
 			]
 		}
+
+	def parse(self, file_name, content):
+		pass
+
