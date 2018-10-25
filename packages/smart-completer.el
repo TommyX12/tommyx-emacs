@@ -101,6 +101,12 @@
 		(let ((encoded (concat (json-encode `(:prefix ,prefix)) "\n")))
 			(process-send-string smart-completer-process encoded))))
 
+(defun smart-completer--decode (msg)
+	(message msg)
+	(alist-get 'candidates
+						 (let ((json-array-type 'list))
+							 (json-read-from-string msg))))
+
 ;; sync
 ;; (defun smart-completer-process-filter (process output)
 ;; 	(setq smart-completer-process-return output))
@@ -109,7 +115,8 @@
 	(when smart-completer-async-callback
 		(setq output (s-split "\n" output t))
 		(dolist (chunk output)
-			(funcall smart-completer-async-callback (s-split "\t" chunk t)))
+			(funcall smart-completer-async-callback
+							 (smart-completer--decode chunk)))
 		(setq smart-completer-async-callback nil)
 		(setq smart-completer-processing nil)))
 
@@ -129,7 +136,7 @@
     ;; (candidates (when-let ((response (smart-completer-query arg)))
 		;; 	(s-split "\t" response t)))
     (meta (format "This value is named %s" arg))
-		;; (no-cache t)
+		(no-cache t)
 		;; (sorted t)
 		))
 
