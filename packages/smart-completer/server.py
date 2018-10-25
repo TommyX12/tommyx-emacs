@@ -1,3 +1,4 @@
+import util
 
 class Server(object):
 
@@ -14,6 +15,7 @@ class STDIOServer(Server):
 		Server.__init__(self, protocol, handler)
 
 	def listen(self, args = None):
+		util.print_log('server started.')
 		while True:
 			request = str(input())
 			data = self.protocol.decode(request)

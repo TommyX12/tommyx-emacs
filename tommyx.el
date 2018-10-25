@@ -103,6 +103,8 @@
 	:config
 	(setq request-backend 'url-retrieve) ; curl is slow on windows
 )
+(use-package json :ensure t)
+(use-package unicode-escape :ensure t)
 (use-package alert :ensure t
 	:config
 	(setq alert-default-style 'companion)

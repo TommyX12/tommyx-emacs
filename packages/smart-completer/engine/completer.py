@@ -4,16 +4,20 @@ class Completer(object):
 	def __init__(self):
 		pass
 
-	def request_handler(self, request_data):
-		prefix = request_data['prefix']
-		results = {
+	def complete(self, prefix, context):
+		raise NotImplementedError()
+
+class SmartCompleter(Completer):
+
+	def __init__(self):
+		Completer.__init__(self)
+	
+	def complete(self, prefix, context):
+		return {
 			'candidates': [
-				(prefix + "what"),
-				(prefix + "wht"),
-				(prefix + "interactive"),
-				(prefix + "inwg"),
-				(prefix + "interavve"),
-				(prefix + "interaction")
-			],
+				prefix + ' thing1',
+				prefix + ' thing2',
+				context + ' thing1',
+				context + ' thing2',
+			]
 		}
-		return results

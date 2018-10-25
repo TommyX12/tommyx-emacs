@@ -1,4 +1,5 @@
 import json
+import util
 
 class Protocol(object):
 
@@ -18,9 +19,19 @@ class JSONProtocol(Protocol):
 		Protocol.__init__(self)
 
 	def encode(self, data):
-		return json.dumps(data)
+		try:
+			return json.dumps(data)
+
+		except Exception:
+			util.print_traceback()
+			return None
 
 	def decode(self, message):
-		return json.loads(message)
+		try:
+			return json.loads(message)
+
+		except Exception:
+			util.print_traceback()
+			return "null"
 
 

@@ -174,6 +174,7 @@ But when the companion window does not exist, it will create the companion windo
 	(setq-local cursor-in-non-selected-windows nil)
 	(setq-local word-wrap nil)
 	(setq-local scroll-margin 0)
+	(buffer-disable-undo)
   (current-buffer))
 
 (defun companion-default-display-fn (buffer _alist)

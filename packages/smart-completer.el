@@ -14,11 +14,15 @@
 
 (require 'cl-lib)
 (require 'json)
+(require 'unicode-escape)
 (require 's)
 
 ;;
 ;; Constants
 ;;
+
+(defconst smart-completer--process-name "smart-completer-process")
+(defconst smart-completer--buffer-name "*smart-completer-log*")
 
 ;;
 ;; Macros
@@ -49,11 +53,13 @@
 
 (defvar smart-completer-executable-command "python")
 
-(defvar smart-completer-executable-arg
-	(expand-file-name "smart-completer/smart-completer.py"
-	 (file-name-directory load-file-name)))
+(defvar smart-completer-executable-args
+	(list (expand-file-name
+				 "smart-completer/smart_completer.py"
+				 (file-name-directory load-file-name))))
 
 (defvar smart-completer-process nil)
+(defvar smart-completer-log-process nil)
 
 (defvar smart-completer-process-return nil)
 (defvar smart-completer-process-processing nil)
@@ -69,21 +75,52 @@
 ;; Global methods
 ;;
 
+(defun smart-completer--get-log-buffer ()
+	(if-let ((buf (get-buffer smart-completer--buffer-name)))
+			buf
+		(let ((buf (get-buffer-create smart-completer--buffer-name)))
+			(with-current-buffer buf
+				(setq buffer-read-only t)
+				(let ((inhibit-read-only t))
+					(buffer-disable-undo)
+					(erase-buffer)))
+			buf)))
+
 (defun smart-completer-enable ()
 	"Enable smart-completer."
 	(smart-completer-disable)
 	(let ((process-connection-type nil))
+		(setq smart-completer-log-process
+					(make-pipe-process
+					 :name smart-completer--buffer-name
+					 :buffer (smart-completer--get-log-buffer)))
 		(setq smart-completer-process
-					(start-process "smart-completer-process" nil smart-completer-executable-command smart-completer-executable-arg))
-		(set-process-filter smart-completer-process
-												'smart-completer-process-filter)
+					(make-process
+					 :name smart-completer--process-name
+					 :command (cons
+										 smart-completer-executable-command
+										 smart-completer-executable-args)
+					 :coding 'utf-8
+					 :connection-type 'pipe
+					 :filter #'smart-completer-process-filter
+					 :stderr smart-completer-log-process))
+		;; (start-process
+		;;  smart-completer--process-name
+		;;  nil
+		;;  smart-completer-executable-command
+		;;  (car smart-completer-executable-args))
+		;; (set-process-filter smart-completer-process
+		;; 										'smart-completer-process-filter)
 	))
 
 (defun smart-completer-disable ()
 	"Disable smart-completer."
 	(when smart-completer-process
 		(delete-process smart-completer-process)
-		(setq smart-completer-process nil)))
+		(setq smart-completer-process nil))
+	(when smart-completer-log-process
+		(delete-process smart-completer-log-process)
+		(setq smart-completer-log-process nil)))
 
 ;; sync
 ;; (defun smart-completer-query (prefix)
@@ -98,11 +135,17 @@
 	"TODO"
 	(when smart-completer-process
 		(setq smart-completer-processing t)
-		(let ((encoded (concat (json-encode `(:prefix ,prefix)) "\n")))
+		(let* ((json-null nil)
+					 (json-encoding-pretty-print nil)
+					 (message (list
+										 :command "complete"
+										 :args (list
+														:prefix prefix
+														:context "test")))
+					 (encoded (concat (unicode-escape* (json-encode-plist message)) "\n")))
 			(process-send-string smart-completer-process encoded))))
 
 (defun smart-completer--decode (msg)
-	(message msg)
 	(alist-get 'candidates
 						 (let ((json-array-type 'list))
 							 (json-read-from-string msg))))
