@@ -1,4 +1,5 @@
 import util
+from container import CompletionCache
 
 class Completer(object):
 
@@ -12,6 +13,7 @@ class SmartCompleter(Completer):
 
 	def __init__(self):
 		Completer.__init__(self)
+		self.caches = {}
 	
 	def complete(self, prefix, context):
 		return {

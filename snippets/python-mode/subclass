@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: new subclass
+# key: subclass
+# --
+class ${1:Class}(${2:BaseClass}):
+
+	def __init__(self$3):
+		$2.__init__(self$3)
+		$0
