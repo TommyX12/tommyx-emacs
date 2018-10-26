@@ -19,7 +19,9 @@ class STDIOServer(Server):
 		while True:
 			request = str(input())
 			data = self.protocol.decode(request)
+			# util.print_log("received: " + str(data['command']))
 			response = self.handler(data)
-			message = self.protocol.encode(response)
-			if message is not None:
+			# util.print_log("response: " + str(response))
+			if response is not None:
+				message = self.protocol.encode(response)
 				print(message)

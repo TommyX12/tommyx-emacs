@@ -7,8 +7,9 @@ class CompleterInterface(object):
 		self.commands = {
 			'complete': (
 				lambda args: self.completer.complete(
-					args['context'],
 					args['prefix'],
+					args['context'],
+					args['file_name'],
 				)
 			),
 			'parse': (

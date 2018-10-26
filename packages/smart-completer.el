@@ -72,6 +72,8 @@
 (defvar smart-completer-async-prefix nil)
 
 (defvar smart-completer-max-parse-radius 80000)
+(defvar smart-completer-max-context-chars 100)
+(defvar smart-completer-max-prefix-chars 100)
 
 ;;
 ;; Major mode definition
@@ -144,25 +146,25 @@
 
 (defun smart-completer-send-command (command)
 	"TODO"
-	(when smart-completer-process
-		(setq smart-completer-processing t)
+	(if (null smart-completer-process)
+      (smart-completer-enable)
 		(let ((json-null nil)
 					(json-encoding-pretty-print nil)
 					(encoded (concat (unicode-escape* (json-encode-plist command)) "\n")))
 			(process-send-string smart-completer-process encoded))))
 
-(defun smart-completer-query (prefix)
+(defun smart-completer-query (prefix context)
 	"TODO"
 	(smart-completer-send-command
 	 (list
 		:command "complete"
 		:args (list
+					:file_name (or (buffer-file-name) nil)
 					:prefix prefix
-					:context "test"))))
+					:context context))))
 
-(defun smart-completer--on-save ()
-	"TODO"
-	(smart-completer-send-command
+(defun smart-completer-parse ()
+  (smart-completer-send-command
 	 (list
 		:command "parse"
 		:args (list
@@ -173,10 +175,16 @@
 										(min (point-max) (+ (point)
 																				smart-completer-max-parse-radius)))))))
 
+(defun smart-completer--on-save ()
+	"TODO"
+	(smart-completer-parse))
+
 (defun smart-completer--decode (msg)
-	(alist-get 'candidates
-						 (let ((json-array-type 'list))
-							 (json-read-from-string msg))))
+  (setq msg (let ((json-array-type 'list))
+              (json-read-from-string msg)))
+  (if (alist-get 'not_parsed msg)
+      (smart-completer-parse)
+    (alist-get 'candidates msg)))
 
 ;; sync
 ;; (defun smart-completer-process-filter (process output)
@@ -187,28 +195,47 @@
 		(setq output (s-split "\n" output t))
 		(dolist (chunk output)
 			(funcall smart-completer-async-callback
-							 (smart-completer--decode chunk)))
-		(setq smart-completer-async-callback nil)
-		(setq smart-completer-processing nil)))
+							 (smart-completer--decode chunk)))))
+
+(defun smart-completer--word-char-p (char)
+  (or
+   (and (>= char ?a) (<= char ?z))
+   (and (>= char ?A) (<= char ?Z))
+   (and (>= char ?0) (<= char ?9))
+   (= char ?_)))
+
+(defun smart-completer--grab-prefix ()
+  (let ((i (point)) (k 0) c)
+    (while (and (< k smart-completer-max-prefix-chars)
+                (> i (point-min))
+                (smart-completer--word-char-p (char-before i)))
+      (setq i (1- i))
+      (setq k (1+ k)))
+    (buffer-substring i (point))))
 
 (defun company-smart-completer (command &optional arg &rest ignored)
   (interactive (list 'interactive))
   (cl-case command
     (interactive (company-begin-backend 'company-smart-completer))
-    (prefix (company-grab-symbol))
+    (prefix `(,(smart-completer--grab-prefix) . t))
     (candidates
-			(smart-completer-query arg)
-			(setq smart-completer-async-prefix arg)
-			'(:async . (lambda (callback)
-				(setq smart-completer-async-callback callback)
-			)))
+		 (let ((context-point (- (point) (length arg))))
+			 (smart-completer-query arg
+														  (buffer-substring
+														   (max (point-min) (- context-point
+																			   smart-completer-max-context-chars))
+														   context-point)))
+		 (setq smart-completer-async-prefix arg)
+		 '(:async . (lambda (callback)
+		 	(setq smart-completer-async-callback callback)
+		 )))
 
 		;; sync
     ;; (candidates (when-let ((response (smart-completer-query arg)))
 		;; 	(s-split "\t" response t)))
     ;; (meta (format "This value is named %s" arg))
-		(no-cache t)
-		;; (sorted t)
+		;; (no-cache t)
+		(sorted t)
 		))
 
 ;;

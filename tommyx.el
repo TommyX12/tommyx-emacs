@@ -639,7 +639,11 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq company-dabbrev-ignore-case nil)
 (setq company-dabbrev-other-buffers t)
 (with-eval-after-load 'company
-  (company-flx-mode +1))
+  (setq-default company-transformers '())
+  (company-flx-mode 1)
+  ; fix bug with custom completer
+  (delete #'company-flx-transformer company-transformers)
+  (add-hook 'emacs-lisp-mode-hook (lambda () (setq-local company-transformers '(company-flx-transformer)))))
 (setq company-flx-limit 256)
 
 ;; ycmd
@@ -1788,8 +1792,11 @@ command (ran after) is mysteriously incorrect."
 (evil-define-key 'insert emmet-mode-keymap (kbd "C-l") 'emmet-expand-line)
 (evil-define-key 'visual emmet-mode-keymap (kbd "C-l") 'emmet-wrap-with-markup)
 ; spell correction
-(evil-define-key 'insert 'global (kbd "S-SPC S-SPC") (lambda () (interactive) (save-excursion (flyspell-lazy-check-pending) (flyspell-auto-correct-previous-word (point)))))
-(evil-define-key 'insert 'global (kbd "<S-space> <S-space>") (lambda () (interactive) (save-excursion (flyspell-lazy-check-pending) (flyspell-auto-correct-previous-word (point)))))
+(evil-define-key 'insert 'global (kbd "C-SPC") (lambda () (interactive) (save-excursion (flyspell-lazy-check-pending) (flyspell-auto-correct-previous-word (point)))))
+(evil-define-key 'insert 'global (kbd "<C-space>") (lambda () (interactive) (save-excursion (flyspell-lazy-check-pending) (flyspell-auto-correct-previous-word (point)))))
+; insert space and move left
+(evil-define-key 'insert 'global (kbd "S-SPC") (lambda () (interactive) (save-excursion (insert " "))))
+(evil-define-key 'insert 'global (kbd "<S-space>") (lambda () (interactive) (save-excursion (insert " "))))
 ; use c-hjkl to move around
 (evil-define-key 'insert 'global (kbd "M-S-g") 'evil-first-non-blank)
 (evil-define-key 'insert 'global (kbd "M-S-h") 'left-word)
