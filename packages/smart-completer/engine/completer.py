@@ -1,10 +1,14 @@
 if __name__ == '__main__':
 	import sys
 	sys.path.append('..')
+	from container import CompletionCache
+	from text_parser import NGramParser, TokenSeparator
+
+else:
+	from .container import CompletionCache
+	from .text_parser import NGramParser, TokenSeparator
 
 import util
-from .container import CompletionCache
-from .text_parser import NGramParser, TokenSeparator
 
 CONTEXT_LENGTH = 6
 NUM_CANDIDATES = 10
@@ -82,9 +86,31 @@ class SmartCompleter(Completer):
 
 
 if __name__ == '__main__':
+	print("running doctest.")
 	import doctest
 	doctest.testmod()
 
+	print("running memory test.")
+	import os
+	import psutil
+	def get_memory_usage():
+		process = psutil.Process(os.getpid())
+		return process.memory_info().rss
+
+	import random, string
+	word_size = 6
+	vocab_size = 500
+	corpus_size = 10000
+	chars = string.ascii_uppercase + string.digits
+	vocab = [''.join(random.choice(chars) for _ in range(word_size)) for _ in range(vocab_size)]
+	corpus = ' '.join(random.choice(vocab) for _ in range(corpus_size))
+	memory_before = get_memory_usage()
+	completer = SmartCompleter()
+	completer.parse("a.txt", corpus)
+	memory_after = get_memory_usage()
+	print(memory_after - memory_before)
+
+	print("running sample run.")
 	completer = SmartCompleter()
 
 	completer.parse("a.txt", "what is going on here, going on how")
