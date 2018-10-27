@@ -98,6 +98,7 @@ if __name__ == '__main__':
 		return process.memory_info().rss
 
 	import random, string
+	random.seed(0)
 	word_size = 6
 	vocab_size = 500
 	corpus_size = 10000
@@ -108,7 +109,9 @@ if __name__ == '__main__':
 	completer = SmartCompleter()
 	completer.parse("a.txt", corpus)
 	memory_after = get_memory_usage()
-	print(memory_after - memory_before)
+	print("cache memory:", memory_after - memory_before)
+	print("corpus memory:", sys.getsizeof(corpus))
+	print("cache memory per corpus byte:", (memory_after - memory_before) / sys.getsizeof(corpus))
 
 	print("running sample run.")
 	completer = SmartCompleter()
