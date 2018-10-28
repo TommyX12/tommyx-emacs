@@ -1,20 +1,27 @@
 
 class Counter(object):
 
+	__slots__ = ['count']
+
 	def __init__(self, count = 0):
 		self.count = count
 
 
 class CacheCharNode(object):
 
+	__slots__ = ['char', 'next_chars', 'token_nodes', 'exact_token_node']
+
 	def __init__(self, char):
 		self.char = char
 		self.next_chars = {}
 		self.token_nodes = []
+		self.exact_token_node = None
 
 	def add_token(self, token, next_token_node):
 		if len(token) == 0:
 			self.token_nodes.append(next_token_node)
+			self.exact_token_node = next_token_node
+			# TODO will change for other type of expansions.
 			return
 
 		char = token[0]
@@ -24,6 +31,34 @@ class CacheCharNode(object):
 			self.next_chars[char] = CacheCharNode(char)
 
 		self.next_chars[char].add_token(rest, next_token_node)
+
+	def __contains__(self, token):
+		return self._contains_dfs(token, token)
+
+	def _contains_dfs(self, token_old, token):
+		if len(token) == 0:
+			return self.exact_token_node is not None and \
+				self.exact_token_node.token == token_old
+
+		else:
+			char = token[0]
+			rest = token[1:]
+			if char not in self.next_chars:
+				return
+
+			return self.next_chars[char]._contains_dfs(token_old, rest)
+
+	def __getitem__(self, token):
+		if len(token) == 0:
+			return self.exact_token_node
+
+		else:
+			char = token[0]
+			rest = token[1:]
+			if char not in self.next_chars:
+				return
+
+			return self.next_chars[char][rest]
 
 	def complete(self, prefix, counter, results):
 		if counter.count <= 0:
@@ -56,10 +91,12 @@ class CacheCharNode(object):
 
 class CacheTokenNode(object):
 
+	__slots__ = ['token', 'char_root']
+
 	def __init__(self, token):
 		self.token = token
 		self.char_root = CacheCharNode(None)
-		self.next_tokens = {}
+		# self.next_tokens = {}
 
 	def add_ngram(self, ngram):
 		# ngram is a tuple
@@ -69,12 +106,11 @@ class CacheTokenNode(object):
 		token = ngram[0]
 		rest = ngram[1:]
 
-		if token not in self.next_tokens:
+		if token not in self.char_root:
 			next_token_node = CacheTokenNode(token)
-			self.next_tokens[token] = next_token_node
 			self.char_root.add_token(token, next_token_node)
 
-		self.next_tokens[token].add_ngram(rest)
+		self.char_root[token].add_ngram(rest)
 
 	def complete(self, prefix, context_ngram, count):
 		results = []
@@ -91,13 +127,15 @@ class CacheTokenNode(object):
 		else:
 			token = context_ngram[0]
 			rest = context_ngram[1:]
-			if token not in self.next_tokens:
+			if token not in self.char_root:
 				return
 
-			self.next_tokens[token]._dfs(prefix, rest, counter, results)
+			self.char_root[token]._dfs(prefix, rest, counter, results)
 
 
 class CompletionCache(object):
+
+	__slots__ = ['root']
 
 	def __init__(self):
 		self.root = CacheTokenNode(None)

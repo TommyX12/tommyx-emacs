@@ -10,7 +10,7 @@ else:
 
 import util
 
-CONTEXT_LENGTH = 6
+CONTEXT_LENGTH = 4
 NUM_CANDIDATES = 10
 
 class Completer(object):
@@ -28,8 +28,6 @@ class SmartCompleter(Completer):
 		self.token_separator = TokenSeparator()
 		self.ngram_parser = NGramParser(self.token_separator, CONTEXT_LENGTH)
 		self.caches = {}
-
-		self.caches
 	
 	def complete(self, prefix, context, file_name):
 		if file_name not in self.caches:
