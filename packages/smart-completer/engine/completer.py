@@ -10,7 +10,9 @@ else:
 
 import util
 
-CONTEXT_LENGTH = 4
+import json
+
+CONTEXT_LENGTH = 6
 NUM_CANDIDATES = 10
 
 class Completer(object):
@@ -23,13 +25,38 @@ class Completer(object):
 
 class SmartCompleter(Completer):
 
-	def __init__(self):
+	def __init__(
+			self,
+			context_length = CONTEXT_LENGTH,
+			num_candidates = NUM_CANDIDATES
+		):
 		Completer.__init__(self)
+		self.context_length = context_length
+		self.num_candidates = num_candidates
 		self.token_separator = TokenSeparator()
-		self.ngram_parser = NGramParser(self.token_separator, CONTEXT_LENGTH)
+		self.ngram_parser = NGramParser(self.token_separator, context_length)
 		self.caches = {}
 	
 	def complete(self, prefix, context, file_name):
+		"""
+		>>> completer = SmartCompleter(num_candidates = 99999)
+		>>> completer.parse("a.txt", "what is going on here, going on how")
+		>>> completer.parse("b.txt", "what is going on what, going on why")
+		>>> sorted(completer.complete("h", "going on", "a.txt")['candidates'])
+		['here', 'how']
+		>>> sorted(completer.complete("", "going on", "a.txt")['candidates'])
+		[',', 'going', 'here', 'how', 'is', 'on', 'what']
+		>>> sorted(completer.complete("", "", "a.txt")['candidates'])
+		[',', 'going', 'here', 'how', 'is', 'on', 'what']
+		>>> sorted(completer.complete("h", "going on", "b.txt")['candidates'])
+		[]
+		>>> sorted(completer.complete("", "going on", "b.txt")['candidates'])
+		[',', 'going', 'is', 'on', 'what', 'why']
+		>>> sorted(completer.complete("", "", "b.txt")['candidates'])
+		[',', 'going', 'is', 'on', 'what', 'why']
+		>>> completer.complete("", "", "c.txt")
+		{'not_parsed': True}
+		"""
 		if file_name not in self.caches:
 			return {'not_parsed': True}
 
@@ -46,20 +73,17 @@ class SmartCompleter(Completer):
 		if len(context_ngram) > CONTEXT_LENGTH - 1:
 			context_ngram = context_ngram[-(CONTEXT_LENGTH - 1):]
 
-		count = NUM_CANDIDATES
 		candidates = []
 		candidates_set = {}
 		for i in range(len(context_ngram) + 1):
-			if count <= 0:
-				break
-
-			completions = cache.complete(prefix, context_ngram[i:], count)
+			completions = cache.complete(
+				prefix, context_ngram[i:],
+				self.num_candidates
+			)
 			for completion in completions:
 				if completion not in candidates_set:
 					candidates.append(completion)
 					candidates_set[completion] = True
-
-			count -= len(completions)
 
 		return {'candidates': candidates}
 
@@ -81,6 +105,12 @@ class SmartCompleter(Completer):
 				break
 
 			cache.add_ngram(ngram)
+
+	def log_status(self):
+		status = {
+			"num_files_cached": len(self.caches)
+		}
+		util.print_log(json.dumps(status, sort_keys = True, indent = 4))
 
 
 if __name__ == '__main__':
@@ -111,15 +141,3 @@ if __name__ == '__main__':
 	print("corpus memory:", sys.getsizeof(corpus))
 	print("cache memory per corpus byte:", (memory_after - memory_before) / sys.getsizeof(corpus))
 
-	print("running sample run.")
-	completer = SmartCompleter()
-
-	completer.parse("a.txt", "what is going on here, going on how")
-	completer.parse("b.txt", "what is going on what, going on why")
-
-	print(completer.complete("h", "going on", "a.txt"))
-	print(completer.complete("", "going on", "a.txt"))
-	print(completer.complete("", "", "a.txt"))
-	print(completer.complete("h", "going on", "b.txt"))
-	print(completer.complete("", "going on", "b.txt"))
-	print(completer.complete("", "", "b.txt"))

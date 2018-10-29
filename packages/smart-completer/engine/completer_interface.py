@@ -18,6 +18,9 @@ class CompleterInterface(object):
 					args['content'],
 				)
 			),
+			'log_status': (
+				lambda args: self.completer.log_status()
+			),
 		}
 		util.print_log('completer started.')
 

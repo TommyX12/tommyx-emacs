@@ -175,6 +175,13 @@
 										(min (point-max) (+ (point)
 																				smart-completer-max-parse-radius)))))))
 
+(defun smart-completer-log-status ()
+  (interactive)
+  (smart-completer-send-command
+   (list
+    :command "log_status"
+    :args nil)))
+
 (defun smart-completer--on-save ()
 	"TODO"
 	(smart-completer-parse))

@@ -1,3 +1,4 @@
+from bisect import insort, bisect_left
 
 class Counter(object):
 
@@ -7,11 +8,76 @@ class Counter(object):
 		self.count = count
 
 
-class CacheCharNode(object):
+class TokenCache(object):
+
+	def __init__(self):
+		pass
+
+	def add_token(self, token, next_token_node):
+		raise NotImplementedError()
+
+	def __contains__(self, token):
+		raise NotImplementedError()
+
+	def __getitem__(self, token):
+		raise NotImplementedError()
+
+	def complete(self, prefix, counter, results):
+		raise NotImplementedError()
+
+
+class NGramCache(object):
+
+	def __init__(self):
+		pass
+
+	def add_ngram(self, ngram):
+		raise NotImplementedError()
+
+	def complete(self, prefix, context_ngram, count):
+		raise NotImplementedError()
+
+
+class SortedArrayTokenCache(object):
+
+	__slots__ = ['next_token_nodes']
+
+	def __init__(self):
+		self.next_token_nodes = []
+
+	def add_token(self, token, next_token_node):
+		insort(self.next_token_nodes, (token, next_token_node))
+
+	def __contains__(self, token):
+		index = bisect_left(self.next_token_nodes, (token,))
+		return (
+			index >= 0 and index < len(self.next_token_nodes)
+			and self.next_token_nodes[index][0] == token
+		)
+
+	def __getitem__(self, token):
+		index = bisect_left(self.next_token_nodes, (token,))
+		# TODO have to change here when dealing with multiple expansions
+		if index >= 0 and index < len(self.next_token_nodes):
+			return self.next_token_nodes[index][1]
+
+	def complete(self, prefix, counter, results):
+		index = bisect_left(self.next_token_nodes, (prefix,))
+		while index < len(self.next_token_nodes) and counter.count > 0:
+			if self.next_token_nodes[index][0].startswith(prefix):
+				results.append(self.next_token_nodes[index][1].token)
+				counter.count -= 1
+				index += 1
+
+			else:
+				break
+
+
+class TrieTokenCache(object):
 
 	__slots__ = ['char', 'next_chars', 'token_nodes', 'exact_token_node']
 
-	def __init__(self, char):
+	def __init__(self, char = None):
 		self.char = char
 		self.next_chars = {}
 		self.token_nodes = []
@@ -28,7 +94,7 @@ class CacheCharNode(object):
 		rest = token[1:]
 
 		if char not in self.next_chars:
-			self.next_chars[char] = CacheCharNode(char)
+			self.next_chars[char] = TrieTokenCache(char)
 
 		self.next_chars[char].add_token(rest, next_token_node)
 
@@ -88,15 +154,14 @@ class CacheCharNode(object):
 
 			self.next_chars[char].complete(rest, counter, results)
 
+class TrieNGramCache(object):
 
-class CacheTokenNode(object):
+	__slots__ = ['token', 'char_cache']
 
-	__slots__ = ['token', 'char_root']
-
-	def __init__(self, token):
+	def __init__(self, token = None):
 		self.token = token
-		self.char_root = CacheCharNode(None)
-		# self.next_tokens = {}
+		# self.char_cache = TrieTokenCache()
+		self.char_cache = SortedArrayTokenCache()
 
 	def add_ngram(self, ngram):
 		# ngram is a tuple
@@ -106,11 +171,11 @@ class CacheTokenNode(object):
 		token = ngram[0]
 		rest = ngram[1:]
 
-		if token not in self.char_root:
-			next_token_node = CacheTokenNode(token)
-			self.char_root.add_token(token, next_token_node)
+		if token not in self.char_cache:
+			next_token_node = TrieNGramCache(token)
+			self.char_cache.add_token(token, next_token_node)
 
-		self.char_root[token].add_ngram(rest)
+		self.char_cache[token].add_ngram(rest)
 
 	def complete(self, prefix, context_ngram, count):
 		results = []
@@ -122,15 +187,15 @@ class CacheTokenNode(object):
 			return
 
 		if len(context_ngram) == 0:
-			self.char_root.complete(prefix, counter, results)
+			self.char_cache.complete(prefix, counter, results)
 
 		else:
 			token = context_ngram[0]
 			rest = context_ngram[1:]
-			if token not in self.char_root:
+			if token not in self.char_cache:
 				return
 
-			self.char_root[token]._dfs(prefix, rest, counter, results)
+			self.char_cache[token]._dfs(prefix, rest, counter, results)
 
 
 class CompletionCache(object):
@@ -138,7 +203,7 @@ class CompletionCache(object):
 	__slots__ = ['root']
 
 	def __init__(self):
-		self.root = CacheTokenNode(None)
+		self.root = TrieNGramCache()
 
 	def add_ngram(self, ngram):
 		self.root.add_ngram(ngram)
@@ -147,7 +212,7 @@ class CompletionCache(object):
 		return self.root.complete(prefix, context_ngram, count)
 
 	def clear(self):
-		self.root = CacheTokenNode(None)
+		self.root = TrieNGramCache()
 
 
 if __name__ == '__main__':
