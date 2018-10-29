@@ -183,10 +183,10 @@
 )
 
 	(setq evil-normal-state-cursor `(box ,primary+1))
-	(setq evil-insert-state-cursor `(box ,suc))
+	(setq evil-insert-state-cursor `(box ,base))
 	(setq evil-emacs-state-cursor `(box ,emacs))
 	(setq evil-replace-state-cursor `(box ,war))
-	(setq evil-visual-state-cursor `(box ,secondary+1))
+	(setq evil-visual-state-cursor `(box ,suc))
 
 (custom-theme-set-faces
 	name
