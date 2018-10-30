@@ -642,9 +642,10 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq company-dabbrev-other-buffers t)
 (with-eval-after-load 'company
   (setq-default company-transformers '())
-  (company-flx-mode 1)
   ; fix bug with custom completer
-  (delete #'company-flx-transformer company-transformers)
+  ;; (company-flx-mode 1)
+  ;; (delete #'company-flx-transformer company-transformers)
+  (advice-add 'company-capf :around #'company-flx-company-capf-advice)
   (add-hook 'emacs-lisp-mode-hook (lambda () (setq-local company-transformers '(company-flx-transformer)))))
 (setq company-flx-limit 256)
 
