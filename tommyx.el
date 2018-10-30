@@ -20,11 +20,13 @@
 
 ;; set font
 (if (not (boundp 'selected-font)) (progn
-  (setq selected-font "DejaVu Sans Mono")
   (cond
-	((find-font (font-spec :name "Consolas"))
-	(setq selected-font "Consolas"))
-)))
+	 ((find-font (font-spec :name "Consolas"))
+	  (setq selected-font "Consolas"))
+   ((find-font (font-spec :name "DejaVu Sans Mono"))
+    (setq selected-font "DejaVu Sans Mono"))
+   (t
+    (setq selected-font "Menlo")))))
 (if (not (boundp 'font-size-small))
 	(setq font-size-small 120))
 (if (not (boundp 'font-size-big))
@@ -212,31 +214,31 @@
 ;; 	;; (add-hook 'lsp-mode-hook 'lsp-ui-mode) ; TODO disabled for performance reasons
 ;; )
 (use-package company :ensure t)
-(use-package company-childframe :ensure t :after company
+(use-package company-posframe :ensure t :after company
 	:config
 	; company posframe (childframe)
-	(company-childframe-mode 1)
-	(defun company-childframe-show () ; override function
-		"Show company-childframe candidate menu."
+	(company-posframe-mode 1)
+	(defun company-posframe-show () ; override function
+		"Show company-posframe candidate menu."
 		(let* ((height (min company-tooltip-limit company-candidates-length))
 			(lines (company--create-lines company-selection height))
 			(contents (mapconcat #'identity lines "\n"))
-			(buffer (get-buffer-create company-childframe-buffer)))
+			(buffer (get-buffer-create company-posframe-buffer)))
 		(setq contents (copy-sequence contents))
 		(remove-text-properties 0 (length contents) '(mouse-face nil) contents)
 		(with-current-buffer buffer
-			(setq-local overriding-local-map company-childframe-active-map))
+			(setq-local overriding-local-map company-posframe-active-map))
 		(posframe-show buffer
 						:override-parameters '((border-width . 1) (internal-border-width . 1))
 						:string contents
 						:position (- (point) (length company-prefix))
 						:x-pixel-offset (* -1 company-tooltip-margin (default-font-width))
-						:font company-childframe-font
+						:font company-posframe-font
 						:min-width company-tooltip-minimum-width
 						:background-color (face-attribute 'company-tooltip :background))))
 	; integration with desktop package if installed
 	(when (require 'desktop nil 'noerror)
-		(push '(company-childframe-mode . nil)
+		(push '(company-posframe-mode . nil)
 			desktop-minor-mode-table)))
 ;; (use-package company-box :ensure t :after company
 ;; 	:hook (company-mode-hook . company-box-mode))
@@ -2262,6 +2264,10 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 ;; winner mode (record window config change so can undo)
 (winner-mode 1)
+
+;; mac use correct modifier keys
+(setq mac-option-modifier 'super)
+(setq mac-command-modifier 'meta)
 
 ;; encourage taking a break
 (setq type-break-interval 1800)

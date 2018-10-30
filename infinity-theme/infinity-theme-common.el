@@ -88,6 +88,7 @@
 	(bg3           (if (eq theme 'dark) (if (has-true-color) "#0a1014" "#121212") (if (has-true-color) "#dedede" "#d0d0d0")))
 	(bg4           (if (eq theme 'dark) (if (has-true-color) "#080a14" "#080808") (if (has-true-color) "#dadada" "#bcbcbc")))
 	(border        (if (eq theme 'dark) (if (has-true-color) "#555555" "#111111") (if (has-true-color) "#aaaaaa" "#b3b9be")))
+	(border-shadow (if (eq theme 'dark) (if (has-true-color) "#060606" "#111111") (if (has-true-color) "#555555" "#b3b9be")))
 	(cblk          (if (eq theme 'dark) (if (has-true-color) "#C1C9D5" "#b2b2b2") (if (has-true-color) "#535870" "#5f5f87")))
 	(cblk-bg       (if (eq theme 'dark) (if (has-true-color) "#2B2D33" "#262626") (if (has-true-color) "#E3E6F0" "#ffffff")))
 	(cblk-ln       (if (eq theme 'dark) (if (has-true-color) "#757F91" "#af5faf") (if (has-true-color) "#808DB2" "#af5fdf")))
