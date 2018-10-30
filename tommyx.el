@@ -23,6 +23,10 @@
   (cond
 	 ((find-font (font-spec :name "Consolas"))
 	  (setq selected-font "Consolas"))
+   ((find-font (font-spec :name "Source Code Pro"))
+    (setq selected-font "Source Code Pro"))
+   ((find-font (font-spec :name "Fira Code"))
+    (setq selected-font "Fira Code"))
    ((find-font (font-spec :name "DejaVu Sans Mono"))
     (setq selected-font "DejaVu Sans Mono"))
    (t
@@ -655,7 +659,9 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; ycmd
 (setq ycmd-global-config (expand-file-name "third_party/ycmd/.ycm_extra_conf.py"
 	(file-name-directory load-file-name)))
-(setq ycmd-server-command `("python" "-u" ,(expand-file-name "third_party/ycmd/ycmd/"
+(unless (boundp 'ycmd-server-command)
+  (setq ycmd-server-python-command "python"))
+(setq ycmd-server-command `(,ycmd-server-python-command "-u" ,(expand-file-name "third_party/ycmd/ycmd/"
 	(file-name-directory load-file-name))))
 ; TODO disabled
 (add-hook 'ycmd-mode-hook 'company-ycmd-setup)
@@ -2280,6 +2286,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq type-break-good-rest-interval 300)
 (setq type-break-demo-boring-stats t)
 (setq type-break-keystroke-threshold '(nil . nil))
+(setq type-break-warning-repeat 10)
 (setq type-break-demo-functions '(type-break-demo-boring))
 (type-break-mode 1)
 (type-break-query-mode 1)

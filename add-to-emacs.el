@@ -11,6 +11,9 @@
 (setq org-directory "~/notes/org") ; remove this if you are not me.
 (setq use-light-theme nil) ; set to t if you want to startup with light theme.
 
+;; ycmd
+;; (setq ycmd-server-python-command "python3")
+
 ;; others
 ;; (setq font-size-small 130)
 ;; (setq font-size-big 150)
