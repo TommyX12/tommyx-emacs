@@ -86,6 +86,8 @@
 ;; evil
 (setq evil-want-Y-yank-to-eol t)
 (setq evil-want-integration nil)
+; https://github.com/emacs-evil/evil-collection/issues/60
+(setq evil-want-keybinding nil)
 (setq evil-search-module 'evil-search)
 
 ;; evil-collection
@@ -643,7 +645,8 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (with-eval-after-load 'company
   (setq-default company-transformers '())
   ; fix bug with custom completer
-  ;; (company-flx-mode 1)
+  (company-flx-mode 1)
+  (company-flx-mode -1)
   ;; (delete #'company-flx-transformer company-transformers)
   (advice-add 'company-capf :around #'company-flx-company-capf-advice)
   (add-hook 'emacs-lisp-mode-hook (lambda () (setq-local company-transformers '(company-flx-transformer)))))
@@ -1223,6 +1226,8 @@ command (ran after) is mysteriously incorrect."
 		:which-key "light theme")
 	"atd" '((lambda () (interactive) (change-theme dark-theme))
 		:which-key "dark theme")
+  "aF" '((lambda () (interactive) (toggle-frame-fullscreen))
+    :which-key "toggle full-screen")
 	
 	"afs" '(set-to-small-font
 		:which-key "small font")

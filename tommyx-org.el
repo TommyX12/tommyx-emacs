@@ -445,7 +445,7 @@
 	"ji" '(org-agenda-clock-in
 		:which-key "clock in")
 )
-(evil-define-key 'motion org-agenda-mode-map
+(evil-define-key 'normal org-agenda-mode-map
   ;; C-c C-t: make into todo / cycle todo states
   ;; C-c C-s: add / change scheduled start
   ;; C-c C-d: add / change deadline
@@ -471,7 +471,6 @@
 	"u" (lambda () (interactive) (message "Temporarily disabled undo.")) ; 'org-agenda-undo
 	"U" 'org-agenda-redo
 
-	"j" 'org-agenda-next-line
 	"j" 'org-agenda-next-line
 	"k" 'org-agenda-previous-line
 	(kbd "C-j") 'org-agenda-next-date-line
