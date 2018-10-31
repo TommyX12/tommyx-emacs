@@ -1792,15 +1792,15 @@ command (ran after) is mysteriously incorrect."
 
 ;; insert mode mappings
 ; yas
-(evil-define-key 'insert 'global (kbd "C-j") 'yas-next-field)
-(evil-define-key 'insert 'global (kbd "C-k") 'yas-prev-field)
-(evil-define-key 'insert 'global (kbd "C-l") 'yas-insert-snippet)
-(evil-define-key 'insert yas-minor-mode-map (kbd "C-l") yas-maybe-expand)
+(evil-define-key 'insert 'global (kbd "M-j") 'yas-next-field)
+(evil-define-key 'insert 'global (kbd "M-k") 'yas-prev-field)
+(evil-define-key 'insert 'global (kbd "M-l") 'yas-insert-snippet)
+(evil-define-key 'insert yas-minor-mode-map (kbd "M-l") yas-maybe-expand)
 ; emmet
-(evil-define-key 'insert emmet-mode-keymap (kbd "C-S-j") 'yas-next-field)
-(evil-define-key 'insert emmet-mode-keymap (kbd "C-S-k") 'yas-prev-field)
-(evil-define-key 'insert emmet-mode-keymap (kbd "C-S-l") 'yas-insert-snippet)
-(evil-define-key 'insert yas-minor-mode-map (kbd "C-S-l") yas-maybe-expand)
+(evil-define-key 'insert emmet-mode-keymap (kbd "M-j") 'yas-next-field)
+(evil-define-key 'insert emmet-mode-keymap (kbd "M-k") 'yas-prev-field)
+(evil-define-key 'insert emmet-mode-keymap (kbd "M-l") 'yas-insert-snippet)
+(evil-define-key 'insert yas-minor-mode-map (kbd "M-l") yas-maybe-expand)
 (evil-define-key 'insert emmet-mode-keymap (kbd "C-j") 'emmet-next-edit-point)
 (evil-define-key 'insert emmet-mode-keymap (kbd "C-k") 'emmet-prev-edit-point)
 (evil-define-key 'insert emmet-mode-keymap (kbd "C-l") 'emmet-expand-line)
@@ -1819,12 +1819,12 @@ command (ran after) is mysteriously incorrect."
 (evil-define-key 'insert 'global (kbd "M-S-l") 'right-word)
 (evil-define-key 'insert 'global (kbd "M-S-;") 'end-of-line)
 ; use M-j/k/l to do completion
-(evil-define-key 'insert 'global (kbd "M-j") 'company-complete-common-or-cycle)
-(evil-define-key 'insert 'global (kbd "M-k") 'company-select-previous)
-(evil-define-key 'insert 'global (kbd "M-l") 'company-complete-selection)
-(define-key company-active-map (kbd "M-j") 'company-complete-common-or-cycle)
-(define-key company-active-map (kbd "M-k") 'company-select-previous)
-(define-key company-active-map (kbd "M-l") 'company-complete-selection)
+;; (evil-define-key 'insert 'global (kbd "M-j") 'company-complete-common-or-cycle)
+;; (evil-define-key 'insert 'global (kbd "M-k") 'company-select-previous)
+;; (evil-define-key 'insert 'global (kbd "M-l") 'company-complete-selection)
+;; (define-key company-active-map (kbd "M-j") 'company-complete-common-or-cycle)
+;; (define-key company-active-map (kbd "M-k") 'company-select-previous)
+;; (define-key company-active-map (kbd "M-l") 'company-complete-selection)
 ; j mappings
 (setq insert-mode-j-mapping-func (general-key-dispatch
 	; fallback
@@ -2131,22 +2131,22 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
    #b11000000
    #b11000000])
 (define-fringe-bitmap 'left-curly-arrow
-  [#b00000111
-   #b00000111
-   #b00000111
-   #b00000111
-   #b00000111
-   #b00000111
-   #b00000111
-   #b00000111
-   #b00000111
-   #b00000111
-   #b00000111
-   #b00000111
-   #b00000111
-   #b00000111
-   #b00000111
-   #b00000111])
+  [#b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011
+   #b00000011])
 
 ;; word wrap
 (add-hook 'prog-mode-hook (lambda () (toggle-word-wrap 1)))
