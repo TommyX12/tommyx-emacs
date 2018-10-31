@@ -18,7 +18,7 @@
 (setq status-lines-scale 1.15)
 
 ;; solve bug about MacOS status line separator
-(setq powerline-image-apple-rgb nil)
+(setq powerline-image-apple-rgb t)
 (setq ns-use-srgb-colorspace t)
 
 ;; delayed update trigger for performance

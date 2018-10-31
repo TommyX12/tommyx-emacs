@@ -234,14 +234,17 @@
 		(remove-text-properties 0 (length contents) '(mouse-face nil) contents)
 		(with-current-buffer buffer
 			(setq-local overriding-local-map company-posframe-active-map))
-		(posframe-show buffer
-						:override-parameters '((border-width . 1) (internal-border-width . 1))
-						:string contents
-						:position (- (point) (length company-prefix))
-						:x-pixel-offset (* -1 company-tooltip-margin (default-font-width))
-						:font company-posframe-font
-						:min-width company-tooltip-minimum-width
-						:background-color (face-attribute 'company-tooltip :background))))
+		(posframe-show
+     buffer
+		 :override-parameters '((border-width . 1)
+                            (internal-border-width . 1)
+                            (undecorated . t))
+		 :string contents
+		 :position (- (point) (length company-prefix))
+		 :x-pixel-offset (* -1 company-tooltip-margin (default-font-width))
+		 :font company-posframe-font
+		 :min-width company-tooltip-minimum-width
+		 :background-color (face-attribute 'company-tooltip :background))))
 	; integration with desktop package if installed
 	(when (require 'desktop nil 'noerror)
 		(push '(company-posframe-mode . nil)
@@ -909,6 +912,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 	(width . 50)
 	(border-width . 1)
 	(internal-border-width . 1)
+  (undecorated . t)
 	(min-width . 50)
 	(refresh . 1)
 	))

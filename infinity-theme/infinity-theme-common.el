@@ -125,7 +125,7 @@
 	(suc           (if (eq theme 'dark) (if (has-true-color) "#86dc2f" "#86dc2f") (if (has-true-color) "#42ae2c" "#00af00")))
 	(ttip          (if (eq theme 'dark) (if (has-true-color) "#9AA2BA" "#888888") (if (has-true-color) "#79839F" "#5f5f87")))
 	(ttip-sl       (if (eq theme 'dark) (if (has-true-color) "#505B79" "#333333") (if (has-true-color) "#C6C9DD" "#afafff")))
-	(ttip-bg       (if (eq theme 'dark) (if (has-true-color) "#32363E" "#444444") (if (has-true-color) "#E0E3EA" "#dfdfff")))
+	(ttip-bg       (if (eq theme 'dark) (if (has-true-color) "#343840" "#444444") (if (has-true-color) "#DEE1E8" "#dfdfff")))
 	(type          (if (eq theme 'dark) (if (has-true-color) "#86ac4f" "#86dc2f") (if (has-true-color) "#52883c" "#00af00")))
 	(var           (if (eq theme 'dark) (if (has-true-color) "#7590db" "#8787d7") (if (has-true-color) "#5A8AB1" "#af5fd7")))
 	(war           (if (eq theme 'dark) (if (has-true-color) "#dc752f" "#dc752f") (if (has-true-color) "#dc752f" "#dc752f")))
@@ -653,7 +653,7 @@
 	`(ivy-remote ((,class (:foreground ,cyan))))
 
 ;;;;; ivy-posframe
-	`(ivy-posframe ((,class (:inherit default :background ,bg2))))
+	`(ivy-posframe ((,class (:inherit default :background ,ttip-bg))))
 
 ;;;;; latex
 	`(font-latex-bold-face ((,class (:bold t))))
