@@ -162,6 +162,49 @@
 )
 (org-notify-add 'default '(:time "1h" :actions nil :period "2m" :duration 60))
 
+;; scanning all org files
+(defvar all-org-directory-files nil 
+  "List of all org files in org-directory.
+Update with 'update-all-org-directory-files'.")
+
+(defun find-org-files
+    (&optional recurse dirs file-excludes dir-excludes)
+  "Fill the variable `all-org-directory-files'.
+Optional parameters:
+  recurse        If `t', scan the directory recusively.
+  dirs           A list of directories to scan for *.org files.
+  file-excludes  Regular expression. If a filename matches this regular
+expression,
+                 do not add it to `all-org-directory-files'.
+  dir-excludes   Regular expression. If a directory name matches this
+regular expression,
+                 do not add it to `all-org-directory-files'."
+  (let ((targets (or dirs (list org-directory)))
+        (fex (or file-excludes  "^[#\\.].*$"))
+        (dex (or dir-excludes  "^[#\\.].*$"))
+        path)
+    (dolist (dir targets)
+      (if (file-directory-p dir)
+          (let ((all (directory-files dir nil "^[^#\\.].*$")))
+            (dolist (f all)
+              (setq path
+                    (concat (file-name-as-directory dir) f))
+              (cond
+               ((file-directory-p path)
+                (if (and recurse (not (string-match dex f)))
+                      (find-org-files t (list path) fex dex)))
+               ((and (string-match "^[^#\\.].*\\.org$" f)
+                     (not (string-match fex f)))
+                (setq all-org-directory-files
+                      (append (list path) all-org-directory-files))))))
+        (message "Not a directory: %s" path)))))
+
+(defun update-all-org-directory-files ()
+  "Add files org-refile targets recursively."
+  (interactive)
+  (setq all-org-directory-files nil)
+  (find-org-files t))
+
 ;; key bindings
 ; global leader
 (general-define-key
@@ -499,6 +542,8 @@
 ;; org directory external config
 (load (expand-file-name "org-config.el" org-directory))
 
+;; do not use org-super-agenda-header-map
+(setq org-super-agenda-header-map (make-sparse-keymap))
 
 ;; start notification server
 (org-notify-start 60)

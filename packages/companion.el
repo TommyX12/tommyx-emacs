@@ -600,10 +600,10 @@ Companion buffer is BUFFER."
 ;; 
 
 (run-with-idle-timer 0.5 t 'companion-update)
-(run-at-time 0 5 'companion--idle-update)
+(run-at-time 0 3 'companion--idle-update)
 (add-hook 'window-configuration-change-hook 'companion-update)
 
-(run-at-time 0 5 'companion-notif--tick)
+(run-at-time 0 3 'companion-notif--tick)
 
 
 (provide 'companion)
