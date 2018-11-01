@@ -508,7 +508,7 @@ Companion buffer is BUFFER."
   "A spaceline segment to display emacs version."
 	(concat
 	 (propertize (all-the-icons-fileicon "elisp") 'face `(:height 0.8 :inherit mode-line-buffer-id :family ,(all-the-icons-fileicon-family)) 'display '(raise 0))
-	 (propertize (concat " GNU Emacs " emacs-version) 'face 'bold)))
+	 (propertize (concat " Emacs " emacs-version) 'face 'bold)))
 
 (spaceline-define-segment companion-time
   "A spaceline segment to display date and time."

@@ -7,6 +7,7 @@
 (require 'org-bullets)
 (require 'org-notify)
 (require 'companion)
+(require 'hydra)
 
 ;; startup settings
 (add-hook 'org-mode-hook (lambda () (interactive)
@@ -205,6 +206,27 @@ regular expression,
   (setq all-org-directory-files nil)
   (find-org-files t))
 
+;; key binding helpers
+(defun org-up-heading-custom ()
+  (interactive)
+  (if (org-at-heading-p)
+      (org-up-heading-safe)
+    (org-back-to-heading)))
+
+(defun org-backward-heading-same-level-custom ()
+  (interactive)
+  (if (org-at-heading-p)
+      (org-backward-heading-same-level 1)
+    (org-back-to-heading)))
+
+;; hydra
+(defhydra hydra-org-nav ()
+  "org heaidng navigation"
+  ("h" org-up-heading-custom "parent heading")
+  ("l" outline-next-heading "next heading")
+  ("k" org-backward-heading-same-level-custom "previous heading same level")
+  ("j" org-forward-heading-same-level "next heading same level"))
+
 ;; key bindings
 ; global leader
 (general-define-key
@@ -382,23 +404,30 @@ regular expression,
 	(kbd "C-S-k") 'org-metaup ; move up
 	(kbd "C-S-l") 'org-shiftmetaright ; demote/indent
 
-	(kbd "C-RET") 'org-insert-heading-respect-content
-	(kbd "C-S-RET") 'org-insert-todo-heading-respect-content
-	(kbd "M-RET") 'org-insert-subheading
-	(kbd "M-S-RET") 'org-insert-todo-subheading
-	(kbd "<C-return>") 'org-insert-heading-respect-content
-	(kbd "<C-S-return>") 'org-insert-todo-heading-respect-content
-	(kbd "<M-return>") 'org-insert-subheading
-	(kbd "<M-S-return>") 'org-insert-todo-subheading
+	(kbd "M-RET") 'org-insert-heading-respect-content
+	(kbd "M-S-RET") 'org-insert-todo-heading-respect-content
+	(kbd "C-RET") 'org-insert-subheading
+	(kbd "C-S-RET") 'org-insert-todo-subheading
+	(kbd "<M-return>") 'org-insert-heading-respect-content
+	(kbd "<M-S-return>") 'org-insert-todo-heading-respect-content
+	(kbd "<C-return>") 'org-insert-subheading
+	(kbd "<C-S-return>") 'org-insert-todo-subheading
 
-	(kbd "C-h") (lambda () (interactive) (outline-hide-subtree))
-	(kbd "C-j") 'org-next-visible-heading
-	(kbd "C-k") 'org-previous-visible-heading
-	;; (kbd "C-l") (lambda () (interactive) (outline-show-entry) (outline-show-children))
-	(kbd "C-l") 'org-cycle
+	(kbd "C-g") (lambda () (interactive) (outline-hide-subtree))
+	;; (kbd "C-j") 'org-next-visible-heading
+	;; (kbd "C-k") 'org-previous-visible-heading
+	;; ;; (kbd "C-l") (lambda () (interactive) (outline-show-entry) (outline-show-children))
+	(kbd "C-;") 'org-cycle
 
 	"X" 'outline-show-all
 	"Z" 'org-shifttab ; cycle global visibility
+
+  "t" 'hydra-org-nav/body
+
+  (kbd "C-h") 'org-up-heading-custom
+  (kbd "C-l") 'outline-next-heading
+  (kbd "C-k") 'org-backward-heading-same-level-custom
+  (kbd "C-j") 'org-forward-heading-same-level
 )
 (evil-define-key 'insert org-mode-map
   ;; using evil-collection with org mode:
@@ -413,14 +442,14 @@ regular expression,
 
 	(kbd "C-c C-.") 'org-time-stamp-inactive ; with C-u as previx also add time.
 
-	(kbd "C-RET") 'org-meta-return
-	(kbd "C-S-RET") 'org-insert-todo-heading
-	(kbd "M-RET") 'org-insert-subheading
-	(kbd "M-S-RET") 'org-insert-todo-subheading
-	(kbd "<C-return>") 'org-meta-return
-	(kbd "<C-S-return>") 'org-insert-todo-heading
-	(kbd "<M-return>") 'org-insert-subheading
-	(kbd "<M-S-return>") 'org-insert-todo-subheading
+	(kbd "M-RET") 'org-meta-return
+	(kbd "M-S-RET") 'org-insert-todo-heading
+	(kbd "C-RET") 'org-insert-subheading
+	(kbd "C-S-RET") 'org-insert-todo-subheading
+	(kbd "<M-return>") 'org-meta-return
+	(kbd "<M-S-return>") 'org-insert-todo-heading
+	(kbd "<C-return>") 'org-insert-subheading
+	(kbd "<C-S-return>") 'org-insert-todo-subheading
 )
 (evil-define-motion evil-org-next-visible-heading () :type exclusive
 	(org-next-visible-heading 1))

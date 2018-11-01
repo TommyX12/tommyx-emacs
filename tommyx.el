@@ -1785,10 +1785,10 @@ command (ran after) is mysteriously incorrect."
 ;; (evil-define-key 'normal web-mode-map (kbd "C-l") 'web-mode-fold-or-unfold)
 
 ;; origami mode
-(evil-define-key 'normal 'global (kbd "C-h") 'origami-close-node-recursively)
+(evil-define-key 'normal 'global (kbd "C-g") 'origami-close-node-recursively)
 (evil-define-key 'normal 'global (kbd "C-j") 'origami-forward-fold)
 (evil-define-key 'normal 'global (kbd "C-k") 'origami-previous-fold)
-(evil-define-key 'normal 'global (kbd "C-l") 'origami-recursively-toggle-node)
+(evil-define-key 'normal 'global (kbd "C-;") 'origami-recursively-toggle-node)
 (evil-define-key 'normal 'global "Z" 'origami-close-all-nodes)
 (evil-define-key 'normal 'global "X" (lambda () (interactive) (origami-open-all-nodes (current-buffer)) (origami-mode -1) (origami-mode 1)))
 (evil-define-key 'normal 'global "zx" (lambda () (interactive)
