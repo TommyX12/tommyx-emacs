@@ -488,7 +488,9 @@ regular expression,
 	"ji" '(org-agenda-clock-in
 		:which-key "clock in")
 )
-(evil-define-key 'normal org-agenda-mode-map
+(general-define-key
+  :keymaps 'org-agenda-mode-map
+  :states '(motion normal)
   ;; C-c C-t: make into todo / cycle todo states
   ;; C-c C-s: add / change scheduled start
   ;; C-c C-d: add / change deadline
@@ -538,6 +540,9 @@ regular expression,
 	"jj" '(org-capture-finalize
 		:which-key "capture save")
 )
+
+;; refresh all org files
+(update-all-org-directory-files)
 
 ;; org directory external config
 (load (expand-file-name "org-config.el" org-directory))

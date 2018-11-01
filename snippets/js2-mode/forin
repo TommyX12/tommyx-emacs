@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: forin
+# key: forin
+# --
+for (var ${1:i} in ${2:obj}) {
+	$0$2[$1]
+}
