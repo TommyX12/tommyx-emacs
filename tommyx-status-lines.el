@@ -42,7 +42,7 @@
     (delayed-mode-line-update)))
 ; update event triggers
 (run-with-idle-timer 0.5 t 'delayed-mode-line-update)
-(run-at-time 0 3 'delayed-mode-line-update-if-idle)
+(run-at-time 0 1 'delayed-mode-line-update-if-idle)
 (add-hook 'window-configuration-change-hook 'delayed-mode-line-update)
 ;; (advice-add 'select-window :after #'delayed-mode-line-update) ; TODO avy-jump calls this too much
 

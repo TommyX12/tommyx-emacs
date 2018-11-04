@@ -66,6 +66,20 @@
 (menu-bar-mode -1)
 
 
+;;; packages settings before loading
+
+;; evil
+(setq evil-want-Y-yank-to-eol t)
+(setq evil-want-integration nil)
+; https://github.com/emacs-evil/evil-collection/issues/60
+(setq evil-want-keybinding nil)
+(setq evil-search-module 'evil-search)
+
+;; evil-collection
+(setq evil-collection-company-use-tng nil)
+(setq evil-collection-setup-minibuffer nil)
+
+
 ;;; initialize packages
 (require 'package)
 
@@ -83,20 +97,6 @@
   (package-install 'use-package))
 
 (eval-when-compile (require 'use-package))
-
-
-;;; packages settings before loading
-
-;; evil
-(setq evil-want-Y-yank-to-eol t)
-(setq evil-want-integration nil)
-; https://github.com/emacs-evil/evil-collection/issues/60
-(setq evil-want-keybinding nil)
-(setq evil-search-module 'evil-search)
-
-;; evil-collection
-(setq evil-collection-company-use-tng nil)
-(setq evil-collection-setup-minibuffer nil)
 
 
 ;;; install packages
@@ -460,6 +460,8 @@
 (use-package auctex :ensure t
 	:config
 )
+(use-package markdown-mode :ensure t)
+(use-package markdown-mode+ :ensure t)
 (use-package racket-mode :ensure t)
 (use-package haskell-mode :ensure t)
 (use-package haskell-snippets :ensure t)
@@ -1062,7 +1064,8 @@ Useful for a search overview popup."
 	(status-lines-compile)
 	(when (fboundp 'companion-reopen)
 		(companion-reopen))
-	(posframe-delete-all))
+	(unless (eq system-type 'darwin)
+    (posframe-delete-all)))
 (defun pop-kill-ring ()
   "Remove most recent entry from kill-ring"
 	(when kill-ring
@@ -2280,6 +2283,9 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 ;; flyspell
 (setq flyspell-issue-message-flag nil)
+
+;; blink matching parens
+(setq blink-matching-delay 0.1)
 
 ;; winner mode (record window config change so can undo)
 (winner-mode 1)
