@@ -347,6 +347,18 @@ regular expression,
 
 	"ji" '(org-clock-in ; org-pomodoro
 		:which-key "org clock in")
+
+  "j%" '((lambda () (interactive)
+           (insert "[%]")
+           (org-ctrl-c-ctrl-c)
+           (insert " "))
+    :which-key "org insert % cookie")
+
+  "j/" '((lambda () (interactive)
+           (insert "[/]")
+           (org-ctrl-c-ctrl-c)
+           (insert " "))
+    :which-key "org insert / cookie")
 )
 
 ; org mode
