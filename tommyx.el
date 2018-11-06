@@ -6,6 +6,8 @@
 	(expand-file-name "infinity-theme" (file-name-directory load-file-name)))
 (add-to-list 'load-path
 	(expand-file-name "packages" (file-name-directory load-file-name)))
+(add-to-list 'load-path
+	(expand-file-name "packages/company-tabnine" (file-name-directory load-file-name)))
 
 ;;; themes
 ; (load-theme 'spacemacs-dark t)

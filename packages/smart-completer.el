@@ -22,9 +22,7 @@
 ;;
 
 (defconst smart-completer--process-name "smart-completer-process")
-
 (defconst smart-completer--buffer-name "*smart-completer-log*")
-
 (defconst smart-completer--hooks-alist
 	'((after-save-hook . smart-completer--on-save)))
 
