@@ -458,6 +458,7 @@
 ;; )
 (require 'companion)
 (require 'smart-completer)
+(require 'company-tabnine)
 ; language specific
 (use-package auctex :ensure t
 	:config
@@ -467,6 +468,7 @@
 (use-package racket-mode :ensure t)
 (use-package haskell-mode :ensure t)
 (use-package haskell-snippets :ensure t)
+(use-package rust-mode :ensure t)
 (use-package csv-mode :ensure t)
 (use-package json-mode :ensure t)
 ;; (use-package vue-mode :ensure t
