@@ -259,6 +259,13 @@
 ;; 	:config
 ;; 	(push 'company-lsp company-backends)
 ;; )
+(use-package company-ycmd :ensure t 
+  :config
+  (add-to-list 'company-backends #'company-ycmd))
+
+(require 'company-tabnine)
+(add-to-list 'company-backends #'company-tabnine)
+
 (use-package yasnippet :ensure t
   :bind (:map yas-minor-mode-map
 	("TAB" . nil)
@@ -271,7 +278,6 @@
 	("S-TAB" . nil)
 	("<S-tab>" . nil)))
 (use-package ycmd :ensure t)
-(use-package company-ycmd :ensure t)
 (use-package flycheck-ycmd :ensure t)
 (use-package yasnippet-snippets :ensure t)
 (use-package powerline :ensure t)
@@ -458,7 +464,6 @@
 ;; )
 (require 'companion)
 (require 'smart-completer)
-(require 'company-tabnine)
 ; language specific
 (use-package auctex :ensure t
 	:config
@@ -647,6 +652,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 		;; company-preview-frontend
 		company-echo-metadata-frontend))
 ;; (setq company-idle-delay 0)
+(setq company-tooltip-align-annotations t)
 (setq company-idle-delay 0.2)
 (setq company-selection-wrap-around t)
 (setq company-show-numbers t)
@@ -674,7 +680,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq ycmd-server-command `(,ycmd-server-python-command "-u" ,(expand-file-name "third_party/ycmd/ycmd/"
 	(file-name-directory load-file-name))))
 ; TODO disabled
-(add-hook 'ycmd-mode-hook 'company-ycmd-setup)
+;; (add-hook 'ycmd-mode-hook 'company-ycmd-setup) ; already manually added
 (add-hook 'ycmd-mode-hook 'flycheck-ycmd-setup)
 (add-hook 'ycmd-mode-hook (lambda () (interactive) (when (ycmd-major-mode-to-file-types major-mode) (ycmd-eldoc-setup))))
 ; attempt to improve performance
@@ -1860,6 +1866,11 @@ command (ran after) is mysteriously incorrect."
 				(if company-selection-changed
 					(company-complete-selection)
 					(company-complete-common-or-cycle)))
+  ; j[ skip TabNine
+  "[" (lambda () (interactive)
+				(with-company-tabnine-disabled
+         (company-abort)
+				 (company-auto-begin)))
 	"0" (lambda () (interactive) (company-complete-number 0))
 	"1" (lambda () (interactive) (company-complete-number 1))
 	"2" (lambda () (interactive) (company-complete-number 2))
