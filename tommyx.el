@@ -106,6 +106,7 @@
 (require 'font-lock+)
 (require 'hl-line+)
 (require 'info+)
+(use-package package-lint :ensure t)
 (use-package dash :ensure t)
 (use-package s :ensure t)
 (use-package cl-lib :ensure t)
@@ -263,20 +264,23 @@
   :config
   (add-to-list 'company-backends #'company-ycmd))
 
-(require 'company-tabnine)
-(add-to-list 'company-backends #'company-tabnine)
+;; (require 'company-tabnine)
+(use-package company-tabnine :ensure t :after company
+  :config
+  (add-to-list 'company-backends #'company-tabnine))
 
 (use-package yasnippet :ensure t
-  :bind (:map yas-minor-mode-map
-	("TAB" . nil)
-	("<tab>" . nil)
-	("S-TAB" . nil)
-	("<S-tab>" . nil))
+  :bind
+  (:map yas-minor-mode-map
+	      ("TAB" . nil)
+	      ("<tab>" . nil)
+	      ("S-TAB" . nil)
+	      ("<S-tab>" . nil))
 	(:map yas-keymap
-	("TAB" . nil)
-	("<tab>" . nil)
-	("S-TAB" . nil)
-	("<S-tab>" . nil)))
+	      ("TAB" . nil)
+	      ("<tab>" . nil)
+	      ("S-TAB" . nil)
+	      ("<S-tab>" . nil)))
 (use-package ycmd :ensure t)
 (use-package flycheck-ycmd :ensure t)
 (use-package yasnippet-snippets :ensure t)
@@ -1867,10 +1871,7 @@ command (ran after) is mysteriously incorrect."
 					(company-complete-selection)
 					(company-complete-common-or-cycle)))
   ; j[ skip TabNine
-  "[" (lambda () (interactive)
-				(with-company-tabnine-disabled
-         (company-abort)
-				 (company-auto-begin)))
+  "[" 'company-tabnine-call-other-backends
 	"0" (lambda () (interactive) (company-complete-number 0))
 	"1" (lambda () (interactive) (company-complete-number 1))
 	"2" (lambda () (interactive) (company-complete-number 2))

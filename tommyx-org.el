@@ -221,7 +221,7 @@ regular expression,
 
 ;; hydra
 (defhydra hydra-org-nav ()
-  "org heaidng navigation"
+  "org heading navigation"
   ("h" org-up-heading-custom "parent heading")
   ("l" outline-next-heading "next heading")
   ("k" org-backward-heading-same-level-custom "previous heading same level")
