@@ -336,7 +336,7 @@
 	`(company-scrollbar-bg ((,class (:background ,bg2))))
 	`(company-scrollbar-fg ((,class (:background ,act2))))
 	`(company-template-field ((,class (:inherit region))))
-	`(company-tooltip ((,class (:background ,ttip-bg :foreground ,ttip))))
+	`(company-tooltip ((,class (:background ,ttip-bg :foreground ,base))))
 	`(company-tooltip-annotation ((,class (:foreground ,type))))
 	`(company-tooltip-common ((,class (:background ,ttip-bg :foreground ,keyword))))
 	`(company-tooltip-common-selection ((,class (:foreground ,base))))
