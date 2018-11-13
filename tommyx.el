@@ -679,7 +679,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; ycmd
 (setq ycmd-global-config (expand-file-name "third_party/ycmd/.ycm_extra_conf.py"
 	(file-name-directory load-file-name)))
-(unless (boundp 'ycmd-server-command)
+(unless (boundp 'ycmd-server-python-command)
   (setq ycmd-server-python-command "python"))
 (setq ycmd-server-command `(,ycmd-server-python-command "-u" ,(expand-file-name "third_party/ycmd/ycmd/"
 	(file-name-directory load-file-name))))
