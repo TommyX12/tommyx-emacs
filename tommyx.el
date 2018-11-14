@@ -655,9 +655,9 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 		company-pseudo-tooltip-frontend
 		;; company-preview-frontend
 		company-echo-metadata-frontend))
-;; (setq company-idle-delay 0)
+(setq company-idle-delay 0)
 (setq company-tooltip-align-annotations t)
-(setq company-idle-delay 0.2)
+;; (setq company-idle-delay 0.2)
 (setq company-selection-wrap-around t)
 (setq company-show-numbers t)
 (setq company-quickhelp-delay nil) ; we will manually trigger the help
@@ -1190,6 +1190,7 @@ command (ran after) is mysteriously incorrect."
 (define-prefix-command 'global-leader-sidebar)
 (define-prefix-command 'global-leader-templates)
 (define-prefix-command 'global-leader-files)
+(define-prefix-command 'global-leader-battery)
 ; prefix keys
 (general-define-key
 	:keymaps 'override
@@ -1223,6 +1224,8 @@ command (ran after) is mysteriously incorrect."
 		:which-key "templates")
 	"e" '(global-leader-files
 		:which-key "files")
+  "b" '(global-leader-battery
+    :which-key "battery")
 )
 (general-define-key
 	:keymaps 'override
@@ -1291,6 +1294,10 @@ command (ran after) is mysteriously incorrect."
 	"ea" '(evil-write-all
 		:which-key "write all files")
 
+  "bc" '((lambda () (interactive) (setq company-idle-delay 0))
+    :which-key "instant completion")
+  "bC" '((lambda () (interactive) (setq company-idle-delay 0.2))
+    :which-key "delayed completion")
 )
 (general-define-key
 	:keymaps 'override
@@ -1867,9 +1874,14 @@ command (ran after) is mysteriously incorrect."
 	"l" (lambda () (interactive) (call-with-command-hooks 'move-end-of-line "jl"))
 	; jp complete
 	"p" (lambda () (interactive)
-				(if company-selection-changed
-					(company-complete-selection)
-					(company-complete-common-or-cycle)))
+        (cond
+         (company-selection-changed
+          (company-complete-selection))
+         (company-candidates
+          (company-select-next))
+         (t
+          (company-auto-begin)
+          (company-select-next))))
   ; j[ skip TabNine
   "[" 'company-tabnine-call-other-backends
 	"0" (lambda () (interactive) (company-complete-number 0))

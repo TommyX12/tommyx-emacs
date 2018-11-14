@@ -19,7 +19,7 @@
 
 ;; solve bug about MacOS status line separator
 (when (eq system-type 'darwin)
-  ((setq powerline-image-apple-rgb t)))
+  (setq powerline-image-apple-rgb t))
 (setq ns-use-srgb-colorspace t)
 
 ;; delayed update trigger for performance

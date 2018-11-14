@@ -1,6 +1,9 @@
 ;; requires
 (require 'projectile)
 
+;; general config
+(setq compile-command "")
+
 ;; configs
 (setq projectile-enable-caching t)
 (projectile-mode)
