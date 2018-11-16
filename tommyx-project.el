@@ -60,9 +60,9 @@
 
 	"pr" '(projectile-run-project
 		:which-key "run project")
-	"pc" '(projectile-compile-project
-		:which-key "compile project")
-	"pC" '(compile
+	"pc" '(compile
 		:which-key "compile")
+	"pC" '(projectile-compile-project
+		:which-key "compile project")
 
 )

@@ -226,7 +226,7 @@
 (use-package company-posframe :ensure t :after company
 	:config
 	; company posframe (childframe)
-	(company-posframe-mode 1)
+	;; (company-posframe-mode 1) ; TODO turned off for possible performance reasons
 	(defun company-posframe-show () ; override function
 		"Show company-posframe candidate menu."
 		(let* ((height (min company-tooltip-limit company-candidates-length))
@@ -1135,6 +1135,7 @@ command (ran after) is mysteriously incorrect."
 ;; use esc (same as "C-[") for escape
 (global-set-key (kbd "C-[") 'keyboard-escape-quit)
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+(global-set-key (kbd "M-[") 'keyboard-escape-quit)
 
 ;; hydra
 (defhydra hydra-zoom ()
@@ -1794,6 +1795,14 @@ command (ran after) is mysteriously incorrect."
 	"S-RET" 'ivy-immediate-done ; use exact input, not candidate
 	"<S-return>" 'ivy-immediate-done
 	"M-l" 'ivy-alt-done
+)
+
+;; minibuffer
+(general-define-key
+  :keymaps '(minibuffer-local-shell-command-map)
+  "M-k" 'previous-line-or-history-element
+  "M-j" 'next-line-or-history-element
+  "M-l" 'exit-minibuffer
 )
 
 ;; help mode
