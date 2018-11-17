@@ -401,6 +401,8 @@
 ;; (use-package fancy-battery :ensure t)
 (use-package rainbow-mode :ensure t)
 (use-package highlight-numbers :ensure t)
+(use-package highlight-operators :ensure t
+  :config)
 (use-package hl-todo :ensure t
 	:config
 	(global-hl-todo-mode)) ; TODO 
@@ -413,9 +415,7 @@
 	(setq emmet-move-cursor-between-quotes t)
 	(setq emmet-indentation 2)
 	:bind (:map emmet-mode-keymap
-		("C-j" . nil)
-	)
-)
+		("C-j" . nil)))
 (use-package imenu-list :ensure t :after neotree
 	:config
 	(setq imenu-list-position 'right)
