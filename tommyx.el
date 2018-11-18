@@ -1119,6 +1119,11 @@ command (ran after) is mysteriously incorrect."
 (defun paste-from-default-register () (interactive)
 	;; (evil-paste-from-register ?\")
 	(yank))
+(defun self-insert-or-send-raw (string)
+  (interactive)
+  (if (eq major-mode 'term-mode)
+      (term-send-raw-string string)
+    (self-insert-command 1)))
 
 
 ;;; key bindings
@@ -1870,9 +1875,9 @@ command (ran after) is mysteriously incorrect."
 	; fallback
 	(lambda () (interactive)
 		(let ((my-company--company-command-p-override t))
-			(call-with-command-hooks 'self-insert-command)))
+			(call-with-command-hooks (lambda () (interactive) (self-insert-or-send-raw "j")))))
 	:timeout 0.25
-	"j" (lambda () (interactive) (call-with-command-hooks 'self-insert-command "jj"))
+	"j" (lambda () (interactive) (call-with-command-hooks (lambda () (interactive) (self-insert-or-send-raw "j")) "jj"))
 	"t" (lambda () (interactive) (call-with-command-hooks 'insert-todo "jt"))
 	"f" (lambda () (interactive) (call-with-command-hooks 'insert-backslash "jf"))
 	; jk quit insert mode
@@ -1910,9 +1915,12 @@ command (ran after) is mysteriously incorrect."
 	; jv to paste from default register
 	"v" (lambda () (interactive) (call-with-command-hooks 'paste-from-default-register "jv"))
 ))
-(setq insert-mode-J-mapping-func (general-key-dispatch 'self-insert-command
+(setq insert-mode-J-mapping-func (general-key-dispatch
+	(lambda () (interactive)
+		(let ((my-company--company-command-p-override t))
+			(call-with-command-hooks (lambda () (interactive) (self-insert-or-send-raw "J")))))
 	:timeout 0.25
-	"J" (lambda () (interactive) (call-with-command-hooks 'self-insert-command "JJ"))
+	"J" (lambda () (interactive) (call-with-command-hooks (lambda () (interactive) (self-insert-or-send-raw "J")) "JJ"))
 	; JV to use counsel yank-pop
 	"V" (lambda () (interactive) (call-with-command-hooks 'counsel-yank-pop "JV"))
 ))
@@ -2320,6 +2328,9 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 ;; flyspell
 (setq flyspell-issue-message-flag nil)
+
+;; tramp
+(setq tramp-default-method "ssh")
 
 ;; blink matching parens
 (setq blink-matching-delay 0.1)
