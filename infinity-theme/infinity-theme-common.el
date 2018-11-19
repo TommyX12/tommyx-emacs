@@ -603,7 +603,7 @@
 	`(hi-yellow ((,class (:foreground ,yellow :background ,yellow-bg))))
 
 ;;;;; highlight-indentation
-	`(highlight-indentation-face ((,class (:background ,comment-bg))))
+	`(highlight-indentation-face ((,class (:background ,bg12))))
 
 ;;;;; highlight-symbol
 	`(highlight-symbol-face ((,class (:background ,bg2))))

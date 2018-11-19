@@ -202,10 +202,23 @@
 (use-package ace-window :ensure t)
 (use-package general :ensure t)
 (use-package beacon :ensure t)
-;; (use-package highlight-indent-guides :ensure t)
+;; (use-package highlight-indent-guides :ensure t
+;;   :config
+;;   (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
+;;   (add-hook 'text-mode-hook 'highlight-indent-guides-mode)
+;;   (setq highlight-indent-guides-method 'character)
+;;   (setq highlight-indent-guides-auto-odd-face-perc 3)
+;;   (setq highlight-indent-guides-auto-even-face-perc 6)
+;;   (setq highlight-indent-guides-character ?\|)
+;;   (setq highlight-indent-guides-responsive nil)
+;; )
 ;; (require 'visual-indentation-mode)
 ;; (require 'highlight-indent-guides) ; my own version
 ;; (require 'indent-hint)
+(use-package highlight-indentation :ensure t
+  :config
+  (add-hook 'prog-mode-hook 'highlight-indentation-mode)
+  (add-hook 'text-mode-hook 'highlight-indentation-mode))
 (require 'origami)
 ;; (use-package origami :ensure t)
 (use-package volatile-highlights :ensure t)
@@ -788,13 +801,10 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 ;; volatile-highlight
 ;; (vhl/define-extension 'evil
-;;						 'evil-move
-;;						 'evil-paste-after
-;;						 'evil-paste-before
-;;						 'evil-paste-pop)
+;; 						 'evil-normal-state)
 ;; (with-eval-after-load 'evil
-;;	   (vhl/install-extension 'evil)
-;;	   (vhl/load-extension 'evil))
+;; 	   (vhl/install-extension 'evil)
+;; 	   (vhl/load-extension 'evil)) 
 (vhl/define-extension 'undo-tree
 					  'undo-tree-move
 					  'undo-tree-yank)
@@ -805,9 +815,9 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 ;; evil-goggles
 (setq evil-goggles-pulse nil)
-(setq evil-goggles-duration 0.1)
-(setq evil-goggles-async-duration 0.2)
-(setq evil-goggles-blocking-duration 0.1)
+(setq evil-goggles-duration 1)
+(setq evil-goggles-async-duration 1)
+(setq evil-goggles-blocking-duration 1)
 (setq evil-goggles--commands
 	'((evil-yank                  :face evil-goggles-yank-face                  :switch evil-goggles-enable-yank                  :advice evil-goggles--generic-async-advice)
     (evil-join                  :face evil-goggles-join-face                  :switch evil-goggles-enable-join                  :advice evil-goggles--join-advice)
@@ -838,13 +848,6 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq flyspell-lazy-window-idle-seconds 5)
 
 ;; highlight indent guides (currently disabled)
-;; (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
-;; (add-hook 'text-mode-hook 'highlight-indent-guides-mode)
-(setq highlight-indent-guides-method 'fill)
-(setq highlight-indent-guides-auto-odd-face-perc 3)
-(setq highlight-indent-guides-auto-even-face-perc 6)
-(setq highlight-indent-guides-character ?\|)
-(setq highlight-indent-guides-responsive nil)
 
 ;; visual indentation mode
 ;; (add-hook 'prog-mode-hook 'visual-indentation-mode)
@@ -1057,16 +1060,21 @@ Useful for a search overview popup."
   (cond
    ;; If there is selection use it
    ((and transient-mark-mode
-		 mark-active
-		 (not (eq (mark) (point))))
-	(let ((mark-saved (mark))
-		  (point-saved (point)))
-	  (deactivate-mark)
-	  (buffer-substring-no-properties mark-saved point-saved)))
+		     mark-active
+		     (not (eq (mark) (point))))
+	  (let ((mark-saved (mark))
+		      (point-saved (point)))
+	    (deactivate-mark)
+	    (buffer-substring-no-properties mark-saved point-saved)))
    ;; Otherwise, use symbol at point or empty
-   (t (format "\\<%s\\>"
-			  (or (word-at-point)
-				  "")))))
+   (t
+    (save-excursion
+      (when (not (looking-at "\\sw"))
+        (while (and (> (point) (point-min)) (= (char-before) ? ))
+          (backward-char)))
+      (format "\\<%s\\>"
+			        (or (word-at-point)
+				          ""))))))
 (evil-define-motion swiper-movement () :type exclusive
 	(swiper))
 (evil-define-command evil-noh-blink () :repeat nil (interactive)
@@ -1124,7 +1132,20 @@ command (ran after) is mysteriously incorrect."
   (if (eq major-mode 'term-mode)
       (term-send-raw-string string)
     (self-insert-command 1)))
+(evil-define-motion evil-sp-forward-sexp () :type exclusive
+	(sp-forward-sexp))
+(evil-define-motion evil-sp-backward-sexp () :type exclusive
+	(sp-backward-sexp))
 
+(defun peek-region-in-split ()
+  "Doesn't work.  Improve."
+  (interactive)
+  (split-window (selected-window) 1 'below)
+  (switch-to-buffer (clone-indirect-buffer nil nil))
+  (call-interactively 'narrow-to-region)
+  (fit-window-to-buffer)
+  (goto-char 0)
+  (windmove-down))
 
 ;;; key bindings
 
@@ -1140,7 +1161,6 @@ command (ran after) is mysteriously incorrect."
 ;; use esc (same as "C-[") for escape
 (global-set-key (kbd "C-[") 'keyboard-escape-quit)
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
-(global-set-key (kbd "M-[") 'keyboard-escape-quit)
 
 ;; hydra
 (defhydra hydra-zoom ()
@@ -1318,6 +1338,9 @@ command (ran after) is mysteriously incorrect."
 		:which-key "search selection")
 	"C-f" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
 		:which-key "search selection in all buffers")
+
+  "wp" '(peek-region-in-split
+    :which-key "peek region in split")
 )
 (general-define-key
 	:keymaps 'override
@@ -1353,6 +1376,8 @@ command (ran after) is mysteriously incorrect."
 		:which-key "undo window config")
 	"wU" '(winner-redo
 		:which-key "redo window config")
+  "wp" '(peek-region-in-split
+    :which-key "peek region in split")
 
 	"n" '(ivy-switch-buffer
 		:which-key "switch buffer")
@@ -1576,10 +1601,10 @@ command (ran after) is mysteriously incorrect."
 	(down-list))
 (evil-define-motion move-to-prev-parens () :type exclusive
 	(backward-up-list))
-(evil-define-key 'normal 'global "(" 'sp-backward-sexp)
-(evil-define-key 'normal 'global ")" 'sp-forward-sexp)
-(evil-define-key 'visual 'global "(" 'sp-backward-sexp)
-(evil-define-key 'visual 'global ")" 'sp-forward-sexp)
+(evil-define-key 'normal 'global "(" 'evil-sp-backward-sexp)
+(evil-define-key 'normal 'global ")" 'evil-sp-forward-sexp)
+(evil-define-key 'visual 'global "(" 'evil-sp-backward-sexp)
+(evil-define-key 'visual 'global ")" 'evil-sp-forward-sexp)
 ; move cursor to comfortable reading position
 (evil-define-key 'motion 'global ",z" (lambda () (interactive) (recenter-top-bottom (/ (* (window-total-height) 2) 7))))
 ; do not re-copy when pasting in visual mode
@@ -1593,6 +1618,7 @@ command (ran after) is mysteriously incorrect."
 (define-key evil-outer-text-objects-map "a" 'evil-outer-arg)
 ; narrowing
 (evil-define-key 'motion 'global ",,n" 'narrow-to-defun)
+(evil-define-key 'visual 'global ",,n" 'narrow-to-region)
 (evil-define-key 'motion 'global ",,N" 'widen)
 ; use enter and S-enter to open blank lines. TODO implement numeric prefix arg
 (evil-define-key 'normal 'global (kbd "M-o") (lambda () (interactive) (save-excursion (evil-insert-newline-below))))
@@ -2011,7 +2037,8 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (add-hook 'css-mode-hook (lambda () (modify-syntax-entry ?- "w") (modify-syntax-entry ?_ "w")))
 
 ;; indent settings
-(setq-default indent-tabs-mode t) ; use tabs instead of space
+(setq default-indent-tabs-mode nil)
+(setq-default indent-tabs-mode default-indent-tabs-mode) ; use tabs instead of space
 (setq-default tab-width 4)
 (setq-default evil-shift-width tab-width)
 (setq-default python-indent 4)
@@ -2020,7 +2047,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (add-hook 'prog-mode-hook (lambda () (setq evil-shift-width tab-width)))
 (add-hook 'python-mode-hook (lambda ()
 	(setq-local tab-width 4)
-	(setq-local indent-tabs-mode t)
+	(setq-local indent-tabs-mode default-indent-tabs-mode)
 	(setq-local python-indent-offset tab-width)
 	(setq-local python-indent tab-width)
 	(setq-local evil-shift-width tab-width)
@@ -2032,12 +2059,12 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ))
 (add-hook 'latex-mode-hook (lambda ()
   (setq-local tab-width 2)
-	(setq-local indent-tabs-mode t)
+	(setq-local indent-tabs-mode default-indent-tabs-mode)
   (setq-local evil-shift-width tab-width)
 ))
 (add-hook 'TeX-mode-hook (lambda ()
   (setq-local tab-width 2)
-	(setq-local indent-tabs-mode t)
+	(setq-local indent-tabs-mode default-indent-tabs-mode)
   (setq-local evil-shift-width tab-width)
 ))
 (add-hook 'emacs-lisp-mode-hook (lambda ()
@@ -2310,7 +2337,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq whitespace-display-mappings '(
 	(tab-mark ?\t	[?\| ?\t])
 ))
-(global-whitespace-mode 1)
+;; (global-whitespace-mode 1)
 
 ;; tabify only leading whitespace
 (setq tabify-regexp "^\t* [ \t]+")
