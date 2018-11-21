@@ -731,12 +731,12 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; (setq show-paren-style 'expression)
 ;; (show-paren-mode 1)
 ; auto expanison of brackets
-(sp-local-pair 'prog-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
-(sp-local-pair 'text-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
-(sp-local-pair 'prog-mode "[" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
-(sp-local-pair 'text-mode "[" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
-(sp-local-pair 'prog-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
-(sp-local-pair 'text-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("| " "SPC")))
+(sp-local-pair 'prog-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
+(sp-local-pair 'text-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
+(sp-local-pair 'prog-mode "[" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
+(sp-local-pair 'text-mode "[" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
+(sp-local-pair 'prog-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
+(sp-local-pair 'text-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
 ;; (defun remove-parens-overlay (&rest _) (sp-remove-active-pair-overlay))
 ;; (advice-add 'evil-normal-state :after #'remove-parens-overlay)
 
@@ -775,6 +775,14 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; moved to theme definition
 ; push jump list every time entering insert mode
 (add-hook 'evil-insert-state-entry-hook 'evil--jumps-push)
+; do not remove space when leaving insert mode
+(setq evil-allow-remove-spaces nil)
+(defun my-evil-maybe-remove-spaces (func &rest args)
+  (if evil-allow-remove-spaces
+      (apply func args)
+    (setq evil-maybe-remove-spaces nil)
+    (apply func args)))
+(advice-add #'evil-maybe-remove-spaces :around #'my-evil-maybe-remove-spaces)
 
 ;; rainbow-delimiters
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
@@ -819,22 +827,70 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq evil-goggles-async-duration 1)
 (setq evil-goggles-blocking-duration 1)
 (setq evil-goggles--commands
-	'((evil-yank                  :face evil-goggles-yank-face                  :switch evil-goggles-enable-yank                  :advice evil-goggles--generic-async-advice)
-    (evil-join                  :face evil-goggles-join-face                  :switch evil-goggles-enable-join                  :advice evil-goggles--join-advice)
-    (evil-join-whitespace       :face evil-goggles-join-face                  :switch evil-goggles-enable-join                  :advice evil-goggles--join-advice)
-    (evil-fill-and-move         :face evil-goggles-fill-and-move-face         :switch evil-goggles-enable-fill-and-move         :advice evil-goggles--generic-async-advice)
-		(evil-shift-left            :face evil-goggles-shift-face                 :switch evil-goggles-enable-shift                 :advice evil-goggles--generic-async-advice)
-    (evil-shift-right           :face evil-goggles-shift-face                 :switch evil-goggles-enable-shift                 :advice evil-goggles--generic-async-advice)
-    (evil-org-<                 :face evil-goggles-shift-face                 :switch evil-goggles-enable-shift                 :advice evil-goggles--generic-async-advice)
-    (evil-org->                 :face evil-goggles-shift-face                 :switch evil-goggles-enable-shift                 :advice evil-goggles--generic-async-advice)
-    (evil-surround-region       :face evil-goggles-surround-face              :switch evil-goggles-enable-surround              :advice evil-goggles--generic-async-advice)
-    (evil-commentary            :face evil-goggles-commentary-face            :switch evil-goggles-enable-commentary            :advice evil-goggles--generic-async-advice)
-    (evilnc-comment-operator    :face evil-goggles-nerd-commenter-face        :switch evil-goggles-enable-nerd-commenter        :advice evil-goggles--generic-async-advice)
-    (evil-replace-with-register :face evil-goggles-replace-with-register-face :switch evil-goggles-enable-replace-with-register :advice evil-goggles--generic-async-advice-1)
-    (evil-set-marker            :face evil-goggles-set-marker-face            :switch evil-goggles-enable-set-marker            :advice evil-goggles--set-marker-advice)
-    (evil-record-macro          :face evil-goggles-record-macro-face          :switch evil-goggles-enable-record-macro          :advice evil-goggles--record-macro-advice)
-    (evil-paste-before          :face evil-goggles-paste-face                 :switch evil-goggles-enable-paste                 :advice evil-goggles--paste-advice :after t)
-    (evil-paste-after           :face evil-goggles-paste-face                 :switch evil-goggles-enable-paste                 :advice evil-goggles--paste-advice :after t)))
+	    '((evil-yank
+         :face evil-goggles-yank-face
+         :switch evil-goggles-enable-yank
+         :advice evil-goggles--generic-async-advice)
+        (evil-join
+         :face evil-goggles-join-face
+         :switch evil-goggles-enable-join
+         :advice evil-goggles--join-advice)
+        (evil-join-whitespace
+         :face evil-goggles-join-face
+         :switch evil-goggles-enable-join
+         :advice evil-goggles--join-advice)
+        (evil-fill-and-move
+         :face evil-goggles-fill-and-move-face
+         :switch evil-goggles-enable-fill-and-move
+         :advice evil-goggles--generic-async-advice)
+        (evil-shift-left
+         :face evil-goggles-shift-face
+         :switch evil-goggles-enable-shift
+         :advice evil-goggles--generic-async-advice)
+        (evil-shift-right
+         :face evil-goggles-shift-face
+         :switch evil-goggles-enable-shift
+         :advice evil-goggles--generic-async-advice)
+        (evil-org-<
+         :face evil-goggles-shift-face
+         :switch evil-goggles-enable-shift
+         :advice evil-goggles--generic-async-advice)
+        (evil-org->
+         :face evil-goggles-shift-face
+         :switch evil-goggles-enable-shift
+         :advice evil-goggles--generic-async-advice)
+        (evil-surround-region
+         :face evil-goggles-surround-face
+         :switch evil-goggles-enable-surround
+         :advice evil-goggles--generic-async-advice)
+        (evil-commentary
+         :face evil-goggles-commentary-face
+         :switch evil-goggles-enable-commentary
+         :advice evil-goggles--generic-async-advice)
+        (evilnc-comment-operator
+         :face evil-goggles-nerd-commenter-face
+         :switch evil-goggles-enable-nerd-commenter
+         :advice evil-goggles--generic-async-advice)
+        (evil-replace-with-register
+         :face evil-goggles-replace-with-register-face
+         :switch evil-goggles-enable-replace-with-register
+         :advice evil-goggles--generic-async-advice-1)
+        (evil-set-marker
+         :face evil-goggles-set-marker-face
+         :switch evil-goggles-enable-set-marker
+         :advice evil-goggles--set-marker-advice)
+        (evil-record-macro
+         :face evil-goggles-record-macro-face
+         :switch evil-goggles-enable-record-macro
+         :advice evil-goggles--record-macro-advice)
+        (evil-paste-before
+         :face evil-goggles-paste-face
+         :switch evil-goggles-enable-paste
+         :advice evil-goggles--paste-advice :after t)
+        (evil-paste-after
+         :face evil-goggles-paste-face
+         :switch evil-goggles-enable-paste
+         :advice evil-goggles--paste-advice :after t)))
 (evil-goggles-mode 1)
 
 ;; evil-collection
@@ -1136,7 +1192,6 @@ command (ran after) is mysteriously incorrect."
 	(sp-forward-sexp))
 (evil-define-motion evil-sp-backward-sexp () :type exclusive
 	(sp-backward-sexp))
-
 (defun peek-region-in-split ()
   "Doesn't work.  Improve."
   (interactive)
@@ -1443,10 +1498,10 @@ command (ran after) is mysteriously incorrect."
 	"9"	 '((lambda () (interactive) (winum-select-window-9) (delayed-mode-line-update))
 		:which-key "move to window 9")
 
-	"TAB" '(evil-buffer
+	"TAB" '((lambda () (interactive) (switch-to-buffer (other-buffer)) (delayed-mode-line-update))
 		:which-key "switch to other buffer")
 
-	"q" '(kill-this-buffer
+  "q" '(kill-this-buffer
 		:which-key "kill current buffer")
 )
 ; create fake key to represent move to window keys
@@ -1521,7 +1576,15 @@ command (ran after) is mysteriously incorrect."
 ;; (evil-define-key 'motion 'global (kbd ", TAB") 'evil-buffer)
 ;; (evil-define-key 'motion 'global (kbd ", <tab>") 'evil-buffer)
 ; ,d delete line content
-(evil-define-key 'normal 'global ",d" (lambda () (interactive) (evil-first-non-blank) (kill-line)))
+(evil-define-key 'normal 'global ",d"
+  (lambda ()
+    (interactive)
+    (if (save-excursion
+          (beginning-of-line)
+          (looking-at "[ \t]*$"))
+        (beginning-of-line)
+    (evil-first-non-blank))
+    (call-interactively 'evil-delete-line)))
 ; ,f fix spelling
 (evil-define-key 'normal 'global ",f" 'flyspell-auto-correct-word)
 (evil-define-key 'normal 'global ",F" (lambda () (interactive) (flyspell-lazy-check-visible) (flyspell-auto-correct-previous-word (point))))
@@ -1835,6 +1898,10 @@ command (ran after) is mysteriously incorrect."
   "M-j" 'next-line-or-history-element
   "M-l" 'exit-minibuffer
 )
+
+;; newline
+;; (evil-define-key 'insert 'global (kbd "RET") 'newline)
+;; (evil-define-key 'insert 'global (kbd "<return>") 'newline)
 
 ;; help mode
 (evil-define-key 'motion help-mode-map (kbd "u") 'help-go-back)
