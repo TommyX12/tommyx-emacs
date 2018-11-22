@@ -1812,8 +1812,8 @@ command (ran after) is mysteriously incorrect."
 ;; TODO apparently not working
 (evil-define-key 'normal eshell-mode-map (kbd "C-j") 'eshell-previous-prompt)
 (evil-define-key 'normal eshell-mode-map (kbd "C-k") 'eshell-next-prompt)
-(evil-define-key 'insert eshell-mode-map (kbd "C-j") 'eshell-previous-matching-input-from-input)
-(evil-define-key 'insert eshell-mode-map (kbd "C-k") 'eshell-next-matching-input-from-input)
+(evil-define-key 'insert eshell-mode-map (kbd "M-j") 'eshell-previous-matching-input-from-input)
+(evil-define-key 'insert eshell-mode-map (kbd "M-k") 'eshell-next-matching-input-from-input)
 
 ;; helm
 ;; (global-set-key (kbd "M-x") 'helm-M-x)
@@ -1898,10 +1898,6 @@ command (ran after) is mysteriously incorrect."
   "M-j" 'next-line-or-history-element
   "M-l" 'exit-minibuffer
 )
-
-;; newline
-;; (evil-define-key 'insert 'global (kbd "RET") 'newline)
-;; (evil-define-key 'insert 'global (kbd "<return>") 'newline)
 
 ;; help mode
 (evil-define-key 'motion help-mode-map (kbd "u") 'help-go-back)
@@ -2116,6 +2112,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 	(setq-local tab-width 4)
 	(setq-local indent-tabs-mode default-indent-tabs-mode)
 	(setq-local python-indent-offset tab-width)
+	(setq-local highlight-indentation-offset tab-width)
 	(setq-local python-indent tab-width)
 	(setq-local evil-shift-width tab-width)
 	(setq-local yas-indent-line 'auto)
