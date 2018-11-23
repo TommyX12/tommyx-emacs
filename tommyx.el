@@ -332,7 +332,71 @@
 ;; 	:config
 ;; 	(persp-mode)
 ;; )
-(use-package git-gutter :ensure t)
+;; (use-package git-gutter :ensure t
+;;   :config
+;;   (setq
+;; 	 git-gutter:window-width 1
+;; 	 git-gutter:update-interval 5
+;; 	 git-gutter:modified-sign "|"
+;; 	 git-gutter:added-sign "|"
+;; 	 git-gutter:deleted-sign "-")
+;;   (global-git-gutter-mode +1))
+(use-package git-gutter-fringe :ensure t
+  :config
+
+  (fringe-helper-define 'git-gutter-fr:added 'center
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX...")
+
+  (fringe-helper-define 'git-gutter-fr:deleted 'center
+    "........"
+    "........"
+    "........"
+    "XXXXXXXX"
+    "XXXXXXXX"
+    "........"
+    "........"
+    "........")
+
+  (fringe-helper-define 'git-gutter-fr:modified 'center
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX..."
+    "...XX...")
+  (setq
+	 git-gutter:update-interval 5
+	 git-gutter:modified-sign ""
+	 git-gutter:added-sign ""
+	 git-gutter:deleted-sign ""
+   git-gutter:window-width nil)
+
+  (global-git-gutter-mode +1))
 (use-package yascroll :ensure t)
 (use-package color-identifiers-mode :ensure t)
 (use-package auto-highlight-symbol :ensure t
@@ -583,15 +647,6 @@
 
 ;; companion
 (companion-open)
-
-;; git gutter
-(setq
-	git-gutter:window-width 1
-	git-gutter:update-interval 5
-	git-gutter:modified-sign "|"
-	git-gutter:added-sign "|"
-	git-gutter:deleted-sign "-")
-(global-git-gutter-mode +1)
 
 ;; which-function
 (which-function-mode 1)
@@ -2260,39 +2315,39 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
    #b00011100
    #b00001110])
 (define-fringe-bitmap 'right-curly-arrow
-  [#b11000000
-   #b11000000
-   #b11000000
-   #b11000000
-   #b11000000
-   #b11000000
-   #b11000000
-   #b11000000
-   #b11000000
-   #b11000000
-   #b11000000
-   #b11000000
-   #b11000000
-   #b11000000
-   #b11000000
-   #b11000000])
+  [#b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000])
 (define-fringe-bitmap 'left-curly-arrow
-  [#b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011
-   #b00000011])
+  [#b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000])
 
 ;; word wrap
 (add-hook 'prog-mode-hook (lambda () (toggle-word-wrap 1)))
