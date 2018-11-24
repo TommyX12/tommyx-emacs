@@ -1739,9 +1739,9 @@ command (ran after) is mysteriously incorrect."
 (evil-define-key 'visual 'global ",,n" 'narrow-to-region)
 (evil-define-key 'motion 'global ",,N" 'widen)
 ; use enter and S-enter to open blank lines. TODO implement numeric prefix arg
-(evil-define-key 'normal 'global (kbd "M-o") (lambda () (interactive) (save-excursion (evil-insert-newline-below))))
-(evil-define-key 'normal 'global (kbd "C-o") (lambda () (interactive) (save-excursion (evil-insert-newline-above))))
-(evil-define-key 'normal 'global (kbd "C-M-o") (lambda () (interactive) (save-excursion (evil-insert-newline-above)) (save-excursion (evil-insert-newline-below))))
+(evil-define-key 'normal 'global (kbd "M-o") (lambda () (interactive) (save-excursion (evil-insert-newline-below) (indent-according-to-mode))))
+(evil-define-key 'normal 'global (kbd "C-o") (lambda () (interactive) (save-excursion (evil-insert-newline-above) (indent-according-to-mode))))
+(evil-define-key 'normal 'global (kbd "C-M-o") (lambda () (interactive) (save-excursion (evil-insert-newline-above) (indent-according-to-mode)) (save-excursion (evil-insert-newline-below) (indent-according-to-mode))))
 ; neo tree
 (evil-define-key 'motion 'global ",n" (lambda () (interactive) (neotree-show)))
 (evil-define-key 'motion 'global ",N" (lambda () (interactive) (neotree-find)))
