@@ -1,12 +1,14 @@
 import copy
 
+from datetime import date
+
 class Property(object):
 
-    def __init__(self, default_value = None):
-        self.default_value = default_value
+    def __init__(self):
+        pass
 
     def get_default_value(self):
-        return copy.deepcopy(self.default_value)
+        raise NotImplementedError()
 
     def encode(self, data):
         raise NotImplementedError()
@@ -17,7 +19,11 @@ class Property(object):
 class PrimitiveProperty(Property):
     
     def __init__(self, default_value = None):
-        Property.__init__(self, default_value)
+        Property.__init__(self)
+        self.default_value = default_value
+        
+    def get_default_value(self):
+        return copy.deepcopy(self.default_value)
 
     def encode(self, data):
         return data
@@ -27,9 +33,12 @@ class PrimitiveProperty(Property):
 
 class ObjectProperty(Property):
 
-    def __init__(self, prop_type, default_value = None):
-        Property.__init__(self, default_value)
+    def __init__(self, prop_type):
+        Property.__init__(self)
         self.prop_type = prop_type
+
+    def get_default_value(self):
+        return self.prop_type()
 
     def encode(self, prop):
         return prop.encode() if prop is not None else None
@@ -39,9 +48,12 @@ class ObjectProperty(Property):
 
 class ListProperty(Property):
 
-    def __init__(self, prop_type, default_value = []):
-        Property.__init__(self, default_value)
+    def __init__(self, prop_type):
+        Property.__init__(self)
         self.prop_type = prop_type
+
+    def get_default_value(self):
+        return []
 
     def encode(self, props):
         return [
@@ -57,9 +69,12 @@ class ListProperty(Property):
 
 class DictProperty(Property):
     
-    def __init__(self, prop_type, default_value = {}):
+    def __init__(self, prop_type):
         Property.__init__(self, default_value)
         self.prop_type = prop_type
+
+    def get_default_value(self):
+        return {}
 
     def encode(self, props):
         return {
@@ -157,13 +172,14 @@ class PriorityProtocol(PrimitiveProtocol):
 
 class DateProtocol(PrimitiveProtocol):
     def __init__(self):
-        PrimitiveProtocol.__init__(self, date())
+        PrimitiveProtocol.__init__(self, date.today())
         
     def encode(self):
-        raise NotImplementedError()
+        return '-'.join(self.value.year, self.value.month, self.value.day)
 
     def decode(self, encoded_protocol):
-        raise NotImplementedError()
+        components = [int(component) for component in encoded_protocol.split('-')]
+        self.value = date(*components)
 
 class ConfigProtocol(Protocol):
     properties = {
@@ -184,11 +200,68 @@ class TaskProtocol(Protocol):
         'priority': ObjectProperty(PriorityProtocol),
     }
 
-class SchedulingProtocol(Protocol):
+class SchedulingRequestProtocol(Protocol):
     properties = {
         'config': ObjectProperty(ConfigProtocol),
         'tasks': ListProperty(TaskProtocol),
         'work_time': DictProperty(DurationProtocol)
+    }
+
+class SchedulingGeneralInfoProtocol(Protocol):
+    properties = {
+        "stress": ObjectProperty(RatioProtocol),
+    }
+
+class ImpossibleTaskProtocol(Protocol):
+    properties = {
+        "id": ObjectProperty(IDProtocol),
+    }
+
+class AlertsProtocol(Protocol):
+    properties = {
+        "impossible": ListProperty(ImpossibleTaskProtocol),
+    }
+
+class DailyScheduleAmountProtocol(Protocol):
+    properties = {
+        "current": ObjectProperty(DurationProtocol),
+        "total": ObjectProperty(DurationProtocol),
+        "stress": ObjectProperty(RatioProtocol),
+    }
+
+class DailyScheduleEntryProtocol(Protocol):
+    properties = {
+        "id": ObjectProperty(IDProtocol),
+        "amount": ObjectProperty(DailyScheduleAmountProtocol),
+    }
+
+class DailyFragmentAmountProtocol(Protocol):
+    properties = {
+        "current": ObjectProperty(DurationProtocol),
+        "total": ObjectProperty(DurationProtocol),
+    }
+
+class DailyFragmentEntryProtocol(Protocol):
+    properties = {
+        "id": ObjectProperty(IDProtocol),
+        "amount": ObjectProperty(DailyFragmentAmountProtocol),
+    }
+
+class DailyInfoProtocol(Protocol):
+    properties = {
+        "date": ObjectProperty(DateProtocol),
+        "work_time": ObjectProperty(DurationProtocol),
+        "schedule": ListProperty(DailyScheduleEntryProtocol),
+        "fragments": ListProperty(DailyFragmentEntryProtocol),
+        "free_time": ObjectProperty(DurationProtocol),
+        "average_stress": ObjectProperty(RatioProtocol),
+    }
+
+class SchedulingResponseProtocol(Protocol):
+    properties = {
+        "general": ObjectProperty(SchedulingGeneralInfoProtocol),
+        "alerts": ObjectProperty(AlertsProtocol),
+        "daily_info": ListProperty(DailyInfoProtocol),
     }
 
 class EngineRequestProtocol(Protocol):
@@ -203,5 +276,4 @@ class EngineResponseProtocol(Protocol):
         'error': PrimitiveProperty(),
         'data': PrimitiveProperty(),
     }
-        
 

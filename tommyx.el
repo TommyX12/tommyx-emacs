@@ -332,71 +332,71 @@
 ;; 	:config
 ;; 	(persp-mode)
 ;; )
-;; (use-package git-gutter :ensure t
-;;   :config
-;;   (setq
-;; 	 git-gutter:window-width 1
-;; 	 git-gutter:update-interval 5
-;; 	 git-gutter:modified-sign "|"
-;; 	 git-gutter:added-sign "|"
-;; 	 git-gutter:deleted-sign "-")
-;;   (global-git-gutter-mode +1))
-(use-package git-gutter-fringe :ensure t
+(use-package git-gutter :ensure t
   :config
-
-  (fringe-helper-define 'git-gutter-fr:added 'center
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX...")
-
-  (fringe-helper-define 'git-gutter-fr:deleted 'center
-    "........"
-    "........"
-    "........"
-    "XXXXXXXX"
-    "XXXXXXXX"
-    "........"
-    "........"
-    "........")
-
-  (fringe-helper-define 'git-gutter-fr:modified 'center
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX..."
-    "...XX...")
   (setq
+	 git-gutter:window-width 1
 	 git-gutter:update-interval 5
-	 git-gutter:modified-sign ""
-	 git-gutter:added-sign ""
-	 git-gutter:deleted-sign ""
-   git-gutter:window-width nil)
-
+	 git-gutter:modified-sign " "
+	 git-gutter:added-sign " "
+	 git-gutter:deleted-sign " ")
   (global-git-gutter-mode +1))
+;; (use-package git-gutter-fringe :ensure t
+;;   :config
+
+;;   (fringe-helper-define 'git-gutter-fr:added 'center
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX...")
+
+;;   (fringe-helper-define 'git-gutter-fr:deleted 'center
+;;     "........"
+;;     "........"
+;;     "........"
+;;     "XXXXXXXX"
+;;     "XXXXXXXX"
+;;     "........"
+;;     "........"
+;;     "........")
+
+;;   (fringe-helper-define 'git-gutter-fr:modified 'center
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX..."
+;;     "...XX...")
+;;   (setq
+;; 	 git-gutter:update-interval 5
+;; 	 git-gutter:modified-sign ""
+;; 	 git-gutter:added-sign ""
+;; 	 git-gutter:deleted-sign ""
+;;    git-gutter:window-width nil)
+
+;;   (global-git-gutter-mode +1))
 (use-package yascroll :ensure t)
 (use-package color-identifiers-mode :ensure t)
 (use-package auto-highlight-symbol :ensure t

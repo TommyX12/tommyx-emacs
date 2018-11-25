@@ -15,10 +15,11 @@ class EngineController(object):
     def execute(self, decoded_request):
         command = decoded_request.command
         if command == 'schedule':
-            decoded_args = SchedulingProtocol().decode(decoded_request.args)
+            decoded_args = SchedulingRequestProtocol().decode(decoded_request.args)
+            engine_response = self.engine.schedule(decoded_args)
             return EngineResponseProtocol() \
                 .set_property('status', 'success') \
-                .set_property('data', None) # TODO
+                .set_property('data', encoded_response)
 
         else:
             return EngineResponseProtocol() \

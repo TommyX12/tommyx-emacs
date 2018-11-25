@@ -136,13 +136,16 @@
 	(green         (if (eq theme 'dark) (if (has-true-color) "#67b11d" "#67b11d") (if (has-true-color) "#67b11d" "#5faf00")))
 	(green-bg      (if (eq theme 'dark) (if (has-true-color) "#293235" "#262626") (if (has-true-color) "#edf2e9" "#ffffff")))
 	(green-bg-s    (if (eq theme 'dark) (if (has-true-color) "#29422d" "#262626") (if (has-true-color) "#dae6d0" "#ffffff")))
+	(green-bg-s2   (if (eq theme 'dark) (if (has-true-color) "#40804A" "#262626") (if (has-true-color) "#6F994D" "#ffffff")))
 	(cyan          (if (eq theme 'dark) (if (has-true-color) "#28def0" "#00ffff") (if (has-true-color) "#21b8c7" "#008080")))
 	(red           (if (eq theme 'dark) (if (has-true-color) "#f2241f" "#d70000") (if (has-true-color) "#f2241f" "#d70008")))
 	(red-bg        (if (eq theme 'dark) (if (has-true-color) "#3c2a2c" "#262626") (if (has-true-color) "#faede4" "#ffffff")))
 	(red-bg-s      (if (eq theme 'dark) (if (has-true-color) "#512e31" "#262626") (if (has-true-color) "#eed9d2" "#ffffff")))
+	(red-bg-s2     (if (eq theme 'dark) (if (has-true-color) "#804045" "#262626") (if (has-true-color) "#99492E" "#ffffff")))
 	(blue          (if (eq theme 'dark) (if (has-true-color) "#4f97d7" "#268bd2") (if (has-true-color) "#3a81c3" "#268bd2")))
 	(blue-bg       (if (eq theme 'dark) (if (has-true-color) "#293239" "#262626") (if (has-true-color) "#edf1ed" "#d7d7ff")))
 	(blue-bg-s     (if (eq theme 'dark) (if (has-true-color) "#2d4252" "#262626") (if (has-true-color) "#d1dcdf" "#d7d7ff")))
+	(blue-bg-s2    (if (eq theme 'dark) (if (has-true-color) "#406075" "#262626") (if (has-true-color) "#5C8299" "#d7d7ff")))
 	(magenta       (if (eq theme 'dark) (if (has-true-color) "#a31db1" "#af00df") (if (has-true-color) "#a31db1" "#800080")))
 	(yellow        (if (eq theme 'dark) (if (has-true-color) "#b1951d" "#875f00") (if (has-true-color) "#b1951d" "#875f00")))
 	(yellow-bg     (if (eq theme 'dark) (if (has-true-color) "#32322c" "#262626") (if (has-true-color) "#f6f1e1" "#ffffff")))
@@ -527,9 +530,9 @@
 	`(jabber-roster-user-xa ((,class (:foreground ,aqua))))
 
 ;;;;; git-gutter
-	 `(git-gutter:added ((,class (:foreground ,green :inherit bold))))
-	 `(git-gutter:deleted ((,class (:foreground ,red :inherit bold))))
-	 `(git-gutter:modified ((,class (:foreground ,blue :inherit bold))))
+	 `(git-gutter:added ((,class (:background ,green-bg-s2))))
+	 `(git-gutter:deleted ((,class (:background ,red-bg-s2))))
+	 `(git-gutter:modified ((,class (:background ,blue-bg-s2))))
 
 ;;;;; git-gutter-fr
 	`(git-gutter-fr:added ((,class (:foreground ,green :inherit bold))))
