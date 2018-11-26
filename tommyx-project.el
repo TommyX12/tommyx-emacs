@@ -65,4 +65,10 @@
 	"pC" '(projectile-compile-project
 		:which-key "compile project")
 
+  "pt" '(projectile-run-term
+    :which-key "open project terminal")
+
+  "pe" '(projectile-run-eshell
+    :which-key "open project eshell")
+
 )

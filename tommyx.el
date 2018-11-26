@@ -1372,7 +1372,7 @@ command (ran after) is mysteriously incorrect."
 	"is" '(counsel-semantic-or-imenu
 		:which-key "semantic item")
 
-	"iS" '(imenu
+	"iS" '((lambda () (interactive) (call-interactively 'imenu))
 		:which-key "semantic item tree")
 
 	"x" '(counsel-M-x
@@ -1488,6 +1488,8 @@ command (ran after) is mysteriously incorrect."
 		:which-key "redo window config")
   "wp" '(peek-region-in-split
     :which-key "peek region in split")
+	"wt" '((lambda () (interactive) (evil-window-set-height 12))
+		:which-key "make into terminal height")
 
 	"n" '(ivy-switch-buffer
 		:which-key "switch buffer")
@@ -2479,7 +2481,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq tramp-default-method "ssh")
 
 ;; blink matching parens
-(setq blink-matching-delay 0.1)
+(setq blink-matching-paren nil) ; we have smartparens, don't need this
 
 ;; winner mode (record window config change so can undo)
 (winner-mode 1)
