@@ -9,7 +9,7 @@ from engine_controller import EngineController
 from serializer import JSONSerializer
 
 def main():
-    engine = Engine()
+    engine = Engine.create()
     serializer = JSONSerializer()
     engine_controller = EngineController(engine, serializer)
     server = STDIOServer(engine_controller.request_handler)

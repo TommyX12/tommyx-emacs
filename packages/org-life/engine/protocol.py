@@ -1,6 +1,7 @@
 import copy
 
-from datetime import date
+from datetime import date, timedelta
+
 
 class Property(object):
 
@@ -16,6 +17,7 @@ class Property(object):
     def decode(self, encoded):
         raise NotImplementedError()
 
+    
 class PrimitiveProperty(Property):
     
     def __init__(self, default_value = None):
@@ -31,6 +33,7 @@ class PrimitiveProperty(Property):
     def decode(self, encoded):
         return encoded
 
+    
 class ObjectProperty(Property):
 
     def __init__(self, prop_type):
@@ -46,6 +49,7 @@ class ObjectProperty(Property):
     def decode(self, encoded_prop):
         return self.prop_type().decode(encoded_prop) if encoded_prop is not None else None
 
+    
 class ListProperty(Property):
 
     def __init__(self, prop_type):
@@ -67,6 +71,7 @@ class ListProperty(Property):
             for encoded_prop in encoded_props
         ] if encoded_props is not None else None
 
+    
 class DictProperty(Property):
     
     def __init__(self, prop_type):
@@ -146,134 +151,159 @@ class PrimitiveProtocol(Protocol):
 # ============= Implementations =============
 
 
-class CommandProtocol(PrimitiveProtocol):
+class Command(PrimitiveProtocol):
     def __init__(self):
         PrimitiveProperty.__init__(self, None)
 
-class DurationProtocol(PrimitiveProtocol):
+class Duration(PrimitiveProtocol):
     def __init__(self):
         PrimitiveProperty.__init__(self, 0)
 
-class RatioProtocol(PrimitiveProtocol):
+class Ratio(PrimitiveProtocol):
     def __init__(self):
         PrimitiveProperty.__init__(self, 0.0)
 
-class DaysProtocol(PrimitiveProtocol):
+class Days(PrimitiveProtocol):
     def __init__(self):
         PrimitiveProperty.__init__(self, 0)
 
-class IDProtocol(PrimitiveProtocol):
+class TaskID(PrimitiveProtocol):
     def __init__(self):
         PrimitiveProperty.__init__(self, 0)
 
-class PriorityProtocol(PrimitiveProtocol):
+class Priority(PrimitiveProtocol):
     def __init__(self):
         PrimitiveProperty.__init__(self, 0)
 
-class DateProtocol(PrimitiveProtocol):
-    def __init__(self):
-        PrimitiveProtocol.__init__(self, date.today())
+class Date(Protocol):
+
+    def __init__(self, date_object = None):
+        Protocol.__init__(self)
+        if date_object is None:
+            date_object = date.today()
+
+        self._date = date_object
         
     def encode(self):
-        return '-'.join(self.value.year, self.value.month, self.value.day)
+        return '-'.join(self._date.year, self._date.month, self._date.day)
 
     def decode(self, encoded_protocol):
         components = [int(component) for component in encoded_protocol.split('-')]
-        self.value = date(*components)
+        self._date = date(*components)
 
-class ConfigProtocol(Protocol):
+    def today():
+        return Date(date.today())
+
+    def copy(self):
+        return Date(self._date)
+
+    def add_days(days):
+        return Date(self._date + timedelta(days = days))
+
+    def __hash__(self):
+        '''
+        Make possible to be used as dictionary key.
+        '''
+        return hash(self._date)
+
+class Config(Protocol):
     properties = {
-        'today': ObjectProperty(DateProtocol),
-        'scheduling_days': ObjectProperty(DaysProtocol),
-        'daily_info_days': ObjectProperty(DaysProtocol),
-        'fragment_max_stress': ObjectProperty(RatioProtocol),
-        'fragment_max_percentage': ObjectProperty(RatioProtocol),
+        'today': ObjectProperty(Date),
+        'scheduling_days': ObjectProperty(Days),
+        'daily_info_days': ObjectProperty(Days),
+        'fragment_max_stress': ObjectProperty(Ratio),
+        'fragment_max_percentage': ObjectProperty(Ratio),
     }
 
-class TaskProtocol(Protocol):
+class Task(Protocol):
     properties = {
-        'id': ObjectProperty(IDProtocol),
-        'from': ObjectProperty(DateProtocol),
-        'to': ObjectProperty(DateProtocol),
-        'amount': ObjectProperty(DurationProtocol),
-        'done': ObjectProperty(DurationProtocol),
-        'priority': ObjectProperty(PriorityProtocol),
+        'id': ObjectProperty(TaskID),
+        'from': ObjectProperty(Date),
+        'to': ObjectProperty(Date),
+        'amount': ObjectProperty(Duration),
+        'done': ObjectProperty(Duration),
+        'priority': ObjectProperty(Priority),
     }
 
-class SchedulingRequestProtocol(Protocol):
+class SchedulingRequest(Protocol):
     properties = {
-        'config': ObjectProperty(ConfigProtocol),
-        'tasks': ListProperty(TaskProtocol),
-        'work_time': DictProperty(DurationProtocol)
+        'config': ObjectProperty(Config),
+        'tasks': ListProperty(Task),
+        'work_time': DictProperty(Duration),
     }
 
-class SchedulingGeneralInfoProtocol(Protocol):
+class SchedulingGeneralInfo(Protocol):
     properties = {
-        "stress": ObjectProperty(RatioProtocol),
+        "stress": ObjectProperty(Ratio),
     }
 
-class ImpossibleTaskProtocol(Protocol):
+class ImpossibleTask(Protocol):
     properties = {
-        "id": ObjectProperty(IDProtocol),
+        "id": ObjectProperty(TaskID),
     }
 
-class AlertsProtocol(Protocol):
+class Alerts(Protocol):
     properties = {
-        "impossible": ListProperty(ImpossibleTaskProtocol),
+        "impossible_tasks": ListProperty(ImpossibleTask),
     }
 
-class DailyScheduleAmountProtocol(Protocol):
+class DailyScheduleAmount(Protocol):
     properties = {
-        "current": ObjectProperty(DurationProtocol),
-        "total": ObjectProperty(DurationProtocol),
-        "stress": ObjectProperty(RatioProtocol),
+        "current": ObjectProperty(Duration),
+        "total": ObjectProperty(Duration),
+        "stress": ObjectProperty(Ratio),
     }
 
-class DailyScheduleEntryProtocol(Protocol):
+class DailyScheduleEntry(Protocol):
     properties = {
-        "id": ObjectProperty(IDProtocol),
-        "amount": ObjectProperty(DailyScheduleAmountProtocol),
+        "id": ObjectProperty(TaskID),
+        "amount": ObjectProperty(DailyScheduleAmount),
     }
 
-class DailyFragmentAmountProtocol(Protocol):
+class DailyFragmentAmount(Protocol):
     properties = {
-        "current": ObjectProperty(DurationProtocol),
-        "total": ObjectProperty(DurationProtocol),
+        "current": ObjectProperty(Duration),
+        "total": ObjectProperty(Duration),
     }
 
-class DailyFragmentEntryProtocol(Protocol):
+class DailyFragmentEntry(Protocol):
     properties = {
-        "id": ObjectProperty(IDProtocol),
-        "amount": ObjectProperty(DailyFragmentAmountProtocol),
+        "id": ObjectProperty(TaskID),
+        "amount": ObjectProperty(DailyFragmentAmount),
     }
 
-class DailyInfoProtocol(Protocol):
+class DailyInfo(Protocol):
     properties = {
-        "date": ObjectProperty(DateProtocol),
-        "work_time": ObjectProperty(DurationProtocol),
-        "schedule": ListProperty(DailyScheduleEntryProtocol),
-        "fragments": ListProperty(DailyFragmentEntryProtocol),
-        "free_time": ObjectProperty(DurationProtocol),
-        "average_stress": ObjectProperty(RatioProtocol),
+        "date": ObjectProperty(Date),
+        "work_time": ObjectProperty(Duration),
+        "schedule": ListProperty(DailyScheduleEntry),
+        "fragments": ListProperty(DailyFragmentEntry),
+        "free_time": ObjectProperty(Duration),
+        "average_stress": ObjectProperty(Ratio),
     }
 
-class SchedulingResponseProtocol(Protocol):
+class SchedulingResponse(Protocol):
     properties = {
-        "general": ObjectProperty(SchedulingGeneralInfoProtocol),
-        "alerts": ObjectProperty(AlertsProtocol),
-        "daily_info": ListProperty(DailyInfoProtocol),
+        "general": ObjectProperty(SchedulingGeneralInfo),
+        "alerts": ObjectProperty(Alerts),
+        "daily_infos": ListProperty(DailyInfo),
     }
 
-class EngineRequestProtocol(Protocol):
+class EngineRequest(Protocol):
     properties = {
         'command': PrimitiveProperty(),
         'args': PrimitiveProperty(),
     }
 
-class EngineResponseProtocol(Protocol):
+class EngineResponse(Protocol):
     properties = {
         'status': PrimitiveProperty(),
         'error': PrimitiveProperty(),
         'data': PrimitiveProperty(),
     }
 
+class FreeTimeInfo(Protocol):
+    properties = {
+        "free_time": ObjectProperty(Duration),
+        "average_stress": ObjectProperty(Ratio),
+    }

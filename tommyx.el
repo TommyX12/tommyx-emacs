@@ -339,7 +339,8 @@
 	 git-gutter:update-interval 5
 	 git-gutter:modified-sign " "
 	 git-gutter:added-sign " "
-	 git-gutter:deleted-sign " ")
+	 git-gutter:deleted-sign " "
+   git-gutter:visual-line t)
   (global-git-gutter-mode +1))
 ;; (use-package git-gutter-fringe :ensure t
 ;;   :config
@@ -1449,8 +1450,9 @@ command (ran after) is mysteriously incorrect."
 	"C-f" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
 		:which-key "search selection in all buffers")
 
-  "wp" '(peek-region-in-split
-    :which-key "peek region in split")
+  ; not working
+  ;; "wp" '(peek-region-in-split
+  ;;   :which-key "peek region in split")
 )
 (general-define-key
 	:keymaps 'override

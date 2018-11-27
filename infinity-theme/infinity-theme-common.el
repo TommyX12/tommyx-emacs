@@ -530,9 +530,9 @@
 	`(jabber-roster-user-xa ((,class (:foreground ,aqua))))
 
 ;;;;; git-gutter
-	 `(git-gutter:added ((,class (:background ,green-bg-s2))))
-	 `(git-gutter:deleted ((,class (:background ,red-bg-s2))))
-	 `(git-gutter:modified ((,class (:background ,blue-bg-s2))))
+	 `(git-gutter:added ((,class (:foreground ,green :background ,green-bg-s2))))
+	 `(git-gutter:deleted ((,class (:foreground ,red :background ,red-bg-s2))))
+	 `(git-gutter:modified ((,class (:foreground ,blue :background ,blue-bg-s2))))
 
 ;;;;; git-gutter-fr
 	`(git-gutter-fr:added ((,class (:foreground ,green :inherit bold))))
