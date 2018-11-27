@@ -2204,7 +2204,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ))
 
 ;; set frame title
-(setq frame-title-format (concat "TommyX's GNU Emacs " emacs-version))
+(setq frame-title-format (concat "TommyX's Emacs " emacs-version))
 
 ;; attempt to improve font-lock performance
 ;; (setq jit-lock-defer-time 0)

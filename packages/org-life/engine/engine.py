@@ -17,12 +17,36 @@ class WorkTimeParser(object):
         raise NotImplementedError()
 
 
+class Planner(object):
+
+    def __init__(self):
+        pass
+
+    def plan(self, tasks, schedule, direction = FillDirection.EARLY):
+        raise NotImplementedError()
+
+
+class StressAnalyzer(object):
+
+    def __init__(self):
+        pass
+
+    def analyze(self, schedule):
+        raise NotImplementedError()
+
+
 class Fragmentizer(object):
 
     def __init__(self):
         pass
 
-    def suggest_fragment_tasks(self, tasks, schedule):
+    def suggest_fragments(self, tasks, schedule):
+        raise NotImplementedError()
+
+
+class Session(object):
+
+    def __init__(self):
         raise NotImplementedError()
 
 
@@ -36,7 +60,7 @@ class Schedule(object):
     def copy(self):
         raise NotImplementedError()
     
-    def plan(self, tasks, direction = FillDirection.EARLY):
+    def add_sessions(self, sessions):
         raise NotImplementedError()
 
         self._invalidate_cache()
@@ -48,10 +72,6 @@ class Schedule(object):
         self._cache_free_time_info_if_needed()
         raise NotImplementedError()
 
-    def get_overall_stress(self):
-        self._cache_free_time_info_if_needed()
-        raise NotImplementedError()
-
     def get_impossible_tasks(self):
         raise NotImplementedError()
 
@@ -60,16 +80,14 @@ class Schedule(object):
 
     def from_work_time_list(work_time_list):
         raise NotImplementedError()
-
-    def from_work_time_config(work_time_parser, schedule_start, schedule_end, work_time_config):
-        work_time_list = work_time_parser.parse_work_time_config(schedule_start, schedule_end, work_time_config)
-        return Schedule.from_work_time_list(work_time_list)
     
 
 class Engine(object):
 
-    def __init__(self, work_time_parser, fragmentizer, logger = DummyLogger()):
+    def __init__(self, work_time_parser, planner, stress_analyzer, fragmentizer, logger = DummyLogger()):
         self.work_time_parser = work_time_parser
+        self.planner = planner
+        self.stress_analyzer = stress_analyzer
         self.fragmentizer = fragmentizer
         self.logger = logger
 
@@ -78,8 +96,10 @@ class Engine(object):
         Factory method.
         '''
         work_time_parser = WorkTimeParser()
+        planner = Planner()
+        stress_analyzer = StressAnalyzer()
         fragmentizer = Fragmentizer()
-        return Engine(work_time_parser, fragmentizer, logger)
+        return Engine(work_time_parser, planner, stress_analyzer, fragmentizer, logger)
 
     def schedule(self, scheduling_request):
         # setup
@@ -93,9 +113,12 @@ class Engine(object):
         response = SchedulingResponse()
         for i in range(config.scheduling_days):
             response.daily_infos.append(DailyInfo())
+
+        # parse work time config
+        work_time_list = self.work_time_parser.parse_work_time_config(schedule_start, schedule_end, work_time_config)
         
         # schedule objects
-        early_schedule = Schedule.from_work_time_config(self.work_time_parser, schedule_start, schedule_end, work_time_config)
+        early_schedule = Schedule.from_work_time_list(work_time_list)
         late_schedule = early_schedule.copy()
 
         # progress count
@@ -104,7 +127,7 @@ class Engine(object):
 
         # free time and conflict check
         # run backward pass to generate maximum free time, and overall stress
-        late_schedule.plan(tasks, direction = FillDirection.LATE)
+        self.planner.plan(tasks, late_schedule, direction = FillDirection.LATE)
         impossible_tasks = late_schedule.get_impossible_tasks()
         # get free time info and stress
         for daily_info in response.daily_infos:
@@ -112,7 +135,9 @@ class Engine(object):
             daily_info.free_time.value = free_time_info.free_time.value
             daily_info.average_stress.value = free_time_info.average_stress.value
 
-        response.general.stress.value = late_schedule.get_overall_stress()
+        overall_stress = self.stress_analyzer.analyze(late_schedule)
+
+        response.general.stress.value = overall_stress
 
         # report impossible tasks to alert
         response.alerts.impossible = impossible_tasks
@@ -121,7 +146,7 @@ class Engine(object):
         # compute fragmented time for today (using maximum free time)
         # have the randomizer seeded with today's day string.
         # select task randomly from all tasks
-        self.fragmentizer.suggest_fragment_tasks(tasks, schedule)
+        fragment_sessions = self.fragmentizer.suggest_fragments(tasks, schedule)
 
         # schedule suggestion for deadline tasks, as well as task stress
         # run forward pass (while accounting for today's fragmented time) to generate suggestion
