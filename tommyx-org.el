@@ -41,9 +41,16 @@
 (setq counsel-org-headline-display-style 'path)
 (setq counsel-org-headline-path-separator "/")
 
+;; tag
+(setq org-tags-column 0)
+
 ;; bullet
 (setq org-bullets-bullet-list '("●"))
 (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+
+;; links
+(setq org-descriptive-links t)
+(setq org-link-file-path-type 'relative)
 
 ;; habit
 (add-to-list 'org-modules 'org-habit)
@@ -230,14 +237,13 @@ regular expression,
 ;; key bindings
 ; global leader
 (general-define-key
-	:keymaps 'override
+  :keymaps 'override
 	:states '(motion normal visual)
 	:prefix "SPC"
 	:non-normal-prefix "M-SPC"
 
 )
 (general-define-key
-	:keymaps 'override
 	:states '(motion normal)
 	:prefix "SPC"
 	:non-normal-prefix "M-SPC"
@@ -265,6 +271,12 @@ regular expression,
 
 	"oO" '(org-clock-cancel
 		:which-key "org clock cancel")
+
+  "ol" '(org-insert-link-global
+    :which-key "insert org link")
+
+  "oL" '(org-store-link
+    :which-key "store org link")
 )
 ; org mode leader
 (general-define-key
@@ -298,67 +310,78 @@ regular expression,
 		:which-key "org sort")
 )
 (general-define-key
-	:keymaps 'org-mode-map
+  :keymaps 'org-mode-map
 	:states '(motion normal)
-	:prefix "SPC"
-	:non-normal-prefix "M-SPC"
+	:prefix "SPC j"
 
-	"jr" '(org-refile
+	"r" '(org-refile
 		:which-key "org refile")
 
-	"jc" '(org-copy
+	"c" '(org-copy
 		:which-key "org copy")
 
-	"jt" '(org-todo
+	"t" '(org-todo
 		:which-key "org todo")
 
-	"jT" '(org-shiftleft
+	"T" '(org-shiftleft
 		:which-key "org todo back")
 
-	"jx" '(org-ctrl-c-ctrl-c
+	"x" '(org-ctrl-c-ctrl-c
 		:which-key "org update")
 
-	"js" '(org-schedule
+	"s" '(org-schedule
 		:which-key "org schedule")
 
-	(kbd "j C-s") '((lambda () (interactive) (org-todo "TODAY"))
+	"C-s" '((lambda () (interactive) (org-todo "TODAY"))
 		:which-key "org set TODAY")
 
-	(kbd "j C-S-s") '((lambda () (interactive) (org-todo "TODO"))
+	"C-S-s" '((lambda () (interactive) (org-todo "TODO"))
 		:which-key "org remove TODAY")
 
-	"jS" '((lambda () (interactive) (org-schedule nil "+1d"))
+	"S" '((lambda () (interactive) (org-schedule nil "+1d"))
 		:which-key "org schedule to tomorrow")
 
-	"jd" '(org-deadline
+	"d" '(org-deadline
 		:which-key "org deadline")
 
-	"jD" '((lambda () (interactive) (org-deadline nil "+1w"))
+	"D" '((lambda () (interactive) (org-deadline nil "+1w"))
 		:which-key "org deadline to 1w")
 
-	"jp" '(org-priority
+	"p" '(org-priority
 		:which-key "org priority")
 
-	"jP" '(org-set-property
+	"P" '(org-set-property
 		:which-key "org set property")
 
-	"jq" '(org-set-tags-command
+	"q" '(org-set-tags-command
 		:which-key "org set tags")
 
-	"ji" '(org-clock-in ; org-pomodoro
+	"i" '(org-clock-in ; org-pomodoro
 		:which-key "org clock in")
 
-  "j%" '((lambda () (interactive)
+  "%" '((lambda () (interactive)
            (insert "[%]")
            (org-ctrl-c-ctrl-c)
            (insert " "))
     :which-key "org insert % cookie")
 
-  "j/" '((lambda () (interactive)
+  "/" '((lambda () (interactive)
            (insert "[/]")
            (org-ctrl-c-ctrl-c)
            (insert " "))
     :which-key "org insert / cookie")
+
+  "l" '(org-insert-link ; also allow editing link
+    :which-key "org insert link")
+
+  "L" '(org-store-link
+    :which-key "org store link")
+
+  "o" '(org-open-at-point
+    :which-key "org open link")
+
+  "C-l" '(org-toggle-link-display
+    :which-key "org toggle link display")
 )
 
 ; org mode

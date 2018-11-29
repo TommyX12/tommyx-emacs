@@ -127,7 +127,8 @@ class Engine(object):
 
         # free time and conflict check
         # run backward pass to generate maximum free time, and overall stress
-        self.planner.plan(tasks, late_schedule, direction = FillDirection.LATE)
+        late_sessions = self.planner.plan(tasks, late_schedule, direction = FillDirection.LATE)
+        late_schedule.add_sessions(late_sessions)
         impossible_tasks = late_schedule.get_impossible_tasks()
         # get free time info and stress
         for daily_info in response.daily_infos:
@@ -148,7 +149,11 @@ class Engine(object):
         # select task randomly from all tasks
         fragment_sessions = self.fragmentizer.suggest_fragments(tasks, schedule)
 
-        # schedule suggestion for deadline tasks, as well as task stress
+        # schedule suggestion for deadline tasks
         # run forward pass (while accounting for today's fragmented time) to generate suggestion
+        early_schedule.add_sessions(fragment_sessions)
+        early_sessions = self.planner.plan(tasks, early_schedule, direction = FillDirection.EARLY)
+        early_schedule.add_sessions(early_sessions)
+        
         # compute task stress of each session
 

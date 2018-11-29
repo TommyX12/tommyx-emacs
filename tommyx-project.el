@@ -42,33 +42,32 @@
 
 ;; key bindings
 (general-define-key
-	:keymaps 'override
+  :keymaps 'override
 	:states '(motion normal)
-	:prefix "SPC"
-	:non-normal-prefix "M-SPC"
+  :prefix "SPC p"
 
-	"pp" '(counsel-projectile-switch-project
+	"p" '(counsel-projectile-switch-project
 		:which-key "switch project")
-	"pw" '(persp-switch
+	"w" '(persp-switch
 		:which-key "switch workspace")
-	"pn" '(persp-rename
+	"n" '(persp-rename
 		:which-key "rename workspace")
-	"pd" '(persp-kill
+	"d" '(persp-kill
 		:which-key "delete workspace")
-	"pR" '(projectile-invalidate-cache
+	"R" '(projectile-invalidate-cache
 		:which-key "re-index project files")
 
-	"pr" '(projectile-run-project
+	"r" '(projectile-run-project
 		:which-key "run project")
-	"pc" '(compile
+	"c" '(compile
 		:which-key "compile")
-	"pC" '(projectile-compile-project
+	"C" '(projectile-compile-project
 		:which-key "compile project")
 
-  "pt" '(projectile-run-term
+  "t" '(projectile-run-term
     :which-key "open project terminal")
 
-  "pe" '(projectile-run-eshell
+  "e" '(projectile-run-eshell
     :which-key "open project eshell")
 
 )

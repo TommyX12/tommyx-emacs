@@ -340,7 +340,7 @@
 	 git-gutter:modified-sign " "
 	 git-gutter:added-sign " "
 	 git-gutter:deleted-sign " "
-   git-gutter:visual-line t)
+   git-gutter:visual-line nil)
   (global-git-gutter-mode +1))
 ;; (use-package git-gutter-fringe :ensure t
 ;;   :config
@@ -969,6 +969,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 ;; general
 (general-evil-setup)
+(general-auto-unbind-keys)
 
 ;; flycheck
 (global-flycheck-mode)
@@ -1152,6 +1153,7 @@ Useful for a search overview popup."
   (color-identifiers:refresh)
   (flyspell-lazy-check-visible)
   (git-gutter:update-all-windows)
+  (git-gutter)
   (flycheck-buffer)
   (garbage-collect)
 	(yascroll:safe-show-scroll-bar)
@@ -1262,7 +1264,7 @@ command (ran after) is mysteriously incorrect."
 
 ;; profiler
 (general-define-key
-	:keymaps 'override
+  :keymaps 'override
 
 	"C-M-p" (lambda () (interactive) (profiler-start 'cpu+mem))
 	"C-M-S-p" (lambda () (interactive)
@@ -1314,6 +1316,7 @@ command (ran after) is mysteriously incorrect."
 (evil-define-key 'normal 'global "t" 'hydra-move/body)
 
 ;; global leader
+;; (define-prefix-command 'global-leader)
 (define-prefix-command 'global-leader-window)
 (define-prefix-command 'global-leader-helm)
 (define-prefix-command 'global-leader-navigation)
@@ -1330,10 +1333,15 @@ command (ran after) is mysteriously incorrect."
 (define-prefix-command 'global-leader-battery)
 ; prefix keys
 (general-define-key
-	:keymaps 'override
+  :keymaps 'override
+  :states '(motion normal visual)
+  
+  "SPC" 'global-leader)
+
+(general-define-key
+  :keymaps 'override
 	:states '(motion normal visual)
-	:prefix "SPC"
-	:non-normal-prefix "M-SPC"
+  :prefix "SPC"
 
 	"w" '(global-leader-window
 		:which-key "window")
@@ -1365,7 +1373,7 @@ command (ran after) is mysteriously incorrect."
     :which-key "battery")
 )
 (general-define-key
-	:keymaps 'override
+  :keymaps 'override
 	:states '(motion normal visual)
 	:prefix "SPC"
 	:non-normal-prefix "M-SPC"
@@ -1437,7 +1445,7 @@ command (ran after) is mysteriously incorrect."
     :which-key "delayed completion")
 )
 (general-define-key
-	:keymaps 'override
+  :keymaps 'override
 	:states '(visual)
 	:prefix "SPC"
 	:non-normal-prefix "M-SPC"
@@ -1455,7 +1463,7 @@ command (ran after) is mysteriously incorrect."
   ;;   :which-key "peek region in split")
 )
 (general-define-key
-	:keymaps 'override
+  :keymaps 'override
 	:states '(motion normal)
 	:prefix "SPC"
 	:non-normal-prefix "M-SPC"
@@ -2141,6 +2149,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ; use alt-h for help instead of ctrl-h
 (bind-key* (kbd "C-M-h") help-map)
 (bind-key* (kbd "C-M-h C-M-h") 'counsel-apropos)
+(bind-key* (kbd "C-M-x") 'execute-extended-command)
 
 
 ;;; misc settings
