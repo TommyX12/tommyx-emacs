@@ -455,7 +455,9 @@
 	(setq neo-show-hidden-files t)
 	(add-hook 'neotree-mode-hook (lambda ()
 		(hl-line-mode 1)
-		(setq-local use-line-nav t)))
+		(setq-local use-line-nav t)
+    (setq-local highlight-indentation-offset 2)
+    (highlight-indentation-mode 1)))
 	(setq neo-confirm-change-root 'off-p)
 	(setq neo-banner-message "")
 	(setq neo-show-updir-line nil)
@@ -464,6 +466,12 @@
 	(setq neo-vc-integration '(face))
 	(setq neo-mode-line-type 'default) ; for performance reason
 	(setq neo-auto-indent-point t)
+  
+	(add-hook 'neotree-mode-hook (lambda ()
+		(hl-line-mode 1)
+		(setq tab-width 2)
+		(whitespace-mode 1)
+		(setq-local use-line-nav t)))
 )
 (use-package magit :ensure t)
 (use-package page-break-lines :ensure t)
