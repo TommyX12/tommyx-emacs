@@ -282,7 +282,7 @@
   :config
   (add-to-list 'company-backends #'company-tabnine)
 
-  ;; TODO: workaround for company-flx-mode and other transformers
+  ;; workaround for company-flx-mode and other transformers
   (setq company-tabnine--disable-next-transform nil)
   (defun my-company--transform-candidates (func &rest args)
     (if (not company-tabnine--disable-next-transform)
@@ -565,7 +565,9 @@
 ;; )
 (require 'companion)
 (require 'smart-completer)
+
 ; language specific
+
 (use-package auctex :ensure t
 	:config
 )
@@ -621,6 +623,10 @@
 ;; 	(add-hook 'rjsx-mode #'lsp-javascript-typescript-enable) ;; for rjsx-mode support
 ;; )
 ;; (use-package js2-refactor :ensure t)
+
+; fun
+
+(use-package landmark :ensure t)
 
 
 ;;; package settings
