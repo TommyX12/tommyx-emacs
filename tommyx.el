@@ -280,7 +280,24 @@
 ;; (require 'company-tabnine)
 (use-package company-tabnine :ensure t :after company
   :config
-  (add-to-list 'company-backends #'company-tabnine))
+  (add-to-list 'company-backends #'company-tabnine)
+
+  ;; TODO: workaround for company-flx-mode and other transformers
+  (setq company-tabnine--disable-next-transform nil)
+  (defun my-company--transform-candidates (func &rest args)
+    (if (not company-tabnine--disable-next-transform)
+        (apply func args)
+      (setq company-tabnine--disable-next-transform nil)
+      (car args)))
+
+  (defun my-company-tabnine (func &rest args)
+    (when (eq (car args) 'candidates)
+      (setq company-tabnine--disable-next-transform t))
+    (apply func args))
+  
+  (advice-add #'company--transform-candidates :around #'my-company--transform-candidates)
+  (advice-add #'company-tabnine :around #'my-company-tabnine)
+  )
 
 (use-package yasnippet :ensure t
   :bind
@@ -466,12 +483,6 @@
 	(setq neo-vc-integration '(face))
 	(setq neo-mode-line-type 'default) ; for performance reason
 	(setq neo-auto-indent-point t)
-  
-	(add-hook 'neotree-mode-hook (lambda ()
-		(hl-line-mode 1)
-		(setq tab-width 2)
-		(whitespace-mode 1)
-		(setq-local use-line-nav t)))
 )
 (use-package magit :ensure t)
 (use-package page-break-lines :ensure t)
@@ -742,15 +753,15 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq company-dabbrev-downcase nil)
 (setq company-dabbrev-ignore-case nil)
 (setq company-dabbrev-other-buffers t)
-(with-eval-after-load 'company
-  (setq-default company-transformers '())
-  ; fix bug with custom completer
-  (company-flx-mode 1)
-  (company-flx-mode -1)
-  ;; (delete #'company-flx-transformer company-transformers)
-  (advice-add 'company-capf :around #'company-flx-company-capf-advice)
-  (add-hook 'emacs-lisp-mode-hook (lambda () (setq-local company-transformers '(company-flx-transformer))))
-  (add-hook 'css-mode-hook (lambda () (setq-local company-transformers '(company-flx-transformer)))))
+;; (with-eval-after-load 'company
+;;   (setq-default company-transformers '())
+;;   ; fix bug with custom completer
+;;   (company-flx-mode 1)
+;;   (company-flx-mode -1)
+;;   ;; (delete #'company-flx-transformer company-transformers)
+;;   (advice-add 'company-capf :around #'company-flx-company-capf-advice)
+;;   (add-hook 'emacs-lisp-mode-hook (lambda () (setq-local company-transformers '(company-flx-transformer))))
+;;   (add-hook 'css-mode-hook (lambda () (setq-local company-transformers '(company-flx-transformer)))))
 (setq company-flx-limit 256)
 
 ;; ycmd
@@ -1986,18 +1997,18 @@ command (ran after) is mysteriously incorrect."
 ;; (evil-define-key 'normal web-mode-map (kbd "C-h") 'web-mode-fold-or-unfold)
 ;; (evil-define-key 'normal web-mode-map (kbd "C-l") 'web-mode-fold-or-unfold)
 
-;; origami mode
-(evil-define-key 'normal 'global (kbd "C-g") 'origami-close-node-recursively)
-(evil-define-key 'normal 'global (kbd "C-j") 'origami-forward-fold)
-(evil-define-key 'normal 'global (kbd "C-k") 'origami-previous-fold)
-(evil-define-key 'normal 'global (kbd "C-;") 'origami-recursively-toggle-node)
-(evil-define-key 'normal 'global "Z" 'origami-close-all-nodes)
-(evil-define-key 'normal 'global "X" (lambda () (interactive) (origami-open-all-nodes (current-buffer)) (origami-mode -1) (origami-mode 1)))
-(evil-define-key 'normal 'global "zx" (lambda () (interactive)
-	(origami-show-only-node (current-buffer) (point))
-	(origami-open-node-recursively (current-buffer) (point))))
-(evil-define-key 'normal 'global "zu" 'origami-undo)
-(evil-define-key 'normal 'global "zU" 'origami-redo)
+;; origami mode (disabled due to performance)
+;; (evil-define-key 'normal 'global (kbd "C-g") 'origami-close-node-recursively)
+;; (evil-define-key 'normal 'global (kbd "C-j") 'origami-forward-fold)
+;; (evil-define-key 'normal 'global (kbd "C-k") 'origami-previous-fold)
+;; (evil-define-key 'normal 'global (kbd "C-;") 'origami-recursively-toggle-node)
+;; (evil-define-key 'normal 'global "Z" 'origami-close-all-nodes)
+;; (evil-define-key 'normal 'global "X" (lambda () (interactive) (origami-open-all-nodes (current-buffer)) (origami-mode -1) (origami-mode 1)))
+;; (evil-define-key 'normal 'global "zx" (lambda () (interactive)
+;; 	(origami-show-only-node (current-buffer) (point))
+;; 	(origami-open-node-recursively (current-buffer) (point))))
+;; (evil-define-key 'normal 'global "zu" 'origami-undo)
+;; (evil-define-key 'normal 'global "zU" 'origami-redo)
 
 ;; insert mode mappings
 ; yas
@@ -2196,6 +2207,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (add-hook 'web-mode-hook (lambda ()
   (setq-local tab-width 2)
   (setq-local evil-shift-width tab-width)
+	(setq-local highlight-indentation-offset 4)
 ))
 (add-hook 'latex-mode-hook (lambda ()
   (setq-local tab-width 2)
@@ -2273,7 +2285,8 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; auto display line numbers (turned off for performance)
 ;; (add-hook 'prog-mode-hook (lambda () (display-line-numbers-mode)))
 ;; (add-hook 'sgml-mode-hook (lambda () (display-line-numbers-mode)))
-(setq display-line-numbers-grow-only t)
+(setq display-line-numbers-width-start t)
+(setq display-line-numbers-grow-only nil)
 
 ;; indicate end of buffer
 (add-hook 'prog-mode-hook (lambda () (setq indicate-buffer-boundaries t)))
