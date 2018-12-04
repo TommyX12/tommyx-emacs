@@ -1,4 +1,5 @@
 ;;; add directories to load-path
+;; TODO make sure these overrides package archive install directories
 (add-to-list 'load-path (file-name-directory load-file-name))
 (add-to-list 'load-path
 	(expand-file-name "infinity-theme" (file-name-directory load-file-name)))
@@ -8,6 +9,8 @@
 	(expand-file-name "packages" (file-name-directory load-file-name)))
 (add-to-list 'load-path
 	(expand-file-name "packages/company-tabnine" (file-name-directory load-file-name)))
+(add-to-list 'load-path
+	(expand-file-name "packages/highlight-indentation" (file-name-directory load-file-name)))
 
 ;;; themes
 ; (load-theme 'spacemacs-dark t)
@@ -215,10 +218,17 @@
 ;; (require 'visual-indentation-mode)
 ;; (require 'highlight-indent-guides) ; my own version
 ;; (require 'indent-hint)
-(use-package highlight-indentation :ensure t
-  :config
-  (add-hook 'prog-mode-hook 'highlight-indentation-mode)
-  (add-hook 'text-mode-hook 'highlight-indentation-mode))
+
+;; (use-package highlight-indentation :ensure t
+;;   :config
+;;   (add-hook 'prog-mode-hook 'highlight-indentation-mode)
+;;   (add-hook 'text-mode-hook 'highlight-indentation-mode))
+
+(require 'highlight-indentation)
+(setq highlight-indentation-blank-lines t)
+(add-hook 'prog-mode-hook 'highlight-indentation-mode)
+(add-hook 'text-mode-hook 'highlight-indentation-mode)
+
 (require 'origami)
 ;; (use-package origami :ensure t)
 (use-package volatile-highlights :ensure t)
@@ -255,6 +265,8 @@
 		 :override-parameters '((border-width . 1)
                             (internal-border-width . 1)
                             (undecorated . t))
+	   :height 10
+	   :width (window-width) ; (if full-width (window-width) nil)
 		 :string contents
 		 :position (- (point) (length company-prefix))
 		 :x-pixel-offset (* -1 company-tooltip-margin (default-font-width))
@@ -768,6 +780,8 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;;   (advice-add 'company-capf :around #'company-flx-company-capf-advice)
 ;;   (add-hook 'emacs-lisp-mode-hook (lambda () (setq-local company-transformers '(company-flx-transformer))))
 ;;   (add-hook 'css-mode-hook (lambda () (setq-local company-transformers '(company-flx-transformer)))))
+(with-eval-after-load 'company
+  (company-flx-mode 1))
 (setq company-flx-limit 256)
 
 ;; ycmd
@@ -1629,10 +1643,11 @@ command (ran after) is mysteriously incorrect."
 ; allow repeat in visual mode
 (evil-define-key 'visual 'global "." (kbd ";norm . RET"))
 ; open line above
-(defun smart-open-line-above () (interactive)
-  (move-beginning-of-line nil)
-  (newline-and-indent)
-  (forward-line -1)
+(defun smart-open-line-above ()
+  (interactive)
+  ;; (move-beginning-of-line nil)
+  (save-excursion
+    (newline-and-indent))
   (indent-according-to-mode))
 (evil-define-key 'insert 'global (kbd "S-RET") 'smart-open-line-above)
 (evil-define-key 'insert 'global (kbd "<S-return>") 'smart-open-line-above)
@@ -1990,6 +2005,14 @@ command (ran after) is mysteriously incorrect."
   "M-j" 'next-line-or-history-element
   "M-l" 'exit-minibuffer
 )
+;; ex mode
+(general-define-key
+  :keymaps '(minibuffer-local-map evil-ex-completion-map)
+  "M-k" 'previous-complete-history-element
+  "M-j" 'next-complete-history-element
+  "M-l" 'exit-minibuffer
+)
+
 
 ;; help mode
 (evil-define-key 'motion help-mode-map (kbd "u") 'help-go-back)

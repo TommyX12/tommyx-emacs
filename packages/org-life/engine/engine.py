@@ -80,7 +80,7 @@ class Schedule(object):
 
     def from_work_time_list(work_time_list):
         raise NotImplementedError()
-    
+
 
 class Engine(object):
 
