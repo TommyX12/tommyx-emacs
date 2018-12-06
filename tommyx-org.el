@@ -598,10 +598,10 @@ regular expression,
 	"jr" '(org-capture-refile
 		:which-key "capture refile")
 
-	"jk" '(org-capture-kill
+	"jK" '(org-capture-kill
 		:which-key "capture discard")
 
-	"jj" '(org-capture-finalize
+	"jk" '(org-capture-finalize
 		:which-key "capture save")
 )
 

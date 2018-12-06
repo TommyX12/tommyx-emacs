@@ -1,6 +1,7 @@
 import copy
 
-from datetime import date, timedelta
+from datetime import date as DatetimeDate, timedelta
+from enum import Enum
 
 
 class Property(object):
@@ -75,7 +76,7 @@ class ListProperty(Property):
 class DictProperty(Property):
     
     def __init__(self, prop_type):
-        Property.__init__(self, default_value)
+        Property.__init__(self)
         self.prop_type = prop_type
 
     def get_default_value(self):
@@ -152,53 +153,68 @@ class PrimitiveProtocol(Protocol):
 
 
 class Command(PrimitiveProtocol):
-    def __init__(self):
-        PrimitiveProperty.__init__(self, None)
+    def __init__(self, value = None):
+        PrimitiveProperty.__init__(self, value)
 
 class Duration(PrimitiveProtocol):
-    def __init__(self):
-        PrimitiveProperty.__init__(self, 0)
+    def __init__(self, value = 0):
+        PrimitiveProperty.__init__(self, value)
 
 class Ratio(PrimitiveProtocol):
-    def __init__(self):
-        PrimitiveProperty.__init__(self, 0.0)
+    def __init__(self, value = 0.0):
+        PrimitiveProperty.__init__(self, value)
 
 class Days(PrimitiveProtocol):
-    def __init__(self):
-        PrimitiveProperty.__init__(self, 0)
+    def __init__(self, value = 0):
+        PrimitiveProperty.__init__(self, value)
 
 class TaskID(PrimitiveProtocol):
-    def __init__(self):
-        PrimitiveProperty.__init__(self, 0)
+    def __init__(self, value = 0):
+        PrimitiveProperty.__init__(self, value)
 
 class Priority(PrimitiveProtocol):
-    def __init__(self):
-        PrimitiveProperty.__init__(self, 0)
+    def __init__(self, value = 0):
+        PrimitiveProperty.__init__(self, value)
 
 class Date(Protocol):
 
     def __init__(self, date_object = None):
         Protocol.__init__(self)
         if date_object is None:
-            date_object = date.today()
+            date_object = DatetimeDate.today()
 
         self._date = date_object
         
     def encode(self):
         return '-'.join(self._date.year, self._date.month, self._date.day)
 
+    def from_components(year, month, day):
+        return Date(DatetimeDate(year, month, day))
+
     def decode(self, encoded_protocol):
         components = [int(component) for component in encoded_protocol.split('-')]
-        self._date = date(*components)
+        self._date = DatetimeDate(*components)
 
     def today():
-        return Date(date.today())
+        return Date(DatetimeDate.today())
+
+    def get_weekday():
+        '''
+        Monday is 0 and Sunday is 6.
+        '''
+        return self._date.weekday()
 
     def copy(self):
         return Date(self._date)
 
-    def add_days(days):
+    def add_days(self, days):
         return Date(self._date + timedelta(days = days))
+
+    def __eq__(self, date):
+        return self._date == date._date
+
+    def __lt__(self, date):
+        return self._date < date._date
 
     def __hash__(self):
         '''
@@ -225,11 +241,27 @@ class Task(Protocol):
         'priority': ObjectProperty(Priority),
     }
 
+class WorkTimeSelector(PrimitiveProtocol):
+    def __init__(self, value = 'default'):
+        PrimitiveProtocol.__init__(self, value)
+        
+    def encode(self):
+        return self.value
+
+    def decode(self, encoded_protocol):
+        self.value = encoded_protocol.lower()
+
+class WorkTimeConfigEntry(Protocol):
+    properties = {
+        'selector': ObjectProperty(WorkTimeSelector),
+        'duration': ObjectProperty(Duration),
+    }
+
 class SchedulingRequest(Protocol):
     properties = {
         'config': ObjectProperty(Config),
         'tasks': ListProperty(Task),
-        'work_time': DictProperty(Duration),
+        'work_time': ListProperty(WorkTimeConfigEntry),
     }
 
 class SchedulingGeneralInfo(Protocol):
@@ -247,18 +279,37 @@ class Alerts(Protocol):
         "impossible_tasks": ListProperty(ImpossibleTask),
     }
 
-class DailyScheduleAmount(Protocol):
+class SessionAmount(Protocol):
     properties = {
         "current": ObjectProperty(Duration),
         "total": ObjectProperty(Duration),
         "stress": ObjectProperty(Ratio),
     }
 
-class DailyScheduleEntry(Protocol):
+class SessionTypeEnum(Enum):
+    TASK = 0
+    FRAGMENT = 1
+
+class SessionType(PrimitiveProtocol):
+    def __init__(self, value = SessionTypeEnum.TASK):
+        PrimitiveProperty.__init__(self, value)
+
+    def encode(self):
+        return self.value.value
+
+    def decode(self, encoded_protocol):
+        self.value = SessionTypeEnum(encoded_protocol)
+
+class Session(Protocol):
     properties = {
         "id": ObjectProperty(TaskID),
-        "amount": ObjectProperty(DailyScheduleAmount),
+        "amount": ObjectProperty(SessionAmount),
+        "type": ObjectProperty(SessionType),
     }
+
+    def __init__(self):
+        Protocol.__init__(self)
+        raise NotImplementedError()
 
 class DailyFragmentAmount(Protocol):
     properties = {
@@ -276,8 +327,7 @@ class DailyInfo(Protocol):
     properties = {
         "date": ObjectProperty(Date),
         "work_time": ObjectProperty(Duration),
-        "schedule": ListProperty(DailyScheduleEntry),
-        "fragments": ListProperty(DailyFragmentEntry),
+        "sessions": ListProperty(Session),
         "free_time": ObjectProperty(Duration),
         "average_stress": ObjectProperty(Ratio),
     }
