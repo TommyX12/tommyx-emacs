@@ -82,6 +82,7 @@
 	(bg1           (if (eq theme 'dark) (if (has-true-color) "#2B2C30" "#262626") (if (has-true-color) "#f4f4f4" "#ffffff")))
 	(bg11          (if (eq theme 'dark) (if (has-true-color) "#303136" "#262626") (if (has-true-color) "#EBEBEB" "#ffffff")))
 	(bg12          (if (eq theme 'dark) (if (has-true-color) "#35363B" "#262626") (if (has-true-color) "#E0E0E0" "#ffffff")))
+	(bg12b         (if (eq theme 'dark) (if (has-true-color) "#2f3948" "#262626") (if (has-true-color) "#d2E2Eb" "#ffffff")))
 	(bg13          (if (eq theme 'dark) (if (has-true-color) "#1B1C1F" "#262626") (if (has-true-color) "#D4D4D4" "#ffffff")))
 	(bg14          (if (eq theme 'dark) (if (has-true-color) "#404147" "#262626") (if (has-true-color) "#C7C7C7" "#ffffff")))
 	(bg2           (if (eq theme 'dark) (if (has-true-color) "#222329" "#1c1c1c") (if (has-true-color) "#e9e9e9" "#e4e4e4")))
@@ -607,6 +608,14 @@
 
 ;;;;; highlight-indentation
 	`(highlight-indentation-face ((,class (:background ,bg12))))
+	`(highlight-indentation-face-1 ((,class (:background ,bg12))))
+	`(highlight-indentation-face-2 ((,class (:background ,bg12b))))
+	`(highlight-indentation-face-3 ((,class (:background ,bg12))))
+	`(highlight-indentation-face-4 ((,class (:background ,bg12b))))
+	`(highlight-indentation-face-5 ((,class (:background ,bg12))))
+	`(highlight-indentation-face-6 ((,class (:background ,bg12b))))
+	`(highlight-indentation-face-7 ((,class (:background ,bg12))))
+	`(highlight-indentation-face-8 ((,class (:background ,bg12b))))
 
 ;;;;; highlight-symbol
 	`(highlight-symbol-face ((,class (:background ,bg2))))
