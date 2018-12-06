@@ -48,7 +48,7 @@ class ObjectProperty(Property):
         return prop.encode() if prop is not None else None
 
     def decode(self, encoded_prop):
-        return self.prop_type().decode(encoded_prop) if encoded_prop is not None else None
+        return self.prop_type().decode_self(encoded_prop) if encoded_prop is not None else None
 
     
 class ListProperty(Property):
@@ -68,7 +68,7 @@ class ListProperty(Property):
 
     def decode(self, encoded_props):
         return [
-            self.prop_type().decode(encoded_prop)
+            self.prop_type().decode_self(encoded_prop)
             for encoded_prop in encoded_props
         ] if encoded_props is not None else None
 
@@ -90,7 +90,7 @@ class DictProperty(Property):
 
     def decode(self, encoded_props):
         return {
-            prop_name: self.prop_type().decode(encoded_props[prop_name])
+            prop_name: self.prop_type().decode_self(encoded_props[prop_name])
             for prop_name in encoded_props
         } if encoded_props is not None else None
 
@@ -114,6 +114,15 @@ class Protocol(object):
 
         return result
 
+    def decode_self(self, encoded_protocol):
+        '''
+        Decode and return self.
+        Allows chaining.
+        '''
+
+        self.decode(encoded_protocol)
+        return self
+
     def decode(self, encoded_protocol):
         props = type(self).properties
         for prop_name in props:
@@ -122,8 +131,6 @@ class Protocol(object):
 
             prop = props[prop_name]
             self.set_property(prop_name, prop.decode(encoded_protocol[prop_name]))
-
-        return self # allows chaining
 
     def get_property(self, prop_name):
         return self.__dict__[prop_name]
@@ -154,27 +161,27 @@ class PrimitiveProtocol(Protocol):
 
 class Command(PrimitiveProtocol):
     def __init__(self, value = None):
-        PrimitiveProperty.__init__(self, value)
+        PrimitiveProtocol.__init__(self, value)
 
 class Duration(PrimitiveProtocol):
     def __init__(self, value = 0):
-        PrimitiveProperty.__init__(self, value)
+        PrimitiveProtocol.__init__(self, value)
 
 class Ratio(PrimitiveProtocol):
     def __init__(self, value = 0.0):
-        PrimitiveProperty.__init__(self, value)
+        PrimitiveProtocol.__init__(self, value)
 
 class Days(PrimitiveProtocol):
     def __init__(self, value = 0):
-        PrimitiveProperty.__init__(self, value)
+        PrimitiveProtocol.__init__(self, value)
 
 class TaskID(PrimitiveProtocol):
     def __init__(self, value = 0):
-        PrimitiveProperty.__init__(self, value)
+        PrimitiveProtocol.__init__(self, value)
 
 class Priority(PrimitiveProtocol):
     def __init__(self, value = 0):
-        PrimitiveProperty.__init__(self, value)
+        PrimitiveProtocol.__init__(self, value)
 
 class Date(Protocol):
 
@@ -198,7 +205,7 @@ class Date(Protocol):
     def today():
         return Date(DatetimeDate.today())
 
-    def get_weekday():
+    def get_weekday(self):
         '''
         Monday is 0 and Sunday is 6.
         '''
@@ -215,6 +222,9 @@ class Date(Protocol):
 
     def __lt__(self, date):
         return self._date < date._date
+
+    def __le__(self, date):
+        return self._date <= date._date
 
     def __hash__(self):
         '''
@@ -292,7 +302,7 @@ class SessionTypeEnum(Enum):
 
 class SessionType(PrimitiveProtocol):
     def __init__(self, value = SessionTypeEnum.TASK):
-        PrimitiveProperty.__init__(self, value)
+        PrimitiveProtocol.__init__(self, value)
 
     def encode(self):
         return self.value.value

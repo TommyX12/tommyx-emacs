@@ -25,8 +25,8 @@ class WorkTimeParser(object):
         'sunday': 6,
     }
 
-    SINGLE_DATE_RE = re.compile(r'\d+-\d+-\d+')
-    DATE_RANGE_RE = re.compile(r'\d+-\d+-\d+\s+-\s+\d+-\d+-\d+')
+    SINGLE_DATE_RE = re.compile(r'^\d+-\d+-\d+$')
+    DATE_RANGE_RE = re.compile(r'^\d+-\d+-\d+\s+-\s+\d+-\d+-\d+$')
     DATE_RANGE_SPLIT_RE = re.compile(r'\s+-\s+')
 
     def __init__(self):
@@ -47,6 +47,54 @@ class WorkTimeParser(object):
         return WorkTimeParser._parse_single_date(dates[0]), WorkTimeParser._parse_single_date(dates[1])
 
     def get_work_time_dict(self, schedule_start, schedule_end, work_time_config):
+        '''
+        TODO
+        
+        >>> parser = WorkTimeParser()
+        >>> work_time_config = [
+        ...     WorkTimeConfigEntry().decode_self(
+        ...         {"selector":"default","duration":5}
+        ...     ),
+        ...     WorkTimeConfigEntry().decode_self(
+        ...         {"selector":"saturday","duration":10}
+        ...     ),
+        ...     WorkTimeConfigEntry().decode_self(
+        ...         {"selector":"friday","duration":20}
+        ...     ),
+        ...     WorkTimeConfigEntry().decode_self(
+        ...         {"selector":"2018-12-06","duration":15}
+        ...     ),
+        ...     WorkTimeConfigEntry().decode_self(
+        ...         {"selector":"2018-12-12 - 2018-12-16","duration":30}
+        ...     ),
+        ...     WorkTimeConfigEntry().decode_self(
+        ...         {"selector":"2018-12-14","duration":0}
+        ...     ),
+        ... ]
+        >>> schedule_start = Date().decode_self('2018-12-06')
+        >>> schedule_end = Date().decode_self('2019-01-01')
+        >>> d = parser.get_work_time_dict(schedule_start, schedule_end, work_time_config)
+        >>> d[Date().decode_self('2018-12-06')].value
+        15
+        >>> d[Date().decode_self('2018-12-07')].value
+        20
+        >>> d[Date().decode_self('2018-12-08')].value
+        10
+        >>> d[Date().decode_self('2018-12-09')].value
+        5
+        >>> d[Date().decode_self('2018-12-11')].value
+        5
+        >>> d[Date().decode_self('2018-12-12')].value
+        30
+        >>> d[Date().decode_self('2018-12-13')].value
+        30
+        >>> d[Date().decode_self('2018-12-14')].value
+        0
+        >>> d[Date().decode_self('2018-12-15')].value
+        30
+        >>> d[Date().decode_self('2018-12-20')].value
+        5
+        '''
         default = Duration(WorkTimeParser.DEFAULT_WORK_TIME.value)
         result = {}
         day_of_week_dict = {}
@@ -71,17 +119,16 @@ class WorkTimeParser(object):
             else:
                 result[date] = Duration(default.value)
 
-            result[date] = self.get_work_time(date)
             date = date.add_days(1)
 
         # date selectors
         for entry in work_time_config:
-            if WorkTimeParser._match_single_date(entry.selector):
-                date = WorkTimeParser._parse_single_date(entry.selector)
+            if WorkTimeParser._match_single_date(entry.selector.value):
+                date = WorkTimeParser._parse_single_date(entry.selector.value)
                 result[date] = Duration(entry.duration.value)
 
-            elif WorkTimeParser._match_date_range(entry.selector):
-                date_start, date_end = WorkTimeParser._parse_single_date(entry.selector)
+            elif WorkTimeParser._match_date_range(entry.selector.value):
+                date_start, date_end = WorkTimeParser._parse_date_range(entry.selector.value)
                 if date_start < schedule_start:
                     date_start = schedule_start
 
@@ -95,39 +142,6 @@ class WorkTimeParser(object):
 
 
         return result
-
-
-class Planner(object):
-
-    def __init__(self):
-        pass
-
-    def plan(self, tasks, schedule, direction = FillDirection.EARLY):
-        raise NotImplementedError()
-
-
-class StressAnalyzer(object):
-
-    def __init__(self):
-        pass
-
-    def analyze(self, schedule):
-        '''
-        TODO return using Ratio protocol
-        '''
-        raise NotImplementedError()
-
-
-class Fragmentizer(object):
-
-    def __init__(self):
-        pass
-
-    def suggest_fragments(self, tasks, schedule):
-        '''
-        TODO set session type to SessionTypeEnum.FRAGMENT
-        '''
-        raise NotImplementedError()
 
 
 class Schedule(object):
@@ -161,7 +175,40 @@ class Schedule(object):
     def _cache_free_time_info_if_needed(self):
         raise NotImplementedError()
 
-    def from_work_time_list(work_time_dict):
+    def from_work_time_dict(schedule_start, schedule_end, work_time_dict):
+        raise NotImplementedError()
+
+
+class Planner(object):
+
+    def __init__(self):
+        pass
+
+    def plan(self, tasks, schedule, direction = FillDirection.EARLY):
+        raise NotImplementedError()
+
+
+class StressAnalyzer(object):
+
+    def __init__(self):
+        pass
+
+    def analyze(self, schedule):
+        '''
+        TODO return using Ratio protocol
+        '''
+        raise NotImplementedError()
+
+
+class Fragmentizer(object):
+
+    def __init__(self):
+        pass
+
+    def suggest_fragments(self, tasks, schedule):
+        '''
+        TODO set session type to SessionTypeEnum.FRAGMENT
+        '''
         raise NotImplementedError()
 
 
@@ -207,7 +254,7 @@ class Engine(object):
             daily_info.work_time = work_time_dict[daily_info.date]
         
         # schedule objects
-        early_schedule = Schedule.from_work_time_list(work_time_dict)
+        early_schedule = Schedule.from_work_time_dict(work_time_dict)
         late_schedule = early_schedule.copy()
 
         # progress count
@@ -252,3 +299,11 @@ class Engine(object):
             daily_info.sessions = early_schedule.get_sessions(daily_info.date)
 
         return response
+
+def main():
+    import doctest
+    doctest.testmod()
+
+
+if __name__ == '__main__':
+    main()
