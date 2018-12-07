@@ -3,7 +3,7 @@ from datetime import date
 
 import util
 from logger import DummyLogger
-from protocol import *
+from data_structure import *
 
 class EngineController(object):
 

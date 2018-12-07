@@ -276,24 +276,24 @@ class SchedulingRequest(Protocol):
 
 class SchedulingGeneralInfo(Protocol):
     properties = {
-        "stress": ObjectProperty(Ratio),
+        'stress': ObjectProperty(Ratio),
     }
 
 class ImpossibleTask(Protocol):
     properties = {
-        "id": ObjectProperty(TaskID),
+        'id': ObjectProperty(TaskID),
     }
 
 class Alerts(Protocol):
     properties = {
-        "impossible_tasks": ListProperty(ImpossibleTask),
+        'impossible_tasks': ListProperty(ImpossibleTask),
     }
 
 class SessionAmount(Protocol):
     properties = {
-        "current": ObjectProperty(Duration),
-        "total": ObjectProperty(Duration),
-        "stress": ObjectProperty(Ratio),
+        'current': ObjectProperty(Duration),
+        'total': ObjectProperty(Duration),
+        'stress': ObjectProperty(Ratio),
     }
 
 class SessionTypeEnum(Enum):
@@ -312,9 +312,9 @@ class SessionType(PrimitiveProtocol):
 
 class Session(Protocol):
     properties = {
-        "id": ObjectProperty(TaskID),
-        "amount": ObjectProperty(SessionAmount),
-        "type": ObjectProperty(SessionType),
+        'id': ObjectProperty(TaskID),
+        'amount': ObjectProperty(SessionAmount),
+        'type': ObjectProperty(SessionType),
     }
 
     def __init__(self):
@@ -323,30 +323,30 @@ class Session(Protocol):
 
 class DailyFragmentAmount(Protocol):
     properties = {
-        "current": ObjectProperty(Duration),
-        "total": ObjectProperty(Duration),
+        'current': ObjectProperty(Duration),
+        'total': ObjectProperty(Duration),
     }
 
 class DailyFragmentEntry(Protocol):
     properties = {
-        "id": ObjectProperty(TaskID),
-        "amount": ObjectProperty(DailyFragmentAmount),
+        'id': ObjectProperty(TaskID),
+        'amount': ObjectProperty(DailyFragmentAmount),
     }
 
 class DailyInfo(Protocol):
     properties = {
-        "date": ObjectProperty(Date),
-        "work_time": ObjectProperty(Duration),
-        "sessions": ListProperty(Session),
-        "free_time": ObjectProperty(Duration),
-        "average_stress": ObjectProperty(Ratio),
+        'date': ObjectProperty(Date),
+        'work_time': ObjectProperty(Duration),
+        'sessions': ListProperty(Session),
+        'free_time': ObjectProperty(Duration),
+        'average_stress': ObjectProperty(Ratio),
     }
 
 class SchedulingResponse(Protocol):
     properties = {
-        "general": ObjectProperty(SchedulingGeneralInfo),
-        "alerts": ObjectProperty(Alerts),
-        "daily_infos": ListProperty(DailyInfo),
+        'general': ObjectProperty(SchedulingGeneralInfo),
+        'alerts': ObjectProperty(Alerts),
+        'daily_infos': ListProperty(DailyInfo),
     }
 
 class EngineRequest(Protocol):
@@ -364,6 +364,161 @@ class EngineResponse(Protocol):
 
 class FreeTimeInfo(Protocol):
     properties = {
-        "free_time": ObjectProperty(Duration),
-        "average_stress": ObjectProperty(Ratio),
+        'free_time': ObjectProperty(Duration),
+        'average_stress': ObjectProperty(Ratio),
     }
+
+class DailyStressInfo(Protocol):
+    properties = {
+        'cumulative_free_time': ObjectProperty(Duration),
+        'cumulative_average_stress': ObjectProperty(Ratio),
+    }
+
+class StressInfo(Protocol):
+    '''
+    TODO: This is not yet encodable, since it intends to use Date as key.
+    '''
+    properties = {
+        'overall_stress': ObjectProperty(Ratio),
+        'daily_stress_infos': DictProperty(DailyStressInfo), # use Date as key
+    }
+    
+
+class FillDirection(Enum):
+    EARLY = 0
+    LATE = 1
+    
+
+class Schedule(object):
+    
+    def __init__(self, work_time_dict):
+        raise NotImplementedError()
+
+        self._invalidate_cache()
+    
+    def copy(self):
+        raise NotImplementedError()
+    
+    def add_sessions(self, sessions):
+        raise NotImplementedError()
+
+        self._invalidate_cache()
+
+    def _invalidate_cache(self):
+        raise NotImplementedError()
+    
+    def get_sessions(self, date):
+        raise NotImplementedError()
+
+    def get_free_time_info(self, date):
+        self._cache_free_time_info_if_needed()
+        raise NotImplementedError()
+
+    def get_impossible_tasks(self):
+        raise NotImplementedError()
+
+    def _cache_free_time_info_if_needed(self):
+        raise NotImplementedError()
+
+    def from_work_time_dict(schedule_start, schedule_end, work_time_dict):
+        raise NotImplementedError()
+
+
+class GreedySchedulingQueue(object):
+    '''
+    A priority queue for greedy scheduling.
+    Data must be unique and hashable.
+    '''
+
+    def __init__(self):
+        self.heap = []
+        self.indices = {}
+    
+    def clear(self):
+        '''
+        Clears the queue.
+        '''
+        
+        self.heap = []
+        self.indices = {}
+
+    def top(self):
+        '''
+        Returns the data in the queue with the highest priority.
+        '''
+        raise NotImplementedError()
+
+    def add(self, data, priority):
+        '''
+        Add data with given priority.
+        '''
+        if data in self.indices:
+            raise ValueError()
+
+        self.heap.append((data, priority))
+        self.indices[data] = len(self.heap) - 1
+        self._float_up(len(self.heap) - 1)
+    
+    def delete(self, data):
+        if data not in self.indices:
+            raise ValueError()
+            
+        index = self.indices[data]
+        old_priority = self.heap[index][1]
+        new_data, priority = self.heap[len(self.heap) - 1]
+        self.heap[index] = (new_data, priority)
+
+        if priority > old_priority:
+            self._float_up(index)
+
+        else:
+            self._float_down(index)
+    
+    def _float_down(self, i):
+        '''
+        Pushes the i-th entry downward on the heap when necessary.
+        '''
+        
+        i_value = self.heap[i][0]
+        i_priority = self.heap[i][1]
+        j = i
+        
+        while j < len(self.heap) - 1:
+            l = 2 * i + 1
+            r = 2 * i + 2
+            
+            if l < len(self.heap) and self.heap[l][1] > self.heap[j][1]:
+                j = l
+                
+            if r < len(self.heap) and self.heap[r][1] > self.heap[j][1]:
+                j = r
+            
+            if j == i:
+                break
+            
+            self.indices[self.heap[j][0]] = i
+            self.indices[i_value] = j
+            self.heap[i], self.heap[j] = self.heap[j], self.heap[i]
+            
+            i = j
+        
+    def _float_up(self, i):
+        '''
+        Pushes the i-th entry upward on the heap when necessary.
+        '''
+        i_value = self.heap[i][0]
+        i_priority = self.heap[i][1]
+        j = i
+        
+        while j > 0:
+            j = (i - 1) // 2
+            
+            if i_priority <= self.heap[j][1]:
+                break
+            
+            self.indices[self.heap[j][0]] = i
+            self.indices[i_value] = j
+            self.heap[i], self.heap[j] = self.heap[j], self.heap[i]
+            
+            i = j
+        

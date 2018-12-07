@@ -1063,7 +1063,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; origami
 (add-to-list 'origami-parser-alist
 	'(python-mode . origami-indent-parser))
-(global-origami-mode 1)
+;; (global-origami-mode 1)
 
 ;; ivy, counsel and swiper
 ; main
