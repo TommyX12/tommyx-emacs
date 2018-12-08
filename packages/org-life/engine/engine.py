@@ -60,16 +60,15 @@ class Engine(object):
 
         # free time and conflict check
         # run backward pass to generate maximum free time, and overall stress
-        late_sessions = self.planner.plan(tasks, late_schedule, direction = FillDirection.LATE)
-        late_schedule.add_sessions(late_sessions)
-        impossible_tasks = late_schedule.get_impossible_tasks()
+        late_plan_result = self.planner.plan(tasks, late_schedule, direction = FillDirection.LATE)
+        impossible_tasks = late_plan_result.impossible_tasks
         # get free time info and stress
         stress_info = self.stress_analyzer.analyze(late_schedule)
         response.general.stress.value = stress_info.overall_stress.value
         for daily_info in response.daily_infos:
             daily_stress_info = stress_info.daily_stress_infos[daily_info.date]
-            daily_info.free_time.value = daily_stress_info.cumulative_free_time.value
-            daily_info.average_stress.value = daily_stress_info.cumulative_average_stress.value
+            daily_info.free_time.value = daily_stress_info.acc_free_time.value
+            daily_info.average_stress.value = daily_stress_info.acc_average_stress.value
 
         # report impossible tasks to alert
         response.alerts.impossible = impossible_tasks
@@ -82,9 +81,8 @@ class Engine(object):
 
         # schedule suggestion for deadline tasks
         # run forward pass (while accounting for today's fragmented time) to generate suggestion
-        early_schedule.add_sessions(fragment_sessions)
-        early_sessions = self.planner.plan(tasks, early_schedule, direction = FillDirection.EARLY)
-        early_schedule.add_sessions(early_sessions)
+        early_schedule.add_dated_sessions(fragment_sessions)
+        self.planner.plan(tasks, early_schedule, direction = FillDirection.EARLY)
         
         # compute task stress of each session
         # TODO

@@ -199,8 +199,18 @@ class Date(Protocol):
         return Date(DatetimeDate(year, month, day))
 
     def decode(self, encoded_protocol):
-        components = [int(component) for component in encoded_protocol.split('-')]
-        self._date = DatetimeDate(*components)
+        if encoded_protocol == 'min':
+            self._date = DatetimeDate.min
+
+        elif encoded_protocol == 'max':
+            self._date = DatetimeDate.max
+
+        elif encoded_protocol == 'today':
+            self._date = DatetimeDate.today()
+
+        else:
+            components = [int(component) for component in encoded_protocol.split('-')]
+            self._date = DatetimeDate(*components)
 
     def today():
         return Date(DatetimeDate.today())
@@ -244,8 +254,8 @@ class Config(Protocol):
 class Task(Protocol):
     properties = {
         'id': ObjectProperty(TaskID),
-        'from': ObjectProperty(Date),
-        'to': ObjectProperty(Date),
+        'start': ObjectProperty(Date),
+        'end': ObjectProperty(Date),
         'amount': ObjectProperty(Duration),
         'done': ObjectProperty(Duration),
         'priority': ObjectProperty(Priority),
@@ -289,10 +299,9 @@ class Alerts(Protocol):
         'impossible_tasks': ListProperty(ImpossibleTask),
     }
 
-class SessionAmount(Protocol):
+class SessionStressInfo(Protocol):
     properties = {
-        'current': ObjectProperty(Duration),
-        'total': ObjectProperty(Duration),
+        'acc_amount': ObjectProperty(Duration),
         'stress': ObjectProperty(Ratio),
     }
 
@@ -313,24 +322,19 @@ class SessionType(PrimitiveProtocol):
 class Session(Protocol):
     properties = {
         'id': ObjectProperty(TaskID),
-        'amount': ObjectProperty(SessionAmount),
+        'amount': ObjectProperty(Duration),
         'type': ObjectProperty(SessionType),
+        'stress_info': ObjectProperty(SessionStressInfo),
     }
 
     def __init__(self):
         Protocol.__init__(self)
-        raise NotImplementedError()
+        raise NkotImplementedError()
 
-class DailyFragmentAmount(Protocol):
+class DatedSession(Protocol):
     properties = {
-        'current': ObjectProperty(Duration),
-        'total': ObjectProperty(Duration),
-    }
-
-class DailyFragmentEntry(Protocol):
-    properties = {
-        'id': ObjectProperty(TaskID),
-        'amount': ObjectProperty(DailyFragmentAmount),
+        'date': ObjectProperty(Date),
+        'session': ObjectProperty(Session),
     }
 
 class DailyInfo(Protocol):
@@ -340,6 +344,11 @@ class DailyInfo(Protocol):
         'sessions': ListProperty(Session),
         'free_time': ObjectProperty(Duration),
         'average_stress': ObjectProperty(Ratio),
+    }
+
+class PlannerResult(Protocol):
+    properties = {
+        'impossible_tasks': ListProperty(ImpossibleTask),
     }
 
 class SchedulingResponse(Protocol):
@@ -370,8 +379,8 @@ class FreeTimeInfo(Protocol):
 
 class DailyStressInfo(Protocol):
     properties = {
-        'cumulative_free_time': ObjectProperty(Duration),
-        'cumulative_average_stress': ObjectProperty(Ratio),
+        'acc_free_time': ObjectProperty(Duration),
+        'acc_average_stress': ObjectProperty(Ratio),
     }
 
 class StressInfo(Protocol):
@@ -387,138 +396,80 @@ class StressInfo(Protocol):
 class FillDirection(Enum):
     EARLY = 0
     LATE = 1
-    
+
+
+class DailySchedule(object):
+
+    def __init__(self, work_time):
+        self._work_time = work_time
+        self._used_time = 0
+        self._sessions = []
+
+    def copy(self):
+        return copy.deepcopy(self)
+
+    def get_free_time(self):
+        return self._work_time - self._used_time
+
+    def add_session(self, session):
+        task_id = session.id.value
+        amount = session.amount.value
+        if amount > self.get_free_time():
+            raise ValueError()
+
+        self._used_time += amount
+        self._sessions.append(session)
+
+    def get_sessions(self):
+        return self._sessions
+
 
 class Schedule(object):
     
-    def __init__(self, work_time_dict):
-        raise NotImplementedError()
+    def __init__(self, schedule_start, schedule_end, daily_schedules):
+        self.schedule_start = schedule_start
+        self.schedule_end = schedule_end
+        self.daily_schedules = daily_schedules
 
-        self._invalidate_cache()
+    def get_schedule_start(self):
+        return self.schedule_start
+    
+    def get_schedule_end(self):
+        return self.schedule_end
     
     def copy(self):
-        raise NotImplementedError()
-    
-    def add_sessions(self, sessions):
-        raise NotImplementedError()
+        schedule_start = self.schedule_start.copy()
+        schedule_end = self.schedule_end.copy()
+        daily_schedules = {}
+        for date in self.daily_schedules:
+            daily_schedules[date] = self.daily_schedules[date].copy()
+            
+        return Schedule(schedule_start, schedule_end, daily_schedules)
 
-        self._invalidate_cache()
+    def add_session(self, date, session):
+        self.daily_schedules[date].add_session(session)
 
-    def _invalidate_cache(self):
-        raise NotImplementedError()
+    def add_dated_sessions(self, dated_sessions):
+        for dated_session in dated_sessions:
+            date, session = dated_session.date, dated_session.session
+            self.daily_schedules[date].add_session(session)
     
     def get_sessions(self, date):
-        raise NotImplementedError()
+        return self.daily_schedules[date].get_sessions()
 
-    def get_free_time_info(self, date):
-        self._cache_free_time_info_if_needed()
-        raise NotImplementedError()
-
-    def get_impossible_tasks(self):
-        raise NotImplementedError()
-
-    def _cache_free_time_info_if_needed(self):
-        raise NotImplementedError()
+    def get_free_time(self, date):
+        return self.daily_schedules[date].get_free_time()
 
     def from_work_time_dict(schedule_start, schedule_end, work_time_dict):
-        raise NotImplementedError()
-
-
-class GreedySchedulingQueue(object):
-    '''
-    A priority queue for greedy scheduling.
-    Data must be unique and hashable.
-    '''
-
-    def __init__(self):
-        self.heap = []
-        self.indices = {}
-    
-    def clear(self):
-        '''
-        Clears the queue.
-        '''
+        daily_schedules = {}
         
-        self.heap = []
-        self.indices = {}
+        date = schedule_start
+        while date <= schedule_end:
+            daily_schedules[date] = DailySchedule(
+                work_time = work_time_dict[date].value,
+            )
+            date = date.add_days(1)
 
-    def top(self):
-        '''
-        Returns the data in the queue with the highest priority.
-        '''
-        raise NotImplementedError()
+        return Schedule(schedule_start, schedule_end, daily_schedules)
 
-    def add(self, data, priority):
-        '''
-        Add data with given priority.
-        '''
-        if data in self.indices:
-            raise ValueError()
 
-        self.heap.append((data, priority))
-        self.indices[data] = len(self.heap) - 1
-        self._float_up(len(self.heap) - 1)
-    
-    def delete(self, data):
-        if data not in self.indices:
-            raise ValueError()
-            
-        index = self.indices[data]
-        old_priority = self.heap[index][1]
-        new_data, priority = self.heap[len(self.heap) - 1]
-        self.heap[index] = (new_data, priority)
-
-        if priority > old_priority:
-            self._float_up(index)
-
-        else:
-            self._float_down(index)
-    
-    def _float_down(self, i):
-        '''
-        Pushes the i-th entry downward on the heap when necessary.
-        '''
-        
-        i_value = self.heap[i][0]
-        i_priority = self.heap[i][1]
-        j = i
-        
-        while j < len(self.heap) - 1:
-            l = 2 * i + 1
-            r = 2 * i + 2
-            
-            if l < len(self.heap) and self.heap[l][1] > self.heap[j][1]:
-                j = l
-                
-            if r < len(self.heap) and self.heap[r][1] > self.heap[j][1]:
-                j = r
-            
-            if j == i:
-                break
-            
-            self.indices[self.heap[j][0]] = i
-            self.indices[i_value] = j
-            self.heap[i], self.heap[j] = self.heap[j], self.heap[i]
-            
-            i = j
-        
-    def _float_up(self, i):
-        '''
-        Pushes the i-th entry upward on the heap when necessary.
-        '''
-        i_value = self.heap[i][0]
-        i_priority = self.heap[i][1]
-        j = i
-        
-        while j > 0:
-            j = (i - 1) // 2
-            
-            if i_priority <= self.heap[j][1]:
-                break
-            
-            self.indices[self.heap[j][0]] = i
-            self.indices[i_value] = j
-            self.heap[i], self.heap[j] = self.heap[j], self.heap[i]
-            
-            i = j
-        
