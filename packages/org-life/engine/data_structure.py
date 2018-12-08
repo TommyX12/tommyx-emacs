@@ -193,7 +193,7 @@ class Date(Protocol):
         self._date = date_object
         
     def encode(self):
-        return '-'.join(self._date.year, self._date.month, self._date.day)
+        return '-'.join([str(x) for x in [self._date.year, self._date.month, self._date.day]])
 
     def from_components(year, month, day):
         return Date(DatetimeDate(year, month, day))
@@ -326,10 +326,6 @@ class Session(Protocol):
         'type': ObjectProperty(SessionType),
         'stress_info': ObjectProperty(SessionStressInfo),
     }
-
-    def __init__(self):
-        Protocol.__init__(self)
-        raise NkotImplementedError()
 
 class DatedSession(Protocol):
     properties = {

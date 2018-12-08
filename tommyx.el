@@ -1205,6 +1205,14 @@ Useful for a search overview popup."
 ;; (defun fit-window-to-region ()
 ;; 	(interactive)
 ;; 	TODO)
+(evil-define-motion fast-move-up () :type exclusive
+	(evil-previous-visual-line 5))
+(evil-define-motion fast-move-down () :type exclusive
+	(evil-next-visual-line 5))
+(evil-define-motion fast-move-left () :type exclusive
+	(evil-backward-char 8))
+(evil-define-motion fast-move-right () :type exclusive
+	(evil-forward-char 8))
 (defun indent-buffer ()
 	(interactive)
 	(save-excursion
@@ -1698,43 +1706,36 @@ command (ran after) is mysteriously incorrect."
 ; ,v select line content
 ;; (evil-define-key 'normal 'global ",v" (lambda () (interactive) (evil-first-non-blank) (evil-visual-char) (evil-last-non-blank)))
 (evil-define-key 'normal 'global ",v" 'evil-visual-restore)
-; use visual line
-(evil-define-key 'motion 'global "j" 'evil-next-visual-line)
-(evil-define-key 'motion 'global "k" 'evil-previous-visual-line)
-; more comfortable word movement
-(evil-define-key 'motion 'global "w" 'evil-backward-word-begin)
-(evil-define-key 'motion 'global "e" 'evil-forward-word-end)
-(evil-define-key 'motion 'global "b" 'evil-forward-word-begin)
-(evil-define-key 'motion 'global "W" 'evil-backward-WORD-begin)
-(evil-define-key 'motion 'global "E" 'evil-forward-WORD-end)
-(evil-define-key 'motion 'global "B" 'evil-forward-WORD-begin)
-; faster movement
-(evil-define-motion fast-move-up () :type exclusive
-	(evil-previous-visual-line 5))
-(evil-define-motion fast-move-down () :type exclusive
-	(evil-next-visual-line 5))
-(evil-define-motion fast-move-left () :type exclusive
-	(evil-backward-char 8))
-(evil-define-motion fast-move-right () :type exclusive
-	(evil-forward-char 8))
-(evil-define-key 'motion 'global "H" (lambda () (interactive) (evil-backward-char 8)))
-(evil-define-key 'motion 'global "J" (lambda () (interactive) (evil-next-visual-line 5)))
-(evil-define-key 'motion 'global "K" (lambda () (interactive) (evil-previous-visual-line 5)))
-(evil-define-key 'motion 'global "L" (lambda () (interactive) (evil-forward-char 8)))
-(evil-define-key 'motion 'global "G" 'evil-first-non-blank)
-(evil-define-key 'motion 'global ":" 'evil-end-of-line)
-(evil-define-key 'normal 'global "H" 'fast-move-left)
-(evil-define-key 'normal 'global "J" 'fast-move-down)
-(evil-define-key 'normal 'global "K" 'fast-move-up)
-(evil-define-key 'normal 'global "L" 'fast-move-right)
-(evil-define-key 'normal 'global "G" 'evil-first-non-blank)
-(evil-define-key 'normal 'global ":" 'evil-end-of-line)
-(evil-define-key 'visual 'global "H" 'fast-move-left)
-(evil-define-key 'visual 'global "J" 'fast-move-down)
-(evil-define-key 'visual 'global "K" 'fast-move-up)
-(evil-define-key 'visual 'global "L" 'fast-move-right)
-(evil-define-key 'visual 'global "G" 'evil-first-non-blank)
-(evil-define-key 'visual 'global ":" (lambda () (interactive) (evil-end-of-line)))
+(general-define-key
+ :states '(motion normal visual)
+ 
+ ;; basic movement
+ "k" 'evil-previous-visual-line
+ "j" 'evil-next-visual-line
+ "h" 'evil-backward-word-begin
+ "l" 'evil-forward-word-end
+ 
+ ;; faster movement
+ "K" 'fast-move-up
+ "J" 'fast-move-down
+ "H" 'evil-backward-WORD-begin
+ "L" 'evil-forward-WORD-end
+ "G" 'evil-first-non-blank
+ ":" 'evil-end-of-line
+
+ ;; more comfortable word movement
+ "w" 'evil-backward-char
+ "e" 'evil-forward-char
+ "W" 'fast-move-left
+ "E" 'fast-move-right
+ "b" 'evil-forward-word-begin
+ "B" 'evil-forward-WORD-begin)
+
+(general-define-key
+  :states '(visual)
+  
+  ;; visual selection should not go over the last char
+  ":" (lambda () (interactive) (evil-end-of-line)))
 ; scrolling
 (evil-define-key 'motion 'global (kbd "M-j") 'evil-scroll-down)
 (evil-define-key 'motion 'global (kbd "M-k") 'evil-scroll-up)

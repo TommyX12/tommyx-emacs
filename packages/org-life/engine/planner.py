@@ -1,4 +1,3 @@
-from functools import cmp_to_key
 from enum import Enum
 
 from data_structure import *
@@ -55,6 +54,31 @@ class TasksPlanningData(object):
 
 
 class ScheduleFiller(object):
+    '''
+    TODO
+
+    >>> from work_time_parser import WorkTimeParser
+    >>> schedule_start = Date().decode_self('2018-12-01')
+    >>> schedule_end = Date().decode_self('2019-01-01')
+    >>> work_time_config = [WorkTimeConfigEntry().decode_self({'selector':'default','duration':20})]
+    >>> work_time_dict = WorkTimeParser().get_work_time_dict(schedule_start, schedule_end, work_time_config)
+    >>> schedule = Schedule.from_work_time_dict(schedule_start, schedule_end, work_time_dict)
+    >>> s = ScheduleFiller(schedule, FillDirection.EARLY)
+    >>> s.fill(1, 15, Date().decode_self('2018-12-04'), Date().decode_self('2018-12-06'))
+    15
+    >>> s.fill(2, 20, Date().decode_self('2018-12-04'), Date().decode_self('2018-12-06'))
+    20
+    >>> s.fill(3, 10, Date().decode_self('2018-12-05'), Date().decode_self('2018-12-06'))
+    5
+    >>> schedule = Schedule.from_work_time_dict(schedule_start, schedule_end, work_time_dict)
+    >>> s = ScheduleFiller(schedule, FillDirection.LATE)
+    >>> s.fill(1, 15, Date().decode_self('2018-12-06'), Date().decode_self('2018-12-04'))
+    15
+    >>> s.fill(2, 20, Date().decode_self('2018-12-06'), Date().decode_self('2018-12-04'))
+    20
+    >>> s.fill(3, 10, Date().decode_self('2018-12-05'), Date().decode_self('2018-12-04'))
+    5
+    '''
 
     def __init__(self, schedule, direction):
         self.schedule = schedule
@@ -66,12 +90,12 @@ class ScheduleFiller(object):
         if direction == FillDirection.EARLY:
             self.delta = 1
             self.get_schedule_date = ScheduleFiller._get_schedule_date_early
-            self.is_before_date = ScheduleFiller._is_before_date_early
+            self.is_before = ScheduleFiller._is_before_early
 
         elif direction == FillDirection.LATE:
             self.delta = -1
             self.get_schedule_date = ScheduleFiller._get_schedule_date_late
-            self.is_before_date = ScheduleFiller._is_before_date_late
+            self.is_before = ScheduleFiller._is_before_late
 
         else:
             raise ValueError()
@@ -82,31 +106,34 @@ class ScheduleFiller(object):
     def _get_schedule_date_late(date):
         return date.add_days(-1)
 
-    def fill(self, task_id, amount, start, end):
+    def fill(self, task_id, amount, date_from, date_to):
         '''
-        Fill task_id with amount from 00:00 of start to 00:00 of end.
+        Fill task_id with amount from 00:00 of date_from to 00:00 of date_to.
+        The concept of "before" is determined by fill direction,
+        which means date_from should be later than date_to if direction is reversed.
         '''
-        if start > end:
+        if self.is_before(date_to, date_from):
             raise ValueError()
 
-        date = start
+        date = date_from
         amount_filled = 0
         
-        # while date < end
-        while self.is_before(date, end):
+        # while date < date_to
+        while self.is_before(date, date_to):
             if amount <= 0:
                 break
 
             schedule_date = self.get_schedule_date(date)
             free_time = self.schedule.get_free_time(schedule_date)
             session_amount = min(amount, free_time)
-            amount -= session_amount
-            amount_filled += session_amount
-            session = Session()
-            session.id.value = task_id
-            session.amount.value = session_amount
-            session.type.value = SessionTypeEnum.TASK
-            self.schedule.add_session(schedule_date, session)
+            if session_amount > 0:
+                amount -= session_amount
+                amount_filled += session_amount
+                session = Session()
+                session.id.value = task_id
+                session.amount.value = session_amount
+                session.type.value = SessionTypeEnum.TASK
+                self.schedule.add_session(schedule_date, session)
 
             date = date.add_days(self.delta)
 
@@ -123,6 +150,49 @@ class GreedySchedulingQueue(object):
     '''
     A priority queue for greedy scheduling.
     Data must be unique and hashable.
+    
+    >>> g = GreedySchedulingQueue(descending = False)
+    >>> g.add(1, 4)
+    >>> g.add(2, 1)
+    >>> g.top()
+    1
+    >>> g.add(3, 2)
+    >>> g.add(4, 8)
+    >>> g.top()
+    4
+    >>> g.is_empty()
+    False
+    >>> g.add(5, 6)
+    >>> g.add(6, 3)
+    >>> g.top()
+    4
+    >>> g.delete(4)
+    >>> g.top()
+    5
+    >>> g.clear()
+    >>> g.is_empty()
+    True
+    >>> g = GreedySchedulingQueue(descending = True)
+    >>> g.add(1, 4)
+    >>> g.add(2, 2)
+    >>> g.top()
+    2
+    >>> g.add(3, 1)
+    >>> g.add(4, 8)
+    >>> g.top()
+    3
+    >>> g.is_empty()
+    False
+    >>> g.add(5, 6)
+    >>> g.add(6, 3)
+    >>> g.top()
+    3
+    >>> g.delete(3)
+    >>> g.top()
+    2
+    >>> g.clear()
+    >>> g.is_empty()
+    True
     '''
 
     def __init__(self, descending = False):
@@ -171,12 +241,16 @@ class GreedySchedulingQueue(object):
     
     def delete(self, data):
         if data not in self.indices:
-            raise ValueError()
+            return
             
         index = self.indices[data]
         old_priority = self.heap[index][1]
         new_data, priority = self.heap[len(self.heap) - 1]
+        self.indices[new_data] = index
         self.heap[index] = (new_data, priority)
+
+        self.heap.pop()
+        del self.indices[data]
 
         # if priority > old_priority:
         if self.comp(old_priority, priority):
@@ -235,35 +309,42 @@ class GreedySchedulingQueue(object):
             i = j
         
 
-class TaskEventType(Enum):
-    TASK_START = 0
-    TASK_END = 1
-
-
-class TaskEvent(object):
-    '''
-    Describes a point in time (00:00 of self.date) where an event occur for a task.
-    Can either be TaskEventType.TASK_START or TaskEventType.TASK_END.
-    
-    Note that TASK_START may be the deadline of task if scheduling backward.
-    '''
-
-    def cmp_forward(a, b):
-        return -1 if a.date < b.date else (0 if a.date == b.date else 1)
-
-    def cmp_backward(a, b):
-        return 1 if a.date < b.date else (0 if a.date == b.date else -1)
-
-    def __init__(self, task_id, date, event_type):
-        self.task_id = task_id
-        self.date = date
-        self.event_type = event_type
-
-    def __lt__(self, other):
-        return self.date < other.date
-
-
 class DateIterator(object):
+    '''
+    TODO
+
+    >>> start = Date().decode_self('2018-12-01')
+    >>> end = Date().decode_self('2018-12-03')
+    >>> d = DateIterator(start, end, FillDirection.EARLY)
+    >>> d.has_next()
+    True
+    >>> d.get_next().encode()
+    '2018-12-1'
+    >>> d.next().encode()
+    '2018-12-1'
+    >>> d.next().encode()
+    '2018-12-2'
+    >>> d.next().encode()
+    '2018-12-3'
+    >>> d.has_next()
+    False
+    >>> d = DateIterator(start, end, FillDirection.LATE)
+    >>> d.has_next()
+    True
+    >>> d.get_next().encode()
+    '2018-12-3'
+    >>> d.next().encode()
+    '2018-12-3'
+    >>> d.next().encode()
+    '2018-12-2'
+    >>> d.next().encode()
+    '2018-12-1'
+    >>> d.has_next()
+    False
+    '''
+
+    def test():
+        pass
 
     def __init__(self, start, end, direction):
         if start > end:
@@ -301,7 +382,7 @@ class DateIterator(object):
 
         date = self.date
         self.date = self.date.add_days(self.delta)
-        return self.date
+        return date
 
     def _has_next_early(self):
         return self.date <= self.end
@@ -310,7 +391,86 @@ class DateIterator(object):
         return self.date >= self.start
 
 
+class TaskEventType(Enum):
+    TASK_START = 0
+    TASK_END = 1
+
+
+class TaskEvent(object):
+    '''
+    Describes a point in time (00:00 of self.date) where an event occur for a task.
+    Can either be TaskEventType.TASK_START or TaskEventType.TASK_END.
+    
+    Note that TASK_START may be the deadline of task if scheduling backward.
+    '''
+
+    def __init__(self, task_id, date, event_type):
+        self.task_id = task_id
+        self.date = date
+        self.event_type = event_type
+
+    def __lt__(self, other):
+        return self.date < other.date
+
+
 class TaskEventsIterator(object):
+    '''
+    TODO
+    
+    >>> task1 = Task()
+    >>> task1.id.value = 1
+    >>> task1.start = Date().decode_self('2018-12-01')
+    >>> task1.end = Date().decode_self('2018-12-05')
+    >>> task2 = Task()
+    >>> task2.id.value = 2
+    >>> task2.start = Date().decode_self('2018-12-01')
+    >>> task2.end = Date().decode_self('2018-12-04')
+    >>> task3 = Task()
+    >>> task3.id.value = 3
+    >>> task3.start = Date().decode_self('2018-12-02')
+    >>> task3.end = Date().decode_self('2018-12-05')
+    >>> tasks = [task1, task2, task3]
+    >>> start = Date().decode_self('2018-12-01')
+    >>> end = Date().decode_self('2018-12-06')
+    >>> p = lambda x: None if x is None else (str(x.task_id) + ' ' + ('s' if x.event_type == TaskEventType.TASK_START else 'e'))
+    >>> t = TaskEventsIterator(tasks, start, end, FillDirection.EARLY)
+    >>> t.read_event_to(Date().decode_self('2018-11-01'))
+    >>> p(t.read_event_to(Date().decode_self('2018-12-01')))
+    '1 s'
+    >>> p(t.read_event_to(Date().decode_self('2018-12-01')))
+    '2 s'
+    >>> p(t.read_event_to(Date().decode_self('2018-12-02')))
+    '3 s'
+    >>> t.read_event_to(Date().decode_self('2018-12-03'))
+    >>> t.read_event_to(Date().decode_self('2018-12-04'))
+    >>> p(t.read_event_to(Date().decode_self('2018-12-05')))
+    '2 e'
+    >>> p(t.read_event_to(Date().decode_self('2018-12-06')))
+    '1 e'
+    >>> p(t.read_event_to(Date().decode_self('2018-12-06')))
+    '3 e'
+    >>> t.read_event_to(Date().decode_self('2018-12-07'))
+    >>> t = TaskEventsIterator(tasks, start, end, FillDirection.LATE)
+    >>> t.read_event_to(Date().decode_self('2018-12-07'))
+    >>> p(t.read_event_to(Date().decode_self('2018-12-06')))
+    '1 e'
+    >>> p(t.read_event_to(Date().decode_self('2018-12-06')))
+    '3 e'
+    >>> p(t.read_event_to(Date().decode_self('2018-12-05')))
+    '2 e'
+    >>> t.read_event_to(Date().decode_self('2018-12-04'))
+    >>> t.read_event_to(Date().decode_self('2018-12-03'))
+    >>> p(t.read_event_to(Date().decode_self('2018-12-02')))
+    '3 s'
+    >>> p(t.read_event_to(Date().decode_self('2018-12-01')))
+    '1 s'
+    >>> p(t.read_event_to(Date().decode_self('2018-12-01')))
+    '2 s'
+    >>> t.read_event_to(Date().decode_self('2018-11-01'))
+    '''
+
+    def test():
+        pass
 
     def __init__(self, tasks, start, end, direction):
         '''
@@ -325,10 +485,7 @@ class TaskEventsIterator(object):
         self.direction = direction
 
         # Points to next event to be read.
-        self.index = None
-        
-        # Direction to move the pointer.
-        self.delta = None
+        self.index = 0
         
         for task in tasks:
             if task.start > task.end:
@@ -346,15 +503,11 @@ class TaskEventsIterator(object):
             ))
 
         if direction == FillDirection.EARLY:
-            self.task_events.sort(key = cmp_to_key(TaskEvent.cmp_forward))
-            self.index = len(self.task_events) - 1
-            self.delta = 1
+            self.task_events.sort(key = lambda x: x.date)
             self.is_before = TaskEventsIterator._is_before_early
 
         elif direction == FillDirection.LATE:
-            self.task_events.sort(key = cmp_to_key(TaskEvent.cmp_backward))
-            self.index = 0
-            self.delta = -1
+            self.task_events.sort(key = lambda x: x.date, reverse = True)
             self.is_before = TaskEventsIterator._is_before_late
 
         else:
@@ -370,9 +523,9 @@ class TaskEventsIterator(object):
             return None
 
         next_event = self.task_events[self.index]
-        # if not next_event.date <= date
+        # if next_event.date <= date
         if not self.is_before(date, next_event.date):
-            self.index += self.delta
+            self.index += 1
             return next_event
 
         return None
@@ -449,10 +602,11 @@ class Planner(object):
                 tasks_data.decrease_amount(next_task_id, amount_filled)
                 
                 # No more free time.
-                if amount_filled <= amount_left:
+                if amount_filled < amount_left:
                     break
-                
-                # Otherwise, task remaining time depleted.
+
+                # Remaining time depleted (amount_filled == amount_left).
+                queue.delete(next_task_id)
         
         return result
 
