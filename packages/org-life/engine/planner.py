@@ -395,6 +395,7 @@ class Planner(object):
                     if not tasks_data.is_task_done(next_event.task_id):
                         impossible_task = ImpossibleTask()
                         impossible_task.id.value = next_event.task_id
+                        impossible_task.amount.value = tasks_data.get_amount_left(next_event.task_id)
                         result.impossible_tasks.append(impossible_task)
 
                     queue.delete(next_event.task_id)

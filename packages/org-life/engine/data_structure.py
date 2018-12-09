@@ -295,6 +295,7 @@ class SchedulingGeneralInfo(Protocol):
 class ImpossibleTask(Protocol):
     properties = {
         'id': ObjectProperty(TaskID),
+        'amount': ObjectProperty(Duration),
     }
 
 class Alerts(Protocol):

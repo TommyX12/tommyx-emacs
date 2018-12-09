@@ -10,7 +10,7 @@ import unittest
 class PlannerTest(unittest.TestCase):
     '''
     TODO: Test more edge cases.
-    TODO: Test infinite deadline, test impossible_tasks
+    TODO: Test infinite deadline.
     '''
 
     def test_tasks_planning_data(self):
@@ -216,6 +216,57 @@ class PlannerTest(unittest.TestCase):
 ==========
 ''')
         self.assertEqual(len(impossible_tasks), 0)
+        
+        task1.amount.value = 1000
+        task1.done.value = 100
+        
+        schedule = Schedule.from_work_time_dict(schedule_start, schedule_end, work_time_dict)
+        result = p.plan(tasks, schedule, direction = FillDirection.LATE)
+        impossible_tasks = result.impossible_tasks
+        self.assertEqual(str(schedule), '''==========
+2018-11-30: [20]
+2018-12-1: [0]
+- 1: 20
+2018-12-2: [0]
+- 1: 20
+2018-12-3: [0]
+- 2: 15
+- 1: 5
+2018-12-4: [0]
+- 3: 15
+- 2: 5
+2018-12-5: [0]
+- 3: 20
+2018-12-6: [20]
+==========
+''')
+        self.assertEqual(len(impossible_tasks), 1)
+        self.assertEqual(impossible_tasks[0].id.value, 1)
+        self.assertEqual(impossible_tasks[0].amount.value, 855)
+        
+        schedule = Schedule.from_work_time_dict(schedule_start, schedule_end, work_time_dict)
+        result = p.plan(tasks, schedule, direction = FillDirection.EARLY)
+        impossible_tasks = result.impossible_tasks
+        self.assertEqual(str(schedule), '''==========
+2018-11-30: [20]
+2018-12-1: [0]
+- 2: 20
+2018-12-2: [0]
+- 1: 20
+2018-12-3: [0]
+- 1: 20
+2018-12-4: [0]
+- 1: 20
+2018-12-5: [0]
+- 1: 20
+2018-12-6: [20]
+==========
+''')
+        self.assertEqual(len(impossible_tasks), 2)
+        self.assertEqual(impossible_tasks[0].id.value, 1)
+        self.assertEqual(impossible_tasks[0].amount.value, 820)
+        self.assertEqual(impossible_tasks[1].id.value, 3)
+        self.assertEqual(impossible_tasks[1].amount.value, 35)
 
 
 if __name__ == '__main__':
