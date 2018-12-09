@@ -5,35 +5,6 @@ import util
 
 
 class TasksPlanningData(object):
-    '''
-    TODO
-    
-    >>> task1 = Task()
-    >>> task1.id.value = 1
-    >>> task1.amount.value = 50
-    >>> task1.done.value = 0
-    >>> task2 = Task()
-    >>> task2.id.value = 2
-    >>> task2.amount.value = 80
-    >>> task2.done.value = 40
-    >>> tasks = [task1, task2]
-    >>> t = TasksPlanningData(tasks)
-    >>> t.get_amount_left(1)
-    50
-    >>> t.get_amount_left(2)
-    40
-    >>> t.decrease_amount(1, 50)
-    >>> t.decrease_amount(2, 20)
-    >>> t.get_amount_left(1)
-    0
-    >>> t.get_amount_left(2)
-    20
-    >>> t.is_task_done(1)
-    True
-    >>> t.is_task_done(2)
-    False
-    '''
-
     def __init__(self, tasks):
         self.amounts = {
             task.id.value: task.amount.value - task.done.value
@@ -54,32 +25,6 @@ class TasksPlanningData(object):
 
 
 class ScheduleFiller(object):
-    '''
-    TODO
-
-    >>> from work_time_parser import WorkTimeParser
-    >>> schedule_start = Date().decode_self('2018-12-01')
-    >>> schedule_end = Date().decode_self('2019-01-01')
-    >>> work_time_config = [WorkTimeConfigEntry().decode_self({'selector':'default','duration':20})]
-    >>> work_time_dict = WorkTimeParser().get_work_time_dict(schedule_start, schedule_end, work_time_config)
-    >>> schedule = Schedule.from_work_time_dict(schedule_start, schedule_end, work_time_dict)
-    >>> s = ScheduleFiller(schedule, FillDirection.EARLY)
-    >>> s.fill(1, 15, Date().decode_self('2018-12-04'), Date().decode_self('2018-12-06'))
-    15
-    >>> s.fill(2, 20, Date().decode_self('2018-12-04'), Date().decode_self('2018-12-06'))
-    20
-    >>> s.fill(3, 10, Date().decode_self('2018-12-05'), Date().decode_self('2018-12-06'))
-    5
-    >>> schedule = Schedule.from_work_time_dict(schedule_start, schedule_end, work_time_dict)
-    >>> s = ScheduleFiller(schedule, FillDirection.LATE)
-    >>> s.fill(1, 15, Date().decode_self('2018-12-06'), Date().decode_self('2018-12-04'))
-    15
-    >>> s.fill(2, 20, Date().decode_self('2018-12-06'), Date().decode_self('2018-12-04'))
-    20
-    >>> s.fill(3, 10, Date().decode_self('2018-12-05'), Date().decode_self('2018-12-04'))
-    5
-    '''
-
     def __init__(self, schedule, direction):
         self.schedule = schedule
 
@@ -150,49 +95,6 @@ class GreedySchedulingQueue(object):
     '''
     A priority queue for greedy scheduling.
     Data must be unique and hashable.
-    
-    >>> g = GreedySchedulingQueue(descending = False)
-    >>> g.add(1, 4)
-    >>> g.add(2, 1)
-    >>> g.top()
-    1
-    >>> g.add(3, 2)
-    >>> g.add(4, 8)
-    >>> g.top()
-    4
-    >>> g.is_empty()
-    False
-    >>> g.add(5, 6)
-    >>> g.add(6, 3)
-    >>> g.top()
-    4
-    >>> g.delete(4)
-    >>> g.top()
-    5
-    >>> g.clear()
-    >>> g.is_empty()
-    True
-    >>> g = GreedySchedulingQueue(descending = True)
-    >>> g.add(1, 4)
-    >>> g.add(2, 2)
-    >>> g.top()
-    2
-    >>> g.add(3, 1)
-    >>> g.add(4, 8)
-    >>> g.top()
-    3
-    >>> g.is_empty()
-    False
-    >>> g.add(5, 6)
-    >>> g.add(6, 3)
-    >>> g.top()
-    3
-    >>> g.delete(3)
-    >>> g.top()
-    2
-    >>> g.clear()
-    >>> g.is_empty()
-    True
     '''
 
     def __init__(self, descending = False):
@@ -310,42 +212,7 @@ class GreedySchedulingQueue(object):
         
 
 class DateIterator(object):
-    '''
-    TODO
-
-    >>> start = Date().decode_self('2018-12-01')
-    >>> end = Date().decode_self('2018-12-03')
-    >>> d = DateIterator(start, end, FillDirection.EARLY)
-    >>> d.has_next()
-    True
-    >>> d.get_next().encode()
-    '2018-12-1'
-    >>> d.next().encode()
-    '2018-12-1'
-    >>> d.next().encode()
-    '2018-12-2'
-    >>> d.next().encode()
-    '2018-12-3'
-    >>> d.has_next()
-    False
-    >>> d = DateIterator(start, end, FillDirection.LATE)
-    >>> d.has_next()
-    True
-    >>> d.get_next().encode()
-    '2018-12-3'
-    >>> d.next().encode()
-    '2018-12-3'
-    >>> d.next().encode()
-    '2018-12-2'
-    >>> d.next().encode()
-    '2018-12-1'
-    >>> d.has_next()
-    False
-    '''
-
-    def test():
-        pass
-
+    
     def __init__(self, start, end, direction):
         if start > end:
             raise ValueError()
@@ -414,63 +281,6 @@ class TaskEvent(object):
 
 
 class TaskEventsIterator(object):
-    '''
-    TODO
-    
-    >>> task1 = Task()
-    >>> task1.id.value = 1
-    >>> task1.start = Date().decode_self('2018-12-01')
-    >>> task1.end = Date().decode_self('2018-12-05')
-    >>> task2 = Task()
-    >>> task2.id.value = 2
-    >>> task2.start = Date().decode_self('2018-12-01')
-    >>> task2.end = Date().decode_self('2018-12-04')
-    >>> task3 = Task()
-    >>> task3.id.value = 3
-    >>> task3.start = Date().decode_self('2018-12-02')
-    >>> task3.end = Date().decode_self('2018-12-05')
-    >>> tasks = [task1, task2, task3]
-    >>> start = Date().decode_self('2018-12-01')
-    >>> end = Date().decode_self('2018-12-06')
-    >>> p = lambda x: None if x is None else (str(x.task_id) + ' ' + ('s' if x.event_type == TaskEventType.TASK_START else 'e'))
-    >>> t = TaskEventsIterator(tasks, start, end, FillDirection.EARLY)
-    >>> t.read_event_to(Date().decode_self('2018-11-01'))
-    >>> p(t.read_event_to(Date().decode_self('2018-12-01')))
-    '1 s'
-    >>> p(t.read_event_to(Date().decode_self('2018-12-01')))
-    '2 s'
-    >>> p(t.read_event_to(Date().decode_self('2018-12-02')))
-    '3 s'
-    >>> t.read_event_to(Date().decode_self('2018-12-03'))
-    >>> t.read_event_to(Date().decode_self('2018-12-04'))
-    >>> p(t.read_event_to(Date().decode_self('2018-12-05')))
-    '2 e'
-    >>> p(t.read_event_to(Date().decode_self('2018-12-06')))
-    '1 e'
-    >>> p(t.read_event_to(Date().decode_self('2018-12-06')))
-    '3 e'
-    >>> t.read_event_to(Date().decode_self('2018-12-07'))
-    >>> t = TaskEventsIterator(tasks, start, end, FillDirection.LATE)
-    >>> t.read_event_to(Date().decode_self('2018-12-07'))
-    >>> p(t.read_event_to(Date().decode_self('2018-12-06')))
-    '1 e'
-    >>> p(t.read_event_to(Date().decode_self('2018-12-06')))
-    '3 e'
-    >>> p(t.read_event_to(Date().decode_self('2018-12-05')))
-    '2 e'
-    >>> t.read_event_to(Date().decode_self('2018-12-04'))
-    >>> t.read_event_to(Date().decode_self('2018-12-03'))
-    >>> p(t.read_event_to(Date().decode_self('2018-12-02')))
-    '3 s'
-    >>> p(t.read_event_to(Date().decode_self('2018-12-01')))
-    '1 s'
-    >>> p(t.read_event_to(Date().decode_self('2018-12-01')))
-    '2 s'
-    >>> t.read_event_to(Date().decode_self('2018-11-01'))
-    '''
-
-    def test():
-        pass
 
     def __init__(self, tasks, start, end, direction):
         '''
@@ -538,6 +348,11 @@ class TaskEventsIterator(object):
     
 
 class Planner(object):
+    '''
+    TODO
+
+    TODO
+    '''
 
     def __init__(self):
         pass

@@ -19,6 +19,7 @@
 (require 'companion-segments)
 (require 'dash)
 (require 'spaceline)
+(require 'type-break)
 ;; (require 'symon)
 
 ;;
@@ -548,7 +549,31 @@ Companion buffer is BUFFER."
 (spaceline-define-segment companion-system-load
   "A spaceline segment to display system load."
 	(let ((value (car (load-average))))
-		(if value (format "%3d" value) "--")))
+		(propertize
+     (if value (format "%3d" value) "--")
+     'face 'font-lock-function-name-face)))
+
+(spaceline-define-segment companion-type-break
+  "A spaceline segment to display `type-break' information."
+  (if (and type-break-mode type-break-time-next-break)
+      (let* ((secs (type-break-time-difference
+                    (current-time)
+                    type-break-time-next-break))
+             (mins (/ secs 60))
+             (secs (- secs (* mins 60)))
+             (text (format "%02d:%02d" mins secs)))
+        (cond
+         ((< secs 0)
+          (propertize text
+                      'face 'error))
+         ((< mins 5)
+          (propertize text
+                      'face 'warning))
+         (t
+          text)))
+    (propertize
+     "No Break"
+     'face 'error)))
 
 ;; (spaceline-define-segment companion-symon
 ;;   "A spaceline segment to display symon system monitor."
@@ -569,7 +594,10 @@ Companion buffer is BUFFER."
   (org-clock)
   (persp-name)
   (workspace-number)
-  (companion-battery :tight-right t :face companion-face)
+	(" | " :tight t :face companion-face)
+  (companion-type-break :tight t :face companion-face)
+	(" | " :tight t :face companion-face)
+  (companion-battery :tight t :face companion-face)
 	(" | " :tight t :face companion-face)
 	;; (companion-symon :face companion-face :tight t)
 	(companion-system-load :face companion-face :tight t)

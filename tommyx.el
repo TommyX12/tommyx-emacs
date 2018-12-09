@@ -2557,7 +2557,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq type-break-good-rest-interval 300)
 (setq type-break-demo-boring-stats t)
 (setq type-break-keystroke-threshold '(nil . nil))
-(setq type-break-warning-repeat 10)
+(setq type-break-warning-repeat 0)
 (setq type-break-demo-functions '(type-break-demo-boring))
 (type-break-mode 1)
 (type-break-query-mode 1)

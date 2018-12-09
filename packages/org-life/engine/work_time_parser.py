@@ -39,54 +39,6 @@ class WorkTimeParser(object):
         return WorkTimeParser._parse_single_date(dates[0]), WorkTimeParser._parse_single_date(dates[1])
 
     def get_work_time_dict(self, schedule_start, schedule_end, work_time_config):
-        '''
-        TODO
-        
-        >>> parser = WorkTimeParser()
-        >>> work_time_config = [
-        ...     WorkTimeConfigEntry().decode_self(
-        ...         {"selector":"default","duration":5}
-        ...     ),
-        ...     WorkTimeConfigEntry().decode_self(
-        ...         {"selector":"saturday","duration":10}
-        ...     ),
-        ...     WorkTimeConfigEntry().decode_self(
-        ...         {"selector":"friday","duration":20}
-        ...     ),
-        ...     WorkTimeConfigEntry().decode_self(
-        ...         {"selector":"2018-12-06","duration":15}
-        ...     ),
-        ...     WorkTimeConfigEntry().decode_self(
-        ...         {"selector":"2018-12-12 - 2018-12-16","duration":30}
-        ...     ),
-        ...     WorkTimeConfigEntry().decode_self(
-        ...         {"selector":"2018-12-14","duration":0}
-        ...     ),
-        ... ]
-        >>> schedule_start = Date().decode_self('2018-12-06')
-        >>> schedule_end = Date().decode_self('2019-01-01')
-        >>> d = parser.get_work_time_dict(schedule_start, schedule_end, work_time_config)
-        >>> d[Date().decode_self('2018-12-06')].value
-        15
-        >>> d[Date().decode_self('2018-12-07')].value
-        20
-        >>> d[Date().decode_self('2018-12-08')].value
-        10
-        >>> d[Date().decode_self('2018-12-09')].value
-        5
-        >>> d[Date().decode_self('2018-12-11')].value
-        5
-        >>> d[Date().decode_self('2018-12-12')].value
-        30
-        >>> d[Date().decode_self('2018-12-13')].value
-        30
-        >>> d[Date().decode_self('2018-12-14')].value
-        0
-        >>> d[Date().decode_self('2018-12-15')].value
-        30
-        >>> d[Date().decode_self('2018-12-20')].value
-        5
-        '''
         default = Duration(WorkTimeParser.DEFAULT_WORK_TIME.value)
         result = {}
         day_of_week_dict = {}
