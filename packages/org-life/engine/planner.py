@@ -154,6 +154,9 @@ class GreedySchedulingQueue(object):
         self.heap.pop()
         del self.indices[data]
 
+        if index == len(self.heap):
+            return
+
         # if priority > old_priority:
         if self.comp(old_priority, priority):
             self._float_up(index)
@@ -271,9 +274,10 @@ class TaskEvent(object):
     Note that TASK_START may be the deadline of task if scheduling backward.
     '''
 
-    def __init__(self, task_id, date, event_type):
+    def __init__(self, task_id, date, opposite_date, event_type):
         self.task_id = task_id
         self.date = date
+        self.opposite_date = opposite_date
         self.event_type = event_type
 
     def __lt__(self, other):
@@ -304,12 +308,16 @@ class TaskEventsIterator(object):
             self.task_events.append(TaskEvent(
                 task.id.value,
                 util.clamp(task.start, start, end),
+                util.clamp(task.end.add_days(1), start, end),
                 TaskEventType.TASK_START
+                if direction == FillDirection.EARLY else TaskEventType.TASK_END
             ))
             self.task_events.append(TaskEvent(
                 task.id.value,
                 util.clamp(task.end.add_days(1), start, end),
+                util.clamp(task.start, start, end),
                 TaskEventType.TASK_END
+                if direction == FillDirection.EARLY else TaskEventType.TASK_START
             ))
 
         if direction == FillDirection.EARLY:
@@ -348,12 +356,7 @@ class TaskEventsIterator(object):
     
 
 class Planner(object):
-    '''
-    TODO
-
-    TODO
-    '''
-
+    
     def __init__(self):
         pass
 
@@ -373,7 +376,7 @@ class Planner(object):
         task_events_iterator = TaskEventsIterator(tasks, planning_start, planning_end, direction)
         filler = ScheduleFiller(schedule, direction)
         date_iterator = DateIterator(planning_start, planning_end, direction)
-        queue = GreedySchedulingQueue(descending = (direction == FillDirection.LATE))
+        queue = GreedySchedulingQueue(descending = (direction == FillDirection.EARLY))
 
         while date_iterator.has_next():
             date = date_iterator.next()
@@ -385,7 +388,7 @@ class Planner(object):
                     break
 
                 if next_event.event_type == TaskEventType.TASK_START:
-                    queue.add(next_event.task_id, next_event.date)
+                    queue.add(next_event.task_id, next_event.opposite_date)
 
                 elif next_event.event_type == TaskEventType.TASK_END:
                     # Check if task is done.

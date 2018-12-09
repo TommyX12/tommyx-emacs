@@ -8,6 +8,10 @@ from work_time_parser import *
 import unittest
 
 class PlannerTest(unittest.TestCase):
+    '''
+    TODO: Test more edge cases.
+    TODO: Test infinite deadline, test impossible_tasks
+    '''
 
     def test_tasks_planning_data(self):
         task1 = Task()
@@ -77,6 +81,10 @@ class PlannerTest(unittest.TestCase):
         g.clear()
         self.assertEqual(g.is_empty(), True)
 
+        g.add(1, 1)
+        g.delete(1)
+        self.assertEqual(g.is_empty(), True)
+
     def test_date_iterator(self):
         start = Date().decode_self('2018-12-01')
         end = Date().decode_self('2018-12-03')
@@ -125,15 +133,89 @@ class PlannerTest(unittest.TestCase):
         self.assertEqual(t.read_event_to(Date().decode_self('2018-12-07')), None)
         t = TaskEventsIterator(tasks, start, end, FillDirection.LATE)
         self.assertEqual(t.read_event_to(Date().decode_self('2018-12-07')), None)
-        self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-06'))), '1 e')
-        self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-06'))), '3 e')
-        self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-05'))), '2 e')
+        self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-06'))), '1 s')
+        self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-06'))), '3 s')
+        self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-05'))), '2 s')
         self.assertEqual(t.read_event_to(Date().decode_self('2018-12-04')), None)
         self.assertEqual(t.read_event_to(Date().decode_self('2018-12-03')), None)
-        self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-02'))), '3 s')
-        self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-01'))), '1 s')
-        self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-01'))), '2 s')
+        self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-02'))), '3 e')
+        self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-01'))), '1 e')
+        self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-01'))), '2 e')
         self.assertEqual(t.read_event_to(Date().decode_self('2018-11-01')), None)
+
+    def test_planner(self):
+        task1 = Task()
+        task1.id.value = 1
+        task1.start = Date().decode_self('2018-12-01')
+        task1.end = Date().decode_self('2018-12-05')
+        task1.amount.value = 10
+        task1.done.value = 0
+        task2 = Task()
+        task2.id.value = 2
+        task2.start = Date().decode_self('2018-12-01')
+        task2.end = Date().decode_self('2018-12-04')
+        task2.amount.value = 25
+        task2.done.value = 5
+        task3 = Task()
+        task3.id.value = 3
+        task3.start = Date().decode_self('2018-12-02')
+        task3.end = Date().decode_self('2018-12-05')
+        task3.amount.value = 55
+        task3.done.value = 20
+        task4 = Task()
+        task4.id.value = 4
+        task4.start = Date().decode_self('2018-12-02')
+        task4.end = Date().decode_self('2018-12-05')
+        task4.amount.value = 20
+        task4.done.value = 20
+        tasks = [task1, task2, task3, task4]
+
+        schedule_start = Date().decode_self('2018-11-30')
+        schedule_end = Date().decode_self('2018-12-06')
+        work_time_config = [WorkTimeConfigEntry().decode_self({'selector':'default','duration':20})]
+        work_time_dict = WorkTimeParser().get_work_time_dict(schedule_start, schedule_end, work_time_config)
+        schedule = Schedule.from_work_time_dict(schedule_start, schedule_end, work_time_dict)
+
+        p = Planner()
+        result = p.plan(tasks, schedule, direction = FillDirection.EARLY)
+        impossible_tasks = result.impossible_tasks
+        self.assertEqual(str(schedule), '''==========
+2018-11-30: [20]
+2018-12-1: [0]
+- 2: 20
+2018-12-2: [0]
+- 1: 10
+- 3: 10
+2018-12-3: [0]
+- 3: 20
+2018-12-4: [15]
+- 3: 5
+2018-12-5: [20]
+2018-12-6: [20]
+==========
+''')
+        self.assertEqual(len(impossible_tasks), 0)
+        
+        schedule = Schedule.from_work_time_dict(schedule_start, schedule_end, work_time_dict)
+        result = p.plan(tasks, schedule, direction = FillDirection.LATE)
+        impossible_tasks = result.impossible_tasks
+        self.assertEqual(str(schedule), '''==========
+2018-11-30: [20]
+2018-12-1: [20]
+2018-12-2: [15]
+- 1: 5
+2018-12-3: [0]
+- 2: 15
+- 1: 5
+2018-12-4: [0]
+- 3: 15
+- 2: 5
+2018-12-5: [0]
+- 3: 20
+2018-12-6: [20]
+==========
+''')
+        self.assertEqual(len(impossible_tasks), 0)
 
 
 if __name__ == '__main__':

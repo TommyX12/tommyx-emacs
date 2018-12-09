@@ -224,6 +224,9 @@ class Date(Protocol):
     def copy(self):
         return Date(self._date)
 
+    def days_to(self, date):
+        return (date._date - self._date).days
+
     def add_days(self, days):
         return Date(self._date + timedelta(days = days))
 
@@ -467,5 +470,21 @@ class Schedule(object):
             date = date.add_days(1)
 
         return Schedule(schedule_start, schedule_end, daily_schedules)
+
+    def __str__(self):
+        s = "".join([
+            "{}: [{}]\n".format(date.encode(), self.get_free_time(date)) +
+            "".join([
+                "- {}: {}\n".format(session.id.value, session.amount.value)
+                for session in self.get_sessions(date)
+            ])
+            for date in [
+                self.schedule_start.add_days(i)
+                for i in range(
+                    self.schedule_start.days_to(self.schedule_end) + 1
+                )
+            ]
+        ])
+        return "==========\n" + s + "==========\n"
 
 
