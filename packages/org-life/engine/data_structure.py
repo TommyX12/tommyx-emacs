@@ -245,13 +245,19 @@ class Date(Protocol):
         '''
         return hash(self._date)
 
+class FragmentationConfig(Protocol):
+    properties = {
+        'max_stress': ObjectProperty(Ratio),
+        'max_percentage': ObjectProperty(Ratio),
+        'fragment_size': ObjectProperty(Duration),
+    }
+
 class Config(Protocol):
     properties = {
         'today': ObjectProperty(Date),
         'scheduling_days': ObjectProperty(Days),
         'daily_info_days': ObjectProperty(Days),
-        'fragment_max_stress': ObjectProperty(Ratio),
-        'fragment_max_percentage': ObjectProperty(Ratio),
+        'fragmentation_config': ObjectProperty(FragmentationConfig),
     }
 
 class Task(Protocol):
@@ -408,6 +414,9 @@ class DailySchedule(object):
     def copy(self):
         return copy.deepcopy(self)
 
+    def get_work_time(self):
+        return self._work_time
+
     def get_free_time(self):
         return self._work_time - self._used_time
 
@@ -456,6 +465,9 @@ class Schedule(object):
     
     def get_sessions(self, date):
         return self.daily_schedules[date].get_sessions()
+
+    def get_work_time(self, date):
+        return self.daily_schedules[date].get_work_time()
 
     def get_free_time(self, date):
         return self.daily_schedules[date].get_free_time()

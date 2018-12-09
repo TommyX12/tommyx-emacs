@@ -1,5 +1,4 @@
-import sys
-import traceback
+import sys, traceback, random
 
 def get_traceback():
     '''
@@ -13,3 +12,10 @@ def clamp(x, a, b):
     '''
     return min(max(x, a), b)
 
+def sample(distribution, values):
+    choice = random.random() * sum(distribution)
+    i, total= 0, distribution[0]
+    while choice > total:
+        i += 1
+        total += distribution[i]
+    return values[i]

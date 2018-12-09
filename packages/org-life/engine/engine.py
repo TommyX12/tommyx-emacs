@@ -5,14 +5,16 @@ import util
 from logger import DummyLogger
 from data_structure import *
 from work_time_parser import WorkTimeParser
+from task_filter import TaskFilter
 from planner import Planner
 from stress_analyzer import StressAnalyzer
 
 
 class Engine(object):
 
-    def __init__(self, work_time_parser, planner, stress_analyzer, fragmentizer, logger = DummyLogger()):
+    def __init__(self, work_time_parser, task_filter, planner, stress_analyzer, fragmentizer, logger = DummyLogger()):
         self.work_time_parser = work_time_parser
+        self.task_filter = task_filter
         self.planner = planner
         self.stress_analyzer = stress_analyzer
         self.fragmentizer = fragmentizer
@@ -23,6 +25,7 @@ class Engine(object):
         Factory method.
         '''
         work_time_parser = WorkTimeParser()
+        task_filter = TaskFilter()
         planner = Planner()
         stress_analyzer = StressAnalyzer()
         fragmentizer = Fragmentizer()
@@ -50,7 +53,7 @@ class Engine(object):
         for daily_info in response.daily_infos:
             daily_info.work_time = work_time_dict[daily_info.date]
         
-        # schedule objects
+        # make schedule objects
         early_schedule = Schedule.from_work_time_dict(work_time_dict)
         late_schedule = early_schedule.copy()
 
@@ -60,7 +63,8 @@ class Engine(object):
 
         # free time and conflict check
         # run backward pass to generate maximum free time, and overall stress
-        late_plan_result = self.planner.plan(tasks, late_schedule, direction = FillDirection.LATE)
+        stress_contributor_tasks = self.task_filter.get_stress_contributor_tasks(tasks)
+        late_plan_result = self.planner.plan(stress_contributor_tasks, late_schedule, direction = FillDirection.LATE)
         impossible_tasks = late_plan_result.impossible_tasks
         # get free time info and stress
         stress_info = self.stress_analyzer.analyze(late_schedule)
@@ -77,7 +81,12 @@ class Engine(object):
         # compute fragmented time for today (using maximum free time)
         # have the randomizer seeded with today's day string.
         # select task randomly from all tasks
-        fragment_sessions = self.fragmentizer.suggest_fragments(tasks, schedule)
+        fragment_sessions = self.fragmentizer.suggest_fragments(
+            tasks,
+            schedule,
+            stress_info,
+            config.fragmentation_config
+        )
 
         # schedule suggestion for deadline tasks
         # run forward pass (while accounting for today's fragmented time) to generate suggestion
