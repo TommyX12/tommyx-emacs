@@ -132,6 +132,14 @@ class SchedulingUtilTest(unittest.TestCase):
         self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-01'))), '4 e')
         self.assertEqual(t.read_event_to(Date().decode_self('2018-11-01')), None)
 
+    def test_sampler(self):
+        s = Sampler([1, 2, 3], 0)
+        a = [s.sample() for _ in range(100)]
+        for _ in range(10):
+            s = Sampler([1, 2, 3], 0)
+            b = [s.sample() for _ in range(100)]
+            self.assertEqual(a, b)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -249,7 +249,8 @@ class FragmentationConfig(Protocol):
     properties = {
         'max_stress': ObjectProperty(Ratio),
         'max_percentage': ObjectProperty(Ratio),
-        'fragment_size': ObjectProperty(Duration),
+        'preferred_fragment_size': ObjectProperty(Duration),
+        'min_fragment_size': ObjectProperty(Duration),
     }
 
 class Config(Protocol):
@@ -296,6 +297,9 @@ class SchedulingRequest(Protocol):
 class SchedulingGeneralInfo(Protocol):
     properties = {
         'stress': ObjectProperty(Ratio),
+        'highest_stress_date': ObjectProperty(Date),
+        'stress_with_fragments': ObjectProperty(Ratio),
+        'stress_without_today': ObjectProperty(Ratio),
     }
 
 class ImpossibleTask(Protocol):
@@ -395,6 +399,7 @@ class StressInfo(Protocol):
     '''
     properties = {
         'overall_stress': ObjectProperty(Ratio),
+        'highest_stress_date': ObjectProperty(Date),
         'daily_stress_infos': DictProperty(DailyStressInfo), # use Date as key
     }
     
@@ -483,6 +488,13 @@ class Schedule(object):
             date = date.add_days(1)
 
         return Schedule(schedule_start, schedule_end, daily_schedules)
+
+    def get_dated_sessions_amount(dated_sessions):
+        result = 0
+        for dated_session in dated_sessions:
+            result += dated_session.session.amount.value
+
+        return result
 
     def __str__(self):
         s = "".join([

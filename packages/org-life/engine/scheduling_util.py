@@ -1,3 +1,4 @@
+import random
 from enum import Enum
 
 from data_structure import *
@@ -333,4 +334,31 @@ class TaskEventsIterator(object):
     
     def _is_before_late(date1, date2):
         return date1 > date2
+
+
+class Sampler(object):
+    '''
+    TODO: Needs testing.
+    '''
+
+    def __init__(self, distribution, seed = None):
+        if seed is not None:
+            self.random = random.Random(seed)
+
+        else:
+            self.random = random.Random()
+
+        self.set_distribution(distribution)
+
+    def set_distribution(self, distribution):
+        self.distribution = distribution
+
+    def sample(self, values = None):
+        choice = self.random.random() * sum(self.distribution)
+        i, total= 0, self.distribution[0]
+        while choice > total:
+            i += 1
+            total += self.distribution[i]
+            
+        return values[i] if values is not None else i
 

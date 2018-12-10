@@ -1,6 +1,7 @@
 import math
 
 from data_structure import *
+from scheduling_util import *
 import util
 
 
@@ -17,6 +18,7 @@ class Fragmentizer(object):
 
     def _get_max_amount_by_max_stress(self, max_stress, schedule, stress_info):
         schedule_start = schedule.get_schedule_start()
+        schedule_end = schedule.get_schedule_end()
 
         result = math.inf
 
@@ -27,12 +29,11 @@ class Fragmentizer(object):
             acc_work_time += schedule.get_work_time(date)
             
             current_stress = 1.0 - (float(acc_free_time) / acc_work_time)
-            target_stress = acc_work_time * max_stress
-            if current_stress >= target_stress:
+            if current_stress >= max_stress:
                 result = 0
                 break
 
-            target_free_time = (1.0 - target_stress) * acc_work_time
+            target_free_time = (1.0 - max_stress) * acc_work_time
 
             result = min(result, acc_free_time - target_free_time)
 
@@ -46,16 +47,13 @@ class Fragmentizer(object):
         return num_chunks, chunk_size
 
     def suggest_fragments(self, tasks, schedule, stress_info, fragmentation_config):
-        '''
-        TODO set session type to SessionTypeEnum.FRAGMENT
-        '''
-
         schedule_start = schedule.get_schedule_start()
         schedule_end = schedule.get_schedule_end()
 
         max_percentage = fragmentation_config.max_percentage.value
         max_stress = fragmentation_config.max_stress.value
-        target_fragment_size = fragmentation_config.fragment_size.value
+        preferred_fragment_size = fragmentation_config.preferred_fragment_size.value
+        min_fragment_size = fragmentation_config.min_fragment_size.value
 
         # compute maximum time we can have
         
@@ -68,15 +66,19 @@ class Fragmentizer(object):
 
         # compute the task to use
 
-        if len(tasks):
+        if len(tasks) == 0:
             return []
 
         result = []
 
         weights = [1 for task in tasks]
-        num_fragments, fragment_size = self._divide_evenly(max_amount, target_fragment_size)
+        sampler = Sampler(weights, seed = schedule_start.encode())
+        num_fragments, fragment_size = self._divide_evenly(max_amount, preferred_fragment_size)
+        if fragment_size < min_fragment_size:
+            return []
+
         for i in range(num_fragments):
-            fragment = util.sample(weights, tasks)
+            fragment = sampler.sample(tasks)
             
             session = Session()
             session.id.value = fragment.id.value
