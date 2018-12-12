@@ -244,6 +244,7 @@ regular expression,
 
 )
 (general-define-key
+  :keymaps 'override
 	:states '(motion normal)
 	:prefix "SPC"
 	:non-normal-prefix "M-SPC"
