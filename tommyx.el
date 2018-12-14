@@ -191,6 +191,7 @@
 	(setq which-key-popup-type 'side-window)
 	(setq which-key-sort-order 'which-key-prefix-then-key-order-reverse)
 	(setq which-key-idle-delay 0.5)
+	(setq which-key-idle-secondary-delay 0.1)
 	;; (setq which-key-allow-evil-operators t)
 	(setq which-key-show-operator-state-maps t)
 	(setq which-key-binding-filter-function
@@ -1190,6 +1191,7 @@ Useful for a search overview popup."
   "Update all the heavy tasks."
   (message "Updating heavy tasks...")
   (color-identifiers:refresh)
+  (font-lock-fontify-buffer)
   (flyspell-lazy-check-visible)
   (git-gutter:update-all-windows)
   (git-gutter)

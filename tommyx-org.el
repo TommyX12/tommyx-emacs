@@ -51,6 +51,8 @@
 ;; links
 (setq org-descriptive-links t)
 (setq org-link-file-path-type 'relative)
+;; (setq org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
+(setq org-id-link-to-org-use-id nil)
 
 ;; habit
 (add-to-list 'org-modules 'org-habit)
