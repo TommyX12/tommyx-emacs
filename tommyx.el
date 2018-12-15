@@ -26,7 +26,8 @@
 ;; set font
 (if (not (boundp 'selected-font)) (progn
   (cond
-	 ((find-font (font-spec :name "Consolas"))
+	 ((and (eq system-type 'ms-dos)
+         (find-font (font-spec :name "Consolas")))
 	  (setq selected-font "Consolas"))
    ((find-font (font-spec :name "Source Code Pro"))
     (setq selected-font "Source Code Pro"))
@@ -507,6 +508,8 @@
 (use-package org-bullets :ensure t
 	:config
 )
+(use-package outshine :ensure t
+  :config)
 (use-package load-relative :ensure t)
 ;; (use-package fancy-battery :ensure t)
 (use-package rainbow-mode :ensure t)
@@ -1308,6 +1311,16 @@ command (ran after) is mysteriously incorrect."
   (fit-window-to-buffer)
   (goto-char 0)
   (windmove-down))
+(defun outline-up-heading-custom ()
+  (interactive)
+  (if (outline-on-heading-p)
+      (outline-up-heading 1)
+    (outline-back-to-heading)))
+(defun outline-backward-heading-same-level-custom ()
+  (interactive)
+  (if (outline-on-heading-p)
+      (outline-backward-same-level 1)
+    (outline-back-to-heading)))
 
 ;;; key bindings
 
@@ -2028,6 +2041,13 @@ command (ran after) is mysteriously incorrect."
 (evil-define-key 'normal web-mode-map (kbd "C-l") nil)
 ;; (evil-define-key 'normal web-mode-map (kbd "C-h") 'web-mode-fold-or-unfold)
 ;; (evil-define-key 'normal web-mode-map (kbd "C-l") 'web-mode-fold-or-unfold)
+
+;; outshine mode
+(dolist (state '(motion normal visual))
+  (evil-define-key state 'global (kbd "C-h") 'outline-up-heading-custom)
+  (evil-define-key state 'global (kbd "C-l") 'outline-next-heading)
+  (evil-define-key state 'global (kbd "C-k") 'outline-backward-heading-same-level-custom)
+  (evil-define-key state 'global (kbd "C-j") 'outline-forward-same-level))
 
 ;; origami mode (disabled due to performance)
 ;; (evil-define-key 'normal 'global (kbd "C-g") 'origami-close-node-recursively)

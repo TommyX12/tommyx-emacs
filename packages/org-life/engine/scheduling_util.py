@@ -149,51 +149,51 @@ class GreedySchedulingQueue(object):
         '''
         Pushes the i-th entry downward on the heap when necessary.
         '''
-        
+
         i_value, i_priority = self.heap[i]
         j = i
-        
+
         while j < len(self.heap) - 1:
             l = 2 * i + 1
             r = 2 * i + 2
-            
+
             # if l < len(self.data) and self.data[l][1] > self.data[j][1]:
             if l < len(self.heap) and self.comp(self.heap[j][1], self.heap[l][1]):
                 j = l
-                
+
             # if r < len(self.data) and self.data[r][1] > self.data[j][1]:
             if r < len(self.heap) and self.comp(self.heap[j][1], self.heap[r][1]):
                 j = r
-            
+
             if j == i:
                 break
-            
+
             self.indices[self.heap[j][0]] = i
             self.indices[i_value] = j
             self.heap[i], self.heap[j] = self.heap[j], self.heap[i]
-            
+
             i = j
-        
+
     def _float_up(self, i):
         '''
         Pushes the i-th entry upward on the heap when necessary.
         '''
         i_value, i_priority = self.heap[i]
         j = i
-        
+
         while j > 0:
             j = (i - 1) // 2
-            
+
             # if i_priority <= self.data[j][1]:
             if not self.comp(self.heap[j][1], i_priority):
                 break
-            
+
             self.indices[self.heap[j][0]] = i
             self.indices[i_value] = j
             self.heap[i], self.heap[j] = self.heap[j], self.heap[i]
-            
+
             i = j
-        
+
 
 class DateIterator(object):
     

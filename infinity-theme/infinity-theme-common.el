@@ -116,7 +116,7 @@
 	;; (head2-bg      (if (eq theme 'dark) (if (has-true-color) "#37434D" "#262626") (if (has-true-color) "#C8CCC8" "#ffffff")))
 	;; (head3-bg      (if (eq theme 'dark) (if (has-true-color) "#37434D" "#262626") (if (has-true-color) "#C8CCC8" "#ffffff")))
 	;; (head4-bg      (if (eq theme 'dark) (if (has-true-color) "#4D4D43" "#262626") (if (has-true-color) "#CCC8BB" "#ffffff")))
-	(highlight     (if (eq theme 'dark) (if (has-true-color) "#3F4352" "#444444") (if (has-true-color) "#C8D1EB" "#d7d7ff")))
+	(highlight     (if (eq theme 'dark) (if (has-true-color) "#3E4459" "#444444") (if (has-true-color) "#C1CCEB" "#d7d7ff")))
 	(highlight-dim (if (eq theme 'dark) (if (has-true-color) "#2B3747" "#444444") (if (has-true-color) "#C5C5E0" "#d7d7ff")))
 	(keyword       (if (eq theme 'dark) (if (has-true-color) "#4f97d7" "#268bd2") (if (has-true-color) "#3a81c3" "#268bd2")))
 	(lnum          (if (eq theme 'dark) (if (has-true-color) "#505050" "#444444") (if (has-true-color) "#a8b2bf" "#af87af")))

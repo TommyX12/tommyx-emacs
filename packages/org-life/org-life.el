@@ -29,6 +29,8 @@
 ;;; Commentary:
 ;;
 ;; TODO
+;; some code snippets taken from and inspired by:
+;; https://github.com/weirdNox/dotfiles/blob/26c5c2739aff28af5ed4d6f243c7ec0e9b581821/config/.emacs.d/config.org#agenda
 ;;
 
 ;;; Code:
@@ -37,13 +39,15 @@
 ;; Dependencies
 ;;
 
+(require 'cl-lib)
+(require 'json)
 (require 'unicode-escape)
 
 ;;
 ;; Constants
 ;;
 
-(defconst org-life--process-name "org-life--process")
+(defconst org-life--engine-process-name "org-life--engine-process")
 (defconst org-life--hooks-alist nil)
 
 ;;
@@ -71,7 +75,7 @@
   :group 'org-life
   :type 'string)
 
-(defcustom org-life-wait 2
+(defcustom org-life-wait 5
   "Number of seconds to wait for engine to respond."
   :group 'org-life
   :type 'float)
@@ -84,7 +88,7 @@
 ;; Variables
 ;;
 
-(defvar org-life--process nil
+(defvar org-life--engine-process nil
   "Engine process.")
 
 (defvar org-life--response nil
@@ -98,18 +102,20 @@
 ;; Global methods
 ;;
 
+;; Engine
+
 (defun org-life-start-engine ()
   "Start engine process."
   (org-life-kill-process)
   (let ((process-connection-type nil))
-    (setq org-life--process
+    (setq org-life--engine-process
           (make-process
-           :name org-life--process-name
+           :name org-life--engine-process-name
            :command org-life-engine-command
            :coding 'utf-8
            :connection-type 'pipe
-           :filter #'org-life--process-filter
-           :sentinel #'org-life--process-sentinel
+           :filter #'org-life--engine-process-filter
+           :sentinel #'org-life--engine-process-sentinel
            :noquery t)))
   ; hook setup
   (message "Engine process started.")
@@ -118,9 +124,9 @@
 
 (defun org-life-kill-process ()
   "Kill TabNine process."
-  (when org-life--process
-    (let ((process org-life--process))
-      (setq org-life--process nil) ; this happens first so sentinel don't catch the kill
+  (when org-life--engine-process
+    (let ((process org-life--engine-process))
+      (setq org-life--engine-process nil) ; this happens first so sentinel don't catch the kill
       (delete-process process)))
   ; hook remove
   (dolist (hook org-life--hooks-alist)
@@ -129,16 +135,16 @@
 (defun org-life-send-request (request)
   "Send REQUEST to engine.  REQUEST needs to be JSON-serializable object.
 Return the response from engine if arrived before `org-life-wait' seconds."
-  (when (null org-life--process)
+  (when (null org-life--engine-process)
     (org-life-start-engine))
-  (when org-life--process
+  (when org-life--engine-process
     (let ((json-null nil)
           (json-encoding-pretty-print nil)
           ;; TODO make sure utf-8 encoding works
           (encoded (concat (unicode-escape* (json-encode-plist request)) "\n")))
       (setq org-life--response nil)
-      (process-send-string org-life--process encoded)
-      (accept-process-output org-life--process org-life-wait)
+      (process-send-string org-life--engine-process encoded)
+      (accept-process-output org-life--engine-process org-life-wait)
       org-life--response)))
 
 (defun org-life-schedule ()
@@ -153,19 +159,199 @@ Return the response from engine if arrived before `org-life-wait' seconds."
     (message msg)
     (json-read-from-string msg)))
 
-(defun org-life--process-sentinel (process event)
+(defun org-life--engine-process-sentinel (process event)
   "Sentinel for engine process.
 PROCESS is the process under watch, EVENT is the event occurred."
-  (when (and org-life--process
+  (when (and org-life--engine-process
              (memq (process-status process) '(exit signal)))
     (message "Engine process shutdown.")))
 
-(defun org-life--process-filter (process output)
+(defun org-life--engine-process-filter (process output)
   "Filter for engine process.
 PROCESS is the process under watch, OUTPUT is the output received."
   (setq output (s-split "\n" output t))
   (setq org-life--response
         (org-life--decode (car (last output)))))
+
+;; Agenda
+
+(cl-defstruct org-life-agenda-entry
+  todo
+  priority
+  text
+  tags
+  planned
+  effort
+  marker
+  project-status
+  children)
+
+(defun org-life-agenda-entry-new (headline-elem &optional tags)
+  (let ((todo-type (org-element-property :todo-type headline-elem))
+        (effort (org-element-property :EFFORT headline-elem)))
+    (make-org-life-agenda-entry
+     :todo (org-element-property :todo-keyword headline-elem)
+     :priority (org-element-property :priority headline-elem)
+     :text (org-element-property :raw-value headline-elem)
+     :tags (or tags (org-element-property :tags headline-elem))
+     :effort (or (and effort (org-duration-to-minutes effort)) 0)
+     :marker (org-agenda-new-marker (org-element-property :begin headline-elem)))))
+
+;; Agenda helper
+
+(defun org-life-agenda-sort-by-priority (a b)
+  (let ((pa (or (org-life-agenda-entry-priority a) org-lowest-priority))
+        (pb (or (org-life-agenda-entry-priority b) org-lowest-priority)))
+    (< pa pb)))
+
+(defun org-life-agenda-flatten-list (l)
+  (cond ((not l) nil)
+        ((atom l) (list l))
+        (t (append (org-life-agenda-flatten-list (car l)) (org-life-agenda-flatten-list (cdr l))))))
+
+(defun org-life-agenda-format-entry (prefix entry)
+  (let ((props (list 'mouse-face 'highlight
+                     'undone-face nil
+                     'done-face 'org-agenda-done
+                     'org-marker (org-life-agenda-entry-marker entry)
+                     'org-hd-marker (org-life-agenda-entry-marker entry)
+                     'todo-state (org-life-agenda-entry-todo entry)
+                     'org-todo-regexp org-todo-regexp
+                     'org-not-done-regexp org-not-done-regexp
+                     'org-complex-heading-regexp org-complex-heading-regexp
+                     'org-highest-priority org-highest-priority
+                     'org-lowest-priority org-lowest-priority
+                     'tags (mapcar 'org-downcase-keep-props (org-life-agenda-entry-tags entry))
+                     'format `(() ,prefix)))
+        (text
+         (concat prefix
+                 (if (org-life-agenda-entry-todo entry)
+                     (concat (org-life-agenda-entry-todo entry) " ")
+                   "")
+                 (if (org-life-agenda-entry-priority entry)
+                     (string ?\[ ?# (org-life-agenda-entry-priority entry) ?\] ? )
+                   "")
+                 (org-life-agenda-entry-text entry)
+                 (if (org-life-agenda-entry-tags entry)
+                     (concat " :" (mapconcat #'identity (org-life-agenda-entry-tags entry) ":") ":")
+                   ""))))
+
+    (add-text-properties (length prefix) (length text) '(org-heading t) text)
+    (setq text (concat (org-add-props text props) "\n"))
+    (org-agenda-highlight-todo text)))
+
+;; Agenda renderer
+
+(defun org-life-agenda-render-block-separator ()
+  (unless (or (bobp) org-agenda-compact-blocks
+              (not org-agenda-block-separator))
+    (insert "\n"
+            (if (stringp org-agenda-block-separator)
+                org-agenda-block-separator
+              (make-string (window-width) org-agenda-block-separator))
+            "\n")))
+
+(defun org-life-agenda-render-entries (entries)
+  (setq entries (sort entries #'org-life-agenda-sort-by-priority))
+  (dolist (entry entries)
+    (insert
+     (org-life-agenda-format-entry "" entry))))
+
+(defun org-life-agenda-render-block (entries title &optional entries-renderer)
+  (when entries
+    (let ((begin (point))
+          (entries-renderer (or entries-renderer
+                        #'org-life-agenda-render-entries)))
+      (org-life-agenda-render-block-separator)
+      (insert (org-add-props title nil 'face 'org-agenda-structure) "\n")
+      (funcall entries-renderer entries)
+      (add-text-properties begin (point-max) `(org-agenda-type tags)))))
+
+(defmacro org-life-agenda-render-section (var-list process-ast render-blocks)
+  `(catch 'exit
+     (let ((files (org-agenda-files nil 'ifmode))
+           ,@var-list)
+       (while (setq file (pop files))
+         (org-check-agenda-file file)
+         (setq buffer (if (file-exists-p file)
+                          (org-get-agenda-file-buffer file)
+                        (error "No such file %s" file)))
+
+         (unless org-todo-regexp
+           (dolist (variable '(org-todo-regexp org-not-done-regexp org-complex-heading-regexp
+                                               org-done-keywords org-done-keywords-for-agenda))
+             (set variable (buffer-local-value variable buffer))))
+
+         (with-current-buffer buffer
+           (org-with-wide-buffer
+            (unless (derived-mode-p 'org-mode) (error "Agenda file %s is not in Org mode" file))
+            (setq ast (org-element-parse-buffer 'headline))
+            ,@process-ast)))
+
+       (let ((inhibit-read-only t))
+         (goto-char (point-max))
+         ,@render-blocks))))
+
+(defun org-life-agenda-process-headline (headline)
+  (org-life-agenda-entry-new headline))
+
+;; Agenda processing
+
+(defun org-life-agenda-process-agenda-files (initial-value ast-processor)
+  (let ((files (org-agenda-files nil 'ifmode))
+        (acc initial-value))
+    (while (setq file (pop files))
+      (org-check-agenda-file file)
+      (setq buffer (if (file-exists-p file)
+                       (org-get-agenda-file-buffer file)
+                     (error "No such file %s" file)))
+
+      (unless org-todo-regexp
+        (dolist (variable '(org-todo-regexp
+                            org-not-done-regexp
+                            org-complex-heading-regexp
+                            org-done-keywords
+                            org-done-keywords-for-agenda))
+          (set variable (buffer-local-value variable buffer))))
+
+      (with-current-buffer buffer
+        (org-with-wide-buffer
+         (unless (derived-mode-p 'org-mode) (error "Agenda file %s is not in Org mode" file))
+         (let ((ast (org-element-parse-buffer 'headline)))
+           (setq acc (funcall ast-processor acc ast))))))))
+
+(defun org-life-agenda-get-data ()
+  (org-life-agenda-process-agenda-files
+   '()
+   (lambda (acc ast) ; ast-processor
+     (append (org-element-map
+                 ast ; data
+                 'headline ; types
+               #'org-life-agenda-process-headline ; fun
+               nil ; info
+               nil ; first-match
+               'headline ; no-recursion
+               )
+             acc))))
+
+(defun org-life-agenda-make-scheduler-request (org-life-agenda-data)
+  TODO)
+
+(defun org-life-agenda-run-scheduler (org-life-agenda-data)
+  (let ((request (org-life-agenda-make-scheduler-request
+                  org-life-agenda-data)))
+    (org-life-send-request request)
+    ;; TODO add response to org-life-agenda-data and return
+    ))
+
+;; Agenda main
+
+(defun org-life-agenda (&rest _)
+  (catch 'exit
+    (let ((org-life-agenda-data (org-life-agenda-get-data)))
+      (let ((inhibit-read-only t))
+        (goto-char (point-max))
+        ((org-life-agenda-render-block org-life-agenda-data "Test"))))))
 
 ;;
 ;; Interactive functions

@@ -497,8 +497,8 @@ regular expression,
 	(kbd "C-S-h") (lambda () (interactive) (org-metaleft) (evil-visual-restore)) ; promote/outdent
 	(kbd "C-S-l") (lambda () (interactive) (org-metaright) (evil-visual-restore)) ; demote/indent
 
-	(kbd "C-j") 'evil-org-next-visible-heading
-	(kbd "C-k") 'evil-org-previous-visible-heading
+	;; (kbd "C-j") 'evil-org-next-visible-heading
+	;; (kbd "C-k") 'evil-org-previous-visible-heading
 )
 (evil-define-key 'motion 'org-mode-map ",,n" 'org-narrow-to-subtree)
 
@@ -619,3 +619,13 @@ regular expression,
 
 ;; start notification server
 (org-notify-start 60)
+
+;; my org-life
+(add-to-list 'load-path
+	(expand-file-name "packages/org-life" (file-name-directory load-file-name)))
+(require 'org-life)
+(push
+ '("x" "org-life agenda"
+   ((org-life-agenda ""
+                     ())))
+ org-agenda-custom-commands)
