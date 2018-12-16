@@ -292,6 +292,9 @@ PROCESS is the process under watch, OUTPUT is the output received."
          (goto-char (point-max))
          ,@render-blocks))))
 
+(defun org-life-agenda-render-agenda (agenda-data)
+  (org-life-agenda-render-block agenda-data "Test"))
+
 (defun org-life-agenda-process-headline (headline)
   (org-life-agenda-entry-new headline))
 
@@ -334,24 +337,27 @@ PROCESS is the process under watch, OUTPUT is the output received."
                )
              acc))))
 
-(defun org-life-agenda-make-scheduler-request (org-life-agenda-data)
+(defun org-life-agenda-make-scheduler-request (agenda-data)
   TODO)
 
-(defun org-life-agenda-run-scheduler (org-life-agenda-data)
-  (let ((request (org-life-agenda-make-scheduler-request
-                  org-life-agenda-data)))
-    (org-life-send-request request)
-    ;; TODO add response to org-life-agenda-data and return
+(defun org-life-agenda-run-scheduler (agenda-data)
+  (let (request response)
+    (setq request (org-life-agenda-make-scheduler-request
+                   agenda-data))
+    (setq response (org-life-send-request request))
+    ;; TODO add response to agenda-data and return
     ))
 
 ;; Agenda main
 
 (defun org-life-agenda (&rest _)
   (catch 'exit
-    (let ((org-life-agenda-data (org-life-agenda-get-data)))
+    (let (agenda-data)
+      (setq agenda-data (org-life-agenda-get-data))
+      (setq agenda-data (org-life-agenda-run-scheduler agenda-data))
       (let ((inhibit-read-only t))
         (goto-char (point-max))
-        ((org-life-agenda-render-block org-life-agenda-data "Test"))))))
+        (org-life-agenda-render-agenda agenda-data)))))
 
 ;;
 ;; Interactive functions
