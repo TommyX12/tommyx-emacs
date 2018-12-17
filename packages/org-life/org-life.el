@@ -118,7 +118,6 @@
            :sentinel #'org-life--engine-process-sentinel
            :noquery t)))
   ; hook setup
-  (message "Engine process started.")
   (dolist (hook org-life--hooks-alist)
     (add-hook (car hook) (cdr hook))))
 
@@ -156,7 +155,6 @@ Return the response from engine if arrived before `org-life-wait' seconds."
   "Decode engine response MSG, and return the decoded object."
   (let ((json-array-type 'list)
         (json-object-type 'alist))
-    (message msg)
     (json-read-from-string msg)))
 
 (defun org-life--engine-process-sentinel (process event)
@@ -164,7 +162,7 @@ Return the response from engine if arrived before `org-life-wait' seconds."
 PROCESS is the process under watch, EVENT is the event occurred."
   (when (and org-life--engine-process
              (memq (process-status process) '(exit signal)))
-    (message "Engine process shutdown.")))
+    (message "org-life engine process shutdown.")))
 
 (defun org-life--engine-process-filter (process output)
   "Filter for engine process.
@@ -174,28 +172,6 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (org-life--decode (car (last output)))))
 
 ;; Agenda
-
-(cl-defstruct org-life-agenda-entry
-  todo
-  priority
-  text
-  tags
-  planned
-  effort
-  marker
-  project-status
-  children)
-
-(defun org-life-agenda-entry-new (headline-elem &optional tags)
-  (let ((todo-type (org-element-property :todo-type headline-elem))
-        (effort (org-element-property :EFFORT headline-elem)))
-    (make-org-life-agenda-entry
-     :todo (org-element-property :todo-keyword headline-elem)
-     :priority (org-element-property :priority headline-elem)
-     :text (org-element-property :raw-value headline-elem)
-     :tags (or tags (org-element-property :tags headline-elem))
-     :effort (or (and effort (org-duration-to-minutes effort)) 0)
-     :marker (org-agenda-new-marker (org-element-property :begin headline-elem)))))
 
 ;; Agenda helper
 
@@ -209,13 +185,15 @@ PROCESS is the process under watch, OUTPUT is the output received."
         ((atom l) (list l))
         (t (append (org-life-agenda-flatten-list (car l)) (org-life-agenda-flatten-list (cdr l))))))
 
+;; Agenda renderer
+
 (defun org-life-agenda-format-entry (prefix entry)
   (let ((props (list 'mouse-face 'highlight
                      'undone-face nil
                      'done-face 'org-agenda-done
                      'org-marker (org-life-agenda-entry-marker entry)
                      'org-hd-marker (org-life-agenda-entry-marker entry)
-                     'todo-state (org-life-agenda-entry-todo entry)
+                     'todo-state (org-life-agenda-entry-todo-keyword entry)
                      'org-todo-regexp org-todo-regexp
                      'org-not-done-regexp org-not-done-regexp
                      'org-complex-heading-regexp org-complex-heading-regexp
@@ -225,13 +203,17 @@ PROCESS is the process under watch, OUTPUT is the output received."
                      'format `(() ,prefix)))
         (text
          (concat prefix
-                 (if (org-life-agenda-entry-todo entry)
-                     (concat (org-life-agenda-entry-todo entry) " ")
+                 (if (org-life-agenda-entry-todo-keyword entry)
+                     (concat (org-life-agenda-entry-todo-keyword entry) " ")
                    "")
                  (if (org-life-agenda-entry-priority entry)
                      (string ?\[ ?# (org-life-agenda-entry-priority entry) ?\] ? )
                    "")
                  (org-life-agenda-entry-text entry)
+                 ;; (let ((deadline (org-life-agenda-entry-deadline entry)))
+                 ;;   (or (and deadline
+                 ;;            (org-timestamp-format deadline "%Y-%m-%d"))
+                 ;;       ""))
                  (if (org-life-agenda-entry-tags entry)
                      (concat " :" (mapconcat #'identity (org-life-agenda-entry-tags entry) ":") ":")
                    ""))))
@@ -239,8 +221,6 @@ PROCESS is the process under watch, OUTPUT is the output received."
     (add-text-properties (length prefix) (length text) '(org-heading t) text)
     (setq text (concat (org-add-props text props) "\n"))
     (org-agenda-highlight-todo text)))
-
-;; Agenda renderer
 
 (cl-defun org-life-agenda-render-block-separator ()
   (unless (or (bobp) org-agenda-compact-blocks
@@ -298,22 +278,57 @@ PROCESS is the process under watch, OUTPUT is the output received."
 
 ;; Agenda processing
 
-(defun org-life-agenda-process-headline (headline-elem)
+(cl-defstruct org-life-agenda-entry
+  todo-type
+  todo-keyword
+  priority
+  text
+  tags
+  scheduled
+  deadline
+  planned
+  effort
+  marker
+  project-status
+  children)
+
+(defun org-life-agenda-entry-new (headline-elem &optional given-tags)
+  (let ((todo-type (org-element-property :todo-type headline-elem))
+        (todo-keyword (org-element-property :todo-keyword headline-elem))
+        (priority (org-element-property :priority headline-elem))
+        (text (org-element-property :raw-value headline-elem))
+        (tags (org-element-property :tags headline-elem))
+        (scheduled (org-element-property :scheduled headline-elem))
+        (deadline (org-element-property :deadline headline-elem))
+        (effort (org-element-property :EFFORT headline-elem))
+        (begin (org-element-property :begin headline-elem)))
+    (make-org-life-agenda-entry
+     :todo-type todo-type
+     :todo-keyword todo-keyword
+     :priority priority
+     :text text
+     :tags (or given-tags tags)
+     :scheduled scheduled
+     :deadline deadline
+     :effort (or (and effort (org-duration-to-minutes effort)) 0)
+     :marker (org-agenda-new-marker begin))))
+
+(defun org-life-agenda-get-tasks (headline-elem)
   (let ((children
          (org-element-map
              (org-element-contents headline-elem) ; data
              'headline ; types
-           #'org-life-agenda-process-headline ; fun
+           #'org-life-agenda-get-tasks ; fun
            nil ; info
            nil ; first-match
            'headline ; no-recursion
            )))
     
-    (if (eq 'done (org-element-property :todo-type headline-elem))
-        children
-      (cons
-       (org-life-agenda-entry-new headline-elem)
-       children))))
+    (if (eq 'todo (org-element-property :todo-type headline-elem))
+        (cons
+         (org-life-agenda-entry-new headline-elem)
+         children)
+      children)))
 
 (defun org-life-agenda-process-agenda-files (initial-value ast-processor)
   (let ((files (org-agenda-files nil 'ifmode))
@@ -342,20 +357,21 @@ PROCESS is the process under watch, OUTPUT is the output received."
     acc))
 
 (defun org-life-agenda-get-agenda-data ()
-  (org-life-agenda-process-agenda-files
-   '()
-   (lambda (acc ast) ; ast-processor
-     (message "done?")
-     (append (org-life-agenda-flatten-list
-              (org-element-map
-                  ast ; data
-                  'headline ; types
-                #'org-life-agenda-process-headline ; fun
-                nil ; info
-                nil ; first-match
-                'headline ; no-recursion
-                ))
-             acc))))
+  (let ((tasks
+         (org-life-agenda-process-agenda-files
+          '()
+          (lambda (acc ast) ; ast-processor
+            (append (org-life-agenda-flatten-list
+                     (org-element-map
+                         ast ; data
+                         'headline ; types
+                       #'org-life-agenda-get-tasks ; fun
+                       nil ; info
+                       nil ; first-match
+                       'headline ; no-recursion
+                       ))
+                    acc)))))
+    tasks))
 
 (defun org-life-agenda-get-scheduler-request (agenda-data)
   (message "TODO: org-life-agenda-get-scheduler-request not implemented.")
