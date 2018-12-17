@@ -242,7 +242,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
 
 ;; Agenda renderer
 
-(defun org-life-agenda-render-block-separator ()
+(cl-defun org-life-agenda-render-block-separator ()
   (unless (or (bobp) org-agenda-compact-blocks
               (not org-agenda-block-separator))
     (insert "\n"
@@ -251,20 +251,20 @@ PROCESS is the process under watch, OUTPUT is the output received."
               (make-string (window-width) org-agenda-block-separator))
             "\n")))
 
-(defun org-life-agenda-render-entries (entries)
+(cl-defun org-life-agenda-render-entries (&key entries)
   (setq entries (sort entries #'org-life-agenda-sort-by-priority))
   (dolist (entry entries)
     (insert
-     (org-life-agenda-format-entry "" entry))))
+     (org-life-agenda-format-entry " " entry))))
 
-(defun org-life-agenda-render-block (entries title &optional entries-renderer)
+(cl-defun org-life-agenda-render-block (&key entries title (entries-renderer nil))
   (when entries
     (let ((begin (point))
           (entries-renderer (or entries-renderer
-                        #'org-life-agenda-render-entries)))
+                                #'org-life-agenda-render-entries)))
       (org-life-agenda-render-block-separator)
       (insert (org-add-props title nil 'face 'org-agenda-structure) "\n")
-      (funcall entries-renderer entries)
+      (funcall entries-renderer :entries entries)
       (add-text-properties begin (point-max) `(org-agenda-type tags)))))
 
 (defmacro org-life-agenda-render-section (var-list process-ast render-blocks)
@@ -292,17 +292,33 @@ PROCESS is the process under watch, OUTPUT is the output received."
          (goto-char (point-max))
          ,@render-blocks))))
 
-(defun org-life-agenda-render-agenda (agenda-data)
-  (org-life-agenda-render-block agenda-data "Test"))
-
-(defun org-life-agenda-process-headline (headline)
-  (org-life-agenda-entry-new headline))
+(cl-defun org-life-agenda-render-agenda (&key agenda-data schedule-data)
+  (org-life-agenda-render-block :entries agenda-data
+                                :title "Test"))
 
 ;; Agenda processing
+
+(defun org-life-agenda-process-headline (headline-elem)
+  (let ((children
+         (org-element-map
+             (org-element-contents headline-elem) ; data
+             'headline ; types
+           #'org-life-agenda-process-headline ; fun
+           nil ; info
+           nil ; first-match
+           'headline ; no-recursion
+           )))
+    
+    (if (eq 'done (org-element-property :todo-type headline-elem))
+        children
+      (cons
+       (org-life-agenda-entry-new headline-elem)
+       children))))
 
 (defun org-life-agenda-process-agenda-files (initial-value ast-processor)
   (let ((files (org-agenda-files nil 'ifmode))
         (acc initial-value))
+    
     (while (setq file (pop files))
       (org-check-agenda-file file)
       (setq buffer (if (file-exists-p file)
@@ -321,43 +337,53 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (org-with-wide-buffer
          (unless (derived-mode-p 'org-mode) (error "Agenda file %s is not in Org mode" file))
          (let ((ast (org-element-parse-buffer 'headline)))
-           (setq acc (funcall ast-processor acc ast))))))))
+           (setq acc (funcall ast-processor acc ast))))))
+    
+    acc))
 
-(defun org-life-agenda-get-data ()
+(defun org-life-agenda-get-agenda-data ()
   (org-life-agenda-process-agenda-files
    '()
    (lambda (acc ast) ; ast-processor
-     (append (org-element-map
-                 ast ; data
-                 'headline ; types
-               #'org-life-agenda-process-headline ; fun
-               nil ; info
-               nil ; first-match
-               'headline ; no-recursion
-               )
+     (message "done?")
+     (append (org-life-agenda-flatten-list
+              (org-element-map
+                  ast ; data
+                  'headline ; types
+                #'org-life-agenda-process-headline ; fun
+                nil ; info
+                nil ; first-match
+                'headline ; no-recursion
+                ))
              acc))))
 
-(defun org-life-agenda-make-scheduler-request (agenda-data)
-  TODO)
+(defun org-life-agenda-get-scheduler-request (agenda-data)
+  (message "TODO: org-life-agenda-get-scheduler-request not implemented.")
+  nil)
 
-(defun org-life-agenda-run-scheduler (agenda-data)
-  (let (request response)
-    (setq request (org-life-agenda-make-scheduler-request
-                   agenda-data))
-    (setq response (org-life-send-request request))
+(defun org-life-agenda-get-schedule-data (agenda-data)
+  (let (request
+        response)
+
+    (message "TODO: org-life-agenda-get-schedule-data not implemented.")
+    ;; (setq request (org-life-agenda-get-scheduler-request agenda-data))
+    ;; (setq response (org-life-send-request request))
     ;; TODO add response to agenda-data and return
     ))
 
 ;; Agenda main
 
 (defun org-life-agenda (&rest _)
-  (catch 'exit
-    (let (agenda-data)
-      (setq agenda-data (org-life-agenda-get-data))
-      (setq agenda-data (org-life-agenda-run-scheduler agenda-data))
+      (let (agenda-data
+          schedule-data)
+      
+      (setq agenda-data (org-life-agenda-get-agenda-data))
+      (setq schedule-data (org-life-agenda-get-schedule-data agenda-data))
+      
       (let ((inhibit-read-only t))
         (goto-char (point-max))
-        (org-life-agenda-render-agenda agenda-data)))))
+        (org-life-agenda-render-agenda :agenda-data agenda-data
+                                       :schedule-data schedule-data))))
 
 ;;
 ;; Interactive functions
