@@ -618,7 +618,7 @@ regular expression,
 (setq org-super-agenda-header-map (make-sparse-keymap))
 
 ;; start notification server
-(org-notify-start 60)
+;; (org-notify-start 60)
 
 ;; my org-life
 (add-to-list 'load-path
