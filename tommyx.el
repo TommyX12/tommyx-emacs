@@ -112,6 +112,7 @@
 (require 'info+)
 (use-package package-lint :ensure t)
 (use-package dash :ensure t)
+(use-package ht :ensure t)
 (use-package s :ensure t)
 (use-package cl-lib :ensure t)
 (use-package request :ensure t

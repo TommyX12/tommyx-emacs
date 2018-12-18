@@ -1,4 +1,4 @@
-;;; org-life.el --- TODO
+;; org-life.el --- TODO
 ;;
 ;; Copyright (c) 2018 Tommy Xiang
 ;;
@@ -40,6 +40,8 @@
 ;;
 
 (require 'cl-lib)
+(require 'dash)
+(require 'ht)
 (require 'json)
 (require 'unicode-escape)
 
@@ -94,6 +96,8 @@
 (defvar org-life--response nil
   "Temporarily stored engine responses.")
 
+(defvar org-life--temp-id 0)
+
 ;;
 ;; Major mode definition
 ;;
@@ -133,18 +137,21 @@
 
 (defun org-life-send-request (request)
   "Send REQUEST to engine.  REQUEST needs to be JSON-serializable object.
-Return the response from engine if arrived before `org-life-wait' seconds."
+Return the response from engine if arrived before `org-life-wait' seconds.
+
+Only parse plist, not alist."
   (when (null org-life--engine-process)
     (org-life-start-engine))
   (when org-life--engine-process
-    (let ((json-null nil)
-          (json-encoding-pretty-print nil)
-          ;; TODO make sure utf-8 encoding works
-          (encoded (concat (unicode-escape* (json-encode-plist request)) "\n")))
-      (setq org-life--response nil)
-      (process-send-string org-life--engine-process encoded)
-      (accept-process-output org-life--engine-process org-life-wait)
-      org-life--response)))
+    (cl-letf (((symbol-function 'json-alist-p) (lambda (list) nil)))
+      (let ((json-null nil)
+            (json-encoding-pretty-print nil)
+            ;; TODO make sure utf-8 encoding works
+            (encoded (concat (unicode-escape* (json-encode request)) "\n")))
+        (setq org-life--response nil)
+        (process-send-string org-life--engine-process encoded)
+        (accept-process-output org-life--engine-process org-life-wait)
+        org-life--response))))
 
 (defun org-life-schedule ()
   "Query engine for scheduling."
@@ -154,7 +161,7 @@ Return the response from engine if arrived before `org-life-wait' seconds."
 (defun org-life--decode (msg)
   "Decode engine response MSG, and return the decoded object."
   (let ((json-array-type 'list)
-        (json-object-type 'alist))
+        (json-object-type 'plist))
     (json-read-from-string msg)))
 
 (defun org-life--engine-process-sentinel (process event)
@@ -184,6 +191,20 @@ PROCESS is the process under watch, OUTPUT is the output received."
   (cond ((not l) nil)
         ((atom l) (list l))
         (t (append (org-life-agenda-flatten-list (car l)) (org-life-agenda-flatten-list (cdr l))))))
+
+(defun org-life-agenda-timestamp-to-request (timestamp &optional default)
+  (or (and timestamp
+           (org-timestamp-format timestamp "%Y-%m-%d"))
+      default))
+
+(defun org-life-agenda-today-date-to-request ()
+  (format-time-string "%Y-%m-%d"))
+
+(defun org-life-agenda-list-to-ht (lst key-func)
+  (let ((result (ht-create)))
+    (dolist (item lst)
+      (ht-set! result (funcall key-func item) item))
+    result))
 
 ;; Agenda renderer
 
@@ -237,6 +258,29 @@ PROCESS is the process under watch, OUTPUT is the output received."
     (insert
      (org-life-agenda-format-entry " " entry))))
 
+(cl-defun org-life-agenda-render-day (&key daily-info
+                                           tasks-dict)
+  (let ((date (plist-get daily-info :date))
+        (work-time (plist-get daily-info :work_time))
+        (sessions (plist-get daily-info :sessions))
+        (free-time (plist-get daily-info :free_time))
+        (average-stress (plist-get daily-info :average_stress)))
+    (insert date " | "
+            (org-duration-from-minutes work-time) " | "
+            (org-duration-from-minutes free-time) " | "
+            (format "%.3f" average-stress) " | "
+            "\n")
+    (dolist (session sessions)
+      (let* ((id (plist-get session :id))
+             (amount (plist-get session :amount))
+             (type (plist-get session :type))
+             (entry (ht-get tasks-dict id)))
+        (insert (org-life-agenda-format-entry
+                 (concat " "
+                         (format "%-8s" (org-duration-from-minutes amount))
+                         "| ")
+                 entry))))))
+
 (cl-defun org-life-agenda-render-block (&key entries title (entries-renderer nil))
   (when entries
     (let ((begin (point))
@@ -246,6 +290,11 @@ PROCESS is the process under watch, OUTPUT is the output received."
       (insert (org-add-props title nil 'face 'org-agenda-structure) "\n")
       (funcall entries-renderer :entries entries)
       (add-text-properties begin (point-max) `(org-agenda-type tags)))))
+
+(cl-defun org-life-agenda-render-error (&key message)
+  (insert (propertize "Error" 'face 'error)
+          "\n"
+          message))
 
 (defmacro org-life-agenda-render-section (var-list process-ast render-blocks)
   `(catch 'exit
@@ -273,12 +322,25 @@ PROCESS is the process under watch, OUTPUT is the output received."
          ,@render-blocks))))
 
 (cl-defun org-life-agenda-render-agenda (&key agenda-data schedule-data)
-  (org-life-agenda-render-block :entries agenda-data
-                                :title "Test"))
+  (let ((status (plist-get schedule-data :status))
+        (err (plist-get schedule-data :err))
+        (data (plist-get schedule-data :data)))
+    (if (string= status "error")
+        (org-life-agenda-render-error err)
+      ;; (org-life-agenda-render-block :entries (plist-get agenda-data :tasks)
+      ;;                               :title "Test")
+      (let ((tasks-dict (plist-get agenda-data :tasks-dict))
+            (general (plist-get data :general))
+            (alerts (plist-get data :alerts))
+            (daily-infos (plist-get data :daily_infos)))
+        (dolist (daily-info daily-infos)
+          (org-life-agenda-render-day :daily-info daily-info
+                                      :tasks-dict tasks-dict))))))
 
 ;; Agenda processing
 
 (cl-defstruct org-life-agenda-entry
+  id
   todo-type
   todo-keyword
   priority
@@ -292,7 +354,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
   project-status
   children)
 
-(defun org-life-agenda-entry-new (headline-elem &optional given-tags)
+(defun org-life-agenda-entry-from-headline (id headline-elem &optional given-tags)
   (let ((todo-type (org-element-property :todo-type headline-elem))
         (todo-keyword (org-element-property :todo-keyword headline-elem))
         (priority (org-element-property :priority headline-elem))
@@ -303,6 +365,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (effort (org-element-property :EFFORT headline-elem))
         (begin (org-element-property :begin headline-elem)))
     (make-org-life-agenda-entry
+     :id id
      :todo-type todo-type
      :todo-keyword todo-keyword
      :priority priority
@@ -325,9 +388,11 @@ PROCESS is the process under watch, OUTPUT is the output received."
            )))
     
     (if (eq 'todo (org-element-property :todo-type headline-elem))
-        (cons
-         (org-life-agenda-entry-new headline-elem)
-         children)
+        (progn
+          (setq org-life--temp-id (1+ org-life--temp-id))
+          (cons
+           (org-life-agenda-entry-from-headline org-life--temp-id headline-elem)
+           children))
       children)))
 
 (defun org-life-agenda-process-agenda-files (initial-value ast-processor)
@@ -357,6 +422,8 @@ PROCESS is the process under watch, OUTPUT is the output received."
     acc))
 
 (defun org-life-agenda-get-agenda-data ()
+  (setq org-life--temp-id 0)
+  
   (let ((tasks
          (org-life-agenda-process-agenda-files
           '()
@@ -371,21 +438,66 @@ PROCESS is the process under watch, OUTPUT is the output received."
                        'headline ; no-recursion
                        ))
                     acc)))))
-    tasks))
+    (list :tasks tasks
+          :tasks-dict (org-life-agenda-list-to-ht
+                       tasks
+                       (lambda (task)
+                         (org-life-agenda-entry-id task))))))
+
+(defun org-life-agenda-get-scheduler-request-config ()
+  "TODO actually allow config"
+  (list
+   :today (org-life-agenda-today-date-to-request)
+   :scheduling_days 365
+   :daily_info_days 14
+   :fragmentation_config (list
+                          :max_stress 0.8
+                          :max_percentage 0.4
+                          :preferred_fragment_size 45
+                          :min_fragment_size 15)))
+
+(defun org-life-agenda-get-scheduler-request-tasks (agenda-tasks)
+  "TODO deal with repeats. deal with non-scheduled tasks. deal with non-effort tasks. deal with amount done. deal with priority."
+  (-non-nil
+   (-map (lambda (task)
+           (when (and
+                  (eq 'todo (org-life-agenda-entry-todo-type task)))
+             (list
+              :id (org-life-agenda-entry-id task)
+              :start (org-life-agenda-timestamp-to-request
+                      (org-life-agenda-entry-scheduled task)
+                      (org-life-agenda-today-date-to-request))
+              :end (org-life-agenda-timestamp-to-request
+                      (org-life-agenda-entry-deadline task)
+                      "max")
+              :amount (org-life-agenda-entry-effort task)
+              :done 0
+              :priority (org-life-agenda-entry-priority task))))
+         agenda-tasks)))
+
+(defun org-life-agenda-get-scheduler-request-work-time ()
+  "TODO actually parse work time"
+  (list
+   (list
+    :selector "default"
+    :duration 480)))
 
 (defun org-life-agenda-get-scheduler-request (agenda-data)
-  (message "TODO: org-life-agenda-get-scheduler-request not implemented.")
-  nil)
+  "TODO"
+  (list
+   :command "schedule"
+   :args (list
+          :config (org-life-agenda-get-scheduler-request-config)
+          :tasks (org-life-agenda-get-scheduler-request-tasks
+                  (plist-get agenda-data :tasks))
+          :work_time (org-life-agenda-get-scheduler-request-work-time))))
 
 (defun org-life-agenda-get-schedule-data (agenda-data)
   (let (request
         response)
 
-    (message "TODO: org-life-agenda-get-schedule-data not implemented.")
-    ;; (setq request (org-life-agenda-get-scheduler-request agenda-data))
-    ;; (setq response (org-life-send-request request))
-    ;; TODO add response to agenda-data and return
-    ))
+    (setq request (org-life-agenda-get-scheduler-request agenda-data))
+    (setq response (org-life-send-request request))))
 
 ;; Agenda main
 

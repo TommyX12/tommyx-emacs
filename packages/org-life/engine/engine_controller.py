@@ -15,8 +15,9 @@ class EngineController(object):
     def execute(self, decoded_request):
         command = decoded_request.command
         if command == 'schedule':
-            decoded_args = SchedulingRequest().decode(decoded_request.args)
+            decoded_args = SchedulingRequest().decode_self(decoded_request.args)
             engine_response = self.engine.schedule(decoded_args)
+            encoded_response = engine_response.encode()
             return EngineResponse() \
                 .set_property('status', 'success') \
                 .set_property('data', encoded_response)
@@ -29,7 +30,7 @@ class EngineController(object):
     def request_handler(self, request):
         try:
             deserialized_request = self.serializer.deserialize(request)
-            decoded_request = EngineRequest().decode(deserialized_request)
+            decoded_request = EngineRequest().decode_self(deserialized_request)
             response = self.execute(decoded_request)
             encoded_response = response.encode()
             serialized_response = self.serializer.serialize(encoded_response)

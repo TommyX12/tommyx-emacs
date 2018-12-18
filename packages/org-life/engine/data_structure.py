@@ -64,13 +64,13 @@ class ListProperty(Property):
         return [
             prop.encode()
             for prop in props
-        ] if props is not None else None
+        ] if props is not None else []
 
     def decode(self, encoded_props):
         return [
             self.prop_type().decode_self(encoded_prop)
             for encoded_prop in encoded_props
-        ] if encoded_props is not None else None
+        ] if encoded_props is not None else []
 
     
 class DictProperty(Property):
@@ -86,15 +86,15 @@ class DictProperty(Property):
         return {
             prop_name: props[prop_name].encode()
             for prop_name in props
-        } if props is not None else None
+        } if props is not None else {}
 
     def decode(self, encoded_props):
         return {
             prop_name: self.prop_type().decode_self(encoded_props[prop_name])
             for prop_name in encoded_props
-        } if encoded_props is not None else None
+        } if encoded_props is not None else {}
 
-    
+
 class Protocol(object):
 
     properties = {}

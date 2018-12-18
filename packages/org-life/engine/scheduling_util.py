@@ -283,19 +283,16 @@ class TaskEventsIterator(object):
         self.index = 0
         
         for task in tasks:
-            if task.start > task.end:
-                raise ValueError()
-
             self.task_events.append(TaskEvent(
                 task.id.value,
                 util.clamp(task.start, start, end),
-                util.clamp(task.end.add_days(1), start, end),
+                util.clamp(task.end, start, end).add_days(1),
                 TaskEventType.TASK_START
                 if direction == FillDirection.EARLY else TaskEventType.TASK_END
             ))
             self.task_events.append(TaskEvent(
                 task.id.value,
-                util.clamp(task.end.add_days(1), start, end),
+                util.clamp(task.end, start, end).add_days(1),
                 util.clamp(task.start, start, end),
                 TaskEventType.TASK_END
                 if direction == FillDirection.EARLY else TaskEventType.TASK_START

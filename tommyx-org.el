@@ -618,6 +618,7 @@ regular expression,
 (setq org-super-agenda-header-map (make-sparse-keymap))
 
 ;; start notification server
+;; temporarily disabled
 ;; (org-notify-start 60)
 
 ;; my org-life
