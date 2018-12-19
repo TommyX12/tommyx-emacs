@@ -1639,6 +1639,24 @@ command (ran after) is mysteriously incorrect."
 ; hide other keys
 (push '(("SPC [1-9]") . t) which-key-replacement-alist)
 
+;; mode specific leader
+
+(general-define-key
+  :keymaps 'emacs-lisp-mode-map
+	:states '(motion normal)
+	:prefix "SPC j"
+
+  "e" 'eval-defun
+  "E" 'eval-buffer
+)
+(general-define-key
+  :keymaps 'emacs-lisp-mode-map
+	:states '(visual)
+	:prefix "SPC j"
+
+  "e" 'eval-region
+)
+
 ;; evil
 
 ; disable C-z

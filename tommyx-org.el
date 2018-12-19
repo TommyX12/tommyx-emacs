@@ -335,6 +335,12 @@ regular expression,
 	"s" '(org-schedule
 		:which-key "org schedule")
 
+  "e" '(org-set-effort
+    :which-key "org set effort")
+
+  "E" '(org-inc-effort
+    :which-key "org increase effort")
+
 	"C-s" '((lambda () (interactive) (org-todo "TODAY"))
 		:which-key "org set TODAY")
 
@@ -528,6 +534,9 @@ regular expression,
 	"js" '(org-agenda-schedule
 		:which-key "agenda schedule")
 
+  "je" '(org-agenda-set-effort
+    :which-key "agenda set effort")
+
 	(kbd "j C-s") '((lambda () (interactive) (org-agenda-todo "TODAY"))
 		:which-key "agenda set TODAY")
 
@@ -625,6 +634,9 @@ regular expression,
 (add-to-list 'load-path
 	(expand-file-name "packages/org-life" (file-name-directory load-file-name)))
 (require 'org-life)
+(setq org-life-config-file-path
+      (expand-file-name "org-life-config.org"
+                        (file-name-directory org-directory)))
 (push
  '("x" "org-life agenda"
    ((org-life-agenda ""

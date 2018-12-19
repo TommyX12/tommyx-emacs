@@ -43,7 +43,7 @@ class StressAnalyzer(object):
                 else:
                     acc_average_stress = 1.0 - (acc_free_time / acc_work_time)
 
-            if acc_average_stress > overall_stress:
+            if acc_average_stress >= overall_stress:
                 overall_stress = acc_average_stress
                 highest_stress_date = date
 

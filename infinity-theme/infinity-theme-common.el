@@ -817,9 +817,9 @@
 
 ;;;;; org
 	`(org-agenda-clocking ((,class (:background ,green-bg-s :inherit bold :foreground ,comp))))
-	`(org-agenda-date ((,class (:foreground ,var :height 1.1))))
+	`(org-agenda-date ((,class (:foreground ,keyword :height 1.1))))
 	`(org-agenda-date-today ((,class (:foreground ,keyword :inherit bold :height 1.3))))
-	`(org-agenda-date-weekend ((,class (:inherit bold :foreground ,var))))
+	`(org-agenda-date-weekend ((,class (:inherit bold :foreground ,comp))))
 	`(org-agenda-done ((,class (:foreground ,comp))))
 	`(org-agenda-dimmed-todo-face ((,class (:foreground ,base-dim))))
 	`(org-agenda-structure ((,class (:height 1.2 :foreground ,primary :inherit bold))))

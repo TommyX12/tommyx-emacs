@@ -43,6 +43,7 @@
 (require 'dash)
 (require 'ht)
 (require 'json)
+(require 'org)
 (require 'unicode-escape)
 
 ;;
@@ -82,9 +83,31 @@
   :group 'org-life
   :type 'float)
 
+(defcustom org-life-config-file-path
+  (expand-file-name "org-life-config.org"
+                    (file-name-directory org-directory))
+  "Path to org-life config file."
+  :group 'org-life
+  :type 'string)
+
 ;;
 ;; Faces
 ;;
+
+(defface org-life-agenda-stress-best-face
+  '((t (:inherit org-warning)))
+  "Face to highlight best stress for org-life-agenda."
+  :group 'org-life)
+
+(defface org-life-agenda-stress-normal-face
+  '((t (:inherit font-lock-function-name-face)))
+  "Face to highlight normal stress for org-life-agenda."
+  :group 'org-life)
+
+(defface org-life-agenda-stress-warning-face
+  '((t (:inherit success)))
+  "Face to highlight warning stress for org-life-agenda."
+  :group 'org-life)
 
 ;;
 ;; Variables
@@ -206,6 +229,27 @@ PROCESS is the process under watch, OUTPUT is the output received."
       (ht-set! result (funcall key-func item) item))
     result))
 
+(defun org-life-agenda-date-string-to-time (date-string)
+  (org-read-date nil t date-string nil))
+
+(defun org-life-agenda-time-to-weekday (time)
+  (cons (format-time-string "%a" time)
+        (string-to-number (format-time-string "%u" time))))
+
+(defun org-life-get-buffer (file)
+  "Get a buffer visiting FILE."
+  (let ((buf (org-find-base-buffer-visiting file)))
+    (if buf
+        buf
+      (setq buf (find-file-noselect file))
+      buf)))
+
+(defmacro org-life-with-config-buffer (&rest body)
+  `(with-current-buffer
+       (org-life-get-buffer ,org-life-config-file-path)
+     (org-with-wide-buffer
+      ,@body)))
+
 ;; Agenda renderer
 
 (defun org-life-agenda-format-entry (prefix entry)
@@ -247,10 +291,34 @@ PROCESS is the process under watch, OUTPUT is the output received."
   (unless (or (bobp) org-agenda-compact-blocks
               (not org-agenda-block-separator))
     (insert "\n"
-            (if (stringp org-agenda-block-separator)
-                org-agenda-block-separator
-              (make-string (window-width) org-agenda-block-separator))
-            "\n")))
+            ;; (if (stringp org-agenda-block-separator)
+            ;;     org-agenda-block-separator
+            ;;   (make-string (window-text-width) org-agenda-block-separator))
+            ;; "\n"
+            )))
+
+(cl-defun org-life-agenda-render-multi-progress-bar (&key bar-width progress-list (fill-char ?=) (empty-char ? ))
+  (insert "|")
+  (let ((bar-width (- bar-width 2))
+        (cur-progress 0)
+        (cur-width 0))
+    
+    (while progress-list
+      (let ((progress (caar progress-list))
+            (face (cdar progress-list)))
+        (when (> progress cur-progress)
+          (let* ((width (round (* (float progress) bar-width)))
+                 (diff (- width cur-width)))
+            (insert (propertize (make-string diff fill-char)
+                                'face face))
+            (setq cur-progress progress)
+            (setq cur-width width)))
+
+        (setq progress-list (cdr progress-list))))
+
+    (let ((diff (- bar-width cur-width)))
+      (insert (make-string diff empty-char))))
+  (insert "|"))
 
 (cl-defun org-life-agenda-render-entries (&key entries)
   (setq entries (sort entries #'org-life-agenda-sort-by-priority))
@@ -258,14 +326,45 @@ PROCESS is the process under watch, OUTPUT is the output received."
     (insert
      (org-life-agenda-format-entry " " entry))))
 
+(cl-defun org-life-agenda-render-impossible-task (&key impossible-task
+                                                       tasks-dict)
+  (let* ((id (plist-get impossible-task :id))
+         (amount (plist-get impossible-task :amount))
+         (entry (ht-get tasks-dict id)))
+    (insert (org-life-agenda-format-entry
+             (concat " "
+                     (propertize
+                      (format "%-8s" (org-duration-from-minutes amount))
+                      'face 'error)
+                     "| ")
+             entry))))
+
 (cl-defun org-life-agenda-render-day (&key daily-info
-                                           tasks-dict)
-  (let ((date (plist-get daily-info :date))
-        (work-time (plist-get daily-info :work_time))
-        (sessions (plist-get daily-info :sessions))
-        (free-time (plist-get daily-info :free_time))
-        (average-stress (plist-get daily-info :average_stress)))
-    (insert date " | "
+                                           tasks-dict
+                                           (today nil))
+  (let* ((date-string (plist-get daily-info :date))
+         (work-time (plist-get daily-info :work_time))
+         (sessions (plist-get daily-info :sessions))
+         (free-time (plist-get daily-info :free_time))
+         (average-stress (plist-get daily-info :average_stress))
+         (time (org-life-agenda-date-string-to-time date-string))
+         (weekday (org-life-agenda-time-to-weekday time))
+         (weekday-num (cdr weekday))
+         (date-string (if today
+                          (propertize date-string
+                                      'face
+                                      'org-agenda-date-today)
+                        (propertize date-string
+                                    'face
+                                    'org-agenda-date)))
+         (weekday-text (if (or (= weekday-num 6)
+                               (= weekday-num 7))
+                           (propertize (car weekday)
+                                       'face
+                                       'org-agenda-date-weekend)
+                         (car weekday)))
+         )
+    (insert weekday-text " " date-string " | "
             (org-duration-from-minutes work-time) " | "
             (org-duration-from-minutes free-time) " | "
             (format "%.3f" average-stress) " | "
@@ -281,13 +380,19 @@ PROCESS is the process under watch, OUTPUT is the output received."
                          "| ")
                  entry))))))
 
+(cl-defun org-life-agenda-render-block-title (&key title)
+  (insert (org-add-props title nil 'face 'org-agenda-structure) "\n"))
+
+(cl-defun org-life-agenda-render-block-sub-title (&key title)
+  (insert (org-add-props title nil 'face 'bold) "\n"))
+
 (cl-defun org-life-agenda-render-block (&key entries title (entries-renderer nil))
   (when entries
     (let ((begin (point))
           (entries-renderer (or entries-renderer
                                 #'org-life-agenda-render-entries)))
       (org-life-agenda-render-block-separator)
-      (insert (org-add-props title nil 'face 'org-agenda-structure) "\n")
+      (org-life-agenda-render-block-title title)
       (funcall entries-renderer :entries entries)
       (add-text-properties begin (point-max) `(org-agenda-type tags)))))
 
@@ -296,30 +401,39 @@ PROCESS is the process under watch, OUTPUT is the output received."
           "\n"
           message))
 
-(defmacro org-life-agenda-render-section (var-list process-ast render-blocks)
-  `(catch 'exit
-     (let ((files (org-agenda-files nil 'ifmode))
-           ,@var-list)
-       (while (setq file (pop files))
-         (org-check-agenda-file file)
-         (setq buffer (if (file-exists-p file)
-                          (org-get-agenda-file-buffer file)
-                        (error "No such file %s" file)))
+(cl-defun org-life-agenda-render-general-info (&key general-info)
+  (let ((stress (plist-get general-info :stress))
+        (highest-stress-date (plist-get general-info :highest_stress_date))
+        (stress-with-fragments (plist-get general-info :stress_with_fragments))
+        (stress-without-today (plist-get general-info :stress_without_today)))
+    (insert (format "Stress: %.3f | %.3f | %.3f" stress stress-with-fragments stress-without-today) "\n")
+    (org-life-agenda-render-multi-progress-bar
+     :bar-width (window-text-width)
+     :progress-list (list (cons stress 'org-life-agenda-stress-best-face)
+                          (cons stress-with-fragments 'org-life-agenda-stress-normal-face)
+                          (cons stress-without-today 'org-life-agenda-stress-warning-face)))
+    (insert "\n")
+    (insert (format (concat "Highest Stress Date: "
+                            (propertize "%s"
+                                        'face 'org-agenda-date)
+                            " (in %d days)")
+                    highest-stress-date
+                    (- (time-to-days
+                        (org-life-agenda-date-string-to-time
+                         highest-stress-date))
+                       (time-to-days
+                        (current-time))))
+            "\n")))
 
-         (unless org-todo-regexp
-           (dolist (variable '(org-todo-regexp org-not-done-regexp org-complex-heading-regexp
-                                               org-done-keywords org-done-keywords-for-agenda))
-             (set variable (buffer-local-value variable buffer))))
-
-         (with-current-buffer buffer
-           (org-with-wide-buffer
-            (unless (derived-mode-p 'org-mode) (error "Agenda file %s is not in Org mode" file))
-            (setq ast (org-element-parse-buffer 'headline))
-            ,@process-ast)))
-
-       (let ((inhibit-read-only t))
-         (goto-char (point-max))
-         ,@render-blocks))))
+(cl-defun org-life-agenda-render-alerts (&key alerts
+                                              tasks-dict)
+  ;; impossible tasks
+  (let ((impossible-tasks (plist-get alerts :impossible_tasks)))
+    (when (> (length impossible-tasks) 0)
+      (org-life-agenda-render-block-sub-title :title "Impossible Tasks")
+      (dolist (impossible-task impossible-tasks)
+        (org-life-agenda-render-impossible-task :impossible-task impossible-task
+                                                :tasks-dict tasks-dict)))))
 
 (cl-defun org-life-agenda-render-agenda (&key agenda-data schedule-data)
   (let ((status (plist-get schedule-data :status))
@@ -330,12 +444,30 @@ PROCESS is the process under watch, OUTPUT is the output received."
       ;; (org-life-agenda-render-block :entries (plist-get agenda-data :tasks)
       ;;                               :title "Test")
       (let ((tasks-dict (plist-get agenda-data :tasks-dict))
-            (general (plist-get data :general))
+            (general-info (plist-get data :general))
             (alerts (plist-get data :alerts))
-            (daily-infos (plist-get data :daily_infos)))
+            (daily-infos (plist-get data :daily_infos))
+
+            (today t))
+        
+        (org-life-agenda-render-block-title :title "General")
+        (org-life-agenda-render-general-info :general-info general-info)
+        
+        (org-life-agenda-render-block-separator)
+        
+        (org-life-agenda-render-block-title :title "Alerts")
+        (org-life-agenda-render-alerts :alerts alerts
+                                       :tasks-dict tasks-dict)
+        
+        (org-life-agenda-render-block-separator)
+        
+        (org-life-agenda-render-block-title :title "Schedules")
         (dolist (daily-info daily-infos)
           (org-life-agenda-render-day :daily-info daily-info
-                                      :tasks-dict tasks-dict))))))
+                                      :tasks-dict tasks-dict
+                                      :today today)
+          (insert "\n")
+          (setq today nil))))))
 
 ;; Agenda processing
 
@@ -446,6 +578,20 @@ PROCESS is the process under watch, OUTPUT is the output received."
 
 (defun org-life-agenda-get-scheduler-request-config ()
   "TODO actually allow config"
+  (org-life-with-config-buffer
+   (unless (derived-mode-p 'org-mode) (error "Agenda file %s is not in Org mode" file))
+   (let* ((ast (org-element-parse-buffer 'headline))
+          (children
+           (org-element-map
+               ast ; data
+               'headline ; types
+             ;; fun
+             (lambda (headline-elem)) ; TODO grab the information
+             nil ; info
+             nil ; first-match
+             'headline ; no-recursion
+             )))))
+  
   (list
    :today (org-life-agenda-today-date-to-request)
    :scheduling_days 365
