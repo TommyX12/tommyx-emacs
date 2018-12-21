@@ -434,7 +434,8 @@ PROCESS is the process under watch, OUTPUT is the output received."
      :progress-list (list (cons stress 'org-life-agenda-stress-best-face)
                           (cons stress-with-fragments 'org-life-agenda-stress-normal-face)
                           (cons stress-without-today 'org-life-agenda-stress-warning-face))
-     :marker-list (list (cons 0.5 nil)))
+     :marker-list (list (cons 0.5 nil)
+                        (cons 0.25 nil)))
     (insert "\n")
     (insert (format (concat "Highest Stress Date: "
                             (propertize "%s"
