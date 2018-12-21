@@ -577,30 +577,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
     
     acc))
 
-(defun org-life-agenda-get-agenda-data ()
-  (setq org-life--temp-id 0)
-  
-  (let ((tasks
-         (org-life-agenda-process-agenda-files
-          '()
-          (lambda (acc ast) ; ast-processor
-            (append (org-life-agenda-flatten-list
-                     (org-element-map
-                         ast ; data
-                         'headline ; types
-                       #'org-life-agenda-get-tasks ; fun
-                       nil ; info
-                       nil ; first-match
-                       'headline ; no-recursion
-                       ))
-                    acc)))))
-    (list :tasks tasks
-          :tasks-dict (org-life-agenda-list-to-ht
-                       tasks
-                       (lambda (task)
-                         (org-life-agenda-entry-id task))))))
-
-(defun org-life-agenda-get-scheduler-request-config ()
+(defun org-life-agenda-get-config-data ()
   "TODO actually allow config"
   (org-life-with-config-buffer
    (unless (derived-mode-p 'org-mode) (error "Agenda file %s is not in Org mode" file))
@@ -625,6 +602,37 @@ PROCESS is the process under watch, OUTPUT is the output received."
                           :max_percentage 0.5
                           :preferred_fragment_size 45
                           :min_fragment_size 15)))
+
+(defun org-life-agenda-get-agenda-data ()
+  (setq org-life--temp-id 0)
+  
+  (let ((config-data
+         (org-life-agenda-get-config-data))
+        (tasks
+         (org-life-agenda-process-agenda-files
+          '()
+          (lambda (acc ast) ; ast-processor
+            (append (org-life-agenda-flatten-list
+                     (org-element-map
+                         ast ; data
+                         'headline ; types
+                       #'org-life-agenda-get-tasks ; fun
+                       nil ; info
+                       nil ; first-match
+                       'headline ; no-recursion
+                       ))
+                    acc)))))
+    
+    (list :config config-data
+          :tasks tasks
+          :tasks-dict (org-life-agenda-list-to-ht
+                       tasks
+                       (lambda (task)
+                         (org-life-agenda-entry-id task))))))
+
+(defun org-life-agenda-get-scheduler-request-config (config-data)
+  ;; This is in the same format as request.
+  config-data)
 
 (defun org-life-agenda-get-scheduler-request-tasks (agenda-tasks)
   "TODO deal with repeats. deal with non-scheduled tasks. deal with non-effort tasks. deal with amount done. deal with priority."
@@ -657,7 +665,8 @@ PROCESS is the process under watch, OUTPUT is the output received."
   (list
    :command "schedule"
    :args (list
-          :config (org-life-agenda-get-scheduler-request-config)
+          :config (org-life-agenda-get-scheduler-request-config
+                   (plist-get agenda-data :config))
           :tasks (org-life-agenda-get-scheduler-request-tasks
                   (plist-get agenda-data :tasks))
           :work_time (org-life-agenda-get-scheduler-request-work-time))))
