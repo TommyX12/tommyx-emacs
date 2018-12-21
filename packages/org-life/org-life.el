@@ -297,14 +297,21 @@ PROCESS is the process under watch, OUTPUT is the output received."
             ;; "\n"
             )))
 
-(cl-defun org-life-agenda-render-multi-progress-bar (&key bar-width progress-list (fill-char ?=) (empty-char ? ))
+(cl-defun org-life-agenda-render-multi-progress-bar
+    (&key bar-width
+          progress-list
+          marker-list
+          (fill-char ?=)
+          (empty-char ? )
+          (marker-char ?|))
   (insert "|")
-  (let ((bar-width (- bar-width 2))
+  
+  (let ((bar-width (max 1 (- bar-width 2)))
         (cur-progress 0)
         (cur-width 0))
     
     (while progress-list
-      (let ((progress (caar progress-list))
+      (let ((progress (min (max (caar progress-list) 0.0) 1.0))
             (face (cdar progress-list)))
         (when (> progress cur-progress)
           (let* ((width (round (* (float progress) bar-width)))
@@ -317,7 +324,20 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (setq progress-list (cdr progress-list))))
 
     (let ((diff (- bar-width cur-width)))
-      (insert (make-string diff empty-char))))
+      (insert (make-string diff empty-char)))
+
+    (dolist (marker marker-list)
+      (let ((pos (min (max (car marker) 0.0) 1.0))
+            (face (cdr marker)))
+        (save-excursion
+          (backward-char)
+          (goto-char (- (point)
+                        (round (* (- 1.0 (float pos))
+                                  (1- bar-width)))))
+          (delete-char 1)
+          (insert (propertize (char-to-string marker-char)
+                              'face face))))))
+  
   (insert "|"))
 
 (cl-defun org-life-agenda-render-entries (&key entries)
@@ -364,21 +384,23 @@ PROCESS is the process under watch, OUTPUT is the output received."
                                        'org-agenda-date-weekend)
                          (car weekday)))
          )
-    (insert weekday-text " " date-string " | "
-            (org-duration-from-minutes work-time) " | "
-            (org-duration-from-minutes free-time) " | "
-            (format "%.3f" average-stress) " | "
-            "\n")
+    (insert (propertize "● "
+                        'face 'org-agenda-date)
+            weekday-text " " date-string "\n")
     (dolist (session sessions)
       (let* ((id (plist-get session :id))
              (amount (plist-get session :amount))
              (type (plist-get session :type))
              (entry (ht-get tasks-dict id)))
         (insert (org-life-agenda-format-entry
-                 (concat " "
-                         (format "%-8s" (org-duration-from-minutes amount))
-                         "| ")
-                 entry))))))
+                 (concat "| "
+                         (format "%-5s" (org-duration-from-minutes amount))
+                         " ")
+                 entry))))
+    (insert (org-duration-from-minutes work-time) " | "
+            (org-duration-from-minutes free-time) " | "
+            (format "%.3f" average-stress)
+            "\n")))
 
 (cl-defun org-life-agenda-render-block-title (&key title)
   (insert (org-add-props title nil 'face 'org-agenda-structure) "\n"))
@@ -411,7 +433,8 @@ PROCESS is the process under watch, OUTPUT is the output received."
      :bar-width (window-text-width)
      :progress-list (list (cons stress 'org-life-agenda-stress-best-face)
                           (cons stress-with-fragments 'org-life-agenda-stress-normal-face)
-                          (cons stress-without-today 'org-life-agenda-stress-warning-face)))
+                          (cons stress-without-today 'org-life-agenda-stress-warning-face))
+     :marker-list (list (cons 0.5 nil)))
     (insert "\n")
     (insert (format (concat "Highest Stress Date: "
                             (propertize "%s"
@@ -597,8 +620,8 @@ PROCESS is the process under watch, OUTPUT is the output received."
    :scheduling_days 365
    :daily_info_days 14
    :fragmentation_config (list
-                          :max_stress 0.8
-                          :max_percentage 0.4
+                          :max_stress 0.5
+                          :max_percentage 0.5
                           :preferred_fragment_size 45
                           :min_fragment_size 15)))
 
