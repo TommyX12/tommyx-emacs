@@ -4,7 +4,7 @@ test_util.allow_parent_import()
 from planner import *
 from scheduling_util import *
 from data_structure import *
-from work_time_parser import *
+from usable_time_parser import *
 
 import unittest
 
@@ -64,9 +64,9 @@ class PlannerTest(unittest.TestCase):
 
         schedule_start = Date().decode_self('2018-11-30')
         schedule_end = Date().decode_self('2018-12-06')
-        work_time_config = [WorkTimeConfigEntry().decode_self({'selector':'default','duration':20})]
-        work_time_dict = WorkTimeParser().get_work_time_dict(schedule_start, schedule_end, work_time_config)
-        schedule = Schedule.from_work_time_dict(schedule_start, schedule_end, work_time_dict)
+        usable_time_config = [UsableTimeConfigEntry().decode_self({'selector':'default','duration':20})]
+        usable_time_dict = UsableTimeParser().get_usable_time_dict(schedule_start, schedule_end, usable_time_config)
+        schedule = Schedule.from_usable_time_dict(schedule_start, schedule_end, usable_time_dict)
 
         p = Planner()
         result = p.plan(tasks, schedule, direction = FillDirection.EARLY)
@@ -88,7 +88,7 @@ class PlannerTest(unittest.TestCase):
 ''')
         self.assertEqual(len(impossible_tasks), 0)
         
-        schedule = Schedule.from_work_time_dict(schedule_start, schedule_end, work_time_dict)
+        schedule = Schedule.from_usable_time_dict(schedule_start, schedule_end, usable_time_dict)
         result = p.plan(tasks, schedule, direction = FillDirection.LATE)
         impossible_tasks = result.impossible_tasks
         self.assertEqual(str(schedule), '''==========
@@ -112,7 +112,7 @@ class PlannerTest(unittest.TestCase):
         task1.amount.value = 1000
         task1.done.value = 100
         
-        schedule = Schedule.from_work_time_dict(schedule_start, schedule_end, work_time_dict)
+        schedule = Schedule.from_usable_time_dict(schedule_start, schedule_end, usable_time_dict)
         result = p.plan(tasks, schedule, direction = FillDirection.LATE)
         impossible_tasks = result.impossible_tasks
         self.assertEqual(str(schedule), '''==========
@@ -136,7 +136,7 @@ class PlannerTest(unittest.TestCase):
         self.assertEqual(impossible_tasks[0].id.value, 1)
         self.assertEqual(impossible_tasks[0].amount.value, 855)
         
-        schedule = Schedule.from_work_time_dict(schedule_start, schedule_end, work_time_dict)
+        schedule = Schedule.from_usable_time_dict(schedule_start, schedule_end, usable_time_dict)
         result = p.plan(tasks, schedule, direction = FillDirection.EARLY)
         impossible_tasks = result.impossible_tasks
         self.assertEqual(str(schedule), '''==========

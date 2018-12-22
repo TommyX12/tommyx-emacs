@@ -3,7 +3,7 @@ test_util.allow_parent_import()
 
 from engine import *
 from data_structure import *
-from work_time_parser import *
+from usable_time_parser import *
 
 import unittest
 
@@ -44,7 +44,7 @@ class EngineTest(unittest.TestCase):
 
         schedule_start = Date().decode_self('2018-11-30')
         schedule_end = Date().decode_self('2018-12-06')
-        work_time_config = [WorkTimeConfigEntry().decode_self({'selector':'default','duration':480})]
+        usable_time_config = [UsableTimeConfigEntry().decode_self({'selector':'default','duration':480})]
 
         fragmentation_config = FragmentationConfig()
         fragmentation_config.max_percentage.value = 0.2
@@ -60,7 +60,7 @@ class EngineTest(unittest.TestCase):
         scheduling_request = SchedulingRequest()
         scheduling_request.config = config
         scheduling_request.tasks = tasks
-        scheduling_request.work_time = work_time_config
+        scheduling_request.usable_time = usable_time_config
 
         engine = Engine.create()
         r = engine.schedule(scheduling_request).encode()

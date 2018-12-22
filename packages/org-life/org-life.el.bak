@@ -507,10 +507,10 @@ PROCESS is the process under watch, OUTPUT is the output received."
 
 (cl-defun org-life-agenda-render-agenda (&key agenda-data schedule-data)
   (let ((status (plist-get schedule-data :status))
-        (err (plist-get schedule-data :error))
+        (err (plist-get schedule-data :err))
         (data (plist-get schedule-data :data)))
     (if (string= status "error")
-        (org-life-agenda-render-error :message err)
+        (org-life-agenda-render-error err)
       ;; (org-life-agenda-render-block :entries (plist-get agenda-data :tasks)
       ;;                               :title "Test")
       (let ((tasks-dict (plist-get agenda-data :tasks-dict))
@@ -632,6 +632,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
      #'identity;; fun
      nil ; info
      t ; first-match
+     'headline ; no-recursion
      )))
 
 (defun org-life-agenda-get-config-data (config-elem)
@@ -680,82 +681,22 @@ PROCESS is the process under watch, OUTPUT is the output received."
     config-data))
 
 (defun org-life-agenda-get-usable-time-config (config-elem)
-  (org-life-with-config-buffer
-   (let* ((usable-time-config
-           org-life-default-usable-time-config)
-          (usable-time-drawer
-           (org-element-map
-               (org-element-contents config-elem) ; data
-               'drawer ; types
-             (lambda (child) ; fun
-               (when (org-life-case-fold-string= (org-element-property :drawer-name child) "usable_time")
-                 child))
-             nil ; info
-             t ; first-match
-             )))
-     (when usable-time-drawer
-       (let* ((entries
-               (org-element-map
-                   (org-element-contents usable-time-drawer)
-                   'item
-                 (lambda (item)
-                   (let* ((contents
-                           (org-element-contents item))
-                          (paragraph
-                           (org-element-map
-                               contents
-                               'paragraph
-                             #'identity
-                             nil
-                             t))
-                          (paragraph-text
-                           (if paragraph
-                               (buffer-substring-no-properties
-                                (org-element-property
-                                 :contents-begin
-                                 paragraph)
-                                (org-element-property
-                                 :contents-end
-                                 paragraph))
-                             ""))
-                          (selector-text
-                           (progn
-                             (string-match "^\\([^\n]*\\)\n.*"
-                                           paragraph-text)
-                             (string-trim (match-string
-                                           1
-                                           paragraph-text))))
-                          (duration-text
-                           (progn
-                             (string-match ".*\n\\([^\n]*\\)$"
-                                           paragraph-text)
-                             (string-trim (match-string
-                                           1
-                                           paragraph-text))))
-                          (selector
-                           (cond
-                            ((string-match
-                              "\\([0-9]+-[0-9]+-[0-9]+\\).*--\\[\\([0-9]+-[0-9]+-[0-9]+\\)"
-                              selector-text)
-                             (concat
-                              (string-trim (match-string 1 selector-text))
-                              " - "
-                              (string-trim (match-string 2 selector-text))))
-                            ((string-match "[0-9]+-[0-9]+-[0-9]+" selector-text)
-                             (string-trim (match-string 0 selector-text)))
-                            (t
-                             selector-text)))
-                          (duration
-                           (org-duration-to-minutes duration-text)))
-                     
-                     (list :selector selector
-                           :duration duration)))
-                 nil
-                 nil)))
-         (setq usable-time-config
-               (append usable-time-config
-                       entries))))
-     usable-time-config)))
+  (let* ((usable-time-config
+          org-life-default-usable-time-config)
+         (usable-time-drawer
+          (org-element-map
+              (org-element-contents config-elem) ; data
+              'drawer ; types
+            (lambda (child) ; fun
+              (when (org-life-case-fold-string= (org-element-property :drawer-name child) "usable_time")
+                child))
+            nil ; info
+            t ; first-match
+            'headline ; no-recursion
+            )))
+    (when usable-time-drawer
+      nil)
+    usable-time-config))
 
 (defun org-life-agenda-get-agenda-data ()
   (setq org-life--temp-id 0)

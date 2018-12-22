@@ -3,7 +3,7 @@ test_util.allow_parent_import()
 
 from fragmentizer import *
 from data_structure import *
-from work_time_parser import *
+from usable_time_parser import *
 
 import unittest
 
@@ -15,9 +15,8 @@ class FragmentizerTest(unittest.TestCase):
     def test_get_max_amount_by_max_percentage(self):
         max_percentage = 0.2
         schedule = test_util.make_schedule([20, 5, 4, 2, 30])
-        stress_info = test_util.make_stress_info([10, 5, 4, 2, 30])
         f = Fragmentizer()
-        self.assertEqual(f._get_max_amount_by_max_percentage(max_percentage, schedule, stress_info), 2)
+        self.assertEqual(f._get_max_amount_by_max_percentage(max_percentage, schedule), 4)
     
     def test_get_max_amount_by_max_stress(self):
         max_stress = 0.8

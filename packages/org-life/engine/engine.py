@@ -4,7 +4,7 @@ from enum import Enum
 import util
 from logger import DummyLogger
 from data_structure import *
-from work_time_parser import WorkTimeParser
+from usable_time_parser import UsableTimeParser
 from task_filter import TaskFilter
 from planner import Planner
 from stress_analyzer import StressAnalyzer
@@ -13,8 +13,8 @@ from fragmentizer import Fragmentizer
 
 class Engine(object):
 
-    def __init__(self, work_time_parser, task_filter, planner, stress_analyzer, fragmentizer, logger = DummyLogger()):
-        self.work_time_parser = work_time_parser
+    def __init__(self, usable_time_parser, task_filter, planner, stress_analyzer, fragmentizer, logger = DummyLogger()):
+        self.usable_time_parser = usable_time_parser
         self.task_filter = task_filter
         self.planner = planner
         self.stress_analyzer = stress_analyzer
@@ -25,18 +25,18 @@ class Engine(object):
         '''
         Factory method.
         '''
-        work_time_parser = WorkTimeParser()
+        usable_time_parser = UsableTimeParser()
         task_filter = TaskFilter()
         planner = Planner()
         stress_analyzer = StressAnalyzer()
         fragmentizer = Fragmentizer()
-        return Engine(work_time_parser, task_filter, planner, stress_analyzer, fragmentizer, logger)
+        return Engine(usable_time_parser, task_filter, planner, stress_analyzer, fragmentizer, logger)
 
     def schedule(self, scheduling_request):
         # setup
         config = scheduling_request.config
         tasks = scheduling_request.tasks
-        work_time_config = scheduling_request.work_time
+        usable_time_config = scheduling_request.usable_time
         schedule_start = config.today
         schedule_end = schedule_start.add_days(config.scheduling_days.value - 1) # inclusive
 
@@ -48,14 +48,14 @@ class Engine(object):
             response.daily_infos.append(daily_info)
 
         # parse work time config
-        work_time_dict = self.work_time_parser.get_work_time_dict(schedule_start, schedule_end, work_time_config)
+        usable_time_dict = self.usable_time_parser.get_usable_time_dict(schedule_start, schedule_end, usable_time_config)
         
         # write to result
         for daily_info in response.daily_infos:
-            daily_info.work_time = work_time_dict[daily_info.date]
+            daily_info.usable_time = usable_time_dict[daily_info.date]
         
         # make schedule objects
-        early_schedule = Schedule.from_work_time_dict(schedule_start, schedule_end, work_time_dict)
+        early_schedule = Schedule.from_usable_time_dict(schedule_start, schedule_end, usable_time_dict)
         late_schedule = early_schedule.copy()
 
         # progress count
@@ -95,7 +95,7 @@ class Engine(object):
         stress_info_with_fragment = self.stress_analyzer.analyze(late_schedule, bias = fragment_amount)
         response.general.stress_with_fragments.value = stress_info_with_fragment.overall_stress.value
         
-        stress_info_without_today = self.stress_analyzer.analyze(late_schedule, bias = work_time_dict[schedule_start].value)
+        stress_info_without_today = self.stress_analyzer.analyze(late_schedule, bias = usable_time_dict[schedule_start].value)
         response.general.stress_without_today.value = stress_info_without_today.overall_stress.value
 
         # schedule suggestion for deadline tasks

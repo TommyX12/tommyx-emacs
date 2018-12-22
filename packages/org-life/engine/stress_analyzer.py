@@ -21,27 +21,27 @@ class StressAnalyzer(object):
         overall_stress = 0.0
         stress_info = StressInfo()
 
-        bias = min(bias, schedule.get_work_time(schedule_start))
+        bias = min(bias, schedule.get_usable_time(schedule_start))
         acc_free_time = -bias
-        acc_work_time = -bias
+        acc_usable_time = -bias
 
         highest_stress_date = schedule_start
         
         date = schedule_start
         while date <= schedule_end:
             acc_free_time += schedule.get_free_time(date)
-            acc_work_time += schedule.get_work_time(date)
+            acc_usable_time += schedule.get_usable_time(date)
 
             if acc_free_time < 0:
                 acc_average_stress = 1.0
                 acc_free_time = 0
 
             else:
-                if acc_work_time <= 0:
+                if acc_usable_time <= 0:
                     acc_average_stress = 0.0
 
                 else:
-                    acc_average_stress = 1.0 - (acc_free_time / acc_work_time)
+                    acc_average_stress = 1.0 - (acc_free_time / acc_usable_time)
 
             if acc_average_stress >= overall_stress:
                 overall_stress = acc_average_stress

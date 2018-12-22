@@ -271,7 +271,7 @@ class Task(Protocol):
         'priority': ObjectProperty(Priority),
     }
 
-class WorkTimeSelector(PrimitiveProtocol):
+class UsableTimeSelector(PrimitiveProtocol):
     def __init__(self, value = 'default'):
         PrimitiveProtocol.__init__(self, value)
         
@@ -281,9 +281,9 @@ class WorkTimeSelector(PrimitiveProtocol):
     def decode(self, encoded_protocol):
         self.value = encoded_protocol.lower()
 
-class WorkTimeConfigEntry(Protocol):
+class UsableTimeConfigEntry(Protocol):
     properties = {
-        'selector': ObjectProperty(WorkTimeSelector),
+        'selector': ObjectProperty(UsableTimeSelector),
         'duration': ObjectProperty(Duration),
     }
 
@@ -291,7 +291,7 @@ class SchedulingRequest(Protocol):
     properties = {
         'config': ObjectProperty(Config),
         'tasks': ListProperty(Task),
-        'work_time': ListProperty(WorkTimeConfigEntry),
+        'usable_time': ListProperty(UsableTimeConfigEntry),
     }
 
 class SchedulingGeneralInfo(Protocol):
@@ -350,7 +350,7 @@ class DatedSession(Protocol):
 class DailyInfo(Protocol):
     properties = {
         'date': ObjectProperty(Date),
-        'work_time': ObjectProperty(Duration),
+        'usable_time': ObjectProperty(Duration),
         'sessions': ListProperty(Session),
         'free_time': ObjectProperty(Duration),
         'average_stress': ObjectProperty(Ratio),
@@ -411,19 +411,19 @@ class FillDirection(Enum):
 
 class DailySchedule(object):
 
-    def __init__(self, work_time):
-        self._work_time = work_time
+    def __init__(self, usable_time):
+        self._usable_time = usable_time
         self._used_time = 0
         self._sessions = []
 
     def copy(self):
         return copy.deepcopy(self)
 
-    def get_work_time(self):
-        return self._work_time
+    def get_usable_time(self):
+        return self._usable_time
 
     def get_free_time(self):
-        return self._work_time - self._used_time
+        return self._usable_time - self._used_time
 
     def add_session(self, session):
         task_id = session.id.value
@@ -471,19 +471,19 @@ class Schedule(object):
     def get_sessions(self, date):
         return self.daily_schedules[date].get_sessions()
 
-    def get_work_time(self, date):
-        return self.daily_schedules[date].get_work_time()
+    def get_usable_time(self, date):
+        return self.daily_schedules[date].get_usable_time()
 
     def get_free_time(self, date):
         return self.daily_schedules[date].get_free_time()
 
-    def from_work_time_dict(schedule_start, schedule_end, work_time_dict):
+    def from_usable_time_dict(schedule_start, schedule_end, usable_time_dict):
         daily_schedules = {}
         
         date = schedule_start
         while date <= schedule_end:
             daily_schedules[date] = DailySchedule(
-                work_time = work_time_dict[date].value,
+                usable_time = usable_time_dict[date].value,
             )
             date = date.add_days(1)
 

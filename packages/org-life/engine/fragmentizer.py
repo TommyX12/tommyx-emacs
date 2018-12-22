@@ -10,11 +10,10 @@ class Fragmentizer(object):
     def __init__(self):
         pass
 
-    def _get_max_amount_by_max_percentage(self, max_percentage, schedule, stress_info):
+    def _get_max_amount_by_max_percentage(self, max_percentage, schedule):
         schedule_start = schedule.get_schedule_start()
-        
-        today_free_time = stress_info.daily_stress_infos[schedule_start].acc_free_time.value
-        return max(0, int(today_free_time * max_percentage))
+        today_usable_time = schedule.get_usable_time(schedule_start)
+        return max(0, int(today_usable_time * max_percentage))
 
     def _get_max_amount_by_max_stress(self, max_stress, schedule, stress_info):
         schedule_start = schedule.get_schedule_start()
@@ -22,18 +21,24 @@ class Fragmentizer(object):
 
         result = math.inf
 
-        acc_work_time = 0
+        acc_usable_time = 0
         date = schedule_start
         while date <= schedule_end:
             acc_free_time = stress_info.daily_stress_infos[date].acc_free_time.value
-            acc_work_time += schedule.get_work_time(date)
+            acc_usable_time += schedule.get_usable_time(date)
             
-            current_stress = 1.0 - (float(acc_free_time) / acc_work_time)
+            current_stress = None
+            if acc_usable_time > 0:
+                current_stress = 1.0 - (float(acc_free_time) / acc_usable_time)
+
+            else:
+                current_stress = 0.0
+                
             if current_stress >= max_stress:
                 result = 0
                 break
 
-            target_free_time = (1.0 - max_stress) * acc_work_time
+            target_free_time = (1.0 - max_stress) * acc_usable_time
 
             result = min(result, acc_free_time - target_free_time)
 
@@ -57,7 +62,7 @@ class Fragmentizer(object):
 
         # compute maximum time we can have
         
-        max_amount_by_max_percentage = self._get_max_amount_by_max_percentage(max_percentage, schedule, stress_info)
+        max_amount_by_max_percentage = self._get_max_amount_by_max_percentage(max_percentage, schedule)
         max_amount_by_max_stress = self._get_max_amount_by_max_stress(max_stress, schedule, stress_info)
         max_amount = min(max_amount_by_max_percentage, max_amount_by_max_stress)
 

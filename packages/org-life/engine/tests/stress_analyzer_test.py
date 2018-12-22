@@ -3,7 +3,7 @@ test_util.allow_parent_import()
 
 from stress_analyzer import *
 from data_structure import *
-from work_time_parser import *
+from usable_time_parser import *
 
 import unittest
 

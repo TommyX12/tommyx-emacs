@@ -3,7 +3,7 @@ test_util.allow_parent_import()
 
 from scheduling_util import *
 from data_structure import *
-from work_time_parser import *
+from usable_time_parser import *
 
 import unittest
 
@@ -17,14 +17,14 @@ class SchedulingUtilTest(unittest.TestCase):
     def test_schedule_filler(self):
         schedule_start = Date().decode_self('2018-12-01')
         schedule_end = Date().decode_self('2019-01-01')
-        work_time_config = [WorkTimeConfigEntry().decode_self({'selector':'default','duration':20})]
-        work_time_dict = WorkTimeParser().get_work_time_dict(schedule_start, schedule_end, work_time_config)
-        schedule = Schedule.from_work_time_dict(schedule_start, schedule_end, work_time_dict)
+        usable_time_config = [UsableTimeConfigEntry().decode_self({'selector':'default','duration':20})]
+        usable_time_dict = UsableTimeParser().get_usable_time_dict(schedule_start, schedule_end, usable_time_config)
+        schedule = Schedule.from_usable_time_dict(schedule_start, schedule_end, usable_time_dict)
         s = ScheduleFiller(schedule, FillDirection.EARLY)
         self.assertEqual(s.fill(1, 15, Date().decode_self('2018-12-04'), Date().decode_self('2018-12-06')), 15)
         self.assertEqual(s.fill(2, 20, Date().decode_self('2018-12-04'), Date().decode_self('2018-12-06')), 20)
         self.assertEqual(s.fill(3, 10, Date().decode_self('2018-12-05'), Date().decode_self('2018-12-06')), 5)
-        schedule = Schedule.from_work_time_dict(schedule_start, schedule_end, work_time_dict)
+        schedule = Schedule.from_usable_time_dict(schedule_start, schedule_end, usable_time_dict)
         s = ScheduleFiller(schedule, FillDirection.LATE)
         self.assertEqual(s.fill(1, 15, Date().decode_self('2018-12-06'), Date().decode_self('2018-12-04')), 15)
         self.assertEqual(s.fill(2, 20, Date().decode_self('2018-12-06'), Date().decode_self('2018-12-04')), 20)
@@ -116,13 +116,13 @@ class SchedulingUtilTest(unittest.TestCase):
         self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-05'))), '2 e')
         self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-06'))), '1 e')
         self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-06'))), '3 e')
-        self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-06'))), '4 e')
-        self.assertEqual(t.read_event_to(Date().decode_self('2018-12-07')), None)
+        self.assertEqual(t.read_event_to(Date().decode_self('2018-12-06')), None)
+        self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-07'))), '4 e')
         t = TaskEventsIterator(tasks, start, end, FillDirection.LATE)
-        self.assertEqual(t.read_event_to(Date().decode_self('2018-12-07')), None)
+        self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-07'))), '4 s')
         self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-06'))), '1 s')
         self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-06'))), '3 s')
-        self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-06'))), '4 s')
+        self.assertEqual(t.read_event_to(Date().decode_self('2018-12-06')), None)
         self.assertEqual(p(t.read_event_to(Date().decode_self('2018-12-05'))), '2 s')
         self.assertEqual(t.read_event_to(Date().decode_self('2018-12-04')), None)
         self.assertEqual(t.read_event_to(Date().decode_self('2018-12-03')), None)
