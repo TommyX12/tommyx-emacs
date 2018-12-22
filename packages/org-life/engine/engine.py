@@ -36,6 +36,7 @@ class Engine(object):
         # setup
         config = scheduling_request.config
         tasks = scheduling_request.tasks
+        sessions = scheduling_request.sessions
         usable_time_config = scheduling_request.usable_time
         schedule_start = config.today
         schedule_end = schedule_start.add_days(config.scheduling_days.value - 1) # inclusive

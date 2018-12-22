@@ -287,32 +287,6 @@ class UsableTimeConfigEntry(Protocol):
         'duration': ObjectProperty(Duration),
     }
 
-class SchedulingRequest(Protocol):
-    properties = {
-        'config': ObjectProperty(Config),
-        'tasks': ListProperty(Task),
-        'usable_time': ListProperty(UsableTimeConfigEntry),
-    }
-
-class SchedulingGeneralInfo(Protocol):
-    properties = {
-        'stress': ObjectProperty(Ratio),
-        'highest_stress_date': ObjectProperty(Date),
-        'stress_with_fragments': ObjectProperty(Ratio),
-        'stress_without_today': ObjectProperty(Ratio),
-    }
-
-class ImpossibleTask(Protocol):
-    properties = {
-        'id': ObjectProperty(TaskID),
-        'amount': ObjectProperty(Duration),
-    }
-
-class Alerts(Protocol):
-    properties = {
-        'impossible_tasks': ListProperty(ImpossibleTask),
-    }
-
 class SessionStressInfo(Protocol):
     properties = {
         'acc_amount': ObjectProperty(Duration),
@@ -333,18 +307,60 @@ class SessionType(PrimitiveProtocol):
     def decode(self, encoded_protocol):
         self.value = SessionTypeEnum(encoded_protocol)
 
+class SessionWeaknessEnum(Enum):
+    STRONG = 0
+    WEAK = 1
+
+class SessionWeakness(PrimitiveProtocol):
+    def __init__(self, value = SessionWeaknessEnum.STRONG):
+        PrimitiveProtocol.__init__(self, value)
+
+    def encode(self):
+        return self.value.value
+
+    def decode(self, encoded_protocol):
+        self.value = SessionWeaknessEnum(encoded_protocol)
+
 class Session(Protocol):
     properties = {
         'id': ObjectProperty(TaskID),
         'amount': ObjectProperty(Duration),
         'type': ObjectProperty(SessionType),
-        'stress_info': ObjectProperty(SessionStressInfo),
+        'weakness': ObjectProperty(SessionWeakness),
+        # 'stress_info': ObjectProperty(SessionStressInfo),
     }
 
 class DatedSession(Protocol):
     properties = {
         'date': ObjectProperty(Date),
         'session': ObjectProperty(Session),
+    }
+
+class SchedulingRequest(Protocol):
+    properties = {
+        'config': ObjectProperty(Config),
+        'tasks': ListProperty(Task),
+        'dated_sessions': ListProperty(DatedSession),
+        'usable_time': ListProperty(UsableTimeConfigEntry),
+    }
+
+class SchedulingGeneralInfo(Protocol):
+    properties = {
+        'stress': ObjectProperty(Ratio),
+        'highest_stress_date': ObjectProperty(Date),
+        'stress_with_fragments': ObjectProperty(Ratio),
+        'stress_without_today': ObjectProperty(Ratio),
+    }
+
+class ImpossibleTask(Protocol):
+    properties = {
+        'id': ObjectProperty(TaskID),
+        'amount': ObjectProperty(Duration),
+    }
+
+class Alerts(Protocol):
+    properties = {
+        'impossible_tasks': ListProperty(ImpossibleTask),
     }
 
 class DailyInfo(Protocol):

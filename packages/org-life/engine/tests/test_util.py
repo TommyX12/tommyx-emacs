@@ -7,22 +7,22 @@ allow_parent_import()
 
 from data_structure import *
 
-def make_schedule(work_times, free_times = None):
+def make_schedule(usable_times, free_times = None):
     if free_times is None:
-        free_times = work_times[:]
+        free_times = usable_times[:]
 
     schedule_start = Date().decode_self('2018-12-01')
-    schedule_end = schedule_start.add_days(len(work_times) - 1)
-    work_time_dict = {
-        schedule_start.add_days(i): Duration(work_times[i])
-        for i in range(len(work_times))
+    schedule_end = schedule_start.add_days(len(usable_times) - 1)
+    usable_time_dict = {
+        schedule_start.add_days(i): Duration(usable_times[i])
+        for i in range(len(usable_times))
     }
-    schedule = Schedule.from_work_time_dict(schedule_start, schedule_end, work_time_dict)
+    schedule = Schedule.from_usable_time_dict(schedule_start, schedule_end, usable_time_dict)
     date = schedule_start
     i = 0
     while date <= schedule_end:
         session = Session()
-        session.amount.value = work_times[i] - free_times[i]
+        session.amount.value = usable_times[i] - free_times[i]
         schedule.add_session(date, session)
         date = date.add_days(1)
         i += 1

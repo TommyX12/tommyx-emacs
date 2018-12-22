@@ -466,7 +466,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
 
 (cl-defun org-life-agenda-render-error (&key message)
   (insert (propertize "Error" 'face 'error)
-          "\n"
+          "\n\n"
           message))
 
 (cl-defun org-life-agenda-render-general-info (&key general-info)
