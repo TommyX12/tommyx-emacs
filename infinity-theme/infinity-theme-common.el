@@ -762,7 +762,7 @@
 
 ;;;;; mode-line
 	`(mode-line           ((,class (:foreground ,base :background ,secondary-4 :box (:color ,border :line-width 1 :style ,(if (eq theme 'dark) 'released-button nil))))))
-	`(mode-line-buffer-id ((,class (:inherit bold :foreground ,func))))
+	`(mode-line-buffer-id ((,class (:foreground ,func))))
 	`(mode-line-inactive  ((,class (:foreground ,base :background ,secondary-4 :box (:color ,border :line-width 1 :style ,(if (eq theme 'dark) 'released-button nil))))))
 
 ;;;;; mu4e
@@ -808,11 +808,11 @@
 	`(neo-vc-up-to-date-face ((,class (:inherit neo-file-link-face))))
 	`(neo-vc-needs-update-face ((,class (:inherit neo-file-link-face))))
 	`(neo-vc-default-face ((,class (:inherit neo-file-link-face))))
-	`(neo-vc-added-face ((,class (:background ,green-bg-s))))
-	`(neo-vc-edited-face ((,class (:background ,blue-bg-s))))
-	`(neo-vc-user-face ((,class (:background ,aqua-bg))))
-	`(neo-vc-unregistered-face ((,class (:background ,green-bg))))
-	`(neo-vc-removed-face ((,class (:background ,red-bg-s))))
+	`(neo-vc-added-face ((,class (:foreground ,green))))
+	`(neo-vc-edited-face ((,class (:foreground ,yellow))))
+	`(neo-vc-user-face ((,class (:foreground ,cyan))))
+	`(neo-vc-unregistered-face ((,class (:foreground ,green))))
+	`(neo-vc-removed-face ((,class (:foreground ,red))))
 	`(neo-root-dir-face ((,class (:foreground ,func :inherit bold :height 1.0 :underline (:color ,border :style line)))))
 
 ;;;;; org
