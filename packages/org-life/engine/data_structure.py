@@ -312,7 +312,7 @@ class SessionWeaknessEnum(Enum):
     WEAK = 1
 
 class SessionWeakness(PrimitiveProtocol):
-    def __init__(self, value = SessionWeaknessEnum.STRONG):
+    def __init__(self, value = SessionWeaknessEnum.WEAK):
         PrimitiveProtocol.__init__(self, value)
 
     def encode(self):
