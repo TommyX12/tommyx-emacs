@@ -198,6 +198,12 @@ class Date(Protocol):
     def from_components(year, month, day):
         return Date(DatetimeDate(year, month, day))
 
+    def is_min(self):
+        return self._date == DatetimeDate.min
+
+    def is_max(self):
+        return self._date == DatetimeDate.max
+
     def decode(self, encoded_protocol):
         if encoded_protocol == 'min':
             self._date = DatetimeDate.min
@@ -418,6 +424,49 @@ class StressInfo(Protocol):
         'highest_stress_date': ObjectProperty(Date),
         'daily_stress_infos': DictProperty(DailyStressInfo), # use Date as key
     }
+
+
+class TaskProressInfo(Protocol):
+    properties = {
+        'done_amount': ObjectProperty(Duration),
+    }
+    
+class ProgressInfo(Protocol):
+    '''
+    TODO: This is not yet encodable, since it intends to use task id as key.
+    '''
+    properties = {
+        'tasks_progress': DictProperty(TaskProressInfo), # use task id as key
+    }
+
+    def copy(self):
+        return copy.deepcopy(self)
+
+    def _ensure_exist(self, task_id):
+        if task_id not in self.tasks_progress:
+            task_progress =  TaskProressInfo()
+            task_progress.done_amount.value = 0
+            self.tasks_progress[task_id] = task_progress
+
+    def get_done_amount(self, task_id):
+        self._ensure_exist(task_id)
+        return self.tasks_progress[task_id].done_amount.value
+    
+    def add_done_amount(self, task_id, done_amount):
+        self._ensure_exist(task_id)
+        self.tasks_progress[task_id].done_amount.value += done_amount
+    
+    def set_done_amount(self, task_id, done_amount):
+        self._ensure_exist(task_id)
+        self.tasks_progress[task_id].done_amount.value = done_amount
+
+    def combine(self, progress_info):
+        result = self.copy()
+        for task_id in progress_info.tasks_progress:
+            task_progress = progress_info.tasks_progress[task_id]
+            result.add_done_amount(task_id, task_progress.done_amount.value)
+
+        return result
     
 
 class FillDirection(Enum):
@@ -428,6 +477,7 @@ class FillDirection(Enum):
 class DailySchedule(object):
 
     def __init__(self, usable_time):
+        self._real_usable_time = usable_time
         self._usable_time = usable_time
         self._used_time = 0
         self._sessions = []
@@ -441,14 +491,19 @@ class DailySchedule(object):
     def get_free_time(self):
         return self._usable_time - self._used_time
 
+    def is_overlimit(self):
+        return self._used_time > self._usable_time
+
     def add_session(self, session):
         task_id = session.id.value
         amount = session.amount.value
-        if amount > self.get_free_time():
-            raise ValueError()
+        if session.weakness.value == SessionWeaknessEnum.STRONG:
+            self._usable_time = max(0, self._usable_time - amount)
+            self._sessions.append(session)
 
-        self._used_time += amount
-        self._sessions.append(session)
+        else:
+            self._used_time += amount
+            self._sessions.append(session)
 
     def get_sessions(self):
         return self._sessions
@@ -482,10 +537,14 @@ class Schedule(object):
     def add_dated_sessions(self, dated_sessions):
         for dated_session in dated_sessions:
             date, session = dated_session.date, dated_session.session
-            self.daily_schedules[date].add_session(session)
+            if date in self.daily_schedules:
+                self.daily_schedules[date].add_session(session)
     
     def get_sessions(self, date):
         return self.daily_schedules[date].get_sessions()
+
+    def is_overlimit(self, date):
+        return self.daily_schedules[date].is_overlimit()
 
     def get_usable_time(self, date):
         return self.daily_schedules[date].get_usable_time()

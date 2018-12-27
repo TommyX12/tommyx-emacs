@@ -32,7 +32,7 @@ class ScheduleFiller(object):
     def _get_schedule_date_late(date):
         return date.add_days(-1)
 
-    def fill(self, task_id, amount, date_from, date_to):
+    def fill(self, task_id, amount, date_from, date_to, weakness = SessionWeaknessEnum.WEAK):
         '''
         Fill task_id with amount from 00:00 of date_from to 00:00 of date_to.
         The concept of "before" is determined by fill direction,
@@ -59,6 +59,7 @@ class ScheduleFiller(object):
                 session.id.value = task_id
                 session.amount.value = session_amount
                 session.type.value = SessionTypeEnum.TASK
+                session.weakness.value = weakness
                 self.schedule.add_session(schedule_date, session)
 
             date = date.add_days(self.delta)
@@ -272,7 +273,7 @@ class TaskEventsIterator(object):
         TODO
         Start and end represents 00:00 of that day.
         '''
-        if start > end:
+        if start is not None and end is not None and start > end:
             raise ValueError()
 
         self.task_events = []
@@ -281,18 +282,24 @@ class TaskEventsIterator(object):
 
         # Points to next event to be read.
         self.index = 0
+
+        def safe_add_1_day(date):
+            if date.is_max():
+                return date
+
+            return date.add_days(1)
         
         for task in tasks:
             self.task_events.append(TaskEvent(
                 task.id.value,
                 util.clamp(task.start, start, end),
-                util.clamp(task.end, start, end).add_days(1),
+                safe_add_1_day(util.clamp(task.end, start, end)),
                 TaskEventType.TASK_START
                 if direction == FillDirection.EARLY else TaskEventType.TASK_END
             ))
             self.task_events.append(TaskEvent(
                 task.id.value,
-                util.clamp(task.end, start, end).add_days(1),
+                safe_add_1_day(util.clamp(task.end, start, end)),
                 util.clamp(task.start, start, end),
                 TaskEventType.TASK_END
                 if direction == FillDirection.EARLY else TaskEventType.TASK_START
@@ -325,6 +332,14 @@ class TaskEventsIterator(object):
             return next_event
 
         return None
+
+    def read_next_event(self):
+        if self.index < 0 or self.index >= len(self.task_events):
+            return None
+
+        next_event = self.task_events[self.index]
+        self.index += 1
+        return next_event
 
     def _is_before_early(date1, date2):
         return date1 < date2

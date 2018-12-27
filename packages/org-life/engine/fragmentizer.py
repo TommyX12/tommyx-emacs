@@ -89,6 +89,7 @@ class Fragmentizer(object):
             session.id.value = fragment.id.value
             session.amount.value = fragment_size
             session.type.value = SessionTypeEnum.FRAGMENT
+            session.weakness.value = SessionWeaknessEnum.WEAK
 
             dated_session = DatedSession()
             dated_session.date = schedule_start

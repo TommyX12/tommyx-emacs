@@ -6,6 +6,7 @@ from logger import DummyLogger
 from data_structure import *
 from usable_time_parser import UsableTimeParser
 from task_filter import TaskFilter
+from progress_counter import ProgressCounter
 from planner import Planner
 from stress_analyzer import StressAnalyzer
 from fragmentizer import Fragmentizer
@@ -13,9 +14,10 @@ from fragmentizer import Fragmentizer
 
 class Engine(object):
 
-    def __init__(self, usable_time_parser, task_filter, planner, stress_analyzer, fragmentizer, logger = DummyLogger()):
+    def __init__(self, usable_time_parser, task_filter, progress_counter, planner, stress_analyzer, fragmentizer, logger = DummyLogger()):
         self.usable_time_parser = usable_time_parser
         self.task_filter = task_filter
+        self.progress_counter = progress_counter
         self.planner = planner
         self.stress_analyzer = stress_analyzer
         self.fragmentizer = fragmentizer
@@ -27,19 +29,35 @@ class Engine(object):
         '''
         usable_time_parser = UsableTimeParser()
         task_filter = TaskFilter()
+        progress_counter = ProgressCounter()
         planner = Planner()
         stress_analyzer = StressAnalyzer()
         fragmentizer = Fragmentizer()
-        return Engine(usable_time_parser, task_filter, planner, stress_analyzer, fragmentizer, logger)
+        return Engine(usable_time_parser, task_filter, progress_counter, planner, stress_analyzer, fragmentizer, logger)
 
     def schedule(self, scheduling_request):
         # setup
         config = scheduling_request.config
-        tasks = scheduling_request.tasks
-        dated_sessions = scheduling_request.dated_sessions
-        usable_time_config = scheduling_request.usable_time
         schedule_start = config.today
         schedule_end = schedule_start.add_days(config.scheduling_days.value - 1) # inclusive
+        tasks = scheduling_request.tasks
+        dated_sessions = scheduling_request.dated_sessions
+        strong_dated_sessions = [
+            dated_session for dated_session in dated_sessions
+            if dated_session.session.weakness.value == SessionWeaknessEnum.STRONG
+        ]
+        strong_dated_sessions.sort(key = lambda x : x.date)
+        weak_dated_sessions = [
+            dated_session for dated_session in dated_sessions
+            if dated_session.session.weakness.value == SessionWeaknessEnum.WEAK
+        ]
+        weak_dated_sessions.sort(key = lambda x : x.date)
+        past_strong_dated_sessions = [
+            dated_session for dated_session in strong_dated_sessions
+            if dated_session.date < schedule_start
+        ]
+        past_strong_dated_sessions.sort(key = lambda x : x.date)
+        usable_time_config = scheduling_request.usable_time
 
         # results
         response = SchedulingResponse()
@@ -57,6 +75,7 @@ class Engine(object):
         
         # make schedule objects
         early_schedule = Schedule.from_usable_time_dict(schedule_start, schedule_end, usable_time_dict)
+        early_schedule.add_dated_sessions(strong_dated_sessions)
         late_schedule = early_schedule.copy()
 
         # progress count

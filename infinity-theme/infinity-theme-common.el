@@ -657,8 +657,8 @@
 	`(info-title-4 ((,class (:height 1.2))))
 
 ;;;;; ivy
-	`(ivy-current-match ((,class (:background ,highlight :inherit bold))))
-	`(ivy-minibuffer-match-face-1 ((,class (:inherit bold))))
+	`(ivy-current-match ((,class (:background ,highlight))))
+	`(ivy-minibuffer-match-face-1 ((,class (:underline t))))
 	`(ivy-minibuffer-match-face-2 ((,class (:foreground ,head1 :underline t))))
 	`(ivy-minibuffer-match-face-3 ((,class (:foreground ,head4 :underline t))))
 	`(ivy-minibuffer-match-face-4 ((,class (:foreground ,head3 :underline t))))
@@ -762,7 +762,7 @@
 
 ;;;;; mode-line
 	`(mode-line           ((,class (:foreground ,base :background ,secondary-4 :box (:color ,border :line-width 1 :style ,(if (eq theme 'dark) 'released-button nil))))))
-	`(mode-line-buffer-id ((,class (:foreground ,func))))
+	`(mode-line-buffer-id ((,class (:foreground ,func :inherit bold))))
 	`(mode-line-inactive  ((,class (:foreground ,base :background ,secondary-4 :box (:color ,border :line-width 1 :style ,(if (eq theme 'dark) 'released-button nil))))))
 
 ;;;;; mu4e
@@ -809,8 +809,8 @@
 	`(neo-vc-needs-update-face ((,class (:inherit neo-file-link-face))))
 	`(neo-vc-default-face ((,class (:inherit neo-file-link-face))))
 	`(neo-vc-added-face ((,class (:foreground ,green))))
-	`(neo-vc-edited-face ((,class (:foreground ,yellow))))
-	`(neo-vc-user-face ((,class (:foreground ,cyan))))
+	`(neo-vc-edited-face ((,class (:foreground ,aqua))))
+	`(neo-vc-user-face ((,class (:foreground ,yellow))))
 	`(neo-vc-unregistered-face ((,class (:foreground ,green))))
 	`(neo-vc-removed-face ((,class (:foreground ,red))))
 	`(neo-root-dir-face ((,class (:foreground ,func :inherit bold :height 1.0 :underline (:color ,border :style line)))))

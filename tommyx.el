@@ -1246,6 +1246,8 @@ Useful for a search overview popup."
 	(swiper))
 (evil-define-command evil-noh-blink () :repeat nil (interactive)
 	(evil-ex-nohighlight) (beacon-blink))
+(evil-define-command evil-comfortable-recenter () :repeat nil
+  (recenter-top-bottom (/ (* (window-total-height) 2) 7)))
 (defun change-theme (theme)
 	"Change to a new theme."
 	(interactive)
@@ -1811,7 +1813,7 @@ command (ran after) is mysteriously incorrect."
 (evil-define-key 'visual 'global "(" 'evil-sp-backward-sexp)
 (evil-define-key 'visual 'global ")" 'evil-sp-forward-sexp)
 ; move cursor to comfortable reading position
-(evil-define-key 'motion 'global ",z" (lambda () (interactive) (recenter-top-bottom (/ (* (window-total-height) 2) 7))))
+(evil-define-key 'motion 'global ",z" 'evil-comfortable-recenter)
 ; do not re-copy when pasting in visual mode
 (evil-define-key 'visual 'global "p" (lambda () (interactive) (call-interactively 'evil-visual-paste) (pop-kill-ring)))
 ; substitute command
@@ -2066,7 +2068,13 @@ command (ran after) is mysteriously incorrect."
   (evil-define-key state 'global (kbd "C-h") 'outline-up-heading-custom)
   (evil-define-key state 'global (kbd "C-l") 'outline-next-heading)
   (evil-define-key state 'global (kbd "C-k") 'outline-backward-heading-same-level-custom)
-  (evil-define-key state 'global (kbd "C-j") 'outline-forward-same-level))
+  (evil-define-key state 'global (kbd "C-j") 'outline-forward-same-level)
+  (evil-define-key state 'global (kbd "C-S-h") 'outline-promote)
+  (evil-define-key state 'global (kbd "C-S-l") 'outline-demote)
+  (evil-define-key state 'global (kbd "C-S-k") 'outline-move-subtree-up)
+  (evil-define-key state 'global (kbd "C-S-j") 'outline-move-subtree-down))
+(dolist (key '("M-RET" "<M-return>"))
+  (evil-define-key 'insert 'global (kbd key) 'outline-insert-heading))
 
 ;; origami mode (disabled due to performance)
 ;; (evil-define-key 'normal 'global (kbd "C-g") 'origami-close-node-recursively)
@@ -2196,16 +2204,16 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; (evil-define-key 'motion 'global ",wv" (lambda () (interactive) (evil-window-vsplit) (delayed-mode-line-update)))
 ;; (evil-define-key 'motion 'global ",wh" (lambda () (interactive) (evil-window-split) (delayed-mode-line-update)))
 ;; (evil-define-key 'motion 'global ",wq" (lambda () (interactive) (evil-quit) (delayed-mode-line-update)))
-;; (evil-define-key 'motion 'global ",0" (lambda () (interactive) (select-window-0) (delayed-mode-line-update)))
-;; (evil-define-key 'motion 'global ",1" (lambda () (interactive) (select-window-1) (delayed-mode-line-update)))
-;; (evil-define-key 'motion 'global ",2" (lambda () (interactive) (select-window-2) (delayed-mode-line-update)))
-;; (evil-define-key 'motion 'global ",3" (lambda () (interactive) (select-window-3) (delayed-mode-line-update)))
-;; (evil-define-key 'motion 'global ",4" (lambda () (interactive) (select-window-4) (delayed-mode-line-update)))
-;; (evil-define-key 'motion 'global ",5" (lambda () (interactive) (select-window-5) (delayed-mode-line-update)))
-;; (evil-define-key 'motion 'global ",6" (lambda () (interactive) (select-window-6) (delayed-mode-line-update)))
-;; (evil-define-key 'motion 'global ",7" (lambda () (interactive) (select-window-7) (delayed-mode-line-update)))
-;; (evil-define-key 'motion 'global ",8" (lambda () (interactive) (select-window-8) (delayed-mode-line-update)))
-;; (evil-define-key 'motion 'global ",9" (lambda () (interactive) (select-window-9) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",0" (lambda () (interactive) (winum-select-window-0) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",1" (lambda () (interactive) (winum-select-window-1) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",2" (lambda () (interactive) (winum-select-window-2) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",3" (lambda () (interactive) (winum-select-window-3) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",4" (lambda () (interactive) (winum-select-window-4) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",5" (lambda () (interactive) (winum-select-window-5) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",6" (lambda () (interactive) (winum-select-window-6) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",7" (lambda () (interactive) (winum-select-window-7) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",8" (lambda () (interactive) (winum-select-window-8) (delayed-mode-line-update)))
+(evil-define-key 'motion 'global ",9" (lambda () (interactive) (winum-select-window-9) (delayed-mode-line-update)))
 
 ;; nerd commenter
 (evil-define-key 'normal 'global (kbd ",c SPC") 'evilnc-comment-or-uncomment-lines)
