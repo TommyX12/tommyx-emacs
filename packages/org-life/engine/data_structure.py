@@ -336,6 +336,9 @@ class Session(Protocol):
         # 'stress_info': ObjectProperty(SessionStressInfo),
     }
 
+    def copy(self):
+        return copy.deepcopy(self)
+
 class DatedSession(Protocol):
     properties = {
         'date': ObjectProperty(Date),
@@ -388,6 +391,7 @@ class SchedulingResponse(Protocol):
         'general': ObjectProperty(SchedulingGeneralInfo),
         'alerts': ObjectProperty(Alerts),
         'daily_infos': ListProperty(DailyInfo),
+        'debug': PrimitiveProperty(),
     }
 
 class EngineRequest(Protocol):
@@ -481,6 +485,24 @@ class DailySchedule(object):
         self._usable_time = usable_time
         self._used_time = 0
         self._sessions = []
+        self._id_to_session = {
+            SessionWeaknessEnum.STRONG: {
+                SessionTypeEnum.TASK: {
+                    
+                },
+                SessionTypeEnum.FRAGMENT: {
+                    
+                },
+            },
+            SessionWeaknessEnum.WEAK: {
+                SessionTypeEnum.TASK: {
+                    
+                },
+                SessionTypeEnum.FRAGMENT: {
+                    
+                },
+            },
+        }
 
     def copy(self):
         return copy.deepcopy(self)
@@ -499,12 +521,19 @@ class DailySchedule(object):
         amount = session.amount.value
         if session.weakness.value == SessionWeaknessEnum.STRONG:
             self._usable_time = max(0, self._usable_time - amount)
-            self._sessions.append(session)
 
         else:
             self._used_time += amount
-            self._sessions.append(session)
 
+        id_to_session_dict = self._id_to_session[session.weakness.value][session.type.value]
+        if task_id in id_to_session_dict:
+            id_to_session_dict[task_id].amount.value += amount
+            
+        else:
+            session = session.copy()
+            self._sessions.append(session)
+            id_to_session_dict[task_id] = session
+        
     def get_sessions(self):
         return self._sessions
 
@@ -542,6 +571,24 @@ class Schedule(object):
     
     def get_sessions(self, date):
         return self.daily_schedules[date].get_sessions()
+
+    def get_all_sessions(self, from_date = None, to_date = None):
+        '''
+        Return a list of all sessions from from_date to to_date (inclusive).
+        '''
+        if from_date is None:
+            from_date = self.schedule_start
+
+        if to_date is None:
+            to_date = self.schedule_end
+
+        sessions = []
+        date = from_date
+        while date <= to_date:
+            sessions += self.daily_schedules[date].get_sessions()
+            date = date.add_days(1)
+
+        return sessions
 
     def is_overlimit(self, date):
         return self.daily_schedules[date].is_overlimit()

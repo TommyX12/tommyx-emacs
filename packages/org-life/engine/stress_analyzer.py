@@ -1,7 +1,6 @@
 
 from data_structure import *
 
-
 class StressAnalyzer(object):
 
     def __init__(self):

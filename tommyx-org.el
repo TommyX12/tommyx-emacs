@@ -59,6 +59,10 @@
 
 ;; clocking
 ; ask for clock-out on leave
+(setq org-clock-report-include-clocking-task t)
+(setq org-clock-persist t)
+(setq org-clock-history-length 25)
+(org-clock-persistence-insinuate)
 (defun my/org-clock-query-out ()
 	"Ask the user before clocking out.
 	This is a useful function for adding to `kill-emacs-query-functions'."
@@ -84,12 +88,11 @@
 (setq org-agenda-dim-blocked-tasks t)
 (setq org-agenda-window-setup 'only-window)
 (setq org-agenda-start-with-clockreport-mode t)
-(setq org-clock-report-include-clocking-task t)
 (setq org-agenda-start-with-log-mode t)
 (setq org-agenda-log-mode-items '(closed clock state))
 (setq org-agenda-restore-windows-after-quit t)
 (setq org-agenda-use-tag-inheritance t) ; tag inheritance in agenda (turn off if slow)
-(setq org-agenda-sticky nil) ; make sure to refresh agenda when re-launch
+(setq org-agenda-sticky t) ; should manually refresh agenda
 (setq org-agenda-span 'day)
 (setq org-agenda-skip-deadline-if-done t)
 (setq org-agenda-skip-scheduled-if-done t)

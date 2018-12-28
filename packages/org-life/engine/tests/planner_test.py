@@ -13,19 +13,24 @@ class PlannerTest(unittest.TestCase):
     TODO: Test more edge cases.
     TODO: Test infinite deadline.
     TODO: Test performance.
+    TODO: Test existing progress.
     '''
 
     def test_tasks_planning_data(self):
         task1 = Task()
         task1.id.value = 1
-        task1.amount.value = 50
+        task1.amount.value = 100
         task1.done.value = 0
         task2 = Task()
         task2.id.value = 2
         task2.amount.value = 80
         task2.done.value = 40
         tasks = [task1, task2]
-        t = TasksPlanningData(tasks)
+
+        progress_info = ProgressInfo()
+        progress_info.add_done_amount(1, 50)
+        
+        t = TasksPlanningData(tasks, progress_info)
         self.assertEqual(t.get_amount_left(1), 50)
         self.assertEqual(t.get_amount_left(2), 40)
         t.decrease_amount(1, 50)

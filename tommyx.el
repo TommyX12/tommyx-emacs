@@ -431,7 +431,15 @@
 
 ;;   (global-git-gutter-mode +1))
 (use-package yascroll :ensure t)
-(use-package color-identifiers-mode :ensure t)
+(use-package color-identifiers-mode :ensure t
+  :config
+  ;; color-identifiers-mode
+  (setq color-identifiers-coloring-method 'sequential)
+  (setq color-identifiers:max-color-saturation 0.3)
+  (setq color-identifiers:min-color-saturation 0.3)
+  (setq color-identifiers:timer (run-with-idle-timer 5 t 'color-identifiers:refresh))
+  (add-hook 'prog-mode-hook (lambda () (color-identifiers-mode 1)))
+  (global-color-identifiers-mode 1))
 (use-package auto-highlight-symbol :ensure t
 	:config
 	(push 'racket-mode ahs-modes)
@@ -650,14 +658,6 @@
 
 ;; status lines
 (load-relative "./tommyx-status-lines.el")
-
-;; color-identifiers-mode
-(setq color-identifiers-coloring-method 'sequential)
-(setq color-identifiers:max-color-saturation 0.3)
-(setq color-identifiers:min-color-saturation 0.25)
-(setq color-identifiers:timer (run-with-idle-timer 5 t 'color-identifiers:refresh))
-(add-hook 'prog-mode-hook (lambda () (color-identifiers-mode 1)))
-(global-color-identifiers-mode 1)
 
 ;; dashboard
 (dashboard-setup-startup-hook)

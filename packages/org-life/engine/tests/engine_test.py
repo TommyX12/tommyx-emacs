@@ -42,6 +42,23 @@ class EngineTest(unittest.TestCase):
         task5.done.value = 0
         tasks = [task1, task2, task3, task4, task5]
 
+        ds1 = DatedSession()
+        ds1.date = Date().decode_self('2018-12-02')
+        ds1.session.id.value = 1
+        ds1.session.amount.value = 50
+        ds1.session.weakness.value = SessionWeaknessEnum.STRONG
+        ds2 = DatedSession()
+        ds2.date = Date().decode_self('2018-11-28')
+        ds2.session.id.value = 5
+        ds2.session.amount.value = 50
+        ds2.session.weakness.value = SessionWeaknessEnum.STRONG
+        ds3 = DatedSession()
+        ds3.date = Date().decode_self('2018-10-28')
+        ds3.session.id.value = 5
+        ds3.session.amount.value = 50
+        ds3.session.weakness.value = SessionWeaknessEnum.STRONG
+        dated_sessions = [ds1, ds2, ds3]
+        
         schedule_start = Date().decode_self('2018-11-30')
         schedule_end = Date().decode_self('2018-12-06')
         usable_time_config = [UsableTimeConfigEntry().decode_self({'selector':'default','duration':480})]
@@ -61,6 +78,7 @@ class EngineTest(unittest.TestCase):
         scheduling_request.config = config
         scheduling_request.tasks = tasks
         scheduling_request.usable_time = usable_time_config
+        scheduling_request.dated_sessions = dated_sessions
 
         engine = Engine.create()
         r = engine.schedule(scheduling_request).encode()

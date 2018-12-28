@@ -657,7 +657,7 @@
 	`(info-title-4 ((,class (:height 1.2))))
 
 ;;;;; ivy
-	`(ivy-current-match ((,class (:background ,highlight))))
+	`(ivy-current-match ((,class (:background ,bg2))))
 	`(ivy-minibuffer-match-face-1 ((,class (:underline t))))
 	`(ivy-minibuffer-match-face-2 ((,class (:foreground ,head1 :underline t))))
 	`(ivy-minibuffer-match-face-3 ((,class (:foreground ,head4 :underline t))))

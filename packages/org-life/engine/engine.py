@@ -42,21 +42,7 @@ class Engine(object):
         schedule_end = schedule_start.add_days(config.scheduling_days.value - 1) # inclusive
         tasks = scheduling_request.tasks
         dated_sessions = scheduling_request.dated_sessions
-        strong_dated_sessions = [
-            dated_session for dated_session in dated_sessions
-            if dated_session.session.weakness.value == SessionWeaknessEnum.STRONG
-        ]
-        strong_dated_sessions.sort(key = lambda x : x.date)
-        weak_dated_sessions = [
-            dated_session for dated_session in dated_sessions
-            if dated_session.session.weakness.value == SessionWeaknessEnum.WEAK
-        ]
-        weak_dated_sessions.sort(key = lambda x : x.date)
-        past_strong_dated_sessions = [
-            dated_session for dated_session in strong_dated_sessions
-            if dated_session.date < schedule_start
-        ]
-        past_strong_dated_sessions.sort(key = lambda x : x.date)
+        dated_sessions.sort(key = lambda x : x.date)
         usable_time_config = scheduling_request.usable_time
 
         # results
@@ -73,19 +59,26 @@ class Engine(object):
         for daily_info in response.daily_infos:
             daily_info.usable_time = usable_time_dict[daily_info.date]
         
+        # progress count
+        strong_dated_sessions = [
+            dated_session for dated_session in dated_sessions
+            if dated_session.session.weakness.value == SessionWeaknessEnum.STRONG
+        ]
+        weak_dated_sessions = [
+            dated_session for dated_session in dated_sessions
+            if dated_session.session.weakness.value == SessionWeaknessEnum.WEAK
+        ]
+        strong_progress = self.progress_counter.count(tasks, strong_dated_sessions, sessions_sorted = True)
+
         # make schedule objects
         early_schedule = Schedule.from_usable_time_dict(schedule_start, schedule_end, usable_time_dict)
         early_schedule.add_dated_sessions(strong_dated_sessions)
         late_schedule = early_schedule.copy()
 
-        # progress count
-        # right now we just use given "done" progress.
-        # we add more future progress by doing the counts
-
         # free time and conflict check
         # run backward pass to generate maximum free time, and overall stress
         stress_contributor_tasks = self.task_filter.get_stress_contributor_tasks(tasks, schedule_start, schedule_end)
-        late_plan_result = self.planner.plan(stress_contributor_tasks, late_schedule, direction = FillDirection.LATE)
+        late_plan_result = self.planner.plan(stress_contributor_tasks, late_schedule, direction = FillDirection.LATE, progress_info = strong_progress)
         impossible_tasks = late_plan_result.impossible_tasks
         # get free time info and stress
         stress_info = self.stress_analyzer.analyze(late_schedule)
@@ -121,7 +114,7 @@ class Engine(object):
         # schedule suggestion for deadline tasks
         # run forward pass (while accounting for today's fragmented time) to generate suggestion
         early_schedule.add_dated_sessions(fragment_sessions)
-        self.planner.plan(tasks, early_schedule, direction = FillDirection.EARLY)
+        self.planner.plan(tasks, early_schedule, direction = FillDirection.EARLY, progress_info = strong_progress)
         
         # compute task stress of each session
         # TODO

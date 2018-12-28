@@ -6,11 +6,15 @@ import util
 
 
 class TasksPlanningData(object):
-    def __init__(self, tasks):
+    def __init__(self, tasks, progress_info = None):
         self.amounts = {
             task.id.value: task.amount.value - task.done.value
             for task in tasks
         }
+
+        if progress_info is not None:
+            for task_id in self.amounts:
+                self.amounts[task_id] = max(0, self.amounts[task_id] - progress_info.get_done_amount(task_id))
 
     def is_task_done(self, task_id):
         return self.amounts[task_id] <= 0
@@ -19,10 +23,7 @@ class TasksPlanningData(object):
         return self.amounts[task_id]
 
     def decrease_amount(self, task_id, amount):
-        if amount > self.amounts[task_id]:
-            raise ValueError()
-
-        self.amounts[task_id] -= amount
+        self.amounts[task_id] = max(0, self.amounts[task_id] - amount)
 
 
 class Planner(object):
@@ -30,14 +31,17 @@ class Planner(object):
     def __init__(self):
         pass
 
-    def plan(self, tasks, schedule, direction = FillDirection.EARLY):
+    def plan(self, tasks, schedule, direction = FillDirection.EARLY, progress_info = None):
         '''
         TODO
         Mutates schedule to fill sessions in.
+        
+        Note that planner doesn't account for existing progress automatically.
+        In order to do that, supply progress_info.
         '''
         result = PlannerResult()
         
-        tasks_data = TasksPlanningData(tasks)
+        tasks_data = TasksPlanningData(tasks, progress_info)
         
         # These days represent 00:00 of that day.
         planning_start = schedule.get_schedule_start()
@@ -83,8 +87,6 @@ class Planner(object):
 
                 next_task_id = queue.top()
                 amount_left = tasks_data.get_amount_left(next_task_id)
-                if amount_left < 0:
-                    raise ValueError()
 
                 # Fill session, until 00:00 of next_date
                 amount_filled = filler.fill(next_task_id, amount_left, date, next_date)

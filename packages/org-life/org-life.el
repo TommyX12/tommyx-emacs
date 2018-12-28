@@ -142,6 +142,8 @@
   "Temporarily stored engine responses.")
 
 (defvar org-life--temp-id 0)
+(defvar org-life--temp-tasks nil)
+(defvar org-life--temp-clocks nil)
 
 ;;
 ;; Major mode definition
@@ -237,15 +239,18 @@ PROCESS is the process under watch, OUTPUT is the output received."
         ((atom l) (list l))
         (t (append (org-life-agenda-flatten-list (car l)) (org-life-agenda-flatten-list (cdr l))))))
 
-(defun org-life-agenda-timestamp-to-request (timestamp &optional default)
+(defun org-life-agenda-timestamp-to-date-string (timestamp &optional default)
   (or (and timestamp
            (org-timestamp-format timestamp "%Y-%m-%d"))
       default))
 
+(defun org-life-agenda-time-to-date-string (time)
+  (format-time-string "%Y-%m-%d" time))
+
 (defun org-life-case-fold-string= (a b)
   (eq t (compare-strings a nil nil b nil nil t)))
 
-(defun org-life-agenda-today-date-to-request ()
+(defun org-life-agenda-today-date-string ()
   (format-time-string "%Y-%m-%d"))
 
 (defun org-life-agenda-list-to-ht (lst key-func)
@@ -268,6 +273,10 @@ PROCESS is the process under watch, OUTPUT is the output received."
         buf
       (setq buf (find-file-noselect file))
       buf)))
+
+(defun org-life-echo (string &rest args)
+  (let (message-log-max)
+    (apply #'message string args)))
 
 (defmacro org-life-with-config-buffer (&rest body)
   `(with-current-buffer
@@ -296,42 +305,57 @@ PROCESS is the process under watch, OUTPUT is the output received."
                   value))
     value))
 
+(defun org-life-time-diff-minutes (t1 t2)
+  (let* ((t1 (time-to-seconds t1))
+         (t2 (time-to-seconds t2)))
+    (round (/ (- t1 t2) 60))))
+
+(defun org-life-end-of-day (time)
+  (let* ((time (apply 'encode-time
+                      (append '(0 0 0)
+                              (cdddr (decode-time time))))))
+    (time-add time (days-to-time 1))))
+
 ;; Agenda renderer
 
-(defun org-life-agenda-format-entry (prefix entry)
-  (let ((props (list 'mouse-face 'highlight
-                     'undone-face nil
-                     'done-face 'org-agenda-done
-                     'org-marker (org-life-agenda-entry-marker entry)
-                     'org-hd-marker (org-life-agenda-entry-marker entry)
-                     'todo-state (org-life-agenda-entry-todo-keyword entry)
-                     'org-todo-regexp org-todo-regexp
-                     'org-not-done-regexp org-not-done-regexp
-                     'org-complex-heading-regexp org-complex-heading-regexp
-                     'org-highest-priority org-highest-priority
-                     'org-lowest-priority org-lowest-priority
-                     'tags (mapcar 'org-downcase-keep-props (org-life-agenda-entry-tags entry))
-                     'format `(() ,prefix)))
-        (text
-         (concat prefix
-                 (if (org-life-agenda-entry-todo-keyword entry)
-                     (concat (org-life-agenda-entry-todo-keyword entry) " ")
-                   "")
-                 (if (org-life-agenda-entry-priority entry)
-                     (string ?\[ ?# (org-life-agenda-entry-priority entry) ?\] ? )
-                   "")
-                 (org-life-agenda-entry-text entry)
-                 ;; (let ((deadline (org-life-agenda-entry-deadline entry)))
-                 ;;   (or (and deadline
-                 ;;            (org-timestamp-format deadline "%Y-%m-%d"))
-                 ;;       ""))
-                 (if (org-life-agenda-entry-tags entry)
-                     (concat " :" (mapconcat #'identity (org-life-agenda-entry-tags entry) ":") ":")
-                   ""))))
+(cl-defun org-life-agenda-render-entry (&key (prefix " ")
+                                             entry
+                                             (face nil))
+  (insert
+   (let ((props (list 'face face
+                      'mouse-face 'highlight
+                      'undone-face 'nil
+                      'done-face 'org-agenda-done
+                      'org-marker (org-life-agenda-entry-marker entry)
+                      'org-hd-marker (org-life-agenda-entry-marker entry)
+                      'todo-state (org-life-agenda-entry-todo-keyword entry)
+                      'org-todo-regexp org-todo-regexp
+                      'org-not-done-regexp org-not-done-regexp
+                      'org-complex-heading-regexp org-complex-heading-regexp
+                      'org-highest-priority org-highest-priority
+                      'org-lowest-priority org-lowest-priority
+                      'tags (mapcar 'org-downcase-keep-props (org-life-agenda-entry-tags entry))
+                      'format `(() ,prefix)))
+         (text
+          (concat prefix
+                  (if (org-life-agenda-entry-todo-keyword entry)
+                      (concat (org-life-agenda-entry-todo-keyword entry) " ")
+                    "")
+                  (if (org-life-agenda-entry-priority entry)
+                      (string ?\[ ?# (org-life-agenda-entry-priority entry) ?\] ? )
+                    "")
+                  (org-life-agenda-entry-text entry)
+                  ;; (let ((deadline (org-life-agenda-entry-deadline entry)))
+                  ;;   (or (and deadline
+                  ;;            (org-timestamp-format deadline "%Y-%m-%d"))
+                  ;;       ""))
+                  (if (org-life-agenda-entry-tags entry)
+                      (concat " :" (mapconcat #'identity (org-life-agenda-entry-tags entry) ":") ":")
+                    ""))))
 
-    (add-text-properties (length prefix) (length text) '(org-heading t) text)
-    (setq text (concat (org-add-props text props) "\n"))
-    (org-agenda-highlight-todo text)))
+     (add-text-properties (length prefix) (length text) '(org-heading t) text)
+     (setq text (concat (org-add-props text props) "\n"))
+     (org-agenda-highlight-todo text))))
 
 (cl-defun org-life-agenda-render-block-separator ()
   (unless (or (bobp) org-agenda-compact-blocks
@@ -389,21 +413,21 @@ PROCESS is the process under watch, OUTPUT is the output received."
 (cl-defun org-life-agenda-render-entries (&key entries)
   (setq entries (sort entries #'org-life-agenda-sort-by-priority))
   (dolist (entry entries)
-    (insert
-     (org-life-agenda-format-entry " " entry))))
+    (org-life-agenda-render-entry :prefix " "
+                                  :entry entry)))
 
 (cl-defun org-life-agenda-render-impossible-task (&key impossible-task
                                                        tasks-dict)
   (let* ((id (plist-get impossible-task :id))
          (amount (plist-get impossible-task :amount))
          (entry (ht-get tasks-dict id)))
-    (insert (org-life-agenda-format-entry
-             (concat " "
+    (org-life-agenda-render-entry
+     :prefix (concat " "
                      (propertize
                       (format "%-8s" (org-duration-from-minutes amount))
                       'face 'error)
                      "| ")
-             entry))))
+     :entry entry)))
 
 (cl-defun org-life-agenda-render-day (&key daily-info
                                            tasks-dict
@@ -437,12 +461,16 @@ PROCESS is the process under watch, OUTPUT is the output received."
       (let* ((id (plist-get session :id))
              (amount (plist-get session :amount))
              (type (plist-get session :type))
+             (weakness (plist-get session :weakness))
              (entry (ht-get tasks-dict id)))
-        (insert (org-life-agenda-format-entry
-                 (concat "| "
+        (org-life-agenda-render-entry
+         :prefix (concat "| "
                          (format "%-5s" (org-duration-from-minutes amount))
                          " ")
-                 entry))))
+         :entry entry
+         :face (if (= weakness 0)
+                   'org-time-grid
+                 nil))))
     (insert (org-duration-from-minutes usable-time) " | "
             (org-duration-from-minutes free-time) " | "
             (format "%.3f" average-stress)
@@ -468,6 +496,11 @@ PROCESS is the process under watch, OUTPUT is the output received."
   (insert (propertize "Error" 'face 'error)
           "\n\n"
           message))
+
+(cl-defun org-life-agenda-render-debug (&key message)
+  (when message
+    (org-life-agenda-render-block-title :title "Debug Messages")
+    (insert (prin1-to-string message) "\n")))
 
 (cl-defun org-life-agenda-render-general-info (&key general-info)
   (let ((stress (plist-get general-info :stress))
@@ -506,6 +539,8 @@ PROCESS is the process under watch, OUTPUT is the output received."
                                                 :tasks-dict tasks-dict)))))
 
 (cl-defun org-life-agenda-render-agenda (&key agenda-data schedule-data)
+  (org-life-echo "Rendering agenda ...")
+  
   (let ((status (plist-get schedule-data :status))
         (err (plist-get schedule-data :error))
         (data (plist-get schedule-data :data)))
@@ -517,8 +552,11 @@ PROCESS is the process under watch, OUTPUT is the output received."
             (general-info (plist-get data :general))
             (alerts (plist-get data :alerts))
             (daily-infos (plist-get data :daily_infos))
+            (debug (plist-get data :debug))
 
             (today t))
+
+        (org-life-agenda-render-debug :message debug)
         
         (org-life-agenda-render-block-title :title "General")
         (org-life-agenda-render-general-info :general-info general-info)
@@ -578,26 +616,84 @@ PROCESS is the process under watch, OUTPUT is the output received."
      :effort (or (and effort (org-duration-to-minutes effort)) 0)
      :marker (org-agenda-new-marker begin))))
 
-(defun org-life-agenda-get-tasks (headline-elem)
-  (let ((children
-         (org-element-map
-             (org-element-contents headline-elem) ; data
-             'headline ; types
-           #'org-life-agenda-get-tasks ; fun
-           nil ; info
-           nil ; first-match
-           'headline ; no-recursion
-           )))
-    
-    (if (eq 'todo (org-element-property :todo-type headline-elem))
-        (progn
-          (setq org-life--temp-id (1+ org-life--temp-id))
-          (cons
-           (org-life-agenda-entry-from-headline org-life--temp-id headline-elem)
-           children))
-      children)))
+(defun org-life-agenda-parse-clock (task-id clock-elem)
+  (let* ((timestamp (org-element-property :value clock-elem))
+         (start (org-timestamp--to-internal-time timestamp))
+         (end (if (eq (org-element-property :status clock-elem) 'running)
+                  (current-time)
+                (org-timestamp--to-internal-time timestamp t)))
+         (session-data-list nil))
 
-(defun org-life-agenda-process-agenda-files (initial-value ast-processor)
+    (when (time-less-p start end)
+      (let ((start-days (time-to-days start))
+            (end-days (time-to-days end)))
+        (if (= start-days end-days)
+            (progn
+              (push (cons start
+                        (org-life-time-diff-minutes end start))
+                  session-data-list))
+            
+          (while (< start-days end-days)
+            (let ((end-of-day (org-life-end-of-day start)))
+              (push (cons start
+                          (org-life-time-diff-minutes end-of-day start))
+                    session-data-list)
+              (setq start end-of-day
+                    start-days (1+ start-days))))
+          (push (cons start
+                      (org-life-time-diff-minutes end start))
+                session-data-list)))
+      
+      (mapcar (lambda (session-data)
+                (list :date (org-life-agenda-time-to-date-string
+                             (car session-data))
+                      :session (list :id task-id
+                                     :amount (cdr session-data)
+                                     :type 0
+                                     :weakness 0)))
+              session-data-list))))
+
+(defun org-life-agenda-get-tasks-and-clocks (headline-elem)
+  "Writes result into `org-life--temp-tasks' and `org-life--temp-clocks'."
+
+  (when (eq 'todo (org-element-property :todo-type headline-elem))
+    ;; id
+    (setq org-life--temp-id (1+ org-life--temp-id))
+
+    ;; tasks
+    (push
+     (org-life-agenda-entry-from-headline org-life--temp-id headline-elem)
+     org-life--temp-tasks)
+
+    ;; clocks
+    (org-element-map
+        (org-element-contents headline-elem) ; data
+        'clock ; types
+      (lambda (clock-elem) ; fun
+        (let ((clock (org-life-agenda-parse-clock
+                      org-life--temp-id
+                      clock-elem)))
+          (setq org-life--temp-clocks
+                (append clock
+                        org-life--temp-clocks))))
+      nil ; info
+      nil ; first-match
+      'headline ; no-recursion
+      ))
+
+  ;; recurse
+  (org-element-map
+      (org-element-contents headline-elem) ; data
+      'headline ; types
+    #'org-life-agenda-get-tasks-and-clocks ; fun
+    nil ; info
+    nil ; first-match
+    'headline ; no-recursion
+    ))
+
+(defun org-life-agenda-process-agenda-files (initial-value
+                                             ast-processor
+                                             &optional granularity)
   (let ((files (org-agenda-files nil 'ifmode))
         (acc initial-value))
     
@@ -618,7 +714,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
       (with-current-buffer buffer
         (org-with-wide-buffer
          (unless (derived-mode-p 'org-mode) (error "Agenda file %s is not in Org mode" file))
-         (let ((ast (org-element-parse-buffer 'headline)))
+         (let ((ast (org-element-parse-buffer granularity)))
            (setq acc (funcall ast-processor acc ast))))))
     
     acc))
@@ -675,7 +771,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
                                          (car property)
                                          (cdr property)))))
     (setq config-data
-          (append (list :today (org-life-agenda-today-date-to-request))
+          (append (list :today (org-life-agenda-today-date-string))
                   config-data))
     config-data))
 
@@ -758,32 +854,44 @@ PROCESS is the process under watch, OUTPUT is the output received."
      usable-time-config)))
 
 (defun org-life-agenda-get-agenda-data ()
+  (org-life-echo "Computing agenda data ...")
+  
   (setq org-life--temp-id 0)
+  (setq org-life--temp-tasks nil)
+  (setq org-life--temp-clocks nil)
+
+  (org-life-echo "Reading agenda files ...")
+  
+  (org-life-agenda-process-agenda-files
+   '()
+   (lambda (acc ast) ; ast-processor
+     (org-element-map
+         ast ; data
+         'headline ; types
+       #'org-life-agenda-get-tasks-and-clocks ; fun
+       nil ; info
+       nil ; first-match
+       'headline ; no-recursion
+       ))
+   'element)
+  
+  (org-life-echo "Gathering data ...")
   
   (let* ((config-elem
           (org-life-agenda-get-config-elem))
          (config-data
           (org-life-agenda-get-config-data config-elem))
          (tasks
-          (org-life-agenda-process-agenda-files
-           '()
-           (lambda (acc ast) ; ast-processor
-             (append (org-life-agenda-flatten-list
-                      (org-element-map
-                          ast ; data
-                          'headline ; types
-                        #'org-life-agenda-get-tasks ; fun
-                        nil ; info
-                        nil ; first-match
-                        'headline ; no-recursion
-                        ))
-                     acc))))
+          org-life--temp-tasks)
+         (clocks
+          org-life--temp-clocks)
          (usable-time-config
           (org-life-agenda-get-usable-time-config config-elem)))
     
     (list :config config-data
           :usable-time usable-time-config
           :tasks tasks
+          :clocks clocks
           :tasks-dict (org-life-agenda-list-to-ht
                        tasks
                        (lambda (task)
@@ -801,10 +909,10 @@ PROCESS is the process under watch, OUTPUT is the output received."
                   (eq 'todo (org-life-agenda-entry-todo-type task)))
              (list
               :id (org-life-agenda-entry-id task)
-              :start (org-life-agenda-timestamp-to-request
+              :start (org-life-agenda-timestamp-to-date-string
                       (org-life-agenda-entry-scheduled task)
-                      (org-life-agenda-today-date-to-request))
-              :end (org-life-agenda-timestamp-to-request
+                      "min")
+              :end (org-life-agenda-timestamp-to-date-string
                       (org-life-agenda-entry-deadline task)
                       "max")
               :amount (org-life-agenda-entry-effort task)
@@ -825,6 +933,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
                    (plist-get agenda-data :config))
           :tasks (org-life-agenda-get-scheduler-request-tasks
                   (plist-get agenda-data :tasks))
+          :dated_sessions (plist-get agenda-data :clocks)
           :usable_time (org-life-agenda-get-scheduler-request-usable-time
                         (plist-get agenda-data :usable-time)))))
 
@@ -832,22 +941,25 @@ PROCESS is the process under watch, OUTPUT is the output received."
   (let (request
         response)
 
+    (org-life-echo "Preparing server request ...")
     (setq request (org-life-agenda-get-scheduler-request agenda-data))
+    
+    (org-life-echo "Sending server request ...")
     (setq response (org-life-send-request request))))
 
 ;; Agenda main
 
 (defun org-life-agenda (&rest _)
-      (let (agenda-data
-          schedule-data)
-      
-      (setq agenda-data (org-life-agenda-get-agenda-data))
-      (setq schedule-data (org-life-agenda-get-schedule-data agenda-data))
-      
-      (let ((inhibit-read-only t))
-        (goto-char (point-max))
-        (org-life-agenda-render-agenda :agenda-data agenda-data
-                                       :schedule-data schedule-data))))
+  (let (agenda-data
+        schedule-data)
+    
+    (setq agenda-data (org-life-agenda-get-agenda-data))
+    (setq schedule-data (org-life-agenda-get-schedule-data agenda-data))
+    
+    (let ((inhibit-read-only t))
+      (goto-char (point-max))
+      (org-life-agenda-render-agenda :agenda-data agenda-data
+                                     :schedule-data schedule-data))))
 
 ;;
 ;; Interactive functions
