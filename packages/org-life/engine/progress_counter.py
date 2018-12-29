@@ -12,8 +12,10 @@ class ProgressCounter(object):
         if not sessions_sorted:
             dated_sessions = sorted(dated_sessions, key = lambda x : x.date)
 
-        acc = ProgressInfo()
-        result = ProgressInfo()
+        task_index_finder = TaskIndexFinder()
+        
+        acc = ProgressInfo(len(tasks))
+        result = ProgressInfo(len(tasks))
 
         session_index = 0
 
@@ -25,27 +27,32 @@ class ProgressCounter(object):
                 break
 
             while session_index < len(dated_sessions) and dated_sessions[session_index].date < next_event.date:
-                acc.add_done_amount(
-                    dated_sessions[session_index].session.id.value,
-                    dated_sessions[session_index].session.amount.value
-                )
+                task_id = dated_sessions[session_index].session.id.value
+                for task_index in task_index_finder.get_task_indices(task_id):
+                    acc.add_done_amount(
+                        task_index,
+                        dated_sessions[session_index].session.amount.value
+                    )
+                    
                 session_index += 1
                 
             if next_event.event_type == TaskEventType.TASK_START:
                 result.set_done_amount(
-                    next_event.task_id,
-                    acc.get_done_amount(next_event.task_id)
+                    next_event.task_index,
+                    acc.get_done_amount(next_event.task_index)
                 )
+                task_index_finder.add(next_event.task_id, next_event.task_index)
 
             elif next_event.event_type == TaskEventType.TASK_END:
                 result.set_done_amount(
-                    next_event.task_id,
-                    acc.get_done_amount(next_event.task_id) - result.get_done_amount(next_event.task_id)
+                    next_event.task_index,
+                    acc.get_done_amount(next_event.task_index) - result.get_done_amount(next_event.task_index)
                 )
+                task_index_finder.remove(next_event.task_id, next_event.task_index)
 
         return result
 
-    
+
 def main():
     import doctest
     doctest.testmod()

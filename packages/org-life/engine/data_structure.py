@@ -1,5 +1,4 @@
-import copy
-
+import copy, calendar
 from datetime import date as DatetimeDate, timedelta
 from enum import Enum
 
@@ -49,6 +48,12 @@ class ObjectProperty(Property):
 
     def decode(self, encoded_prop):
         return self.prop_type().decode_self(encoded_prop) if encoded_prop is not None else None
+
+
+class NullableObjectProperty(ObjectProperty):
+
+    def get_default_value(self):
+        return None
 
     
 class ListProperty(Property):
@@ -184,6 +189,9 @@ class Priority(PrimitiveProtocol):
         PrimitiveProtocol.__init__(self, value)
 
 class Date(Protocol):
+    '''
+    TODO: Add tests.
+    '''
 
     def __init__(self, date_object = None):
         Protocol.__init__(self)
@@ -197,6 +205,12 @@ class Date(Protocol):
 
     def from_components(year, month, day):
         return Date(DatetimeDate(year, month, day))
+
+    def min():
+        return Date(DatetimeDate.min)
+
+    def max():
+        return Date(DatetimeDate.max)
 
     def is_min(self):
         return self._date == DatetimeDate.min
@@ -236,6 +250,18 @@ class Date(Protocol):
     def add_days(self, days):
         return Date(self._date + timedelta(days = days))
 
+    def add_months(self, months):
+        new_year = self._date.year + ((self._date.month + months - 1) // 12)
+        new_months = ((self._date.month + months - 1) % 12) + 1
+        new_day = min(self._date.day, calendar.monthrange(new_year, new_months)[1])
+        return Date.from_components(new_year, new_months, new_day)
+
+    def add_years(self, years):
+        new_year = self._date.year + years
+        new_months = self._date.month
+        new_day = min(self._date.day, calendar.monthrange(new_year, new_months)[1])
+        return Date.from_components(new_year, new_months, new_day)
+
     def __eq__(self, date):
         return self._date == date._date
 
@@ -267,6 +293,33 @@ class Config(Protocol):
         'fragmentation_config': ObjectProperty(FragmentationConfig),
     }
 
+class TaskRepeatUnitEnum(Enum):
+    NONE = 0
+    DAY = 1
+    WEEK = 2
+    MONTH = 3
+    YEAR = 4
+
+class TaskRepeatUnit(PrimitiveProtocol):
+    def __init__(self, value = TaskRepeatUnitEnum.DAY):
+        PrimitiveProtocol.__init__(self, value)
+
+    def encode(self):
+        return self.value.value
+
+    def decode(self, encoded_protocol):
+        self.value = TaskRepeatUnitEnum(encoded_protocol)
+
+class TaskRepeatValue(PrimitiveProtocol):
+    def __init__(self, value = 1):
+        PrimitiveProtocol.__init__(self, value)
+
+class TaskRepeat(Protocol):
+    properties = {
+        'unit': ObjectProperty(TaskRepeatUnit),
+        'value': ObjectProperty(TaskRepeatValue),
+    }
+
 class Task(Protocol):
     properties = {
         'id': ObjectProperty(TaskID),
@@ -275,7 +328,16 @@ class Task(Protocol):
         'amount': ObjectProperty(Duration),
         'done': ObjectProperty(Duration),
         'priority': ObjectProperty(Priority),
+        'repeat': NullableObjectProperty(TaskRepeat),
     }
+
+    def copy(self):
+        return copy.deepcopy(self)
+    
+    def decode(self, encoded_protocol):
+        Protocol.decode(self, encoded_protocol)
+        if self.start > self.end:
+            self.start = self.end
 
 class UsableTimeSelector(PrimitiveProtocol):
     def __init__(self, value = 'default'):
@@ -302,6 +364,7 @@ class SessionStressInfo(Protocol):
 class SessionTypeEnum(Enum):
     TASK = 0
     FRAGMENT = 1
+    OVERLIMIT = 2
 
 class SessionType(PrimitiveProtocol):
     def __init__(self, value = SessionTypeEnum.TASK):
@@ -339,11 +402,31 @@ class Session(Protocol):
     def copy(self):
         return copy.deepcopy(self)
 
+    def with_weakness(self, weakness_value):
+        new_session = self.copy()
+        new_session.weakness.value = weakness_value
+        return new_session
+
 class DatedSession(Protocol):
     properties = {
         'date': ObjectProperty(Date),
         'session': ObjectProperty(Session),
     }
+
+    def __init__(self, date = None, session = None):
+        Protocol.__init__(self)
+        if date is not None:
+            self.date = date
+        if session is not None:
+            self.session = session
+
+    def copy(self):
+        return copy.deepcopy(self)
+
+    def with_weakness(self, weakness_value):
+        new_dated_session = self.copy()
+        new_dated_session.session.weakness.value = weakness_value
+        return new_dated_session
 
 class SchedulingRequest(Protocol):
     properties = {
@@ -353,11 +436,13 @@ class SchedulingRequest(Protocol):
         'usable_time': ListProperty(UsableTimeConfigEntry),
     }
 
+
 class SchedulingGeneralInfo(Protocol):
     properties = {
         'stress': ObjectProperty(Ratio),
         'highest_stress_date': ObjectProperty(Date),
-        'stress_with_fragments': ObjectProperty(Ratio),
+        'stress_with_optimal': ObjectProperty(Ratio),
+        'stress_with_suggested': ObjectProperty(Ratio),
         'stress_without_today': ObjectProperty(Ratio),
     }
 
@@ -434,41 +519,40 @@ class TaskProressInfo(Protocol):
     properties = {
         'done_amount': ObjectProperty(Duration),
     }
+
+    def __init__(self, initial_progress = 0):
+        Protocol.__init__(self)
+        self.done_amount.value = initial_progress
     
 class ProgressInfo(Protocol):
     '''
     TODO: This is not yet encodable, since it intends to use task id as key.
     '''
     properties = {
-        'tasks_progress': DictProperty(TaskProressInfo), # use task id as key
+        'tasks_progress': ListProperty(TaskProressInfo), # use task id as key
     }
+
+    def __init__(self, num_tasks):
+        Protocol.__init__(self)
+        self.tasks_progress = [TaskProressInfo(0) for _ in range(num_tasks)]
 
     def copy(self):
         return copy.deepcopy(self)
 
-    def _ensure_exist(self, task_id):
-        if task_id not in self.tasks_progress:
-            task_progress =  TaskProressInfo()
-            task_progress.done_amount.value = 0
-            self.tasks_progress[task_id] = task_progress
-
-    def get_done_amount(self, task_id):
-        self._ensure_exist(task_id)
-        return self.tasks_progress[task_id].done_amount.value
+    def get_done_amount(self, task_index):
+        return self.tasks_progress[task_index].done_amount.value
     
-    def add_done_amount(self, task_id, done_amount):
-        self._ensure_exist(task_id)
-        self.tasks_progress[task_id].done_amount.value += done_amount
+    def add_done_amount(self, task_index, done_amount):
+        self.tasks_progress[task_index].done_amount.value += done_amount
     
-    def set_done_amount(self, task_id, done_amount):
-        self._ensure_exist(task_id)
-        self.tasks_progress[task_id].done_amount.value = done_amount
+    def set_done_amount(self, task_index, done_amount):
+        self.tasks_progress[task_index].done_amount.value = done_amount
 
     def combine(self, progress_info):
         result = self.copy()
-        for task_id in progress_info.tasks_progress:
-            task_progress = progress_info.tasks_progress[task_id]
-            result.add_done_amount(task_id, task_progress.done_amount.value)
+        for task_index in range(len(self.tasks_progress)):
+            task_progress = progress_info.tasks_progress[task_index]
+            result.add_done_amount(task_index, task_progress.done_amount.value)
 
         return result
     
@@ -487,20 +571,14 @@ class DailySchedule(object):
         self._sessions = []
         self._id_to_session = {
             SessionWeaknessEnum.STRONG: {
-                SessionTypeEnum.TASK: {
-                    
-                },
-                SessionTypeEnum.FRAGMENT: {
-                    
-                },
+                SessionTypeEnum.TASK: {},
+                SessionTypeEnum.FRAGMENT: {},
+                SessionTypeEnum.OVERLIMIT: {},
             },
             SessionWeaknessEnum.WEAK: {
-                SessionTypeEnum.TASK: {
-                    
-                },
-                SessionTypeEnum.FRAGMENT: {
-                    
-                },
+                SessionTypeEnum.TASK: {},
+                SessionTypeEnum.FRAGMENT: {},
+                SessionTypeEnum.OVERLIMIT: {},
             },
         }
 
@@ -511,7 +589,7 @@ class DailySchedule(object):
         return self._usable_time
 
     def get_free_time(self):
-        return self._usable_time - self._used_time
+        return max(0, self._usable_time - self._used_time)
 
     def is_overlimit(self):
         return self._used_time > self._usable_time
@@ -528,12 +606,12 @@ class DailySchedule(object):
         id_to_session_dict = self._id_to_session[session.weakness.value][session.type.value]
         if task_id in id_to_session_dict:
             id_to_session_dict[task_id].amount.value += amount
-            
+
         else:
             session = session.copy()
             self._sessions.append(session)
             id_to_session_dict[task_id] = session
-        
+
     def get_sessions(self):
         return self._sessions
 
@@ -551,17 +629,28 @@ class Schedule(object):
     def get_schedule_end(self):
         return self.schedule_end
     
-    def copy(self):
-        schedule_start = self.schedule_start.copy()
-        schedule_end = self.schedule_end.copy()
+    def copy(self, schedule_start = None, schedule_end = None):
+        if schedule_start is None:
+            schedule_start = self.schedule_start.copy()
+            
+        if schedule_end is None:
+            schedule_end = self.schedule_end.copy()
+        
         daily_schedules = {}
-        for date in self.daily_schedules:
+        date = schedule_start
+        while date <= schedule_end:
             daily_schedules[date] = self.daily_schedules[date].copy()
+            date = date.add_days(1)
             
         return Schedule(schedule_start, schedule_end, daily_schedules)
 
     def add_session(self, date, session):
-        self.daily_schedules[date].add_session(session)
+        if date in self.daily_schedules:
+            self.daily_schedules[date].add_session(session)
+
+    def add_sessions(self, date, sessions):
+        for session in sessions:
+            self.add_session(date, session)
 
     def add_dated_sessions(self, dated_sessions):
         for dated_session in dated_sessions:

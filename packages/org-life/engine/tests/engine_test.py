@@ -82,7 +82,7 @@ class EngineTest(unittest.TestCase):
 
         engine = Engine.create()
         r = engine.schedule(scheduling_request).encode()
-        # print(r)
+        print(r)
         # For now this simply tests if there are any obvious error.
 
 

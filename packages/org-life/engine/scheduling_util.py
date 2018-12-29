@@ -5,6 +5,33 @@ from data_structure import *
 import util
 
 
+class TaskIndexFinder(object):
+    '''
+    Helper container that stores all active task index per task id. 
+    This is used to support multiple tasks (different task index)
+    for the same task id.
+    '''
+
+    def __init__(self):
+        self._data = {}
+
+    def _ensure_exists(self, task_id):
+        if task_id not in self._data:
+            self._data[task_id] = set()
+
+    def add(self, task_id, task_index):
+        self._ensure_exists(task_id)
+        self._data[task_id].add(task_index)
+
+    def remove(self, task_id, task_index):
+        self._ensure_exists(task_id)
+        self._data[task_id].remove(task_index)
+
+    def get_task_indices(self, task_id):
+        self._ensure_exists(task_id)
+        return self._data[task_id]
+
+
 class ScheduleFiller(object):
     def __init__(self, schedule, direction):
         self.schedule = schedule
@@ -256,7 +283,8 @@ class TaskEvent(object):
     Note that TASK_START may be the deadline of task if scheduling backward.
     '''
 
-    def __init__(self, task_id, date, opposite_date, event_type):
+    def __init__(self, task_index, task_id, date, opposite_date, event_type):
+        self.task_index = task_index
         self.task_id = task_id
         self.date = date
         self.opposite_date = opposite_date
@@ -268,7 +296,7 @@ class TaskEvent(object):
 
 class TaskEventsIterator(object):
 
-    def __init__(self, tasks, start, end, direction):
+    def __init__(self, tasks, start, end, direction, tasks_mask = None):
         '''
         TODO
         Start and end represents 00:00 of that day.
@@ -289,8 +317,13 @@ class TaskEventsIterator(object):
 
             return date.add_days(1)
         
-        for task in tasks:
+        for i in range(len(tasks)):
+            if tasks_mask is not None and not tasks_mask[i]:
+                continue
+
+            task = tasks[i]
             self.task_events.append(TaskEvent(
+                i,
                 task.id.value,
                 util.clamp(task.start, start, end),
                 safe_add_1_day(util.clamp(task.end, start, end)),
@@ -298,6 +331,7 @@ class TaskEventsIterator(object):
                 if direction == FillDirection.EARLY else TaskEventType.TASK_END
             ))
             self.task_events.append(TaskEvent(
+                i,
                 task.id.value,
                 safe_add_1_day(util.clamp(task.end, start, end)),
                 util.clamp(task.start, start, end),

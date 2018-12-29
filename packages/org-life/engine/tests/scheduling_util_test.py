@@ -14,6 +14,23 @@ class SchedulingUtilTest(unittest.TestCase):
     TODO: Test performance.
     '''
 
+    def test_task_index_finder(self):
+        t = TaskIndexFinder()
+        t.add(1, 2)
+        t.add(1, 2)
+        t.add(1, 3)
+        t.add(2, 8)
+        t.add(2, 2)
+        t.add(2, 9)
+        t.add(3, 1)
+        t.add(3, 1)
+        t.add(3, 1)
+        t.remove(3, 1)
+        t.remove(2, 9)
+        self.assertEqual(sorted(list(t.get_task_indices(1))), [2, 3])
+        self.assertEqual(sorted(list(t.get_task_indices(2))), [2, 8])
+        self.assertEqual(sorted(list(t.get_task_indices(3))), [])
+
     def test_schedule_filler(self):
         schedule_start = Date().decode_self('2018-12-01')
         schedule_end = Date().decode_self('2019-01-01')

@@ -439,7 +439,6 @@ PROCESS is the process under watch, OUTPUT is the output received."
          (average-stress (plist-get daily-info :average_stress))
          (time (org-life-agenda-date-string-to-time date-string))
          (weekday (org-life-agenda-time-to-weekday time))
-         (weekday-num (cdr weekday))
          (date-string (if today
                           (propertize date-string
                                       'face
@@ -447,16 +446,17 @@ PROCESS is the process under watch, OUTPUT is the output received."
                         (propertize date-string
                                     'face
                                     'org-agenda-date)))
-         (weekday-text (if (or (= weekday-num 6)
-                               (= weekday-num 7))
-                           (propertize (car weekday)
-                                       'face
-                                       'org-agenda-date-weekend)
-                         (car weekday)))
-         )
-    (insert (propertize "● "
-                        'face 'org-agenda-date)
-            weekday-text " " date-string "\n")
+         (weekday-num (cdr weekday))
+         (weekday-text (propertize
+                        (format "● %d-%s"
+                                weekday-num
+                                (car weekday))
+                        'face
+                        (if (or (= weekday-num 6)
+                                (= weekday-num 7))
+                            'org-agenda-date-weekend
+                          'org-agenda-date))))
+    (insert weekday-text " " date-string "\n")
     (dolist (session sessions)
       (let* ((id (plist-get session :id))
              (amount (plist-get session :amount))
@@ -468,9 +468,9 @@ PROCESS is the process under watch, OUTPUT is the output received."
                          (format "%-5s" (org-duration-from-minutes amount))
                          " ")
          :entry entry
-         :face (if (= weakness 0)
-                   'org-time-grid
-                 nil))))
+         :face (cond ((= weakness 0) 'org-time-grid)
+                     ((= type 2) 'org-warning)
+                     (t nil)))))
     (insert (org-duration-from-minutes usable-time) " | "
             (org-duration-from-minutes free-time) " | "
             (format "%.3f" average-stress)
@@ -505,13 +505,14 @@ PROCESS is the process under watch, OUTPUT is the output received."
 (cl-defun org-life-agenda-render-general-info (&key general-info)
   (let ((stress (plist-get general-info :stress))
         (highest-stress-date (plist-get general-info :highest_stress_date))
-        (stress-with-fragments (plist-get general-info :stress_with_fragments))
+        (stress-with-optimal (plist-get general-info :stress_with_optimal))
+        (stress-with-suggested (plist-get general-info :stress_with_suggested))
         (stress-without-today (plist-get general-info :stress_without_today)))
-    (insert (format "Stress: %.3f | %.3f | %.3f" stress stress-with-fragments stress-without-today) "\n")
+    (insert (format "Stress: %.3f | %.3f | %.3f" stress-with-optimal stress-with-suggested stress-without-today) "\n")
     (org-life-agenda-render-multi-progress-bar
      :bar-width (window-text-width)
-     :progress-list (list (cons stress 'org-life-agenda-stress-best-face)
-                          (cons stress-with-fragments 'org-life-agenda-stress-normal-face)
+     :progress-list (list (cons stress-with-optimal 'org-life-agenda-stress-best-face)
+                          (cons stress-with-suggested 'org-life-agenda-stress-normal-face)
                           (cons stress-without-today 'org-life-agenda-stress-warning-face))
      :marker-list (list (cons 0.5 nil)
                         (cons 0.25 nil)))
@@ -904,21 +905,37 @@ PROCESS is the process under watch, OUTPUT is the output received."
 (defun org-life-agenda-get-scheduler-request-tasks (agenda-tasks)
   "TODO deal with repeats. deal with non-scheduled tasks. deal with non-effort tasks. deal with amount done. deal with priority."
   (-non-nil
-   (-map (lambda (task)
-           (when (and
-                  (eq 'todo (org-life-agenda-entry-todo-type task)))
-             (list
-              :id (org-life-agenda-entry-id task)
-              :start (org-life-agenda-timestamp-to-date-string
-                      (org-life-agenda-entry-scheduled task)
-                      "min")
-              :end (org-life-agenda-timestamp-to-date-string
-                      (org-life-agenda-entry-deadline task)
-                      "max")
-              :amount (org-life-agenda-entry-effort task)
-              :done 0
-              :priority (org-life-agenda-entry-priority task))))
-         agenda-tasks)))
+   (mapcar
+    (lambda (task)
+      (when (and
+             (eq 'todo (org-life-agenda-entry-todo-type task)))
+        (list
+         :id (org-life-agenda-entry-id task)
+         :start (org-life-agenda-timestamp-to-date-string
+                 (org-life-agenda-entry-scheduled task)
+                 "min")
+         :end (org-life-agenda-timestamp-to-date-string
+               (org-life-agenda-entry-deadline task)
+               "max")
+         :amount (org-life-agenda-entry-effort task)
+         :done 0
+         :priority (org-life-agenda-entry-priority task)
+         :repeat (let* ((timestamp
+                         (org-life-agenda-entry-deadline task))
+                        (repeater-unit
+                         (org-element-property :repeater-unit timestamp))
+                        (repeater-value
+                         (org-element-property :repeater-value timestamp)))
+                   (when repeater-unit
+                     (list
+                      :unit (cond
+                             ((eq repeater-unit 'day) 1)
+                             ((eq repeater-unit 'week) 2)
+                             ((eq repeater-unit 'month) 3)
+                             ((eq repeater-unit 'year) 4)
+                             (t 0))
+                      :value (or repeater-value 1)))))))
+    agenda-tasks)))
 
 (defun org-life-agenda-get-scheduler-request-usable-time (usable-time-config)
   ;; This is in the same format as request.

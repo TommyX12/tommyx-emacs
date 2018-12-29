@@ -31,7 +31,7 @@ class StressAnalyzer(object):
             acc_free_time += schedule.get_free_time(date)
             acc_usable_time += schedule.get_usable_time(date)
 
-            if acc_free_time < 0:
+            if schedule.is_overlimit(date) or acc_free_time < 0:
                 acc_average_stress = 1.0
                 acc_free_time = 0
 

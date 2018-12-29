@@ -6,6 +6,7 @@ from logger import DummyLogger
 from data_structure import *
 from usable_time_parser import UsableTimeParser
 from task_filter import TaskFilter
+from task_repeater import TaskRepeater
 from progress_counter import ProgressCounter
 from planner import Planner
 from stress_analyzer import StressAnalyzer
@@ -14,9 +15,10 @@ from fragmentizer import Fragmentizer
 
 class Engine(object):
 
-    def __init__(self, usable_time_parser, task_filter, progress_counter, planner, stress_analyzer, fragmentizer, logger = DummyLogger()):
+    def __init__(self, usable_time_parser, task_filter, task_repeater, progress_counter, planner, stress_analyzer, fragmentizer, logger = DummyLogger()):
         self.usable_time_parser = usable_time_parser
         self.task_filter = task_filter
+        self.task_repeater = task_repeater
         self.progress_counter = progress_counter
         self.planner = planner
         self.stress_analyzer = stress_analyzer
@@ -29,11 +31,12 @@ class Engine(object):
         '''
         usable_time_parser = UsableTimeParser()
         task_filter = TaskFilter()
+        task_repeater = TaskRepeater()
         progress_counter = ProgressCounter()
         planner = Planner()
         stress_analyzer = StressAnalyzer()
         fragmentizer = Fragmentizer()
-        return Engine(usable_time_parser, task_filter, progress_counter, planner, stress_analyzer, fragmentizer, logger)
+        return Engine(usable_time_parser, task_filter, task_repeater, progress_counter, planner, stress_analyzer, fragmentizer, logger)
 
     def schedule(self, scheduling_request):
         # setup
@@ -45,7 +48,6 @@ class Engine(object):
         dated_sessions.sort(key = lambda x : x.date)
         usable_time_config = scheduling_request.usable_time
 
-        # results
         response = SchedulingResponse()
         for i in range(config.daily_info_days.value):
             daily_info = DailyInfo()
@@ -55,32 +57,50 @@ class Engine(object):
         # parse work time config
         usable_time_dict = self.usable_time_parser.get_usable_time_dict(schedule_start, schedule_end, usable_time_config)
         
-        # write to result
         for daily_info in response.daily_infos:
             daily_info.usable_time = usable_time_dict[daily_info.date]
+
+        # task repeat
+        tasks = self.task_repeater.repeat(tasks, schedule_start, schedule_end)
         
         # progress count
         strong_dated_sessions = [
             dated_session for dated_session in dated_sessions
             if dated_session.session.weakness.value == SessionWeaknessEnum.STRONG
         ]
+        strong_dated_sessions_without_today = [
+            dated_session for dated_session in strong_dated_sessions
+            if dated_session.date != schedule_start
+        ]
+        strong_dated_sessions_today = [
+            dated_session for dated_session in strong_dated_sessions
+            if dated_session.date == schedule_start
+        ]
         weak_dated_sessions = [
             dated_session for dated_session in dated_sessions
             if dated_session.session.weakness.value == SessionWeaknessEnum.WEAK
         ]
-        strong_progress = self.progress_counter.count(tasks, strong_dated_sessions, sessions_sorted = True)
+        strong_progress_without_today = self.progress_counter.count(tasks, strong_dated_sessions_without_today, sessions_sorted = True)
+        strong_progress_today = self.progress_counter.count(tasks, strong_dated_sessions_today, sessions_sorted = True)
+        strong_progress = strong_progress_without_today.combine(strong_progress_today)
 
         # make schedule objects
         early_schedule = Schedule.from_usable_time_dict(schedule_start, schedule_end, usable_time_dict)
         early_schedule.add_dated_sessions(strong_dated_sessions)
         late_schedule = early_schedule.copy()
 
-        # free time and conflict check
-        # run backward pass to generate maximum free time, and overall stress
-        stress_contributor_tasks = self.task_filter.get_stress_contributor_tasks(tasks, schedule_start, schedule_end)
-        late_plan_result = self.planner.plan(stress_contributor_tasks, late_schedule, direction = FillDirection.LATE, progress_info = strong_progress)
+        # impossible tasks check
+        stress_contributor_tasks_mask = self.task_filter.get_stress_contributor_tasks_mask(tasks, schedule_start, schedule_end)
+        late_plan_result = self.planner.plan(
+            tasks,
+            late_schedule,
+            direction = FillDirection.LATE,
+            progress_info = strong_progress,
+            tasks_mask = stress_contributor_tasks_mask
+        )
         impossible_tasks = late_plan_result.impossible_tasks
-        # get free time info and stress
+        
+        # free time info and stress
         stress_info = self.stress_analyzer.analyze(late_schedule)
         response.general.stress.value = stress_info.overall_stress.value
         response.general.highest_stress_date = stress_info.highest_stress_date
@@ -105,10 +125,66 @@ class Engine(object):
         fragment_amount = Schedule.get_dated_sessions_amount(fragment_sessions)
 
         # additional stress info
-        stress_info_with_fragment = self.stress_analyzer.analyze(late_schedule, bias = fragment_amount)
-        response.general.stress_with_fragments.value = stress_info_with_fragment.overall_stress.value
+        late_schedule_with_optimal = early_schedule.copy()
+        self.planner.plan(
+            tasks,
+            late_schedule_with_optimal,
+            direction = FillDirection.EARLY,
+            progress_info = strong_progress,
+            early_stop = schedule_start,
+            session_weakness = SessionWeaknessEnum.STRONG
+        )
+        optimal_dated_sessions = [
+            DatedSession(schedule_start, session)
+            for session in
+            late_schedule_with_optimal.get_sessions(schedule_start)
+        ]
+        strong_progress_with_optimal = self.progress_counter.count(tasks, optimal_dated_sessions, sessions_sorted = True)
+        strong_progress_with_optimal = strong_progress_with_optimal.combine(strong_progress_without_today)
+        self.planner.plan(
+            tasks,
+            late_schedule_with_optimal,
+            direction = FillDirection.LATE,
+            progress_info = strong_progress_with_optimal,
+            tasks_mask = stress_contributor_tasks_mask
+        )
         
-        stress_info_without_today = self.stress_analyzer.analyze(late_schedule, bias = usable_time_dict[schedule_start].value)
+        late_schedule_with_suggested = early_schedule.copy()
+        strong_fragment_sessions = [
+            dated_session.with_weakness(SessionWeaknessEnum.STRONG)
+            for dated_session in fragment_sessions
+        ]
+        late_schedule_with_suggested.add_dated_sessions(strong_fragment_sessions)
+        self.planner.plan(
+            tasks,
+            late_schedule_with_suggested,
+            direction = FillDirection.EARLY,
+            progress_info = strong_progress,
+            early_stop = schedule_start,
+            session_weakness = SessionWeaknessEnum.STRONG
+        )
+        suggested_dated_sessions = [
+            DatedSession(schedule_start, session)
+            for session in
+            late_schedule_with_suggested.get_sessions(schedule_start)
+        ]
+        strong_progress_with_suggested = self.progress_counter.count(tasks, suggested_dated_sessions, sessions_sorted = True)
+        strong_progress_with_suggested = strong_progress_with_suggested.combine(strong_progress_without_today)
+        self.planner.plan(
+            tasks,
+            late_schedule_with_suggested,
+            direction = FillDirection.LATE,
+            progress_info = strong_progress_with_suggested,
+            tasks_mask = stress_contributor_tasks_mask
+        )
+        
+        stress_info_with_optimal = self.stress_analyzer.analyze(late_schedule_with_optimal)
+        response.general.stress_with_optimal.value = stress_info_with_optimal.overall_stress.value
+        
+        stress_info_with_suggested = self.stress_analyzer.analyze(late_schedule_with_suggested)
+        response.general.stress_with_suggested.value = stress_info_with_suggested.overall_stress.value
+        
+        stress_info_without_today = self.stress_analyzer.analyze(late_schedule, bias = late_schedule.get_usable_time(schedule_start))
         response.general.stress_without_today.value = stress_info_without_today.overall_stress.value
 
         # schedule suggestion for deadline tasks
@@ -119,7 +195,6 @@ class Engine(object):
         # compute task stress of each session
         # TODO
 
-        # write to response
         for daily_info in response.daily_infos:
             daily_info.sessions = early_schedule.get_sessions(daily_info.date)
 

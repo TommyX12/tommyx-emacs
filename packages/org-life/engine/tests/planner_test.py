@@ -27,18 +27,18 @@ class PlannerTest(unittest.TestCase):
         task2.done.value = 40
         tasks = [task1, task2]
 
-        progress_info = ProgressInfo()
-        progress_info.add_done_amount(1, 50)
+        progress_info = ProgressInfo(2)
+        progress_info.add_done_amount(0, 50)
         
         t = TasksPlanningData(tasks, progress_info)
-        self.assertEqual(t.get_amount_left(1), 50)
-        self.assertEqual(t.get_amount_left(2), 40)
-        t.decrease_amount(1, 50)
-        t.decrease_amount(2, 20)
-        self.assertEqual(t.get_amount_left(1), 0)
-        self.assertEqual(t.get_amount_left(2), 20)
-        self.assertEqual(t.is_task_done(1), True)
-        self.assertEqual(t.is_task_done(2), False)
+        self.assertEqual(t.get_amount_left(0), 50)
+        self.assertEqual(t.get_amount_left(1), 40)
+        t.decrease_amount(0, 50)
+        t.decrease_amount(1, 20)
+        self.assertEqual(t.get_amount_left(0), 0)
+        self.assertEqual(t.get_amount_left(1), 20)
+        self.assertEqual(t.is_task_done(0), True)
+        self.assertEqual(t.is_task_done(1), False)
 
     def test_planner(self):
         task1 = Task()
@@ -124,6 +124,7 @@ class PlannerTest(unittest.TestCase):
 2018-11-30: [20]
 2018-12-1: [0]
 - 1: 20
+- 1: 855
 2018-12-2: [0]
 - 1: 20
 2018-12-3: [0]
@@ -156,6 +157,8 @@ class PlannerTest(unittest.TestCase):
 - 1: 20
 2018-12-5: [0]
 - 1: 20
+- 1: 820
+- 3: 35
 2018-12-6: [20]
 ==========
 ''')
