@@ -189,8 +189,15 @@ class Engine(object):
 
         # schedule suggestion for deadline tasks
         # run forward pass (while accounting for today's fragmented time) to generate suggestion
+        strong_progress_with_fragments = self.progress_counter.count(tasks, fragment_sessions, sessions_sorted = True)
+        strong_progress_with_fragments = strong_progress_with_fragments.combine(strong_progress)
         early_schedule.add_dated_sessions(fragment_sessions)
-        self.planner.plan(tasks, early_schedule, direction = FillDirection.EARLY, progress_info = strong_progress)
+        self.planner.plan(
+            tasks,
+            early_schedule,
+            direction = FillDirection.EARLY,
+            progress_info = strong_progress_with_fragments
+        )
         
         # compute task stress of each session
         # TODO

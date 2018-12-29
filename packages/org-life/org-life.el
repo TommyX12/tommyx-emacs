@@ -468,7 +468,8 @@ PROCESS is the process under watch, OUTPUT is the output received."
                          (format "%-5s" (org-duration-from-minutes amount))
                          " ")
          :entry entry
-         :face (cond ((= weakness 0) 'org-time-grid)
+         :face (cond ((= weakness 0) 'org-agenda-done)
+                     ((= type 1) 'org-time-grid)
                      ((= type 2) 'org-warning)
                      (t nil)))))
     (insert (org-duration-from-minutes usable-time) " | "
