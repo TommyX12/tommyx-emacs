@@ -22,16 +22,25 @@ class TaskRepeater(object):
 
         result = []
 
-        new_task = task.copy()
-        if new_task.end < schedule_start:
-            new_task.end = schedule_start
+        if repeat.type.value == TaskRepeatTypeEnum.NORMAL:
+            if task.end >= schedule_start:
+                result.append(task)
+
+            old_task_end = task.end
+            first_task_end = task.end
+
+        elif repeat.type.value == TaskRepeatTypeEnum.RESTART:
+            new_task = task.copy()
+            if new_task.end < schedule_start:
+                new_task.end = schedule_start
             
-        new_task.repeat = None
-        result.append(new_task)
-        
-        first_repeat_end = task.end
-        old_task_end = new_task.end
-            
+            result.append(new_task)
+            old_task_end = new_task.end
+            first_task_end = new_task.end
+
+        else:
+            raise ValueError()
+
         i = 0
         
         while True:
@@ -40,13 +49,13 @@ class TaskRepeater(object):
             unit = repeat.unit.value
             value = max(1, repeat.value.value)
             if unit == TaskRepeatUnitEnum.DAY:
-                new_task_end = first_repeat_end.add_days(i * value)
+                new_task_end = first_task_end.add_days(i * value)
             elif unit == TaskRepeatUnitEnum.WEEK:
-                new_task_end = first_repeat_end.add_days(i * 7 * value)
+                new_task_end = first_task_end.add_days(i * 7 * value)
             elif unit == TaskRepeatUnitEnum.MONTH:
-                new_task_end = first_repeat_end.add_months(i * value)
+                new_task_end = first_task_end.add_months(i * value)
             elif unit == TaskRepeatUnitEnum.YEAR:
-                new_task_end = first_repeat_end.add_years(i * value)
+                new_task_end = first_task_end.add_years(i * value)
             else:
                 raise ValueError()
 

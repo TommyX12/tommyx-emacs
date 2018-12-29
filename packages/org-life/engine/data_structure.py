@@ -293,6 +293,20 @@ class Config(Protocol):
         'fragmentation_config': ObjectProperty(FragmentationConfig),
     }
 
+class TaskRepeatTypeEnum(Enum):
+    NORMAL = 0
+    RESTART = 1
+
+class TaskRepeatType(PrimitiveProtocol):
+    def __init__(self, value = TaskRepeatTypeEnum.NORMAL):
+        PrimitiveProtocol.__init__(self, value)
+
+    def encode(self):
+        return self.value.value
+
+    def decode(self, encoded_protocol):
+        self.value = TaskRepeatTypeEnum(encoded_protocol)
+
 class TaskRepeatUnitEnum(Enum):
     NONE = 0
     DAY = 1
@@ -316,6 +330,7 @@ class TaskRepeatValue(PrimitiveProtocol):
 
 class TaskRepeat(Protocol):
     properties = {
+        'type': ObjectProperty(TaskRepeatType),
         'unit': ObjectProperty(TaskRepeatUnit),
         'value': ObjectProperty(TaskRepeatValue),
     }

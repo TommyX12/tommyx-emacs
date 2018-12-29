@@ -35,7 +35,25 @@ class TaskRepeaterTest(unittest.TestCase):
         task3.start = Date().decode_self('2018-12-01')
         task3.end = Date().decode_self('2018-12-31')
         
-        tasks = [task1, task2, task3]
+        task4 = Task()
+        task4.id.value = 4
+        task4.start = Date().decode_self('2018-11-01')
+        task4.end = Date().decode_self('2018-11-05')
+        task4.repeat = TaskRepeat()
+        task4.repeat.type.value = TaskRepeatTypeEnum.NORMAL
+        task4.repeat.unit.value = TaskRepeatUnitEnum.WEEK
+        task4.repeat.value.value = 5
+        
+        task5 = Task()
+        task5.id.value = 5
+        task5.start = Date().decode_self('2018-11-01')
+        task5.end = Date().decode_self('2018-11-05')
+        task5.repeat = TaskRepeat()
+        task5.repeat.type.value = TaskRepeatTypeEnum.RESTART
+        task5.repeat.unit.value = TaskRepeatUnitEnum.WEEK
+        task5.repeat.value.value = 5
+        
+        tasks = [task1, task2, task3, task4, task5]
 
         schedule_start = Date().decode_self('2018-12-01')
         schedule_end = Date().decode_self('2019-02-01')
@@ -57,7 +75,11 @@ class TaskRepeaterTest(unittest.TestCase):
              (2, '2018-12-1', '2018-12-31'),
              (2, '2019-1-1', '2019-1-31'),
              (2, '2019-2-1', '2019-2-28'),
-             (3, '2018-12-1', '2018-12-31')]
+             (3, '2018-12-1', '2018-12-31'),
+             (4, '2018-12-6', '2018-12-10'),
+             (4, '2019-1-10', '2019-1-14'),
+             (5, '2018-11-1', '2018-12-1'),
+             (5, '2019-1-1', '2019-1-5')]
         )
     
 

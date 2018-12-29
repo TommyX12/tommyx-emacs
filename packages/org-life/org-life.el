@@ -922,12 +922,17 @@ PROCESS is the process under watch, OUTPUT is the output received."
          :priority (org-life-agenda-entry-priority task)
          :repeat (let* ((timestamp
                          (org-life-agenda-entry-deadline task))
+                        (repeater-type
+                         (org-element-property :repeater-type timestamp))
                         (repeater-unit
                          (org-element-property :repeater-unit timestamp))
                         (repeater-value
                          (org-element-property :repeater-value timestamp)))
                    (when repeater-unit
                      (list
+                      :type (cond
+                             ((eq repeater-type 'restart) 1)
+                             (t 0))
                       :unit (cond
                              ((eq repeater-unit 'day) 1)
                              ((eq repeater-unit 'week) 2)
