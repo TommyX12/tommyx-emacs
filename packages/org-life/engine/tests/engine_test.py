@@ -65,7 +65,7 @@ class EngineTest(unittest.TestCase):
 
         fragmentation_config = FragmentationConfig()
         fragmentation_config.max_percentage.value = 0.2
-        fragmentation_config.max_stress.value = 0.8
+        fragmentation_config.min_extra_time_ratio.value = 0.8
         fragmentation_config.preferred_fragment_size.value = 60
         fragmentation_config.min_fragment_size.value = 30
         

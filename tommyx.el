@@ -1211,6 +1211,10 @@ Useful for a search overview popup."
 ;; (defun fit-window-to-region ()
 ;; 	(interactive)
 ;; 	TODO)
+(defun sort-lines-ignore-case ()
+  (interactive)
+  (let ((sort-fold-case t))
+    (call-interactively #'sort-lines)))
 (evil-define-motion fast-move-up () :type exclusive
 	(evil-previous-visual-line 5))
 (evil-define-motion fast-move-down () :type exclusive

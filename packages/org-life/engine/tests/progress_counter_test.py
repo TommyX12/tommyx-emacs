@@ -63,7 +63,11 @@ class ProgressCounterTest(unittest.TestCase):
         ds9.date = Date().decode_self('2018-12-03')
         ds9.session.id.value = 3
         ds9.session.amount.value = 23
-        dated_sessions = [ds1, ds2, ds3, ds4, ds5, ds6, ds7, ds8, ds9]
+        ds10 = DatedSession()
+        ds10.date = Date().decode_self('2018-12-03')
+        ds10.session.id.value = 4
+        ds10.session.amount.value = 23
+        dated_sessions = [ds1, ds2, ds3, ds4, ds5, ds6, ds7, ds8, ds9, ds10]
         
         p = ProgressCounter()
         r = p.count(tasks, dated_sessions)

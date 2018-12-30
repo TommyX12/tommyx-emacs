@@ -1,3 +1,4 @@
+import math
 from enum import Enum
 
 from data_structure import *
@@ -68,7 +69,13 @@ class Planner(object):
                     break
 
                 if next_event.event_type == TaskEventType.TASK_START:
-                    queue.add((next_event.task_index, next_event.task_id), next_event.opposite_date)
+                    queue.add(
+                        (next_event.task_index, next_event.task_id),
+                        (next_event.opposite_date,
+                         tasks[next_event.task_index].priority.value
+                         if tasks[next_event.task_index].priority is not None
+                         else math.inf)
+                    )
 
                 elif next_event.event_type == TaskEventType.TASK_END:
                     # Check if task is done.

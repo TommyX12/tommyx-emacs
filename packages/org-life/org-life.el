@@ -95,7 +95,7 @@
    :scheduling_days 365
    :daily_info_days 14
    :fragmentation_config (list
-                          :max_stress 0.5
+                          :min_extra_time_ratio 1.0
                           :max_percentage 0.5
                           :preferred_fragment_size 45
                           :min_fragment_size 15))
@@ -228,6 +228,14 @@ PROCESS is the process under watch, OUTPUT is the output received."
 ;; Agenda
 
 ;; Agenda helper
+
+(defun org-life-agenda-ratio-to-string (ratio &optional face)
+  (let ((text (if (stringp ratio)
+                  ratio
+                (format "%.2f" ratio))))
+    (if face
+        (propertize text 'face face)
+      text)))
 
 (defun org-life-agenda-sort-by-priority (a b)
   (let ((pa (or (org-life-agenda-entry-priority a) org-lowest-priority))
@@ -437,6 +445,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
          (sessions (plist-get daily-info :sessions))
          (free-time (plist-get daily-info :free_time))
          (average-stress (plist-get daily-info :average_stress))
+         (average-etr (plist-get daily-info :average_etr))
          (time (org-life-agenda-date-string-to-time date-string))
          (weekday (org-life-agenda-time-to-weekday time))
          (date-string (if today
@@ -474,7 +483,8 @@ PROCESS is the process under watch, OUTPUT is the output received."
                      (t nil)))))
     (insert (org-duration-from-minutes usable-time) " | "
             (org-duration-from-minutes free-time) " | "
-            (format "%.3f" average-stress)
+            (org-life-agenda-ratio-to-string average-etr) " | "
+            (org-life-agenda-ratio-to-string average-stress)
             "\n")))
 
 (cl-defun org-life-agenda-render-block-title (&key title)
@@ -508,8 +518,10 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (highest-stress-date (plist-get general-info :highest_stress_date))
         (stress-with-optimal (plist-get general-info :stress_with_optimal))
         (stress-with-suggested (plist-get general-info :stress_with_suggested))
-        (stress-without-today (plist-get general-info :stress_without_today)))
-    (insert (format "Stress: %.3f | %.3f | %.3f" stress-with-optimal stress-with-suggested stress-without-today) "\n")
+        (stress-without-today (plist-get general-info :stress_without_today))
+        (etr-with-optimal (plist-get general-info :etr_with_optimal))
+        (etr-with-suggested (plist-get general-info :etr_with_suggested))
+        (etr-without-today (plist-get general-info :etr_without_today)))
     (org-life-agenda-render-multi-progress-bar
      :bar-width (window-text-width)
      :progress-list (list (cons stress-with-optimal 'org-life-agenda-stress-best-face)
@@ -518,6 +530,37 @@ PROCESS is the process under watch, OUTPUT is the output received."
      :marker-list (list (cons 0.5 nil)
                         (cons 0.25 nil)))
     (insert "\n")
+    (insert (format "|%-20s %10s | %10s | %10s|"
+                    (propertize "Analysis:"
+                                'face 'bold)
+                    "Optimal"
+                    "Suggested"
+                    "Worst")
+            "\n")
+    (insert (format "|%-20s %10s | %10s | %10s|"
+                    "Stress:"
+                    (org-life-agenda-ratio-to-string
+                     stress-with-optimal
+                     'org-life-agenda-stress-best-face)
+                    (org-life-agenda-ratio-to-string
+                     stress-with-suggested
+                     'org-life-agenda-stress-normal-face)
+                    (org-life-agenda-ratio-to-string
+                     stress-without-today
+                     'org-life-agenda-stress-warning-face))
+            "\n")
+    (insert (format "|%-20s %10s | %10s | %10s|"
+                    "Extra Time Ratio:"
+                    (org-life-agenda-ratio-to-string
+                     etr-with-optimal
+                     'org-life-agenda-stress-best-face)
+                    (org-life-agenda-ratio-to-string
+                     etr-with-suggested
+                     'org-life-agenda-stress-normal-face)
+                    (org-life-agenda-ratio-to-string
+                     etr-without-today
+                     'org-life-agenda-stress-warning-face))
+            "\n")
     (insert (format (concat "Highest Stress Date: "
                             (propertize "%s"
                                         'face 'org-agenda-date)
@@ -658,30 +701,29 @@ PROCESS is the process under watch, OUTPUT is the output received."
 (defun org-life-agenda-get-tasks-and-clocks (headline-elem)
   "Writes result into `org-life--temp-tasks' and `org-life--temp-clocks'."
 
-  (when (eq 'todo (org-element-property :todo-type headline-elem))
-    ;; id
-    (setq org-life--temp-id (1+ org-life--temp-id))
+  ;; id
+  (setq org-life--temp-id (1+ org-life--temp-id))
 
-    ;; tasks
-    (push
-     (org-life-agenda-entry-from-headline org-life--temp-id headline-elem)
-     org-life--temp-tasks)
+  ;; tasks
+  (push
+   (org-life-agenda-entry-from-headline org-life--temp-id headline-elem)
+   org-life--temp-tasks)
 
-    ;; clocks
-    (org-element-map
-        (org-element-contents headline-elem) ; data
-        'clock ; types
-      (lambda (clock-elem) ; fun
-        (let ((clock (org-life-agenda-parse-clock
-                      org-life--temp-id
-                      clock-elem)))
-          (setq org-life--temp-clocks
-                (append clock
-                        org-life--temp-clocks))))
-      nil ; info
-      nil ; first-match
-      'headline ; no-recursion
-      ))
+  ;; clocks
+  (org-element-map
+      (org-element-contents headline-elem) ; data
+      'clock ; types
+    (lambda (clock-elem) ; fun
+      (let ((clock (org-life-agenda-parse-clock
+                    org-life--temp-id
+                    clock-elem)))
+        (setq org-life--temp-clocks
+              (append clock
+                      org-life--temp-clocks))))
+    nil ; info
+    nil ; first-match
+    'headline ; no-recursion
+    )
 
   ;; recurse
   (org-element-map
@@ -753,8 +795,8 @@ PROCESS is the process under watch, OUTPUT is the output received."
              (make-prop :DAILY_INFO_DAYS
                         '(:daily_info_days)
                         (string-to-number val))
-             (make-prop :FRAGMENTATION_CONFIG.MAX_STRESS
-                        '(:fragmentation_config :max_stress)
+             (make-prop :FRAGMENTATION_CONFIG.MIN_EXTRA_TIME_RATIO
+                        '(:fragmentation_config :min_extra_time_ratio)
                         (string-to-number val))
              (make-prop :FRAGMENTATION_CONFIG.MAX_PERCENTAGE
                         '(:fragmentation_config :max_percentage)
@@ -908,39 +950,40 @@ PROCESS is the process under watch, OUTPUT is the output received."
   (-non-nil
    (mapcar
     (lambda (task)
-      (when (and
-             (eq 'todo (org-life-agenda-entry-todo-type task)))
-        (list
-         :id (org-life-agenda-entry-id task)
-         :start (org-life-agenda-timestamp-to-date-string
-                 (org-life-agenda-entry-scheduled task)
-                 "min")
-         :end (org-life-agenda-timestamp-to-date-string
-               (org-life-agenda-entry-deadline task)
-               "max")
-         :amount (org-life-agenda-entry-effort task)
-         :done 0
-         :priority (org-life-agenda-entry-priority task)
-         :repeat (let* ((timestamp
-                         (org-life-agenda-entry-deadline task))
-                        (repeater-type
-                         (org-element-property :repeater-type timestamp))
-                        (repeater-unit
-                         (org-element-property :repeater-unit timestamp))
-                        (repeater-value
-                         (org-element-property :repeater-value timestamp)))
-                   (when repeater-unit
-                     (list
-                      :type (cond
-                             ((eq repeater-type 'restart) 1)
-                             (t 0))
-                      :unit (cond
-                             ((eq repeater-unit 'day) 1)
-                             ((eq repeater-unit 'week) 2)
-                             ((eq repeater-unit 'month) 3)
-                             ((eq repeater-unit 'year) 4)
-                             (t 0))
-                      :value (or repeater-value 1)))))))
+      (list
+       :id (org-life-agenda-entry-id task)
+       :start (org-life-agenda-timestamp-to-date-string
+               (org-life-agenda-entry-scheduled task)
+               "min")
+       :end (org-life-agenda-timestamp-to-date-string
+             (org-life-agenda-entry-deadline task)
+             "max")
+       :amount (org-life-agenda-entry-effort task)
+       :done 0
+       :status (cond
+                ((eq 'done (org-life-agenda-entry-todo-type task)) 1)
+                (t 0))
+       :priority (org-life-agenda-entry-priority task)
+       :repeat (let* ((timestamp
+                       (org-life-agenda-entry-deadline task))
+                      (repeater-type
+                       (org-element-property :repeater-type timestamp))
+                      (repeater-unit
+                       (org-element-property :repeater-unit timestamp))
+                      (repeater-value
+                       (org-element-property :repeater-value timestamp)))
+                 (when repeater-unit
+                   (list
+                    :type (cond
+                           ((eq repeater-type 'restart) 1)
+                           (t 0))
+                    :unit (cond
+                           ((eq repeater-unit 'day) 1)
+                           ((eq repeater-unit 'week) 2)
+                           ((eq repeater-unit 'month) 3)
+                           ((eq repeater-unit 'year) 4)
+                           (t 0))
+                    :value (or repeater-value 1))))))
     agenda-tasks)))
 
 (defun org-life-agenda-get-scheduler-request-usable-time (usable-time-config)

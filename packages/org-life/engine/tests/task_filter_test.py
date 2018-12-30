@@ -35,14 +35,17 @@ class TaskFilterTest(unittest.TestCase):
         task4.end = Date().decode_self('2018-11-05')
         task4.amount.value = 55
         task4.done.value = 20
+        task4.status.value = TaskStatusEnum.DONE
 
         schedule_start = Date().decode_self('2018-12-02')
         schedule_end = Date().decode_self('2018-12-04')
 
         t = TaskFilter()
-        tasks = [task1, task2, task3]
+        tasks = [task1, task2, task3, task4]
         r = t.get_stress_contributor_tasks_mask(tasks, schedule_start, schedule_end)
-        self.assertEqual(r, [False, True, False])
+        self.assertEqual(r, [False, True, False, True])
+        r = t.get_todo_tasks(tasks)
+        self.assertEqual(r, [task1, task2, task3])
 
 
 if __name__ == '__main__':

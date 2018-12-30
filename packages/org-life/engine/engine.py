@@ -60,6 +60,9 @@ class Engine(object):
         for daily_info in response.daily_infos:
             daily_info.usable_time = usable_time_dict[daily_info.date]
 
+        # task filtering
+        tasks = self.task_filter.get_todo_tasks(tasks)
+
         # task repeat
         tasks = self.task_repeater.repeat(tasks, schedule_start, schedule_end)
         
@@ -103,11 +106,13 @@ class Engine(object):
         # free time info and stress
         stress_info = self.stress_analyzer.analyze(late_schedule)
         response.general.stress.value = stress_info.overall_stress.value
+        response.general.extra_time_ratio.value = stress_info.extra_time_ratio.value
         response.general.highest_stress_date = stress_info.highest_stress_date
         for daily_info in response.daily_infos:
             daily_stress_info = stress_info.daily_stress_infos[daily_info.date]
             daily_info.free_time.value = daily_stress_info.acc_free_time.value
             daily_info.average_stress.value = daily_stress_info.acc_average_stress.value
+            daily_info.average_etr.value = daily_stress_info.acc_extra_time_ratio.value
 
         # report impossible tasks to alert
         response.alerts.impossible_tasks = impossible_tasks
@@ -180,12 +185,15 @@ class Engine(object):
         
         stress_info_with_optimal = self.stress_analyzer.analyze(late_schedule_with_optimal)
         response.general.stress_with_optimal.value = stress_info_with_optimal.overall_stress.value
+        response.general.etr_with_optimal.value = stress_info_with_optimal.extra_time_ratio.value
         
         stress_info_with_suggested = self.stress_analyzer.analyze(late_schedule_with_suggested)
         response.general.stress_with_suggested.value = stress_info_with_suggested.overall_stress.value
+        response.general.etr_with_suggested.value = stress_info_with_suggested.extra_time_ratio.value
         
         stress_info_without_today = self.stress_analyzer.analyze(late_schedule, bias = late_schedule.get_usable_time(schedule_start))
         response.general.stress_without_today.value = stress_info_without_today.overall_stress.value
+        response.general.etr_without_today.value = stress_info_without_today.extra_time_ratio.value
 
         # schedule suggestion for deadline tasks
         # run forward pass (while accounting for today's fragmented time) to generate suggestion

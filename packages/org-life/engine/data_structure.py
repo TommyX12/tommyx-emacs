@@ -1,4 +1,4 @@
-import copy, calendar
+import copy, calendar, math
 from datetime import date as DatetimeDate, timedelta
 from enum import Enum
 
@@ -175,6 +175,26 @@ class Duration(PrimitiveProtocol):
 class Ratio(PrimitiveProtocol):
     def __init__(self, value = 0.0):
         PrimitiveProtocol.__init__(self, value)
+        
+    def encode(self):
+        if self.value == math.inf:
+            return 'inf'
+        
+        elif self.value == -math.inf:
+            return '-inf'
+
+        else:
+            return self.value
+
+    def decode(self, encoded_protocol):
+        if encoded_protocol == 'inf':
+            self.value = math.inf
+        
+        elif encoded_protocol == '-inf':
+            self.value = -math.inf
+
+        else:
+            self.value = encoded_protocol
 
 class Days(PrimitiveProtocol):
     def __init__(self, value = 0):
@@ -187,6 +207,13 @@ class TaskID(PrimitiveProtocol):
 class Priority(PrimitiveProtocol):
     def __init__(self, value = 0):
         PrimitiveProtocol.__init__(self, value)
+        
+    def decode(self, encoded_protocol):
+        if encoded_protocol is None:
+            self.value = math.inf
+
+        else:
+            self.value = encoded_protocol
 
 class Date(Protocol):
     '''
@@ -279,7 +306,7 @@ class Date(Protocol):
 
 class FragmentationConfig(Protocol):
     properties = {
-        'max_stress': ObjectProperty(Ratio),
+        'min_extra_time_ratio': ObjectProperty(Ratio),
         'max_percentage': ObjectProperty(Ratio),
         'preferred_fragment_size': ObjectProperty(Duration),
         'min_fragment_size': ObjectProperty(Duration),
@@ -292,6 +319,20 @@ class Config(Protocol):
         'daily_info_days': ObjectProperty(Days),
         'fragmentation_config': ObjectProperty(FragmentationConfig),
     }
+
+class TaskStatusEnum(Enum):
+    TODO = 0
+    DONE = 1
+
+class TaskStatus(PrimitiveProtocol):
+    def __init__(self, value = TaskStatusEnum.TODO):
+        PrimitiveProtocol.__init__(self, value)
+
+    def encode(self):
+        return self.value.value
+
+    def decode(self, encoded_protocol):
+        self.value = TaskStatusEnum(encoded_protocol)
 
 class TaskRepeatTypeEnum(Enum):
     NORMAL = 0
@@ -342,6 +383,7 @@ class Task(Protocol):
         'end': ObjectProperty(Date),
         'amount': ObjectProperty(Duration),
         'done': ObjectProperty(Duration),
+        'status': ObjectProperty(TaskStatus),
         'priority': ObjectProperty(Priority),
         'repeat': NullableObjectProperty(TaskRepeat),
     }
@@ -455,10 +497,14 @@ class SchedulingRequest(Protocol):
 class SchedulingGeneralInfo(Protocol):
     properties = {
         'stress': ObjectProperty(Ratio),
+        'extra_time_ratio': ObjectProperty(Ratio),
         'highest_stress_date': ObjectProperty(Date),
         'stress_with_optimal': ObjectProperty(Ratio),
         'stress_with_suggested': ObjectProperty(Ratio),
         'stress_without_today': ObjectProperty(Ratio),
+        'etr_with_optimal': ObjectProperty(Ratio),
+        'etr_with_suggested': ObjectProperty(Ratio),
+        'etr_without_today': ObjectProperty(Ratio),
     }
 
 class ImpossibleTask(Protocol):
@@ -479,6 +525,7 @@ class DailyInfo(Protocol):
         'sessions': ListProperty(Session),
         'free_time': ObjectProperty(Duration),
         'average_stress': ObjectProperty(Ratio),
+        'average_etr': ObjectProperty(Ratio),
     }
 
 class PlannerResult(Protocol):
@@ -517,6 +564,7 @@ class DailyStressInfo(Protocol):
     properties = {
         'acc_free_time': ObjectProperty(Duration),
         'acc_average_stress': ObjectProperty(Ratio),
+        'acc_extra_time_ratio': ObjectProperty(Ratio),
     }
 
 class StressInfo(Protocol):
@@ -524,6 +572,7 @@ class StressInfo(Protocol):
     TODO: This is not yet encodable, since it intends to use Date as key.
     '''
     properties = {
+        'extra_time_ratio': ObjectProperty(Ratio),
         'overall_stress': ObjectProperty(Ratio),
         'highest_stress_date': ObjectProperty(Date),
         'daily_stress_infos': DictProperty(DailyStressInfo), # use Date as key

@@ -5,6 +5,21 @@ from data_structure import *
 import util
 
 
+def used_ratio_to_etr(used_ratio):
+    return (
+        math.inf
+        if used_ratio <= 0.0
+        else (1.0 / used_ratio) - 1.0
+    )
+
+def etr_to_used_ratio(etr):
+    return (
+        0.0
+        if etr == math.inf
+        else 1.0 / (1.0 + etr)
+    )
+
+
 class TaskIndexFinder(object):
     '''
     Helper container that stores all active task index per task id. 

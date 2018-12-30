@@ -15,7 +15,7 @@ class Fragmentizer(object):
         today_usable_time = schedule.get_usable_time(schedule_start)
         return max(0, int(today_usable_time * max_percentage))
 
-    def _get_max_amount_by_max_stress(self, max_stress, schedule, stress_info):
+    def _get_max_amount_by_min_etr(self, min_etr, schedule, stress_info):
         schedule_start = schedule.get_schedule_start()
         schedule_end = schedule.get_schedule_end()
 
@@ -23,6 +23,9 @@ class Fragmentizer(object):
 
         acc_usable_time = 0
         date = schedule_start
+
+        max_used_ratio = etr_to_used_ratio(min_etr)
+        
         while date <= schedule_end:
             acc_free_time = stress_info.daily_stress_infos[date].acc_free_time.value
             acc_usable_time += schedule.get_usable_time(date)
@@ -34,11 +37,11 @@ class Fragmentizer(object):
             else:
                 current_stress = 0.0
                 
-            if current_stress >= max_stress:
+            if current_stress >= max_used_ratio:
                 result = 0
                 break
 
-            target_free_time = (1.0 - max_stress) * acc_usable_time
+            target_free_time = (1.0 - max_used_ratio) * acc_usable_time
 
             result = min(result, acc_free_time - target_free_time)
 
@@ -56,15 +59,15 @@ class Fragmentizer(object):
         schedule_end = schedule.get_schedule_end()
 
         max_percentage = fragmentation_config.max_percentage.value
-        max_stress = fragmentation_config.max_stress.value
+        min_etr = fragmentation_config.min_extra_time_ratio.value
         preferred_fragment_size = fragmentation_config.preferred_fragment_size.value
         min_fragment_size = fragmentation_config.min_fragment_size.value
 
         # compute maximum time we can have
         
         max_amount_by_max_percentage = self._get_max_amount_by_max_percentage(max_percentage, schedule)
-        max_amount_by_max_stress = self._get_max_amount_by_max_stress(max_stress, schedule, stress_info)
-        max_amount = min(max_amount_by_max_percentage, max_amount_by_max_stress)
+        max_amount_by_min_etr = self._get_max_amount_by_min_etr(min_etr, schedule, stress_info)
+        max_amount = min(max_amount_by_max_percentage, max_amount_by_min_etr)
 
         if max_amount <= 0:
             return []

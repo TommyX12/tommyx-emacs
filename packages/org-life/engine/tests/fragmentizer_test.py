@@ -18,12 +18,12 @@ class FragmentizerTest(unittest.TestCase):
         f = Fragmentizer()
         self.assertEqual(f._get_max_amount_by_max_percentage(max_percentage, schedule), 4)
     
-    def test_get_max_amount_by_max_stress(self):
-        max_stress = 0.8
+    def test_get_max_amount_by_min_etr(self):
+        min_extra_time_ratio = 0.25
         schedule = test_util.make_schedule([10, 10, 10, 20, 30])
         stress_info = test_util.make_stress_info([10, 5, 0, 0, 30])
         f = Fragmentizer()
-        self.assertEqual(f._get_max_amount_by_max_stress(max_stress, schedule, stress_info), 5)
+        self.assertEqual(f._get_max_amount_by_min_etr(min_extra_time_ratio, schedule, stress_info), 5)
     
     def test_divide_evenly(self):
         f = Fragmentizer()
@@ -43,13 +43,13 @@ class FragmentizerTest(unittest.TestCase):
         task4.id.value = 4
         tasks = [task1, task2, task3, task4]
         max_percentage = 0.6
-        max_stress = 0.8
+        min_extra_time_ratio = 0.25
         fragment_size = 2
         schedule = test_util.make_schedule([10, 10, 10, 20, 30])
         stress_info = test_util.make_stress_info([10, 5, 0, 0, 30])
         fragmentation_config = FragmentationConfig()
         fragmentation_config.max_percentage.value = max_percentage
-        fragmentation_config.max_stress.value = max_stress
+        fragmentation_config.min_extra_time_ratio.value = min_extra_time_ratio
         fragmentation_config.preferred_fragment_size.value = fragment_size
         f = Fragmentizer()
         r = f.suggest_fragments(
