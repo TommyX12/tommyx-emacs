@@ -2,6 +2,7 @@ import math
 
 from data_structure import *
 from scheduling_util import *
+import util
 
 class StressAnalyzer(object):
 
@@ -13,6 +14,16 @@ class StressAnalyzer(object):
         TODO: enhance this
         '''
         return used_ratio
+
+    def get_lateness(self, session_date, task_start, task_end):
+        total = task_start.days_to(task_end) + 1
+        current = util.clamp(task_start.days_to(session_date) + 1, 0, total)
+        return current / total
+
+    def compute_lateness(self, date, sessions, tasks):
+        for session in sessions:
+            task = tasks[session.task_index.value]
+            session.lateness.value = self.get_lateness(date, task.start, task.end)
 
     def analyze(self, schedule, bias = 0):
         '''

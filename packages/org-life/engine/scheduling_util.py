@@ -74,7 +74,7 @@ class ScheduleFiller(object):
     def _get_schedule_date_late(date):
         return date.add_days(-1)
 
-    def fill(self, task_id, amount, date_from, date_to, weakness = SessionWeaknessEnum.WEAK):
+    def fill(self, task_id, amount, date_from, date_to, weakness = SessionWeaknessEnum.WEAK, session_type = SessionTypeEnum.TASK, task_index = 0):
         '''
         Fill task_id with amount from 00:00 of date_from to 00:00 of date_to.
         The concept of "before" is determined by fill direction,
@@ -100,8 +100,10 @@ class ScheduleFiller(object):
                 session = Session()
                 session.id.value = task_id
                 session.amount.value = session_amount
-                session.type.value = SessionTypeEnum.TASK
+                session.type.value = session_type
                 session.weakness.value = weakness
+                session.last.value = amount == 0
+                session.task_index.value = task_index
                 self.schedule.add_session(schedule_date, session)
 
             date = date.add_days(self.delta)

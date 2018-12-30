@@ -112,7 +112,17 @@ class Planner(object):
                 amount_left = tasks_data.get_amount_left(next_task_index)
 
                 # Fill session, until 00:00 of next_date
-                amount_filled = filler.fill(next_task_id, amount_left, date, next_date, session_weakness)
+                amount_filled = filler.fill(
+                    next_task_id,
+                    amount_left,
+                    date,
+                    next_date,
+                    session_weakness,
+                    SessionTypeEnum.TASK
+                    if tasks[next_task_index].stress_contributor
+                    else SessionTypeEnum.FRAGMENT,
+                    next_task_index
+                )
                 tasks_data.decrease_amount(next_task_index, amount_filled)
                 
                 # No more free time.

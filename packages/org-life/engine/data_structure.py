@@ -204,6 +204,10 @@ class TaskID(PrimitiveProtocol):
     def __init__(self, value = 0):
         PrimitiveProtocol.__init__(self, value)
 
+class TaskIndex(PrimitiveProtocol):
+    def __init__(self, value = 0):
+        PrimitiveProtocol.__init__(self, value)
+
 class Priority(PrimitiveProtocol):
     def __init__(self, value = 0):
         PrimitiveProtocol.__init__(self, value)
@@ -214,6 +218,10 @@ class Priority(PrimitiveProtocol):
 
         else:
             self.value = encoded_protocol
+
+class Boolean(PrimitiveProtocol):
+    def __init__(self, value = False):
+        PrimitiveProtocol.__init__(self, value)
 
 class Date(Protocol):
     '''
@@ -386,6 +394,7 @@ class Task(Protocol):
         'status': ObjectProperty(TaskStatus),
         'priority': ObjectProperty(Priority),
         'repeat': NullableObjectProperty(TaskRepeat),
+        'stress_contributor': PrimitiveProperty(),
     }
 
     def copy(self):
@@ -453,6 +462,9 @@ class Session(Protocol):
         'amount': ObjectProperty(Duration),
         'type': ObjectProperty(SessionType),
         'weakness': ObjectProperty(SessionWeakness),
+        'last': ObjectProperty(Boolean),
+        'lateness': ObjectProperty(Ratio),
+        'task_index': ObjectProperty(TaskIndex),
         # 'stress_info': ObjectProperty(SessionStressInfo),
     }
 
@@ -513,15 +525,24 @@ class ImpossibleTask(Protocol):
         'amount': ObjectProperty(Duration),
     }
 
+class BadEstimateTask(Protocol):
+    properties = {
+        'id': ObjectProperty(TaskID),
+        'amount': ObjectProperty(Duration),
+        'done': ObjectProperty(Duration),
+    }
+
 class Alerts(Protocol):
     properties = {
         'impossible_tasks': ListProperty(ImpossibleTask),
+        'bad_estimate_tasks': ListProperty(BadEstimateTask),
     }
 
 class DailyInfo(Protocol):
     properties = {
         'date': ObjectProperty(Date),
         'usable_time': ObjectProperty(Duration),
+        'actual_usable_time': ObjectProperty(Duration),
         'sessions': ListProperty(Session),
         'free_time': ObjectProperty(Duration),
         'average_stress': ObjectProperty(Ratio),

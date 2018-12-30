@@ -870,6 +870,13 @@
 	`(org-verbatim ((,class (:foreground ,keyword))))
 	`(org-verse ((,class (:inherit org-block :slant italic))))
 	`(org-warning ((,class (:foreground ,war :inherit org-priority))))
+  `(org-life-agenda-secondary-face ((,class (:foreground ,base-dim))))
+  `(org-life-agenda-empty-progress-face ((,class (:inherit bold :foreground ,bg14))))
+  `(org-life-agenda-stress-best-face ((,class (:inherit bold :foreground ,war))))
+  `(org-life-agenda-stress-normal-face ((,class (:inherit bold :foreground ,func))))
+  `(org-life-agenda-stress-warning-face ((,class (:inherit bold :foreground ,comp))))
+  `(org-life-agenda-usable-time-face ((,class (:inherit bold :foreground ,primary-2))))
+  `(org-life-agenda-actual-usable-time-face ((,class (:inherit bold :foreground ,comp))))
 
 ;;;;; perspective
 	`(persp-selected-face ((,class (:inherit bold :foreground ,func))))

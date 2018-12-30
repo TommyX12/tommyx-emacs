@@ -43,6 +43,7 @@ class Engine(object):
         config = scheduling_request.config
         schedule_start = config.today
         schedule_end = schedule_start.add_days(config.scheduling_days.value - 1) # inclusive
+        daily_info_end = schedule_start.add_days(config.daily_info_days.value - 1) # inclusive
         tasks = scheduling_request.tasks
         dated_sessions = scheduling_request.dated_sessions
         dated_sessions.sort(key = lambda x : x.date)
@@ -60,11 +61,12 @@ class Engine(object):
         for daily_info in response.daily_infos:
             daily_info.usable_time = usable_time_dict[daily_info.date]
 
-        # task filtering
+        # task preprocessing
         tasks = self.task_filter.get_todo_tasks(tasks)
-
-        # task repeat
         tasks = self.task_repeater.repeat(tasks, schedule_start, schedule_end)
+        stress_contributor_tasks_mask = self.task_filter.get_stress_contributor_tasks_mask(tasks, schedule_start, schedule_end)
+        for i in range(len(tasks)):
+            tasks[i].stress_contributor = stress_contributor_tasks_mask[i]
         
         # progress count
         strong_dated_sessions = [
@@ -87,13 +89,19 @@ class Engine(object):
         strong_progress_today = self.progress_counter.count(tasks, strong_dated_sessions_today, sessions_sorted = True)
         strong_progress = strong_progress_without_today.combine(strong_progress_today)
 
+        # report bad estimate tasks
+        bad_estimate_tasks = self.task_filter.get_bad_estimate_tasks(tasks, strong_progress)
+        response.alerts.bad_estimate_tasks = bad_estimate_tasks
+
         # make schedule objects
         early_schedule = Schedule.from_usable_time_dict(schedule_start, schedule_end, usable_time_dict)
         early_schedule.add_dated_sessions(strong_dated_sessions)
         late_schedule = early_schedule.copy()
+        
+        for daily_info in response.daily_infos:
+            daily_info.actual_usable_time.value = early_schedule.get_usable_time(daily_info.date)
 
         # impossible tasks check
-        stress_contributor_tasks_mask = self.task_filter.get_stress_contributor_tasks_mask(tasks, schedule_start, schedule_end)
         late_plan_result = self.planner.plan(
             tasks,
             late_schedule,
@@ -204,14 +212,17 @@ class Engine(object):
             tasks,
             early_schedule,
             direction = FillDirection.EARLY,
-            progress_info = strong_progress_with_fragments
+            progress_info = strong_progress_with_fragments,
+            early_stop = daily_info_end
         )
         
         # compute task stress of each session
         # TODO
 
         for daily_info in response.daily_infos:
-            daily_info.sessions = early_schedule.get_sessions(daily_info.date)
+            sessions = early_schedule.get_sessions(daily_info.date)
+            self.stress_analyzer.compute_lateness(daily_info.date, sessions, tasks)
+            daily_info.sessions = sessions
 
         return response
     

@@ -22,3 +22,19 @@ class TaskFilter(object):
             task.end <= schedule_end
             for task in tasks
         ]
+
+    def get_bad_estimate_tasks(self, tasks, progress_info):
+        result = []
+        for i in range(len(tasks)):
+            task = tasks[i]
+            done = task.done.value + progress_info.get_done_amount(i)
+            if done > task.amount.value:
+                bad_estimate_task = BadEstimateTask()
+                bad_estimate_task.id.value = task.id.value
+                bad_estimate_task.amount.value = task.amount.value
+                bad_estimate_task.done.value = done
+
+                result.append(bad_estimate_task)
+
+        return result
+
