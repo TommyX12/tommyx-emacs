@@ -204,6 +204,10 @@ class TaskID(PrimitiveProtocol):
     def __init__(self, value = 0):
         PrimitiveProtocol.__init__(self, value)
 
+class String(PrimitiveProtocol):
+    def __init__(self, value = ""):
+        PrimitiveProtocol.__init__(self, value)
+
 class TaskIndex(PrimitiveProtocol):
     def __init__(self, value = 0):
         PrimitiveProtocol.__init__(self, value)
@@ -322,6 +326,7 @@ class FragmentationConfig(Protocol):
 
 class Config(Protocol):
     properties = {
+        'show_debug_messages': ObjectProperty(Boolean),
         'today': ObjectProperty(Date),
         'scheduling_days': ObjectProperty(Days),
         'daily_info_days': ObjectProperty(Days),
@@ -463,7 +468,7 @@ class Session(Protocol):
         'type': ObjectProperty(SessionType),
         'weakness': ObjectProperty(SessionWeakness),
         'task_index': ObjectProperty(TaskIndex),
-        'to_finish': ObjectProperty(Duration),
+        'to_finish': NullableObjectProperty(Duration),
         'to_deadline': ObjectProperty(Days),
         # 'stress_info': ObjectProperty(SessionStressInfo),
     }
@@ -532,10 +537,17 @@ class BadEstimateTask(Protocol):
         'done': ObjectProperty(Duration),
     }
 
+class BadInfoTask(Protocol):
+    properties = {
+        'id': ObjectProperty(TaskID),
+        'reason': ObjectProperty(String),
+    }
+
 class Alerts(Protocol):
     properties = {
         'impossible_tasks': ListProperty(ImpossibleTask),
         'bad_estimate_tasks': ListProperty(BadEstimateTask),
+        'bad_info_tasks': ListProperty(BadInfoTask),
     }
 
 class DailyInfo(Protocol):

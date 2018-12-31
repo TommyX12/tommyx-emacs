@@ -1,4 +1,4 @@
-import sys, traceback, random
+import sys, traceback, random, time
 
 def get_traceback():
     '''
@@ -20,3 +20,16 @@ def clamp(x, a, b):
         return max(x, a)
 
     return min(max(x, a), b)
+
+class PerformanceTimer(object):
+    
+    def __init__(self):
+        self.time_stack = []
+
+    def push(self):
+        self.time_stack.append(time.time())
+
+    def pop(self):
+        time_before = self.time_stack.pop()
+        time_now = time.time()
+        return time_now - time_before

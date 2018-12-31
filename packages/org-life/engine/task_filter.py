@@ -24,17 +24,32 @@ class TaskFilter(object):
         ]
 
     def get_bad_estimate_tasks(self, tasks, progress_info):
+        empty_tasks_added = set()
         result = []
         for i in range(len(tasks)):
             task = tasks[i]
             done = task.done.value + progress_info.get_done_amount(i)
-            if done > task.amount.value:
+            if task.status.value == TaskStatusEnum.TODO and done > task.amount.value:
                 bad_estimate_task = BadEstimateTask()
                 bad_estimate_task.id.value = task.id.value
                 bad_estimate_task.amount.value = task.amount.value
                 bad_estimate_task.done.value = done
 
                 result.append(bad_estimate_task)
+
+        return result
+
+    def get_bad_info_tasks(self, tasks):
+        empty_tasks_added = set()
+        result = []
+        for i in range(len(tasks)):
+            task = tasks[i]
+            if task.status.value == TaskStatusEnum.TODO and task.amount.value <= 0:
+                bad_info_task = BadInfoTask()
+                bad_info_task.id.value = task.id.value
+                bad_info_task.reason.value = 'No Effort'
+
+                result.append(bad_info_task)
 
         return result
 

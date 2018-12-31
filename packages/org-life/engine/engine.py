@@ -39,7 +39,13 @@ class Engine(object):
         return Engine(usable_time_parser, task_filter, task_repeater, progress_counter, planner, stress_analyzer, fragmentizer, logger)
 
     def schedule(self, scheduling_request):
+        # debug
+        debug_timer = util.PerformanceTimer()
+        debug_timer.push()
+        
         # setup
+        debug_timer.push()
+        
         config = scheduling_request.config
         schedule_start = config.today
         schedule_end = schedule_start.add_days(config.scheduling_days.value - 1) # inclusive
@@ -55,20 +61,46 @@ class Engine(object):
             daily_info.date = schedule_start.add_days(i)
             response.daily_infos.append(daily_info)
 
+        response.debug = ""
+            
+        t = debug_timer.pop()
+        response.debug += "setup: {:.3f}s\n".format(t)
+
         # parse work time config
+        debug_timer.push()
+        
         usable_time_dict = self.usable_time_parser.get_usable_time_dict(schedule_start, schedule_end, usable_time_config)
         
         for daily_info in response.daily_infos:
             daily_info.usable_time = usable_time_dict[daily_info.date]
 
+        t = debug_timer.pop()
+        response.debug += "parse work time config: {:.3f}s\n".format(t)
+
+        # report bad info tasks
+        debug_timer.push()
+        
+        bad_info_tasks = self.task_filter.get_bad_info_tasks(tasks)
+        response.alerts.bad_info_tasks = bad_info_tasks
+
+        t = debug_timer.pop()
+        response.debug += "report bad info tasks: {:.3f}s\n".format(t)
+
         # task preprocessing
+        debug_timer.push()
+        
         tasks = self.task_filter.get_todo_tasks(tasks)
         tasks = self.task_repeater.repeat(tasks, schedule_start, schedule_end)
         stress_contributor_tasks_mask = self.task_filter.get_stress_contributor_tasks_mask(tasks, schedule_start, schedule_end)
         for i in range(len(tasks)):
             tasks[i].stress_contributor = stress_contributor_tasks_mask[i]
+
+        t = debug_timer.pop()
+        response.debug += "preprocess tasks: {:.3f}s\n".format(t)
         
         # progress count
+        debug_timer.push()
+        
         strong_dated_sessions = [
             dated_session for dated_session in dated_sessions
             if dated_session.session.weakness.value == SessionWeaknessEnum.STRONG
@@ -89,11 +121,21 @@ class Engine(object):
         strong_progress_today = self.progress_counter.count(tasks, strong_dated_sessions_today, sessions_sorted = True)
         strong_progress = strong_progress_without_today.combine(strong_progress_today)
 
+        t = debug_timer.pop()
+        response.debug += "progress count: {:.3f}s\n".format(t)
+
         # report bad estimate tasks
+        debug_timer.push()
+        
         bad_estimate_tasks = self.task_filter.get_bad_estimate_tasks(tasks, strong_progress)
         response.alerts.bad_estimate_tasks = bad_estimate_tasks
 
+        t = debug_timer.pop()
+        response.debug += "report bad estimate tasks: {:.3f}s\n".format(t)
+
         # make schedule objects
+        debug_timer.push()
+        
         early_schedule = Schedule.from_usable_time_dict(schedule_start, schedule_end, usable_time_dict)
         early_schedule.add_dated_sessions(strong_dated_sessions)
         late_schedule = early_schedule.copy()
@@ -101,7 +143,12 @@ class Engine(object):
         for daily_info in response.daily_infos:
             daily_info.actual_usable_time.value = early_schedule.get_usable_time(daily_info.date)
 
+        t = debug_timer.pop()
+        response.debug += "parse work time config: {:.3f}s\n".format(t)
+
         # impossible tasks check
+        debug_timer.push()
+        
         late_plan_result = self.planner.plan(
             tasks,
             late_schedule,
@@ -110,8 +157,14 @@ class Engine(object):
             tasks_mask = stress_contributor_tasks_mask
         )
         impossible_tasks = late_plan_result.impossible_tasks
+        response.alerts.impossible_tasks = impossible_tasks
+
+        t = debug_timer.pop()
+        response.debug += "impossible tasks check: {:.3f}s\n".format(t)
         
         # free time info and stress
+        debug_timer.push()
+        
         stress_info = self.stress_analyzer.analyze(late_schedule)
         response.general.stress.value = stress_info.overall_stress.value
         response.general.extra_time_ratio.value = stress_info.extra_time_ratio.value
@@ -122,10 +175,12 @@ class Engine(object):
             daily_info.average_stress.value = daily_stress_info.acc_average_stress.value
             daily_info.average_etr.value = daily_stress_info.acc_extra_time_ratio.value
 
-        # report impossible tasks to alert
-        response.alerts.impossible_tasks = impossible_tasks
+        t = debug_timer.pop()
+        response.debug += "analyze free time and stress: {:.3f}s\n".format(t)
 
         # schedule suggestion for fragmented tasks (today or more)
+        debug_timer.push()
+        
         # compute fragmented time for today (using maximum free time)
         # have the randomizer seeded with today's day string.
         # select task randomly from all tasks
@@ -137,7 +192,12 @@ class Engine(object):
         )
         fragment_amount = Schedule.get_dated_sessions_amount(fragment_sessions)
 
+        t = debug_timer.pop()
+        response.debug += "fragment tasks: {:.3f}s\n".format(t)
+
         # additional stress info
+        debug_timer.push()
+        
         late_schedule_with_optimal = early_schedule.copy()
         self.planner.plan(
             tasks,
@@ -203,7 +263,12 @@ class Engine(object):
         response.general.stress_without_today.value = stress_info_without_today.overall_stress.value
         response.general.etr_without_today.value = stress_info_without_today.extra_time_ratio.value
 
+        t = debug_timer.pop()
+        response.debug += "additional stress info: {:.3f}s\n".format(t)
+
         # schedule suggestion for deadline tasks
+        debug_timer.push()
+        
         # run forward pass (while accounting for today's fragmented time) to generate suggestion
         strong_progress_with_fragments = self.progress_counter.count(tasks, fragment_sessions, sessions_sorted = True)
         strong_progress_with_fragments = strong_progress_with_fragments.combine(strong_progress)
@@ -215,14 +280,28 @@ class Engine(object):
             progress_info = strong_progress_with_fragments,
             early_stop = daily_info_end
         )
+
+        t = debug_timer.pop()
+        response.debug += "compute suggested schedule: {:.3f}s\n".format(t)
         
         # compute task stress of each session
+        debug_timer.push()
+        
         # TODO
 
         for daily_info in response.daily_infos:
             sessions = early_schedule.get_sessions(daily_info.date)
             self.stress_analyzer.compute_session_extra_info(daily_info.date, sessions, tasks)
             daily_info.sessions = sessions
+
+        t = debug_timer.pop()
+        response.debug += "session extra info: {:.3f}s\n".format(t)
+
+        t = debug_timer.pop()
+        response.debug += "total: {:.3f}s\n".format(t)
+
+        if not config.show_debug_messages.value:
+            response.debug = None
 
         return response
     

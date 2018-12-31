@@ -35,9 +35,7 @@
 
 ;;; Code:
 
-;;
-;; Dependencies
-;;
+;;; Dependencies
 
 (require 'cl-lib)
 (require 'dash)
@@ -46,20 +44,14 @@
 (require 'org)
 (require 'unicode-escape)
 
-;;
-;; Constants
-;;
+;;; Constants
 
 (defconst org-life--engine-process-name "org-life--engine-process")
 (defconst org-life--hooks-alist nil)
 
-;;
-;; Macros
-;;
+;;; Macros
 
-;;
-;; Customization
-;;
+;;; Customization
 
 (defgroup org-life nil
   "Options for org-life."
@@ -92,6 +84,7 @@
 
 (defcustom org-life-default-config
   (list
+   :show_debug_messages nil
    :scheduling_days 365
    :daily_info_days 14
    :fragmentation_config (list
@@ -122,9 +115,7 @@
   :group 'org-life
   :type 'integer)
 
-;;
-;; Faces
-;;
+;;; Faces
 
 (defface org-life-agenda-secondary-face
   '((t (:inherit font-lock-comment-face)))
@@ -161,9 +152,7 @@
   "Face to highlight actual usable time for org-life-agenda."
   :group 'org-life)
 
-;;
-;; Variables
-;;
+;;; Variables
 
 (defvar org-life--engine-process nil
   "Engine process.")
@@ -176,13 +165,9 @@
 (defvar org-life--temp-clocks nil)
 (defvar org-life--response-buffer "")
 
-;;
-;; Major mode definition
-;;
+;;; Major mode definition
 
-;;
-;; Global methods
-;;
+;;; Global methods
 
 ;; Engine
 
@@ -277,8 +262,10 @@ PROCESS is the process under watch, OUTPUT is the output received."
     (format "%dd" integer)))
 
 (defun org-life-agenda-short-duration (minutes)
-  (let ((duration (org-duration-from-minutes minutes)))
-    (car (split-string duration " "))))
+  (if minutes
+      (let ((duration (org-duration-from-minutes minutes)))
+        (car (split-string duration " ")))
+    ""))
 
 (defun org-life-agenda-sort-by-priority (a b)
   (let ((pa (or (org-life-agenda-entry-priority a) org-lowest-priority))
@@ -418,6 +405,9 @@ PROCESS is the process under watch, OUTPUT is the output received."
             ;; "\n"
             )))
 
+(cl-defun org-life-agenda-render-block-sub-separator ()
+  (insert "\n"))
+
 (cl-defun org-life-agenda-render-multi-progress-bar
     (&key bar-width
           progress-list
@@ -480,7 +470,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
                      (propertize
                       (format "%-8s" (org-duration-from-minutes amount))
                       'face 'error)
-                     " ")
+                     " | ")
      :entry entry)))
 
 (cl-defun org-life-agenda-render-bad-estimate-task (&key bad-estimate-task
@@ -496,7 +486,16 @@ PROCESS is the process under watch, OUTPUT is the output received."
                               (org-duration-from-minutes done)
                               (org-duration-from-minutes amount))
                       'face 'error)
-                     " ")
+                     " | ")
+     :entry entry)))
+
+(cl-defun org-life-agenda-render-bad-info-task (&key bad-info-task
+                                                     tasks-dict)
+  (let* ((id (plist-get bad-info-task :id))
+         (reason (plist-get bad-info-task :reason))
+         (entry (ht-get tasks-dict id)))
+    (org-life-agenda-render-entry
+     :prefix (format "| %s | " reason)
      :entry entry)))
 
 (cl-defun org-life-agenda-render-day (&key daily-info
@@ -556,8 +555,14 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (org-life-agenda-render-entry
          :prefix (format "| %-5s | %5s | %4s | "
                          (org-duration-from-minutes amount)
-                         (org-life-agenda-short-duration to-finish)
-                         (org-life-agenda-days-to-string to-deadline)
+                         (if (and (numberp to-finish)
+                                  (= to-finish 0))
+                             "Final"
+                           (org-life-agenda-short-duration to-finish))
+                         (if (and (numberp to-deadline)
+                                  (= to-deadline 0))
+                             "Due"
+                           (org-life-agenda-days-to-string to-deadline))
                          ;; (format "%-5s|" (make-string
                          ;;                 (round (* (min 1.0 lateness) 5))
                          ;;                 ?=))
@@ -670,17 +675,34 @@ PROCESS is the process under watch, OUTPUT is the output received."
                                               tasks-dict)
   ;; impossible tasks
   (let ((impossible-tasks (plist-get alerts :impossible_tasks))
-        (bad-estimate-tasks (plist-get alerts :bad_estimate_tasks)))
+        (bad-estimate-tasks (plist-get alerts :bad_estimate_tasks))
+        (bad-info-tasks (plist-get alerts :bad_info_tasks)))
+    
+    ;; TODO: modularize this
+    
     (when (> (length impossible-tasks) 0)
+      (org-life-agenda-render-block-sub-separator)
       (org-life-agenda-render-block-sub-title :title "Impossible Tasks")
       (dolist (impossible-task impossible-tasks)
-        (org-life-agenda-render-impossible-task :impossible-task impossible-task
-                                                :tasks-dict tasks-dict)))
+        (org-life-agenda-render-impossible-task
+         :impossible-task impossible-task
+         :tasks-dict tasks-dict)))
+    
     (when (> (length bad-estimate-tasks) 0)
+      (org-life-agenda-render-block-sub-separator)
       (org-life-agenda-render-block-sub-title :title "Tasks with Bad Estimate")
       (dolist (bad-estimate-task bad-estimate-tasks)
-        (org-life-agenda-render-bad-estimate-task :bad-estimate-task bad-estimate-task
-                                                  :tasks-dict tasks-dict)))))
+        (org-life-agenda-render-bad-estimate-task
+         :bad-estimate-task bad-estimate-task
+         :tasks-dict tasks-dict)))
+
+    (when (> (length bad-info-tasks) 0)
+      (org-life-agenda-render-block-sub-separator)
+      (org-life-agenda-render-block-sub-title :title "Tasks with Bad Info")
+      (dolist (bad-info-task bad-info-tasks)
+        (org-life-agenda-render-bad-info-task
+         :bad-info-task bad-info-task
+         :tasks-dict tasks-dict)))))
 
 (cl-defun org-life-agenda-render-agenda (&key agenda-data schedule-data)
   (org-life-echo "Rendering agenda ...")
@@ -800,7 +822,8 @@ PROCESS is the process under watch, OUTPUT is the output received."
 (defun org-life-agenda-get-tasks-and-clocks (headline-elem)
   "Writes result into `org-life--temp-tasks' and `org-life--temp-clocks'."
 
-  (when (org-element-property :todo-type headline-elem)
+  (when (and (org-element-property :todo-type headline-elem)
+             (not (org-element-property :NO_SCHEDULING headline-elem)))
     ;; id
     (setq org-life--temp-id (1+ org-life--temp-id))
 
@@ -826,14 +849,15 @@ PROCESS is the process under watch, OUTPUT is the output received."
       ))
   
   ;; recurse
-  (org-element-map
-      (org-element-contents headline-elem) ; data
-      'headline ; types
-    #'org-life-agenda-get-tasks-and-clocks ; fun
-    nil ; info
-    nil ; first-match
-    'headline ; no-recursion
-    ))
+  (when (not (org-element-property :NO_SCHEDULING_CHILDREN headline-elem))
+    (org-element-map
+        (org-element-contents headline-elem) ; data
+        'headline ; types
+      #'org-life-agenda-get-tasks-and-clocks ; fun
+      nil ; info
+      nil ; first-match
+      'headline ; no-recursion
+      )))
 
 (defun org-life-agenda-process-agenda-files (initial-value
                                              ast-processor
@@ -886,6 +910,9 @@ PROCESS is the process under watch, OUTPUT is the output received."
                                    (cons ,config-prop-path
                                          ,val))))
             (list
+             (make-prop :SHOW_DEBUG_MESSAGES
+                        '(:show_debug_messages)
+                        (and val t))
              (make-prop :SCHEDULING_DAYS
                         '(:scheduling_days)
                         (string-to-number val))
@@ -1128,22 +1155,16 @@ PROCESS is the process under watch, OUTPUT is the output received."
       (org-life-agenda-render-agenda :agenda-data agenda-data
                                      :schedule-data schedule-data))))
 
-;;
-;; Interactive functions
-;;
+;;; Interactive functions
 
 (defun org-life-restart-engine ()
   "Start/Restart engine."
   (interactive)
   (org-life-start-engine))
 
-;;
-;; Advices
-;;
+;;; Advices
 
-;;
-;; Hooks
-;;
+;;; Hooks
 
 
 
