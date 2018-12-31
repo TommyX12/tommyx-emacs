@@ -102,7 +102,7 @@ class ScheduleFiller(object):
                 session.amount.value = session_amount
                 session.type.value = session_type
                 session.weakness.value = weakness
-                session.last.value = amount == 0
+                session.to_finish.value = amount
                 session.task_index.value = task_index
                 self.schedule.add_session(schedule_date, session)
 

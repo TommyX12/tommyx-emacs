@@ -462,9 +462,9 @@ class Session(Protocol):
         'amount': ObjectProperty(Duration),
         'type': ObjectProperty(SessionType),
         'weakness': ObjectProperty(SessionWeakness),
-        'last': ObjectProperty(Boolean),
-        'lateness': ObjectProperty(Ratio),
         'task_index': ObjectProperty(TaskIndex),
+        'to_finish': ObjectProperty(Duration),
+        'to_deadline': ObjectProperty(Days),
         # 'stress_info': ObjectProperty(SessionStressInfo),
     }
 

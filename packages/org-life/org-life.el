@@ -271,6 +271,15 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (propertize text 'face face)
       text)))
 
+(defun org-life-agenda-days-to-string (integer)
+  (if (stringp integer)
+      ""
+    (format "%dd" integer)))
+
+(defun org-life-agenda-short-duration (minutes)
+  (let ((duration (org-duration-from-minutes minutes)))
+    (car (split-string duration " "))))
+
 (defun org-life-agenda-sort-by-priority (a b)
   (let ((pa (or (org-life-agenda-entry-priority a) org-lowest-priority))
         (pb (or (org-life-agenda-entry-priority b) org-lowest-priority)))
@@ -541,20 +550,18 @@ PROCESS is the process under watch, OUTPUT is the output received."
              (amount (plist-get session :amount))
              (type (plist-get session :type))
              (weakness (plist-get session :weakness))
-             (last (plist-get session :last))
-             (lateness (plist-get session :lateness))
+             (to-deadline (plist-get session :to_deadline))
+             (to-finish (plist-get session :to_finish))
              (entry (ht-get tasks-dict id)))
         (org-life-agenda-render-entry
-         :prefix (concat "| "
-                         (format "%-5s" (org-duration-from-minutes amount))
-                         " "
-                         (format "%-5s|" (make-string
-                                         (round (* (min 1.0 lateness) 5))
-                                         ?=))
-                         (if (eq last t)
-                             (propertize "X "
-                                         'face 'org-agenda-done)
-                           "  "))
+         :prefix (format "| %-5s | %5s | %4s | "
+                         (org-duration-from-minutes amount)
+                         (org-life-agenda-short-duration to-finish)
+                         (org-life-agenda-days-to-string to-deadline)
+                         ;; (format "%-5s|" (make-string
+                         ;;                 (round (* (min 1.0 lateness) 5))
+                         ;;                 ?=))
+                         )
          :entry entry
          :face (cond ((= weakness 0) 'org-agenda-done)
                      ((= type 1) 'org-time-grid)

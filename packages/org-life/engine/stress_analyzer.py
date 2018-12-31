@@ -15,15 +15,16 @@ class StressAnalyzer(object):
         '''
         return used_ratio
 
-    def get_lateness(self, session_date, task_start, task_end):
-        total = task_start.days_to(task_end) + 1
-        current = util.clamp(task_start.days_to(session_date) + 1, 0, total)
-        return current / total
+    def get_days_to_deadline(self, session_date, task_end):
+        if task_end.is_max():
+            return 'inf'
 
-    def compute_lateness(self, date, sessions, tasks):
+        return session_date.days_to(task_end)
+
+    def compute_session_extra_info(self, date, sessions, tasks):
         for session in sessions:
             task = tasks[session.task_index.value]
-            session.lateness.value = self.get_lateness(date, task.start, task.end)
+            session.to_deadline.value = self.get_days_to_deadline(date, task.end)
 
     def analyze(self, schedule, bias = 0):
         '''

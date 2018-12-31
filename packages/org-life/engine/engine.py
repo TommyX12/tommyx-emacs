@@ -221,7 +221,7 @@ class Engine(object):
 
         for daily_info in response.daily_infos:
             sessions = early_schedule.get_sessions(daily_info.date)
-            self.stress_analyzer.compute_lateness(daily_info.date, sessions, tasks)
+            self.stress_analyzer.compute_session_extra_info(daily_info.date, sessions, tasks)
             daily_info.sessions = sessions
 
         return response
