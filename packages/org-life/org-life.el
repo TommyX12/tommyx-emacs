@@ -606,9 +606,11 @@ PROCESS is the process under watch, OUTPUT is the output received."
     (org-life-agenda-render-block-title :title "Debug Messages")
     (insert (prin1-to-string message) "\n")))
 
-(cl-defun org-life-agenda-render-general-info (&key general-info)
+(cl-defun org-life-agenda-render-general-info (&key general-info
+                                                    tasks-dict)
   (let ((stress (plist-get general-info :stress))
         (highest-stress-date (plist-get general-info :highest_stress_date))
+        (highest-stress-task (plist-get general-info :highest_stress_task))
         (stress-with-optimal (plist-get general-info :stress_with_optimal))
         (stress-with-suggested (plist-get general-info :stress_with_suggested))
         (stress-without-today (plist-get general-info :stress_without_today))
@@ -669,7 +671,11 @@ PROCESS is the process under watch, OUTPUT is the output received."
                          highest-stress-date))
                        (time-to-days
                         (current-time))))
-            "\n")))
+            "\n")
+    (when highest-stress-task
+      (let ((entry (ht-get tasks-dict highest-stress-task)))
+        (org-life-agenda-render-entry :prefix "Highest Stress Task: "
+                                      :entry entry)))))
 
 (cl-defun org-life-agenda-render-alerts (&key alerts
                                               tasks-dict)
@@ -725,7 +731,8 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (org-life-agenda-render-debug :message debug)
         
         (org-life-agenda-render-block-title :title "General")
-        (org-life-agenda-render-general-info :general-info general-info)
+        (org-life-agenda-render-general-info :general-info general-info
+                                             :tasks-dict tasks-dict)
         
         (org-life-agenda-render-block-separator)
         
@@ -756,6 +763,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
   deadline
   planned
   effort
+  stressless
   marker
   project-status
   children)
@@ -769,6 +777,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (scheduled (org-element-property :scheduled headline-elem))
         (deadline (org-element-property :deadline headline-elem))
         (effort (org-element-property :EFFORT headline-elem))
+        (stressless (org-element-property :STRESSLESS headline-elem))
         (begin (org-element-property :begin headline-elem)))
     (make-org-life-agenda-entry
      :id id
@@ -779,7 +788,8 @@ PROCESS is the process under watch, OUTPUT is the output received."
      :tags (or given-tags tags)
      :scheduled scheduled
      :deadline deadline
-     :effort (or (and effort (org-duration-to-minutes effort)) 0)
+     :effort (and effort (org-duration-to-minutes effort))
+     :stressless stressless
      :marker (org-agenda-new-marker begin))))
 
 (defun org-life-agenda-parse-clock (task-id clock-elem)
@@ -1087,6 +1097,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
                (org-life-agenda-entry-deadline task)
                "max")
          :amount (org-life-agenda-entry-effort task)
+         :stressless (org-life-agenda-entry-stressless task)
          :done 0
          :status (cond
                   ((eq 'done (org-life-agenda-entry-todo-type task)) 1)

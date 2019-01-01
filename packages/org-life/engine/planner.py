@@ -119,7 +119,7 @@ class Planner(object):
                     next_date,
                     session_weakness,
                     SessionTypeEnum.TASK
-                    if tasks[next_task_index].stress_contributor
+                    if not tasks[next_task_index].stressless.value
                     else SessionTypeEnum.FRAGMENT,
                     next_task_index
                 )

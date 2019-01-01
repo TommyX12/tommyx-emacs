@@ -89,11 +89,11 @@ class Engine(object):
         # task preprocessing
         debug_timer.push()
         
-        tasks = self.task_filter.get_todo_tasks(tasks)
-        tasks = self.task_repeater.repeat(tasks, schedule_start, schedule_end)
-        stress_contributor_tasks_mask = self.task_filter.get_stress_contributor_tasks_mask(tasks, schedule_start, schedule_end)
-        for i in range(len(tasks)):
-            tasks[i].stress_contributor = stress_contributor_tasks_mask[i]
+        todo_tasks = self.task_filter.get_todo_tasks(tasks)
+        timed_tasks = self.task_filter.get_timed_tasks(todo_tasks)
+        timed_tasks = self.task_repeater.repeat(timed_tasks, schedule_start, schedule_end)
+        stress_contributor_tasks_mask = self.task_filter.get_stress_contributor_tasks_mask(timed_tasks, schedule_start, schedule_end)
+        self.task_filter.assign_implicit_stressless(timed_tasks, stress_contributor_tasks_mask)
 
         t = debug_timer.pop()
         response.debug += "preprocess tasks: {:.3f}s\n".format(t)
@@ -117,8 +117,8 @@ class Engine(object):
             dated_session for dated_session in dated_sessions
             if dated_session.session.weakness.value == SessionWeaknessEnum.WEAK
         ]
-        strong_progress_without_today = self.progress_counter.count(tasks, strong_dated_sessions_without_today, sessions_sorted = True)
-        strong_progress_today = self.progress_counter.count(tasks, strong_dated_sessions_today, sessions_sorted = True)
+        strong_progress_without_today = self.progress_counter.count(timed_tasks, strong_dated_sessions_without_today, sessions_sorted = True)
+        strong_progress_today = self.progress_counter.count(timed_tasks, strong_dated_sessions_today, sessions_sorted = True)
         strong_progress = strong_progress_without_today.combine(strong_progress_today)
 
         t = debug_timer.pop()
@@ -127,7 +127,7 @@ class Engine(object):
         # report bad estimate tasks
         debug_timer.push()
         
-        bad_estimate_tasks = self.task_filter.get_bad_estimate_tasks(tasks, strong_progress)
+        bad_estimate_tasks = self.task_filter.get_bad_estimate_tasks(timed_tasks, strong_progress)
         response.alerts.bad_estimate_tasks = bad_estimate_tasks
 
         t = debug_timer.pop()
@@ -150,7 +150,7 @@ class Engine(object):
         debug_timer.push()
         
         late_plan_result = self.planner.plan(
-            tasks,
+            timed_tasks,
             late_schedule,
             direction = FillDirection.LATE,
             progress_info = strong_progress,
@@ -169,6 +169,9 @@ class Engine(object):
         response.general.stress.value = stress_info.overall_stress.value
         response.general.extra_time_ratio.value = stress_info.extra_time_ratio.value
         response.general.highest_stress_date = stress_info.highest_stress_date
+        highest_stress_task = self.stress_analyzer.get_highest_stress_task(timed_tasks, stress_info.highest_stress_date)
+        response.general.highest_stress_task = highest_stress_task.id if highest_stress_task is not None else None
+
         for daily_info in response.daily_infos:
             daily_stress_info = stress_info.daily_stress_infos[daily_info.date]
             daily_info.free_time.value = daily_stress_info.acc_free_time.value
@@ -185,7 +188,7 @@ class Engine(object):
         # have the randomizer seeded with today's day string.
         # select task randomly from all tasks
         fragment_sessions = self.fragmentizer.suggest_fragments(
-            tasks,
+            todo_tasks,
             late_schedule,
             stress_info,
             config.fragmentation_config
@@ -200,11 +203,12 @@ class Engine(object):
         
         late_schedule_with_optimal = early_schedule.copy()
         self.planner.plan(
-            tasks,
+            timed_tasks,
             late_schedule_with_optimal,
             direction = FillDirection.EARLY,
             progress_info = strong_progress,
             early_stop = schedule_start,
+            tasks_mask = stress_contributor_tasks_mask,
             session_weakness = SessionWeaknessEnum.STRONG
         )
         optimal_dated_sessions = [
@@ -212,10 +216,10 @@ class Engine(object):
             for session in
             late_schedule_with_optimal.get_sessions(schedule_start)
         ]
-        strong_progress_with_optimal = self.progress_counter.count(tasks, optimal_dated_sessions, sessions_sorted = True)
+        strong_progress_with_optimal = self.progress_counter.count(timed_tasks, optimal_dated_sessions, sessions_sorted = True)
         strong_progress_with_optimal = strong_progress_with_optimal.combine(strong_progress_without_today)
         self.planner.plan(
-            tasks,
+            timed_tasks,
             late_schedule_with_optimal,
             direction = FillDirection.LATE,
             progress_info = strong_progress_with_optimal,
@@ -229,7 +233,7 @@ class Engine(object):
         ]
         late_schedule_with_suggested.add_dated_sessions(strong_fragment_sessions)
         self.planner.plan(
-            tasks,
+            timed_tasks,
             late_schedule_with_suggested,
             direction = FillDirection.EARLY,
             progress_info = strong_progress,
@@ -241,10 +245,10 @@ class Engine(object):
             for session in
             late_schedule_with_suggested.get_sessions(schedule_start)
         ]
-        strong_progress_with_suggested = self.progress_counter.count(tasks, suggested_dated_sessions, sessions_sorted = True)
+        strong_progress_with_suggested = self.progress_counter.count(timed_tasks, suggested_dated_sessions, sessions_sorted = True)
         strong_progress_with_suggested = strong_progress_with_suggested.combine(strong_progress_without_today)
         self.planner.plan(
-            tasks,
+            timed_tasks,
             late_schedule_with_suggested,
             direction = FillDirection.LATE,
             progress_info = strong_progress_with_suggested,
@@ -270,11 +274,11 @@ class Engine(object):
         debug_timer.push()
         
         # run forward pass (while accounting for today's fragmented time) to generate suggestion
-        strong_progress_with_fragments = self.progress_counter.count(tasks, fragment_sessions, sessions_sorted = True)
+        strong_progress_with_fragments = self.progress_counter.count(timed_tasks, fragment_sessions, sessions_sorted = True)
         strong_progress_with_fragments = strong_progress_with_fragments.combine(strong_progress)
         early_schedule.add_dated_sessions(fragment_sessions)
         self.planner.plan(
-            tasks,
+            timed_tasks,
             early_schedule,
             direction = FillDirection.EARLY,
             progress_info = strong_progress_with_fragments,
@@ -291,7 +295,7 @@ class Engine(object):
 
         for daily_info in response.daily_infos:
             sessions = early_schedule.get_sessions(daily_info.date)
-            self.stress_analyzer.compute_session_extra_info(daily_info.date, sessions, tasks)
+            self.stress_analyzer.compute_session_extra_info(daily_info.date, sessions, timed_tasks)
             daily_info.sessions = sessions
 
         t = debug_timer.pop()

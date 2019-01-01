@@ -26,6 +26,16 @@ class StressAnalyzer(object):
             task = tasks[session.task_index.value]
             session.to_deadline.value = self.get_days_to_deadline(date, task.end)
 
+    def get_highest_stress_task(self, tasks, highest_stress_date):
+        result = None
+        result_amount = 0
+        for task in tasks:
+            if task.end == highest_stress_date and task.amount.value > result_amount:
+                result = task
+                result_amount = task.amount.value
+
+        return result
+
     def analyze(self, schedule, bias = 0):
         '''
         Precondition: Sessions in schedule are stress-contributing.

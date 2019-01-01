@@ -19,9 +19,16 @@ class TaskFilter(object):
         Note that we assume schedule_start is today, which means we still care even if task.start < schedule_start.
         '''
         return [
-            task.end <= schedule_end
+            (not task.stressless.value) and task.end <= schedule_end
             for task in tasks
         ]
+
+    def assign_implicit_stressless(self, tasks, stress_contributor_tasks_mask):
+        '''
+        TODO: Add tests.
+        '''
+        for i in range(len(tasks)):
+            tasks[i].stressless.value = not stress_contributor_tasks_mask[i]
 
     def get_bad_estimate_tasks(self, tasks, progress_info):
         empty_tasks_added = set()
@@ -44,7 +51,7 @@ class TaskFilter(object):
         result = []
         for i in range(len(tasks)):
             task = tasks[i]
-            if task.status.value == TaskStatusEnum.TODO and task.amount.value <= 0:
+            if task.status.value == TaskStatusEnum.TODO and task.amount is None:
                 bad_info_task = BadInfoTask()
                 bad_info_task.id.value = task.id.value
                 bad_info_task.reason.value = 'No Effort'
@@ -52,4 +59,10 @@ class TaskFilter(object):
                 result.append(bad_info_task)
 
         return result
+
+    def get_timed_tasks(self, tasks):
+        return [
+            task for task in tasks
+            if task.amount is not None and task.amount.value > 0
+        ]
 

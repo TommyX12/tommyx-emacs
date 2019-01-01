@@ -44,16 +44,29 @@ class ObjectProperty(Property):
         return self.prop_type()
 
     def encode(self, prop):
-        return prop.encode() if prop is not None else None
+        return prop.encode()
 
     def decode(self, encoded_prop):
-        return self.prop_type().decode_self(encoded_prop) if encoded_prop is not None else None
+        return self.prop_type().decode_self(encoded_prop)
 
 
 class NullableObjectProperty(ObjectProperty):
 
+    def __init__(self, prop_type, default_non_null = False):
+        ObjectProperty.__init__(self, prop_type)
+        self.default_non_null = default_non_null
+
     def get_default_value(self):
+        if self.default_non_null:
+            return self.prop_type()
+
         return None
+
+    def encode(self, prop):
+        return prop.encode() if prop is not None else None
+
+    def decode(self, encoded_prop):
+        return self.prop_type().decode_self(encoded_prop) if encoded_prop is not None else None
 
     
 class ListProperty(Property):
@@ -227,6 +240,14 @@ class Boolean(PrimitiveProtocol):
     def __init__(self, value = False):
         PrimitiveProtocol.__init__(self, value)
 
+    def decode(self, encoded_protocol):
+        if encoded_protocol is None:
+            self.value = False
+
+        else:
+            self.value = encoded_protocol
+
+
 class Date(Protocol):
     '''
     TODO: Add tests.
@@ -394,12 +415,12 @@ class Task(Protocol):
         'id': ObjectProperty(TaskID),
         'start': ObjectProperty(Date),
         'end': ObjectProperty(Date),
-        'amount': ObjectProperty(Duration),
+        'amount': NullableObjectProperty(Duration, True),
         'done': ObjectProperty(Duration),
         'status': ObjectProperty(TaskStatus),
         'priority': ObjectProperty(Priority),
         'repeat': NullableObjectProperty(TaskRepeat),
-        'stress_contributor': PrimitiveProperty(),
+        'stressless': ObjectProperty(Boolean),
     }
 
     def copy(self):
@@ -516,6 +537,7 @@ class SchedulingGeneralInfo(Protocol):
         'stress': ObjectProperty(Ratio),
         'extra_time_ratio': ObjectProperty(Ratio),
         'highest_stress_date': ObjectProperty(Date),
+        'highest_stress_task': NullableObjectProperty(TaskID),
         'stress_with_optimal': ObjectProperty(Ratio),
         'stress_with_suggested': ObjectProperty(Ratio),
         'stress_without_today': ObjectProperty(Ratio),
