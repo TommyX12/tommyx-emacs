@@ -460,10 +460,10 @@ PROCESS is the process under watch, OUTPUT is the output received."
     (org-life-agenda-render-entry :prefix " "
                                   :entry entry)))
 
-(cl-defun org-life-agenda-render-impossible-task (&key impossible-task
+(cl-defun org-life-agenda-render-impossible-task (&key alert-entry
                                                        tasks-dict)
-  (let* ((id (plist-get impossible-task :id))
-         (amount (plist-get impossible-task :amount))
+  (let* ((id (plist-get alert-entry :id))
+         (amount (plist-get alert-entry :amount))
          (entry (ht-get tasks-dict id)))
     (org-life-agenda-render-entry
      :prefix (concat "| "
@@ -473,11 +473,11 @@ PROCESS is the process under watch, OUTPUT is the output received."
                      " | ")
      :entry entry)))
 
-(cl-defun org-life-agenda-render-bad-estimate-task (&key bad-estimate-task
+(cl-defun org-life-agenda-render-bad-estimate-task (&key alert-entry
                                                          tasks-dict)
-  (let* ((id (plist-get bad-estimate-task :id))
-         (amount (plist-get bad-estimate-task :amount))
-         (done (plist-get bad-estimate-task :done))
+  (let* ((id (plist-get alert-entry :id))
+         (amount (plist-get alert-entry :amount))
+         (done (plist-get alert-entry :done))
          (entry (ht-get tasks-dict id)))
     (org-life-agenda-render-entry
      :prefix (concat "| "
@@ -489,10 +489,10 @@ PROCESS is the process under watch, OUTPUT is the output received."
                      " | ")
      :entry entry)))
 
-(cl-defun org-life-agenda-render-bad-info-task (&key bad-info-task
+(cl-defun org-life-agenda-render-bad-info-task (&key alert-entry
                                                      tasks-dict)
-  (let* ((id (plist-get bad-info-task :id))
-         (reason (plist-get bad-info-task :reason))
+  (let* ((id (plist-get alert-entry :id))
+         (reason (plist-get alert-entry :reason))
          (entry (ht-get tasks-dict id)))
     (org-life-agenda-render-entry
      :prefix (format "| %s | " reason)
@@ -568,7 +568,10 @@ PROCESS is the process under watch, OUTPUT is the output received."
                          ;;                 ?=))
                          )
          :entry entry
-         :face (cond ((= weakness 0) 'org-agenda-done)
+         :face (cond ((and (numberp to-deadline)
+                           (< to-deadline 0))
+                      'org-warning)
+                     ((= weakness 0) 'org-agenda-done)
                      ((= type 1) 'org-time-grid)
                      ((= type 2) 'org-warning)
                      (t nil)))))
@@ -677,6 +680,21 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (org-life-agenda-render-entry :prefix "Highest Stress Task: "
                                       :entry entry)))))
 
+(cl-defun org-life-agenda-render-alert-entries (&key title
+                                                     alert-entries
+                                                     renderer
+                                                     tasks-dict)
+  (when (> (length alert-entries) 0)
+    (org-life-agenda-render-block-sub-separator)
+    (org-life-agenda-render-block-sub-title :title
+                                            (format "%s (%d)"
+                                                    title
+                                                    (length alert-entries)))
+    (dolist (alert-entry alert-entries)
+      (funcall renderer
+               :alert-entry alert-entry
+               :tasks-dict tasks-dict))))
+
 (cl-defun org-life-agenda-render-alerts (&key alerts
                                               tasks-dict)
   ;; impossible tasks
@@ -685,30 +703,22 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (bad-info-tasks (plist-get alerts :bad_info_tasks)))
     
     ;; TODO: modularize this
-    
-    (when (> (length impossible-tasks) 0)
-      (org-life-agenda-render-block-sub-separator)
-      (org-life-agenda-render-block-sub-title :title "Impossible Tasks")
-      (dolist (impossible-task impossible-tasks)
-        (org-life-agenda-render-impossible-task
-         :impossible-task impossible-task
-         :tasks-dict tasks-dict)))
-    
-    (when (> (length bad-estimate-tasks) 0)
-      (org-life-agenda-render-block-sub-separator)
-      (org-life-agenda-render-block-sub-title :title "Tasks with Bad Estimate")
-      (dolist (bad-estimate-task bad-estimate-tasks)
-        (org-life-agenda-render-bad-estimate-task
-         :bad-estimate-task bad-estimate-task
-         :tasks-dict tasks-dict)))
 
-    (when (> (length bad-info-tasks) 0)
-      (org-life-agenda-render-block-sub-separator)
-      (org-life-agenda-render-block-sub-title :title "Tasks with Bad Info")
-      (dolist (bad-info-task bad-info-tasks)
-        (org-life-agenda-render-bad-info-task
-         :bad-info-task bad-info-task
-         :tasks-dict tasks-dict)))))
+    (org-life-agenda-render-alert-entries :title "Impossible Tasks"
+                                          :alert-entries impossible-tasks
+                                          :renderer #'org-life-agenda-render-impossible-task
+                                          :tasks-dict tasks-dict)
+
+    (org-life-agenda-render-alert-entries :title "Tasks with Bad Estimate"
+                                          :alert-entries bad-estimate-tasks
+                                          :renderer #'org-life-agenda-render-bad-estimate-task
+                                          :tasks-dict tasks-dict)
+
+    
+    (org-life-agenda-render-alert-entries :title "Tasks with Bad Info"
+                                          :alert-entries bad-info-tasks
+                                          :renderer #'org-life-agenda-render-bad-info-task
+                                          :tasks-dict tasks-dict)))
 
 (cl-defun org-life-agenda-render-agenda (&key agenda-data schedule-data)
   (org-life-echo "Rendering agenda ...")
