@@ -60,7 +60,7 @@ class TaskFilter(object):
 
         return result
 
-    def get_timed_tasks(self, tasks):
+    def get_schedulable_tasks(self, tasks):
         return [
             task for task in tasks
             if task.amount is not None and task.amount.value > 0

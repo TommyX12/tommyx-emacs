@@ -629,12 +629,13 @@ PROCESS is the process under watch, OUTPUT is the output received."
                           (cons stress-without-today
                                 'org-life-agenda-stress-warning-face))
      :marker-list (list (cons 0.5 nil)
-                        (cons 0.25 nil))
+                        (cons 0.25 nil)
+                        (cons 0.75 nil))
      :fill-char org-life-agenda-progress-fill-char
      :empty-char org-life-agenda-progress-empty-char)
     (insert "\n")
     (insert (format "| %-20s %10s | %10s | %10s |"
-                    (propertize "Analysis:"
+                    (propertize "Today's Schedule:"
                                 'face 'bold)
                     "Optimal"
                     "Suggested"
