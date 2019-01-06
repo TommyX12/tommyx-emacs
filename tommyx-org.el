@@ -194,7 +194,7 @@ regular expression,
                  do not add it to `all-org-directory-files'."
   (let ((targets (or dirs (list org-directory)))
         (fex (or file-excludes  "^[#\\.].*$"))
-        (dex (or dir-excludes  "^[#\\.].*$"))
+        (dex (or dir-excludes  "^[#\\.].*$\\|archive"))
         path)
     (dolist (dir targets)
       (if (file-directory-p dir)

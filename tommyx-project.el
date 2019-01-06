@@ -70,4 +70,7 @@
   "e" '(projectile-run-eshell
     :which-key "open project eshell")
 
+  "s" '(shell-command
+    :which-key "shell command")
+
 )

@@ -36,7 +36,7 @@ class TaskFilter(object):
         for i in range(len(tasks)):
             task = tasks[i]
             done = task.done.value + progress_info.get_done_amount(i)
-            if task.status.value == TaskStatusEnum.TODO and done > task.amount.value:
+            if task.status.value == TaskStatusEnum.TODO and done >= task.amount.value:
                 bad_estimate_task = BadEstimateTask()
                 bad_estimate_task.id.value = task.id.value
                 bad_estimate_task.amount.value = task.amount.value
