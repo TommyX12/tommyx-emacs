@@ -42,10 +42,10 @@ class Engine(object):
         # debug
         debug_timer = util.PerformanceTimer()
         debug_timer.push()
-        
+
         # setup
         debug_timer.push()
-        
+
         config = scheduling_request.config
         schedule_start = config.today
         schedule_end = schedule_start.add_days(config.scheduling_days.value - 1) # inclusive
@@ -62,7 +62,7 @@ class Engine(object):
             response.daily_infos.append(daily_info)
 
         response.debug = ""
-            
+
         t = debug_timer.pop()
         response.debug += "setup: {:.3f}s\n".format(t)
 
@@ -98,6 +98,15 @@ class Engine(object):
         t = debug_timer.pop()
         response.debug += "preprocess tasks: {:.3f}s\n".format(t)
         
+        # report overdue tasks
+        debug_timer.push()
+        
+        overdue_tasks = self.task_filter.get_overdue_tasks(schedulable_tasks, schedule_start)
+        response.alerts.overdue_tasks = overdue_tasks
+
+        t = debug_timer.pop()
+        response.debug += "report overdue tasks: {:.3f}s\n".format(t)
+
         # progress count
         debug_timer.push()
         

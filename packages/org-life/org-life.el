@@ -498,6 +498,15 @@ PROCESS is the process under watch, OUTPUT is the output received."
      :prefix (format "| %s | " reason)
      :entry entry)))
 
+(cl-defun org-life-agenda-render-overdue-task (&key alert-entry
+                                                     tasks-dict)
+  (let* ((id (plist-get alert-entry :id))
+         (days (plist-get alert-entry :days))
+         (entry (ht-get tasks-dict id)))
+    (org-life-agenda-render-entry
+     :prefix (format "| %4s | " (org-life-agenda-days-to-string days))
+     :entry entry)))
+
 (cl-defun org-life-agenda-render-day (&key daily-info
                                            tasks-dict
                                            (today nil))
@@ -698,13 +707,11 @@ PROCESS is the process under watch, OUTPUT is the output received."
 
 (cl-defun org-life-agenda-render-alerts (&key alerts
                                               tasks-dict)
-  ;; impossible tasks
   (let ((impossible-tasks (plist-get alerts :impossible_tasks))
         (bad-estimate-tasks (plist-get alerts :bad_estimate_tasks))
-        (bad-info-tasks (plist-get alerts :bad_info_tasks)))
+        (bad-info-tasks (plist-get alerts :bad_info_tasks))
+        (overdue-tasks (plist-get alerts :overdue_tasks)))
     
-    ;; TODO: modularize this
-
     (org-life-agenda-render-alert-entries :title "Impossible Tasks"
                                           :alert-entries impossible-tasks
                                           :renderer #'org-life-agenda-render-impossible-task
@@ -719,6 +726,11 @@ PROCESS is the process under watch, OUTPUT is the output received."
     (org-life-agenda-render-alert-entries :title "Tasks with Bad Info"
                                           :alert-entries bad-info-tasks
                                           :renderer #'org-life-agenda-render-bad-info-task
+                                          :tasks-dict tasks-dict)
+
+    (org-life-agenda-render-alert-entries :title "Tasks with Overdue"
+                                          :alert-entries overdue-tasks
+                                          :renderer #'org-life-agenda-render-overdue-task
                                           :tasks-dict tasks-dict)))
 
 (cl-defun org-life-agenda-render-agenda (&key agenda-data schedule-data)

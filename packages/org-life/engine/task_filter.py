@@ -31,7 +31,6 @@ class TaskFilter(object):
             tasks[i].stressless.value = not stress_contributor_tasks_mask[i]
 
     def get_bad_estimate_tasks(self, tasks, progress_info):
-        empty_tasks_added = set()
         result = []
         for i in range(len(tasks)):
             task = tasks[i]
@@ -47,7 +46,6 @@ class TaskFilter(object):
         return result
 
     def get_bad_info_tasks(self, tasks):
-        empty_tasks_added = set()
         result = []
         for i in range(len(tasks)):
             task = tasks[i]
@@ -65,4 +63,17 @@ class TaskFilter(object):
             task for task in tasks
             if task.amount is not None and task.amount.value > 0
         ]
+
+    def get_overdue_tasks(self, tasks, schedule_start):
+        result = []
+        for i in range(len(tasks)):
+            task = tasks[i]
+            if task.status.value == TaskStatusEnum.TODO and task.end < schedule_start:
+                overdue_task = OverdueTask()
+                overdue_task.id.value = task.id.value
+                overdue_task.days.value = schedule_start.days_to(task.end)
+
+                result.append(overdue_task)
+
+        return result
 

@@ -565,11 +565,18 @@ class BadInfoTask(Protocol):
         'reason': ObjectProperty(String),
     }
 
+class OverdueTask(Protocol):
+    properties = {
+        'id': ObjectProperty(TaskID),
+        'days': ObjectProperty(Days),
+    }
+
 class Alerts(Protocol):
     properties = {
         'impossible_tasks': ListProperty(ImpossibleTask),
         'bad_estimate_tasks': ListProperty(BadEstimateTask),
         'bad_info_tasks': ListProperty(BadInfoTask),
+        'overdue_tasks': ListProperty(OverdueTask),
     }
 
 class DailyInfo(Protocol):
