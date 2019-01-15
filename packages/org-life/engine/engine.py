@@ -86,11 +86,15 @@ class Engine(object):
         t = debug_timer.pop()
         response.debug += "report bad info tasks: {:.3f}s\n".format(t)
 
-        # task preprocessing
+        # task preprocessing and overdue tasks
         debug_timer.push()
         
         todo_tasks = self.task_filter.get_todo_tasks(tasks)
         schedulable_tasks = self.task_filter.get_schedulable_tasks(todo_tasks)
+
+        overdue_tasks = self.task_filter.get_overdue_tasks(schedulable_tasks, schedule_start)
+        response.alerts.overdue_tasks = overdue_tasks
+
         schedulable_tasks = self.task_repeater.repeat(schedulable_tasks, schedule_start, schedule_end)
         stress_contributor_tasks_mask = self.task_filter.get_stress_contributor_tasks_mask(schedulable_tasks, schedule_start, schedule_end)
         self.task_filter.assign_implicit_stressless(schedulable_tasks, stress_contributor_tasks_mask)
@@ -98,15 +102,6 @@ class Engine(object):
         t = debug_timer.pop()
         response.debug += "preprocess tasks: {:.3f}s\n".format(t)
         
-        # report overdue tasks
-        debug_timer.push()
-        
-        overdue_tasks = self.task_filter.get_overdue_tasks(schedulable_tasks, schedule_start)
-        response.alerts.overdue_tasks = overdue_tasks
-
-        t = debug_timer.pop()
-        response.debug += "report overdue tasks: {:.3f}s\n".format(t)
-
         # progress count
         debug_timer.push()
         
@@ -202,7 +197,6 @@ class Engine(object):
             stress_info,
             config.fragmentation_config
         )
-        fragment_amount = Schedule.get_dated_sessions_amount(fragment_sessions)
 
         t = debug_timer.pop()
         response.debug += "fragment tasks: {:.3f}s\n".format(t)

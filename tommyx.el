@@ -517,6 +517,9 @@
 (use-package org-bullets :ensure t
 	:config
 )
+(use-package helm-org-rifle :ensure t
+  :config
+)
 (use-package outshine :ensure t
   :config)
 (use-package load-relative :ensure t)
@@ -596,6 +599,7 @@
 (use-package auctex :ensure t
 	:config
 )
+(use-package csharp-mode :ensure t)
 (use-package markdown-mode :ensure t)
 (use-package markdown-mode+ :ensure t)
 (use-package racket-mode :ensure t)

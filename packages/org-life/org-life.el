@@ -257,9 +257,9 @@ PROCESS is the process under watch, OUTPUT is the output received."
       text)))
 
 (defun org-life-agenda-days-to-string (integer)
-  (if (stringp integer)
-      ""
-    (format "%dd" integer)))
+  (if (numberp integer)
+      (format "%dd" integer)
+    ""))
 
 (defun org-life-agenda-short-duration (minutes)
   (if minutes
@@ -507,6 +507,11 @@ PROCESS is the process under watch, OUTPUT is the output received."
      :prefix (format "| %4s | " (org-life-agenda-days-to-string days))
      :entry entry)))
 
+(cl-defun org-life-agenda-render-schedule-legend ()
+  (insert (format "| %-5s | %5s | %4s | %s"
+                  "Dur." "Rem." "Due" "Task")
+          "\n"))
+
 (cl-defun org-life-agenda-render-day (&key daily-info
                                            tasks-dict
                                            (today nil))
@@ -613,6 +618,11 @@ PROCESS is the process under watch, OUTPUT is the output received."
           "\n\n"
           message))
 
+(cl-defun org-life-agenda-render-last-updated ()
+  (insert (propertize
+           (format-time-string "Last Updated: %Y-%m-%d %H:%M\n")
+           'face 'org-life-agenda-secondary-face)))
+
 (cl-defun org-life-agenda-render-debug (&key message)
   (when message
     (org-life-agenda-render-block-title :title "Debug Messages")
@@ -693,7 +703,8 @@ PROCESS is the process under watch, OUTPUT is the output received."
 (cl-defun org-life-agenda-render-alert-entries (&key title
                                                      alert-entries
                                                      renderer
-                                                     tasks-dict)
+                                                     tasks-dict
+                                                     extra-info-renderer)
   (when (> (length alert-entries) 0)
     (org-life-agenda-render-block-sub-separator)
     (org-life-agenda-render-block-sub-title :title
@@ -703,7 +714,17 @@ PROCESS is the process under watch, OUTPUT is the output received."
     (dolist (alert-entry alert-entries)
       (funcall renderer
                :alert-entry alert-entry
-               :tasks-dict tasks-dict))))
+               :tasks-dict tasks-dict))
+    (when extra-info-renderer
+      (funcall extra-info-renderer
+               :alert-entries alert-entries))))
+
+(cl-defun org-life-agenda-render-impossible-task-extra-info
+    (&key alert-entries)
+  (let ((sum (-reduce-from (lambda (acc entry)
+                             (+ acc (plist-get entry :amount)))
+                           0 alert-entries)))
+    (insert (format "Total Duration: %s\n" (org-duration-from-minutes sum)))))
 
 (cl-defun org-life-agenda-render-alerts (&key alerts
                                               tasks-dict)
@@ -715,7 +736,9 @@ PROCESS is the process under watch, OUTPUT is the output received."
     (org-life-agenda-render-alert-entries :title "Impossible Tasks"
                                           :alert-entries impossible-tasks
                                           :renderer #'org-life-agenda-render-impossible-task
-                                          :tasks-dict tasks-dict)
+                                          :tasks-dict tasks-dict
+                                          :extra-info-renderer
+                                          #'org-life-agenda-render-impossible-task-extra-info)
 
     (org-life-agenda-render-alert-entries :title "Tasks with Bad Estimate"
                                           :alert-entries bad-estimate-tasks
@@ -728,7 +751,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
                                           :renderer #'org-life-agenda-render-bad-info-task
                                           :tasks-dict tasks-dict)
 
-    (org-life-agenda-render-alert-entries :title "Tasks with Overdue"
+    (org-life-agenda-render-alert-entries :title "Overdue Tasks"
                                           :alert-entries overdue-tasks
                                           :renderer #'org-life-agenda-render-overdue-task
                                           :tasks-dict tasks-dict)))
@@ -753,6 +776,9 @@ PROCESS is the process under watch, OUTPUT is the output received."
 
         (org-life-agenda-render-debug :message debug)
         
+        (org-life-agenda-render-last-updated)
+        (org-life-agenda-render-block-sub-separator)
+        
         (org-life-agenda-render-block-title :title "General")
         (org-life-agenda-render-general-info :general-info general-info
                                              :tasks-dict tasks-dict)
@@ -766,6 +792,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (org-life-agenda-render-block-separator)
         
         (org-life-agenda-render-block-title :title "Schedules")
+        ;; (org-life-agenda-render-schedule-legend)
         (dolist (daily-info daily-infos)
           (org-life-agenda-render-day :daily-info daily-info
                                       :tasks-dict tasks-dict
@@ -945,7 +972,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
             (list
              (make-prop :SHOW_DEBUG_MESSAGES
                         '(:show_debug_messages)
-                        (and val t))
+                        (and val (not (string= val "nil")) t))
              (make-prop :SCHEDULING_DAYS
                         '(:scheduling_days)
                         (string-to-number val))

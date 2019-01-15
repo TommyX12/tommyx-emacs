@@ -90,6 +90,7 @@ class Planner(object):
                         session.amount.value = tasks_data.get_amount_left(next_event.task_index)
                         session.type.value = SessionTypeEnum.OVERLIMIT
                         session.weakness.value = session_weakness
+                        session.task_index = TaskIndex(next_event.task_index)
                         schedule.add_session(
                             get_schedule_date(date),
                             session

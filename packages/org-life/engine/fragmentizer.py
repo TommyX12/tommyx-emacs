@@ -12,7 +12,7 @@ class Fragmentizer(object):
 
     def _get_max_amount_by_max_percentage(self, max_percentage, schedule):
         schedule_start = schedule.get_schedule_start()
-        today_usable_time = schedule.get_usable_time(schedule_start)
+        today_usable_time = schedule.get_real_usable_time(schedule_start)
         return max(0, int(today_usable_time * max_percentage))
 
     def _get_max_amount_by_min_etr(self, min_etr, schedule, stress_info):

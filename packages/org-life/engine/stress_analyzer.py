@@ -23,8 +23,11 @@ class StressAnalyzer(object):
 
     def compute_session_extra_info(self, date, sessions, tasks):
         for session in sessions:
+            if session.task_index is None:
+                continue
+
             task = tasks[session.task_index.value]
-            session.to_deadline.value = self.get_days_to_deadline(date, task.end)
+            session.to_deadline = Days(self.get_days_to_deadline(date, task.end))
 
     def get_highest_stress_task(self, tasks, highest_stress_date):
         result = None

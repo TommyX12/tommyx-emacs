@@ -488,9 +488,9 @@ class Session(Protocol):
         'amount': ObjectProperty(Duration),
         'type': ObjectProperty(SessionType),
         'weakness': ObjectProperty(SessionWeakness),
-        'task_index': ObjectProperty(TaskIndex),
+        'task_index': NullableObjectProperty(TaskIndex),
         'to_finish': NullableObjectProperty(Duration),
-        'to_deadline': ObjectProperty(Days),
+        'to_deadline': NullableObjectProperty(Days),
         # 'stress_info': ObjectProperty(SessionStressInfo),
     }
 
@@ -714,6 +714,9 @@ class DailySchedule(object):
     def get_usable_time(self):
         return self._usable_time
 
+    def get_real_usable_time(self):
+        return self._real_usable_time
+
     def get_free_time(self):
         return max(0, self._usable_time - self._used_time)
 
@@ -810,6 +813,9 @@ class Schedule(object):
 
     def get_usable_time(self, date):
         return self.daily_schedules[date].get_usable_time()
+
+    def get_real_usable_time(self, date):
+        return self.daily_schedules[date].get_real_usable_time()
 
     def get_free_time(self, date):
         return self.daily_schedules[date].get_free_time()
