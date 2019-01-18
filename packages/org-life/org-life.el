@@ -49,6 +49,22 @@
 (defconst org-life--engine-process-name "org-life--engine-process")
 (defconst org-life--hooks-alist nil)
 
+;; enums
+(defconst org-life--task-status-enum-todo 0)
+(defconst org-life--task-status-enum-done 1)
+(defconst org-life--task-repeat-type-enum-normal 0)
+(defconst org-life--task-repeat-type-enum-restart 1)
+(defconst org-life--task-repeat-unit-enum-none 0)
+(defconst org-life--task-repeat-unit-enum-day 1)
+(defconst org-life--task-repeat-unit-enum-week 2)
+(defconst org-life--task-repeat-unit-enum-month 3)
+(defconst org-life--task-repeat-unit-enum-year 4)
+(defconst org-life--session-type-enum-task 0)
+(defconst org-life--session-type-enum-fragment 1)
+(defconst org-life--session-type-enum-overlimit 2)
+(defconst org-life--session-weakness-enum-strong 0)
+(defconst org-life--session-weakness-enum-weak 1)
+
 ;;; Macros
 
 ;;; Customization
@@ -585,9 +601,15 @@ PROCESS is the process under watch, OUTPUT is the output received."
          :face (cond ((and (numberp to-deadline)
                            (< to-deadline 0))
                       'org-warning)
-                     ((= weakness 0) 'org-agenda-done)
-                     ((= type 1) 'org-time-grid)
-                     ((= type 2) 'org-warning)
+                     ((= weakness
+                         org-life--session-weakness-enum-strong)
+                      'org-agenda-done)
+                     ((= type
+                         org-life--session-type-enum-fragment)
+                      'org-time-grid)
+                     ((= type
+                         org-life--session-type-enum-overlimit)
+                      'org-warning)
                      (t nil)))))
     (insert (propertize
              (format "| Maximum Free Time: %5s | Extra Time Ratio: %5s | Stress: %5s |"
@@ -879,8 +901,10 @@ PROCESS is the process under watch, OUTPUT is the output received."
                              (car session-data))
                       :session (list :id task-id
                                      :amount (cdr session-data)
-                                     :type 0
-                                     :weakness 0)))
+                                     :type
+                                     org-life--session-type-enum-task
+                                     :weakness
+                                     org-life--session-weakness-enum-strong)))
               session-data-list))))
 
 (defun org-life-agenda-get-tasks-and-clocks (headline-elem)
@@ -1154,8 +1178,10 @@ PROCESS is the process under watch, OUTPUT is the output received."
          :stressless (org-life-agenda-entry-stressless task)
          :done 0
          :status (cond
-                  ((eq 'done (org-life-agenda-entry-todo-type task)) 1)
-                  (t 0))
+                  ((eq 'done
+                       (org-life-agenda-entry-todo-type task))
+                   org-life--task-status-enum-done)
+                  (t org-life--task-status-enum-todo))
          :priority (org-life-agenda-entry-priority task)
          :repeat (let* ((timestamp
                          (org-life-agenda-entry-deadline task))
@@ -1168,14 +1194,21 @@ PROCESS is the process under watch, OUTPUT is the output received."
                    (when repeater-unit
                      (list
                       :type (cond
-                             ((eq repeater-type 'restart) 1)
-                             (t 0))
+                             ((eq repeater-type 'restart)
+                              org-life--task-repeat-type-enum-restart)
+                             (t
+                              org-life--task-repeat-type-enum-normal))
                       :unit (cond
-                             ((eq repeater-unit 'day) 1)
-                             ((eq repeater-unit 'week) 2)
-                             ((eq repeater-unit 'month) 3)
-                             ((eq repeater-unit 'year) 4)
-                             (t 0))
+                             ((eq repeater-unit 'day)
+                              org-life--task-repeat-unit-enum-day)
+                             ((eq repeater-unit 'week)
+                              org-life--task-repeat-unit-enum-week)
+                             ((eq repeater-unit 'month)
+                              org-life--task-repeat-unit-enum-month)
+                             ((eq repeater-unit 'year)
+                              org-life--task-repeat-unit-enum-year)
+                             (t
+                              org-life--task-repeat-unit-enum-none))
                       :value (or repeater-value 1)))))))
     agenda-tasks)))
 
