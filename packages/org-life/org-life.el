@@ -639,6 +639,10 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (etr-with-optimal (plist-get general-info :etr_with_optimal))
         (etr-with-suggested (plist-get general-info :etr_with_suggested))
         (etr-without-today (plist-get general-info :etr_without_today)))
+    (insert "Stress: "
+            (propertize (org-life-agenda-ratio-to-string stress)
+                        'face 'bold)
+            "\n")
     (org-life-agenda-render-multi-progress-bar
      :bar-width (window-text-width)
      :progress-list (list (cons stress-with-optimal
@@ -661,7 +665,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
                     "Worst")
             "\n")
     (insert (format "| %-20s %10s | %10s | %10s |"
-                    "Stress:"
+                    "Stress Tomorrow:"
                     (org-life-agenda-ratio-to-string
                      stress-with-optimal
                      'org-life-agenda-stress-best-face)
