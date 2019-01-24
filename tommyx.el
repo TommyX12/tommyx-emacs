@@ -439,7 +439,18 @@
   (setq color-identifiers:min-color-saturation 0.3)
   (setq color-identifiers:timer (run-with-idle-timer 5 t 'color-identifiers:refresh))
   (add-hook 'prog-mode-hook (lambda () (color-identifiers-mode 1)))
-  (global-color-identifiers-mode 1))
+  (global-color-identifiers-mode 1)
+
+  ;; extra modes support
+  (dolist (maj-mode '(csharp-mode))
+    (color-identifiers:set-declaration-scan-fn
+     maj-mode 'color-identifiers:cc-mode-get-declarations)
+    (add-to-list
+     'color-identifiers:modes-alist
+     `(,maj-mode . (""
+                    "\\_<\\([a-zA-Z_$]\\(?:\\s_\\|\\sw\\)*\\)"
+                    (nil font-lock-variable-name-face))))))
+
 (use-package auto-highlight-symbol :ensure t
 	:config
 	(push 'racket-mode ahs-modes)

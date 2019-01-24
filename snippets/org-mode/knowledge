@@ -1,0 +1,10 @@
+# -*- mode: snippet -*-
+# name: knowledge template
+# key: knowledge
+# --
+* How-to :h:
+
+* Notes :n:
+
+* Questions :q:
+

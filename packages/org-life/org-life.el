@@ -673,9 +673,10 @@ PROCESS is the process under watch, OUTPUT is the output received."
                                 'org-life-agenda-stress-normal-face)
                           (cons stress-without-today
                                 'org-life-agenda-stress-warning-face))
-     :marker-list (list (cons 0.5 nil)
-                        (cons 0.25 nil)
-                        (cons 0.75 nil))
+     :marker-list (list (cons 0.5 'org-life-agenda-secondary-face)
+                        (cons 0.25 'org-life-agenda-secondary-face)
+                        (cons 0.75 'org-life-agenda-secondary-face)
+                        (cons stress nil))
      :fill-char org-life-agenda-progress-fill-char
      :empty-char org-life-agenda-progress-empty-char)
     (insert "\n")
