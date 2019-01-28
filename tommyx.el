@@ -618,7 +618,9 @@
 (use-package haskell-snippets :ensure t)
 (use-package rust-mode :ensure t)
 (use-package csv-mode :ensure t)
-(use-package json-mode :ensure t)
+(use-package json-mode :ensure t
+  :config
+  (setq json-reformat:indent-width 2))
 ;; (use-package vue-mode :ensure t
 ;;	   :config
 ;;	   (setq mmm-submode-decoration-level 0)
@@ -905,6 +907,8 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 ;; highlight numbers
 (add-hook 'prog-mode-hook #'highlight-numbers-mode)
+(add-hook 'json-mode-hook (lambda ()
+                            (highlight-numbers-mode -1)))
 ;; (add-hook 'text-mode-hook #'highlight-numbers-mode)
 
 ;; evil-surround
@@ -2311,6 +2315,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   (setq-local tab-width 2)
   (setq-local evil-shift-width tab-width)
 	(setq-local highlight-indentation-offset 4)
+  (setq-local js-indent-level 2)
 ))
 (add-hook 'latex-mode-hook (lambda ()
   (setq-local tab-width 2)
