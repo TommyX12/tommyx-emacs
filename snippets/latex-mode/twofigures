@@ -1,0 +1,17 @@
+# -*- mode: snippet -*-
+# name: twofigures
+# key: twofigures
+# --
+\begin{figure}[ht!]
+  \centering
+  \begin{minipage}{.5\textwidth}
+    \centering
+    \includegraphics[width=60mm]{$1}
+    \caption{\label{fig:$3} $2}
+  \end{minipage}%
+  \begin{minipage}{.5\textwidth}
+    \centering
+    \includegraphics[width=60mm]{$4}
+    \caption{\label{fig:$6} $5}
+  \end{minipage}
+\end{figure}
