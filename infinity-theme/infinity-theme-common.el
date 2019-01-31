@@ -840,6 +840,7 @@
 	`(org-hide ((,class (:foreground ,base))))
 	`(org-kbd ((,class (:inherit region :foreground ,base :box (:line-width 1 :style released-button)))))
 	`(org-headline-done ((,class (:foreground ,head-done :background ,head1-bg))))
+  `(org-latex-and-related ((,class (:inherit font-latex-math-face))))
 	`(org-level-1 ((,class (:inherit bold :foreground ,head1 :height 1.3 :background ,head1-bg))))
 	`(org-level-2 ((,class (:inherit bold :foreground ,head2 :height 1.2 :background ,head1-bg))))
 	`(org-level-3 ((,class (:bold nil :foreground ,head3 :height 1.1 :background ,head1-bg))))

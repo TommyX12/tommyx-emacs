@@ -526,11 +526,11 @@
 (use-package org-journal :ensure t)
 (use-package org-pomodoro :ensure t)
 (use-package org-bullets :ensure t
-	:config
-)
+	:config)
+(use-package org-preview-html :ensure t
+  :config)
 (use-package helm-org-rifle :ensure t
-  :config
-)
+  :config)
 (use-package outshine :ensure t
   :config)
 (use-package load-relative :ensure t)

@@ -8,6 +8,7 @@
 (require 'org-notify)
 (require 'companion)
 (require 'hydra)
+(require 'smartparens)
 
 ;; startup settings
 (add-hook 'org-mode-hook (lambda () (interactive)
@@ -56,6 +57,25 @@
 
 ;; habit
 (add-to-list 'org-modules 'org-habit)
+
+;; latex
+(setq org-highlight-latex-and-related '(latex))
+(setq org-startup-with-latex-preview t)
+(sp-local-pair 'org-mode "$" "$")
+(sp-local-pair 'org-mode "\\[" "\\]")
+(sp-local-pair 'org-mode "\\(" "\\)")
+(setq org-format-latex-options
+      `(
+        :foreground default
+        :background default
+        :scale ,(if (eq system-type 'darwin)
+                    1.6
+                  1.0)
+        :html-foreground "Black"
+        :html-background "Transparent"
+        :html-scale 1.0
+        :matchers ("begin" "$1" "$" "$$" "\\(" "\\[")))
+;; (setq org-preview-latex-default-process 'imagemagick)
 
 ;; clocking
 ; ask for clock-out on leave
@@ -231,6 +251,11 @@ regular expression,
       (org-backward-heading-same-level 1)
     (org-back-to-heading)))
 
+(defun org-show-latex-fragments ()
+  (interactive)
+  (org-remove-latex-fragment-image-overlays)
+  (org-toggle-latex-fragment '(16)))
+
 ;; hydra
 (defhydra hydra-org-nav ()
   "org heading navigation"
@@ -240,6 +265,7 @@ regular expression,
   ("j" org-forward-heading-same-level "next heading same level"))
 
 ;; key bindings
+(define-prefix-command 'org-view-leader)
 ; global leader
 (general-define-key
   :keymaps 'override
@@ -344,6 +370,16 @@ regular expression,
   "E" '(org-inc-effort
     :which-key "org increase effort")
 
+  "v" '(org-view-leader
+    :which-key "org view and export")
+
+  "vl" '('org-show-latex-fragments
+    :which-key "preview latex fragment")
+
+  "vL" '((lambda () (interactive)
+           (org-remove-latex-fragment-image-overlays))
+    :which-key "remove latex fragment")
+
 	"C-s" '((lambda () (interactive) (org-todo "TODAY"))
 		:which-key "org set TODAY")
 
@@ -397,6 +433,10 @@ regular expression,
 )
 
 ; org mode
+(evil-define-key 'normal org-mode-map (kbd ",l") 'org-show-latex-fragments)
+(evil-define-key 'normal org-mode-map (kbd ",,l")
+  (lambda () (interactive)
+    (org-remove-latex-fragment-image-overlays)))
 (evil-define-key 'normal org-mode-map (kbd "TAB") 'org-cycle)
 (evil-define-key 'normal org-mode-map (kbd "<tab>") 'org-cycle)
 (evil-define-key 'insert org-mode-map (kbd "TAB") 'org-cycle)
