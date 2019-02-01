@@ -673,6 +673,8 @@ regular expression,
 ;; temporarily disabled
 ;; (org-notify-start 60)
 
+;; other agenda views
+
 ;; my org-life
 (add-to-list 'load-path
 	(expand-file-name "packages/org-life" (file-name-directory load-file-name)))
