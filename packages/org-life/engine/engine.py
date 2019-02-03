@@ -297,7 +297,7 @@ class Engine(object):
         # TODO
 
         for daily_info in response.daily_infos:
-            sessions = early_schedule.get_sessions(daily_info.date)
+            sessions = early_schedule.get_sessions(daily_info.date, SessionOrder.AMOUNT)
             self.stress_analyzer.compute_session_extra_info(daily_info.date, sessions, schedulable_tasks)
             daily_info.sessions = sessions
 

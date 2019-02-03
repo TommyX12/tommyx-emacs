@@ -687,6 +687,9 @@ class FillDirection(Enum):
     EARLY = 0
     LATE = 1
 
+class SessionOrder(Enum):
+    NONE = 0
+    AMOUNT = 1
 
 class DailySchedule(object):
 
@@ -741,7 +744,12 @@ class DailySchedule(object):
             self._sessions.append(session)
             id_to_session_dict[task_id] = session
 
-    def get_sessions(self):
+    def get_sessions(self, order = None):
+        if order == SessionOrder.AMOUNT:
+            return sorted(self._sessions,
+                          key = lambda x : x.amount.value,
+                          reverse = True)
+
         return self._sessions
 
 
@@ -787,10 +795,10 @@ class Schedule(object):
             if date in self.daily_schedules:
                 self.daily_schedules[date].add_session(session)
     
-    def get_sessions(self, date):
-        return self.daily_schedules[date].get_sessions()
+    def get_sessions(self, date, order = None):
+        return self.daily_schedules[date].get_sessions(order)
 
-    def get_all_sessions(self, from_date = None, to_date = None):
+    def get_all_sessions(self, from_date = None, to_date = None, order = None):
         '''
         Return a list of all sessions from from_date to to_date (inclusive).
         '''
@@ -803,7 +811,7 @@ class Schedule(object):
         sessions = []
         date = from_date
         while date <= to_date:
-            sessions += self.daily_schedules[date].get_sessions()
+            sessions += self.daily_schedules[date].get_sessions(order)
             date = date.add_days(1)
 
         return sessions

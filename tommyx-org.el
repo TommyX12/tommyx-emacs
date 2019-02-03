@@ -75,6 +75,7 @@
         :html-background "Transparent"
         :html-scale 1.0
         :matchers ("begin" "$1" "$" "$$" "\\(" "\\[")))
+(setq org-preview-latex-default-process 'dvipng)
 ;; (setq org-preview-latex-default-process 'imagemagick)
 
 ;; clocking
@@ -286,7 +287,10 @@ regular expression,
 	"or" '((lambda () (interactive) (org-refile '(4)))
 		:which-key "org goto refile targets")
 
-	"oc" '(org-capture
+	"oc" '(counsel-org-capture
+		:which-key "org capture")
+
+	"oC" '(org-capture
 		:which-key "org capture")
 
 	"oa" '(org-agenda
@@ -653,10 +657,13 @@ regular expression,
 	"jr" '(org-capture-refile
 		:which-key "capture refile")
 
-	"jK" '(org-capture-kill
+	"jj" '(org-capture-kill
 		:which-key "capture discard")
 
 	"jk" '(org-capture-finalize
+		:which-key "capture save")
+
+	"jK" '((lambda () (interactive) (org-capture-finalize '(4)))
 		:which-key "capture save")
 )
 
