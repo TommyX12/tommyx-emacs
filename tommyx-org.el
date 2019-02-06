@@ -252,7 +252,7 @@ regular expression,
       (org-backward-heading-same-level 1)
     (org-back-to-heading)))
 
-(defun org-show-latex-fragments ()
+(defun org-show-all-latex-fragments ()
   (interactive)
   (org-remove-latex-fragment-image-overlays)
   (org-toggle-latex-fragment '(16)))
@@ -377,7 +377,7 @@ regular expression,
   "v" '(org-view-leader
     :which-key "org view and export")
 
-  "vl" '('org-show-latex-fragments
+  "vl" '('org-show-all-latex-fragments
     :which-key "preview latex fragment")
 
   "vL" '((lambda () (interactive)
@@ -437,10 +437,11 @@ regular expression,
 )
 
 ; org mode
-(evil-define-key 'normal org-mode-map (kbd ",l") 'org-show-latex-fragments)
-(evil-define-key 'normal org-mode-map (kbd ",,l")
+(evil-define-key 'normal org-mode-map (kbd ",l") 'org-show-all-latex-fragments)
+(evil-define-key 'normal org-mode-map (kbd ",L")
   (lambda () (interactive)
     (org-remove-latex-fragment-image-overlays)))
+(evil-define-key 'normal org-mode-map (kbd ",,l") 'org-toggle-latex-fragment)
 (evil-define-key 'normal org-mode-map (kbd "TAB") 'org-cycle)
 (evil-define-key 'normal org-mode-map (kbd "<tab>") 'org-cycle)
 (evil-define-key 'insert org-mode-map (kbd "TAB") 'org-cycle)
