@@ -607,9 +607,14 @@
 
 ; language specific
 
-(use-package auctex :ensure t
-	:config
-)
+(use-package auctex :ensure t)
+(use-package ess :ensure t
+  :config
+  (add-hook 'ess-r-mode-hook
+            (lambda ()
+              (setq company-backends
+                    (let ((b #'company-tabnine))
+                      (cons b (remove b company-backends)))))))
 (use-package csharp-mode :ensure t)
 (use-package markdown-mode :ensure t)
 (use-package markdown-mode+ :ensure t)

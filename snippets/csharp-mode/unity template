@@ -1,0 +1,28 @@
+# -*- mode: snippet -*-
+# name: unity template
+# key: unity
+# --
+using System;
+using System.Collections;
+using System.Collections.Generic;
+
+using UnityEngine;
+
+public class ${1:`(file-name-base (buffer-file-name))`} : MonoBehaviour {
+    
+    public $1() {
+        $0
+    }
+
+    protected void Awake() {
+        
+    }
+
+    protected void Start() {
+        
+    }
+
+    protected void Update() {
+        
+    }
+}
