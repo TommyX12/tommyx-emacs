@@ -434,6 +434,8 @@
 (use-package color-identifiers-mode :ensure t
   :config
   ;; color-identifiers-mode
+  (setq color-identifiers-avoid-faces
+        '(font-lock-warning-face error))
   (setq color-identifiers-coloring-method 'sequential)
   (setq color-identifiers:max-color-saturation 0.3)
   (setq color-identifiers:min-color-saturation 0.3)

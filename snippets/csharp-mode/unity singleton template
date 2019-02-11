@@ -1,6 +1,6 @@
 # -*- mode: snippet -*-
-# name: unity template
-# key: unity
+# name: unity singleton template
+# key: unitysingleton
 # --
 using System;
 using System.Collections;
@@ -9,9 +9,11 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class ${1:`(file-name-base (buffer-file-name))`} : MonoBehaviour {
+
+    public static $1 current;
     
     public $1() {
-        
+        current = this;
     }
 
     protected void Awake() {
