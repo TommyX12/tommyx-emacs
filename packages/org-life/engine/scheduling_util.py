@@ -48,7 +48,11 @@ class TaskIndexFinder(object):
 
 
 class ScheduleFiller(object):
+    
     def __init__(self, schedule, direction):
+        self.initialize(schedule, direction)
+        
+    def initialize(self, schedule, direction):
         self.schedule = schedule
 
         self.delta = None
@@ -74,7 +78,7 @@ class ScheduleFiller(object):
     def _get_schedule_date_late(date):
         return date.add_days(-1)
 
-    def fill(self, task_id, amount, date_from, date_to, weakness = SessionWeaknessEnum.WEAK, session_type = SessionTypeEnum.TASK, task_index = 0):
+    def fill(self, task_id, amount, date_from, date_to, weakness = SessionWeaknessEnum.WEAK, session_type = SessionTypeEnum.TASK, task_index = 0, total_amount = 0):
         '''
         Fill task_id with amount from 00:00 of date_from to 00:00 of date_to.
         The concept of "before" is determined by fill direction,
@@ -96,13 +100,16 @@ class ScheduleFiller(object):
             session_amount = min(amount, free_time)
             if session_amount > 0:
                 amount -= session_amount
+                total_amount -= session_amount
                 amount_filled += session_amount
                 session = Session()
                 session.id.value = task_id
                 session.amount.value = session_amount
                 session.type.value = session_type
                 session.weakness.value = weakness
-                session.to_finish = Duration(amount)
+                if total_amount >= 0:
+                    session.to_finish = Duration(total_amount)
+                    
                 session.task_index = TaskIndex(task_index)
                 self.schedule.add_session(schedule_date, session)
 

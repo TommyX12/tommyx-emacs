@@ -12,7 +12,7 @@ class StressAnalyzerTest(unittest.TestCase):
     def test_stress_analyzer(self):
         schedule = test_util.make_schedule([10, 10, 10, 20, 30], [10, 5, 0, 0, 30])
         s = StressAnalyzer()
-        r = s.analyze(schedule)
+        r = s.analyze_late_schedule(schedule)
         self.assertEqual(
             [
                 r.daily_stress_infos[schedule.get_schedule_start().add_days(i)].acc_free_time.value

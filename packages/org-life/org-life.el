@@ -653,6 +653,8 @@ PROCESS is the process under watch, OUTPUT is the output received."
 (cl-defun org-life-agenda-render-general-info (&key general-info
                                                     tasks-dict)
   (let ((stress (plist-get general-info :stress))
+        (pof (plist-get general-info :pof))
+        (workload (plist-get general-info :workload))
         (highest-stress-date (plist-get general-info :highest_stress_date))
         (highest-stress-task (plist-get general-info :highest_stress_task))
         (stress-with-optimal (plist-get general-info :stress_with_optimal))
@@ -660,23 +662,33 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (stress-without-today (plist-get general-info :stress_without_today))
         (etr-with-optimal (plist-get general-info :etr_with_optimal))
         (etr-with-suggested (plist-get general-info :etr_with_suggested))
-        (etr-without-today (plist-get general-info :etr_without_today)))
-    (insert "Stress: "
-            (propertize (org-life-agenda-ratio-to-string stress)
-                        'face 'bold)
+        (etr-without-today (plist-get general-info :etr_without_today))
+        (pof-with-optimal (plist-get general-info :pof_with_optimal))
+        (pof-with-suggested (plist-get general-info :pof_with_suggested))
+        (pof-without-today (plist-get general-info :pof_without_today))
+        (workload-with-optimal (plist-get general-info :workload_with_optimal))
+        (workload-with-suggested (plist-get general-info :workload_with_suggested))
+        (workload-without-today (plist-get general-info :workload_without_today)))
+    (insert (format "Stress: %5s | Failure Probability: %5s | Workload: %5s"
+                    (propertize (org-life-agenda-ratio-to-string stress)
+                                'face 'bold)
+                    (propertize (org-life-agenda-ratio-to-string pof)
+                                'face 'bold)
+                    (propertize (org-life-agenda-ratio-to-string workload)
+                                'face 'bold))
             "\n")
     (org-life-agenda-render-multi-progress-bar
      :bar-width (window-text-width)
-     :progress-list (list (cons stress-with-optimal
+     :progress-list (list (cons pof-with-optimal
                                 'org-life-agenda-stress-best-face)
-                          (cons stress-with-suggested
+                          (cons pof-with-suggested
                                 'org-life-agenda-stress-normal-face)
-                          (cons stress-without-today
+                          (cons pof-without-today
                                 'org-life-agenda-stress-warning-face))
      :marker-list (list (cons 0.5 'org-life-agenda-secondary-face)
                         (cons 0.25 'org-life-agenda-secondary-face)
                         (cons 0.75 'org-life-agenda-secondary-face)
-                        (cons stress nil))
+                        (cons pof nil))
      :fill-char org-life-agenda-progress-fill-char
      :empty-char org-life-agenda-progress-empty-char)
     (insert "\n")
@@ -688,29 +700,41 @@ PROCESS is the process under watch, OUTPUT is the output received."
                     "Worst")
             "\n")
     (insert (format "| %-20s %10s | %10s | %10s |"
-                    "Stress Tomorrow:"
+                    "Failure Probability:"
                     (org-life-agenda-ratio-to-string
-                     stress-with-optimal
+                     pof-with-optimal
                      'org-life-agenda-stress-best-face)
                     (org-life-agenda-ratio-to-string
-                     stress-with-suggested
+                     pof-with-suggested
                      'org-life-agenda-stress-normal-face)
                     (org-life-agenda-ratio-to-string
-                     stress-without-today
+                     pof-without-today
                      'org-life-agenda-stress-warning-face))
             "\n")
     (insert (format "| %-20s %10s | %10s | %10s |"
-                    "Extra Time Ratio:"
+                    "Workload:"
                     (org-life-agenda-ratio-to-string
-                     etr-with-optimal
+                     workload-with-optimal
                      'org-life-agenda-stress-best-face)
                     (org-life-agenda-ratio-to-string
-                     etr-with-suggested
+                     workload-with-suggested
                      'org-life-agenda-stress-normal-face)
                     (org-life-agenda-ratio-to-string
-                     etr-without-today
+                     workload-without-today
                      'org-life-agenda-stress-warning-face))
             "\n")
+    ;; (insert (format "| %-20s %10s | %10s | %10s |"
+    ;;                 "Extra Time Ratio:"
+    ;;                 (org-life-agenda-ratio-to-string
+    ;;                  stress-with-optimal
+    ;;                  'org-life-agenda-stress-best-face)
+    ;;                 (org-life-agenda-ratio-to-string
+    ;;                  stress-with-suggested
+    ;;                  'org-life-agenda-stress-normal-face)
+    ;;                 (org-life-agenda-ratio-to-string
+    ;;                  stress-without-today
+    ;;                  'org-life-agenda-stress-warning-face))
+    ;;         "\n")
     (insert (format (concat "Highest Stress Date: "
                             (propertize "%s"
                                         'face 'org-agenda-date)
@@ -1183,7 +1207,9 @@ PROCESS is the process under watch, OUTPUT is the output received."
                        (org-life-agenda-entry-todo-type task))
                    org-life--task-status-enum-done)
                   (t org-life--task-status-enum-todo))
-         :priority (org-life-agenda-entry-priority task)
+         :priority (- (or (org-life-agenda-entry-priority task)
+                          org-lowest-priority)
+                      org-highest-priority)
          :repeat (let* ((timestamp
                          (org-life-agenda-entry-deadline task))
                         (repeater-type

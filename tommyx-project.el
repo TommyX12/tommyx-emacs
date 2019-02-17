@@ -64,7 +64,9 @@
 	"C" '(projectile-compile-project
 		:which-key "compile project")
 
-  "t" '(projectile-run-term
+  "t" '(ansi-term
+    :which-key "open terminal")
+  "T" '(projectile-run-term
     :which-key "open project terminal")
 
   "e" '(projectile-run-eshell

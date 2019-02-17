@@ -71,9 +71,9 @@ class ProgressCounterTest(unittest.TestCase):
         
         p = ProgressCounter()
         r = p.count(tasks, dated_sessions)
-        self.assertEqual(r.get_done_amount(0), 9)
-        self.assertEqual(r.get_done_amount(1), 30)
-        self.assertEqual(r.get_done_amount(2), 41)
+        self.assertEqual(r.get_amount_done(0), 9)
+        self.assertEqual(r.get_amount_done(1), 30)
+        self.assertEqual(r.get_amount_done(2), 41)
     
 
 if __name__ == '__main__':

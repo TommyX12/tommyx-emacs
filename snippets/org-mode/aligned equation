@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: aligned equation
+# key: aequ
+# --
+\begin{align*}
+\begin{split}
+$0
+\end{split}
+\end{align*}

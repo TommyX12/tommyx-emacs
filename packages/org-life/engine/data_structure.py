@@ -535,6 +535,8 @@ class SchedulingRequest(Protocol):
 class SchedulingGeneralInfo(Protocol):
     properties = {
         'stress': ObjectProperty(Ratio),
+        'pof': ObjectProperty(Ratio),
+        'workload': ObjectProperty(Ratio),
         'extra_time_ratio': ObjectProperty(Ratio),
         'highest_stress_date': ObjectProperty(Date),
         'highest_stress_task': NullableObjectProperty(TaskID),
@@ -544,6 +546,12 @@ class SchedulingGeneralInfo(Protocol):
         'etr_with_optimal': ObjectProperty(Ratio),
         'etr_with_suggested': ObjectProperty(Ratio),
         'etr_without_today': ObjectProperty(Ratio),
+        'pof_with_optimal': ObjectProperty(Ratio),
+        'pof_with_suggested': ObjectProperty(Ratio),
+        'pof_without_today': ObjectProperty(Ratio),
+        'workload_with_optimal': ObjectProperty(Ratio),
+        'workload_with_suggested': ObjectProperty(Ratio),
+        'workload_without_today': ObjectProperty(Ratio),
     }
 
 class ImpossibleTask(Protocol):
@@ -593,6 +601,7 @@ class DailyInfo(Protocol):
 class PlannerResult(Protocol):
     properties = {
         'impossible_tasks': ListProperty(ImpossibleTask),
+        'progress_info': PrimitiveProperty(),
     }
 
 class SchedulingResponse(Protocol):
@@ -627,6 +636,7 @@ class DailyStressInfo(Protocol):
         'acc_free_time': ObjectProperty(Duration),
         'acc_average_stress': ObjectProperty(Ratio),
         'acc_extra_time_ratio': ObjectProperty(Ratio),
+        'acc_failure_prob': ObjectProperty(Ratio),
     }
 
 class StressInfo(Protocol):
@@ -641,45 +651,65 @@ class StressInfo(Protocol):
     }
 
 
-class TaskProressInfo(Protocol):
-    properties = {
-        'done_amount': ObjectProperty(Duration),
-    }
+# class TaskProressInfo(Protocol):
+#     properties = {
+#         'amount_done': ObjectProperty(Duration),
+#     }
 
-    def __init__(self, initial_progress = 0):
-        Protocol.__init__(self)
-        self.done_amount.value = initial_progress
+#     def __init__(self, initial_progress = 0):
+#         Protocol.__init__(self)
+#         self.amount_done.value = initial_progress
     
-class ProgressInfo(Protocol):
-    '''
-    TODO: This is not yet encodable, since it intends to use task id as key.
-    '''
-    properties = {
-        'tasks_progress': ListProperty(TaskProressInfo), # use task id as key
-    }
+#     def copy(self):
+#         return copy.deepcopy(self)
 
-    def __init__(self, num_tasks):
-        Protocol.__init__(self)
-        self.tasks_progress = [TaskProressInfo(0) for _ in range(num_tasks)]
+
+class ProgressInfo():
+    
+    def __init__(self, tasks, amount_left = None, ignore_task_done = False):
+        self.tasks = tasks
+        if amount_left is None:
+            if ignore_task_done:
+                self.amount_left = [task.amount.value for task in tasks]
+
+            else:
+                self.amount_left = [task.amount.value - task.done.value for task in tasks]
+
+        else:
+            self.amount_left = amount_left
 
     def copy(self):
-        return copy.deepcopy(self)
+        return ProgressInfo(self.tasks, self.amount_left[:])
 
-    def get_done_amount(self, task_index):
-        return self.tasks_progress[task_index].done_amount.value
+    def get_amount_done(self, task_index):
+        return self.tasks[task_index].amount.value - self.amount_left[task_index]
     
-    def add_done_amount(self, task_index, done_amount):
-        self.tasks_progress[task_index].done_amount.value += done_amount
+    def add_amount_done(self, task_index, amount_done):
+        self.amount_left[task_index] -= amount_done
     
-    def set_done_amount(self, task_index, done_amount):
-        self.tasks_progress[task_index].done_amount.value = done_amount
+    def get_amount_left(self, task_index):
+        return max(0, self.amount_left[task_index])
+
+    def decrease_amount(self, task_index, amount):
+        self.amount_left[task_index] = self.amount_left[task_index] - amount
+
+    def is_task_done(self, task_index):
+        return self.amount_left[task_index] <= 0
+
+    def add_progress(self, progress_info):
+        '''
+        Note: This assumes that progress_info refers to the same tasks.
+        Also, make sure the other progress_info don't record task.done.
+        '''
+        for task_index in range(len(self.amount_left)):
+            self.add_amount_done(task_index, progress_info.get_amount_done(task_index))
 
     def combine(self, progress_info):
+        '''
+        Note: This assumes that progress_info refers to the same tasks.
+        '''
         result = self.copy()
-        for task_index in range(len(self.tasks_progress)):
-            task_progress = progress_info.tasks_progress[task_index]
-            result.add_done_amount(task_index, task_progress.done_amount.value)
-
+        result.add_progress(progress_info)
         return result
     
 
@@ -717,6 +747,9 @@ class DailySchedule(object):
     def get_usable_time(self):
         return self._usable_time
 
+    def get_used_time(self):
+        return self._used_time
+
     def get_real_usable_time(self):
         return self._real_usable_time
 
@@ -737,7 +770,10 @@ class DailySchedule(object):
 
         id_to_session_dict = self._id_to_session[session.weakness.value][session.type.value]
         if task_id in id_to_session_dict:
-            id_to_session_dict[task_id].amount.value += amount
+            existing_session = id_to_session_dict[task_id]
+            existing_session.amount.value += amount
+            existing_session.to_finish = session.to_finish
+            existing_session.to_deadline = session.to_deadline
 
         else:
             session = session.copy()
@@ -818,6 +854,9 @@ class Schedule(object):
 
     def is_overlimit(self, date):
         return self.daily_schedules[date].is_overlimit()
+
+    def get_used_time(self, date):
+        return self.daily_schedules[date].get_used_time()
 
     def get_usable_time(self, date):
         return self.daily_schedules[date].get_usable_time()

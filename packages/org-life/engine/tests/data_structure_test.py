@@ -70,22 +70,26 @@ class DataStructureTest(unittest.TestCase):
         self.assertEqual(s2.amount.value, 10)
 
     def test_progress_info(self):
-        p1 = ProgressInfo(5)
-        p1.add_done_amount(1, 5)
-        p1.add_done_amount(2, 10)
-        p1.add_done_amount(3, 7)
-        p2 = ProgressInfo(5)
-        p2.set_done_amount(2, 2)
-        p2.add_done_amount(3, 8)
-        p2.add_done_amount(4, 1)
+        task = Task()
+        task.amount.value = 100
+        task.done.value = 20
+        tasks = [task for i in range(5)]
+        p1 = ProgressInfo(tasks)
+        p1.add_amount_done(1, 5)
+        p1.add_amount_done(2, 10)
+        p1.add_amount_done(3, 7)
+        p2 = ProgressInfo(tasks, None, True)
+        p2.add_amount_done(2, 2)
+        p2.add_amount_done(3, 8)
+        p2.add_amount_done(4, 1)
         p3 = p1.combine(p2)
-        self.assertEqual(p1.get_done_amount(0), 0)
-        self.assertEqual(p1.get_done_amount(2), 10)
-        self.assertEqual(p3.get_done_amount(0), 0)
-        self.assertEqual(p3.get_done_amount(1), 5)
-        self.assertEqual(p3.get_done_amount(2), 12)
-        self.assertEqual(p3.get_done_amount(3), 15)
-        self.assertEqual(p3.get_done_amount(4), 1)
+        self.assertEqual(p1.get_amount_done(0), 20)
+        self.assertEqual(p1.get_amount_done(2), 30)
+        self.assertEqual(p3.get_amount_done(0), 20)
+        self.assertEqual(p3.get_amount_done(1), 25)
+        self.assertEqual(p3.get_amount_done(2), 32)
+        self.assertEqual(p3.get_amount_done(3), 35)
+        self.assertEqual(p3.get_amount_done(4), 21)
 
 
 if __name__ == '__main__':

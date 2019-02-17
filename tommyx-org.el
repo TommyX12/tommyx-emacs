@@ -76,6 +76,13 @@
         :html-scale 1.0
         :matchers ("begin" "$1" "$" "$$" "\\(" "\\[")))
 (setq org-preview-latex-default-process 'dvipng)
+(setq org-format-latex-header-default
+      org-format-latex-header)
+(setq org-format-latex-header
+      (concat
+       org-format-latex-header-default
+       "\n\\DeclareMathOperator*{\\argmax}{arg\\,max}"
+       "\n\\DeclareMathOperator*{\\argmin}{arg\\,min}"))
 ;; (setq org-preview-latex-default-process 'imagemagick)
 
 ;; clocking

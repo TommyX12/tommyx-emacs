@@ -14,8 +14,8 @@ class ProgressCounter(object):
 
         task_index_finder = TaskIndexFinder()
         
-        acc = ProgressInfo(len(tasks))
-        result = ProgressInfo(len(tasks))
+        acc = ProgressInfo(tasks, None, True)
+        result = ProgressInfo(tasks, None, True)
 
         session_index = 0
 
@@ -29,7 +29,7 @@ class ProgressCounter(object):
             while session_index < len(dated_sessions) and dated_sessions[session_index].date < next_event.date:
                 task_id = dated_sessions[session_index].session.id.value
                 for task_index in task_index_finder.get_task_indices(task_id):
-                    acc.add_done_amount(
+                    acc.add_amount_done(
                         task_index,
                         dated_sessions[session_index].session.amount.value
                     )
@@ -37,16 +37,16 @@ class ProgressCounter(object):
                 session_index += 1
                 
             if next_event.event_type == TaskEventType.TASK_START:
-                result.set_done_amount(
+                result.add_amount_done(
                     next_event.task_index,
-                    acc.get_done_amount(next_event.task_index)
+                    acc.get_amount_done(next_event.task_index)
                 )
                 task_index_finder.add(next_event.task_id, next_event.task_index)
 
             elif next_event.event_type == TaskEventType.TASK_END:
-                result.set_done_amount(
+                result.add_amount_done(
                     next_event.task_index,
-                    acc.get_done_amount(next_event.task_index) - result.get_done_amount(next_event.task_index)
+                    acc.get_amount_done(next_event.task_index) - result.get_amount_done(next_event.task_index)
                 )
                 task_index_finder.remove(next_event.task_id, next_event.task_index)
 

@@ -1,0 +1,22 @@
+# -*- mode: snippet -*-
+# name: writeup template
+# key: writeup
+# --
+\documentclass[12pt]{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage[left=${1:0.65}in, right=$1in, top=${2:0.75}in, bottom=$2in]{geometry}
+
+\title{$3}
+\author{Tommy Xiang}
+\date{${4:`(format-time-string "%Y-%m-%d")`}}
+
+\begin{document}
+
+\maketitle
+
+$0
+
+\end{document}

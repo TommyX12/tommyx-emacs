@@ -9,6 +9,9 @@ class StressAnalyzer(object):
     def __init__(self):
         pass
 
+    def set_logger(self, logger):
+        self.logger = logger
+
     def stress_formula(self, used_ratio, extra_time_ratio):
         '''
         TODO: enhance this
@@ -39,11 +42,118 @@ class StressAnalyzer(object):
 
         return result
 
-    def analyze(self, schedule, bias = 0):
+    def analyze_failure_probability(
+            self,
+            tasks,
+            tasks_mask,
+            schedule,
+            progress_info,
+            probability_estimator,
+            without_today = False,
+        ):
+        '''
+        TODO
+        '''
+
+        p_estimator = probability_estimator
+        
+        # sort tasks by deadline
+        sorted_tasks = [(i, tasks[i]) for i in range(len(tasks))]
+        sorted_tasks.sort(key = lambda x : x[1].end)
+
+        # compute link from index back to order
+        # self.index_to_order = [0 for _ in range(len(tasks))]
+        # for i in range(len(self.sorted_tasks)):
+        #     self.index_to_order[self.sorted_tasks[i][0]] = i
+    
+        # initialization
+        sorted_task_pressure = [0 for _ in range(len(sorted_tasks))]
+        sorted_task_total_time = [0 for _ in range(len(sorted_tasks))]
+        
+        # compute early schedule
+        start_day = schedule.get_schedule_start().add_days(-1) # -1 is useful
+        end_day = schedule.get_schedule_end()
+        schedule_days = start_day.days_to(end_day)
+        schedule_free_time_until = [0 for _ in range(schedule_days)]
+        for i in range(1, schedule_days):
+            if i == 1 and without_today:
+                schedule_free_time_until[i] = 0
+                
+            else:
+                schedule_free_time_until[i] = schedule.get_free_time(start_day.add_days(i)) + schedule_free_time_until[i - 1]
+
+        # compute total & variable time
+        prev_variable_time = 0
+        for i in range(len(sorted_tasks)):
+            if not tasks_mask[sorted_tasks[i][0]]:
+                continue
+
+            variable_time = progress_info.get_amount_left(sorted_tasks[i][0]) + prev_variable_time
+            sorted_task_pressure[i] = variable_time
+            prev_variable_time = variable_time
+            
+        for i in range(len(sorted_tasks)):
+            due = max(1, start_day.days_to(sorted_tasks[i][1].end))
+            if due < schedule_days:
+                sorted_task_total_time[i] = schedule_free_time_until[due]
+
+            else:
+                sorted_task_total_time[i] = math.inf
+
+        # def debug(i):
+        #     self.logger.log("prob {}, pres {}, total {}".format(
+        #         p_estimator.get_success_probability(
+        #             sorted_tasks[i][1],
+        #             sorted_task_pressure[i],
+        #             sorted_task_total_time[i]
+        #         ),
+        #         sorted_task_pressure[i],
+        #         sorted_task_total_time[i]
+        #     ))
+        #     return None
+
+        pof = max([
+            1 - p_estimator.get_success_probability(
+                sorted_tasks[i][1],
+                sorted_task_pressure[i],
+                sorted_task_total_time[i]
+            )
+            for i in range(len(sorted_tasks))
+            if tasks_mask[sorted_tasks[i][0]] # and debug(i) is None
+        ])
+        # self.logger.log(str([
+        #     (1 - p_estimator.get_success_probability(
+        #         sorted_tasks[i][1],
+        #         sorted_task_pressure[i],
+        #         sorted_task_total_time[i]
+        #     ), sorted_tasks[i][1].end.encode(),
+        #      sorted_task_pressure[i],
+        #      sorted_task_total_time[i]
+        #     )
+        #     for i in range(len(sorted_tasks))
+        #     if tasks_mask[sorted_tasks[i][0]] # and debug(i) is None
+        # ]))
+
+        highest_workload = -math.inf
+        schedule_start = schedule.get_schedule_start()
+        highest_workload_date = schedule_start
+        for i in range(len(sorted_tasks)):
+            if not tasks_mask[sorted_tasks[i][0]]:
+                continue
+
+            workload = sorted_task_pressure[i] / sorted_task_total_time[i] if sorted_task_total_time[i] != 0 else math.inf
+            if workload > highest_workload and not sorted_tasks[i][1].end.is_max():
+                highest_workload = workload
+                highest_workload_date = max(schedule_start, sorted_tasks[i][1].end)
+        
+        return pof, highest_workload, highest_workload_date
+
+    def analyze_late_schedule(self, schedule, bias = 0):
         '''
         Precondition: Sessions in schedule are stress-contributing.
             This means it is the least optimal schedule and has to be done.
         
+        TODO: This is wrong
         TODO: Need to test bias
         TODO: Need to test highest_stress_date
         '''
