@@ -323,3 +323,125 @@ class ARPSchedulingPolicy(SchedulingPolicy):
     def delete(self, task_index):
         if task_index in self.valid_tasks:
             self.valid_tasks.remove(task_index)
+
+
+class RLModel(object):
+
+    def __init__(self):
+        pass
+
+    def get_score(self):
+        raise NotImplementedError()
+
+    def get_loss(self):
+        raise NotImplementedError()
+
+
+class RLSchedulingPolicy(object):
+
+    def __init__(self):
+        raise NotImplementedError()
+
+    def set_logger(self, logger):
+        self.logger = logger
+
+    def initialize(self, direction, tasks, progress_info, schedule):
+        raise NotImplementedError()
+
+    def get_max_session_duration(self):
+        raise NotImplementedError()
+
+    def get_next(self):
+        raise NotImplementedError()
+
+    def add(self, task_index, task, task_event):
+        raise NotImplementedError()
+    
+    def update(self, task_index, date, next_date, duration):
+        raise NotImplementedError()
+
+    def delete(self, task_index):
+        raise NotImplementedError()
+
+    def train(self):
+        import autograd.numpy as np
+        from autograd import grad
+        from autograd.misc.optimizer import adam
+
+        NUM_TASKS = 100
+        TASK_LENGTH_MEAN = 0.5
+        TASK_LENGTH_STD = 1.0
+        STEPS = 500
+
+        def get_initial_features():
+            raise NotImplementedError()
+
+        def generate_problem():
+            for i in range(NUM_TASKS):
+                start = np.random.randint(0, STEPS - 1)
+                end = np.random.randint(0, STEPS)
+                if start > end:
+                    start, end = end, start
+
+                if end == start:
+                    end = end + 1
+
+                amount = max(0, np.random.normal(TASK_LENGTH_MEAN, TASK_LENGTH_STD) * (end - start))
+
+            initial_features = get_initial_features()
+
+            return steps, initial_features
+
+        def update_features(old_features, action):
+            raise NotImplementedError()
+
+        def get_utility(features, loss_mask):
+            raise NotImplementedError()
+
+        def activation(z):
+            return np.tanh(z) * 0.5 + 0.5
+        
+        def model(data, params):
+            output = data
+            for W, b in range(len(params)):
+                output = activation(np.matmul(output, W) + b)
+
+            # TODO in this implementation, last layer also have tanh
+            return output
+
+        def get_total_utility(problem, params):
+            total_utility = 0
+            steps, features = problem
+            for step, mask, loss_mask in steps:
+                scores = model(features, params)
+                scores *= mask # remove ones that are not doable
+                action = np.argmax(scores)
+                features = update_features(features, action)
+                utility = get_utility(features, loss_mask)
+                total_utility = total_utility + utility
+
+            return total_utility
+
+        num_iterations = 1000
+        problems = [generate_problem() for _ in num_iterations]
+        
+        def objective_function(params, iteration):
+            problem = problems[iteration]
+            return get_total_utility(problem, params)
+
+        def optimizer_callback(params, iteration, gradient):
+            raise NotImplementedError()
+
+        # TODO start with simple implementation (don't think about gradient).
+        # then see if end-to-end works. if not, try manual (REINFORCE) gradient.
+
+        objective_gradient = grad(objective_function)
+        trained_params = adam(
+            objective_gradient,
+            initial_params,
+            step_size = 0.01,
+            num_iters = num_iterations,
+            callback = optimizer_callback
+        )
+
+
