@@ -834,6 +834,8 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (add-hook 'org-mode-hook (lambda () (ycmd-eldoc-mode -1)))
 (add-hook 'racket-mode-hook (lambda () (ycmd-eldoc-mode -1)))
 (add-hook 'haskell-mode-hook (lambda () (ycmd-eldoc-mode -1)))
+; c++
+(evil-define-key 'normal c++-mode-map (kbd "C-]") 'ycmd-goto) ; goto
 ; java
 (add-to-list 'ycmd-file-type-map '(java-mode "java")) ; file type detection
 (evil-define-key 'normal java-mode-map (kbd "C-]") 'ycmd-goto) ; goto

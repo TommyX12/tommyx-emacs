@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: simple printf
+# key: p
+# --
+printf("`(line-number-at-pos)`: $1\n");$0

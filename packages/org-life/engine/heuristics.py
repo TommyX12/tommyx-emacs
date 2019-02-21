@@ -340,7 +340,7 @@ class RLModel(object):
 class RLSchedulingPolicy(object):
 
     def __init__(self):
-        raise NotImplementedError()
+        pass
 
     def set_logger(self, logger):
         self.logger = logger
@@ -366,82 +366,220 @@ class RLSchedulingPolicy(object):
     def train(self):
         import autograd.numpy as np
         from autograd import grad
-        from autograd.misc.optimizer import adam
+        from autograd.misc.optimizers import adam
 
-        NUM_TASKS = 100
-        TASK_LENGTH_MEAN = 0.5
-        TASK_LENGTH_STD = 1.0
-        STEPS = 500
+        NUM_TASKS = 10
+        TASK_LENGTH_MEAN = 0.15
+        TASK_LENGTH_STD = 0.2
+        PERCENTAGE_STARTS_NOW = 0.5
+        MIN_UTILITY = 1
+        MAX_UTILITY = 10
+        NUM_STEPS = 100
 
-        def get_initial_features():
-            raise NotImplementedError()
+        def softmax(x):
+            e_x = np.exp(x - np.max(x))
+            return e_x / e_x.sum(axis = 0)
+
+        def get_initial_features(tasks):
+            '''
+            - amount left
+            - time to deadline
+            - utility
+            
+            note that they are column vectors.
+            '''
+            
+            amount = np.array([
+                amount
+                for start, end, amount, utility in tasks
+            ]).reshape((-1, 1))
+
+            days_to_deadline = np.array([
+                end
+                for start, end, amount, utility in tasks
+            ]).reshape((-1, 1))
+
+            utility = np.array([
+                utility
+                for start, end, amount, utility in tasks
+            ]).reshape((-1, 1))
+
+            return amount, days_to_deadline, utility
+
+        def update_features(old_features, scores, mask):
+            old_amount, old_days_to_deadline, old_utility = old_features
+            
+            amount = old_amount + (mask.reshape((-1, 1)) * scores.reshape((-1, 1)))
+            days_to_deadline = old_days_to_deadline - 1
+            utility = old_utility
+
+            return amount, days_to_deadline, utility
 
         def generate_problem():
+            tasks = []
+            
             for i in range(NUM_TASKS):
-                start = np.random.randint(0, STEPS - 1)
-                end = np.random.randint(0, STEPS)
+                start = 0 if np.random.rand() < PERCENTAGE_STARTS_NOW else np.random.randint(0, NUM_STEPS - 2)
+                end = np.random.randint(0, NUM_STEPS - 1)
                 if start > end:
                     start, end = end, start
 
                 if end == start:
                     end = end + 1
 
-                amount = max(0, np.random.normal(TASK_LENGTH_MEAN, TASK_LENGTH_STD) * (end - start))
+                amount = np.random.normal(TASK_LENGTH_MEAN, TASK_LENGTH_STD) * (end - start)
+                if amount < 0:
+                    amount = -amount
 
-            initial_features = get_initial_features()
+                utility = MIN_UTILITY + np.random.rand() * (MAX_UTILITY - MIN_UTILITY)
+
+                tasks.append((start, end, amount, utility))
+
+            task_points = []
+
+            for i in range(len(tasks)):
+                start, end, amount, utility = tasks[i]
+                
+                # time, is_end, task_index
+                task_points.append((start, False, i))
+                task_points.append((end + 1, True, i))
+
+            task_points.sort()
+
+            steps = []
+
+            j = 0
+
+            mask_list = [0 for _ in range(len(tasks))]
+
+            for i in range(NUM_STEPS):
+                loss_mask_list = [0 for _ in range(len(tasks))]
+                
+                while j < len(task_points) and task_points[j][0] <= i:
+                    time, is_end, task_index = task_points[j]
+                    if is_end:
+                        mask_list[task_index] = 0
+                        loss_mask_list[task_index] = 1
+
+                    else: # is start
+                        mask_list[task_index] = 1
+
+                    j += 1
+
+                mask = np.array(mask_list)
+
+                # use this before applying action
+                utility_mask = np.array(loss_mask_list)
+
+                steps.append((mask, utility_mask))
+
+            initial_features = get_initial_features(tasks)
 
             return steps, initial_features
 
-        def update_features(old_features, action):
-            raise NotImplementedError()
-
-        def get_utility(features, loss_mask):
-            raise NotImplementedError()
+        def get_utility(initial_features, features, utility_mask):
+            initial_amount = initial_features[0]
+            amount, days_to_deadline, utility = features
+            return np.sum(utility_mask * np.maximum(0, amount / initial_amount))
 
         def activation(z):
             return np.tanh(z) * 0.5 + 0.5
+
+        def get_initial_params(layer_shapes):
+            params = []
+            for i in range(len(layer_shapes) - 1):
+                W = np.random.normal(0, 1 / layer_shapes[i], (layer_shapes[i], layer_shapes[i + 1]))
+                b = np.random.normal(0, 1 / layer_shapes[i], (layer_shapes[i + 1],))
+                params.append((W, b))
+
+            return params
         
         def model(data, params):
             output = data
-            for W, b in range(len(params)):
+            for W, b in params:
                 output = activation(np.matmul(output, W) + b)
 
             # TODO in this implementation, last layer also have tanh
-            return output
+            return softmax(output)
 
         def get_total_utility(problem, params):
             total_utility = 0
-            steps, features = problem
-            for step, mask, loss_mask in steps:
-                scores = model(features, params)
-                scores *= mask # remove ones that are not doable
-                action = np.argmax(scores)
-                features = update_features(features, action)
-                utility = get_utility(features, loss_mask)
+            steps, initial_features = problem
+            features = initial_features
+            for mask, utility_mask in steps:
+                utility = get_utility(initial_features, features, utility_mask)
                 total_utility = total_utility + utility
+
+                scores = model(np.concatenate(features, axis = 1), params).reshape((-1,))
+                features = update_features(features, scores, mask)
 
             return total_utility
 
-        num_iterations = 1000
-        problems = [generate_problem() for _ in num_iterations]
+        NUM_PROBLEMS = 5
+        NUM_ITERATIONS = 1000
+        LAYER_SHAPES = [3, 8, 1]
+        
+        problems = [generate_problem() for _ in range(NUM_PROBLEMS)]
+        problems *= NUM_ITERATIONS // NUM_PROBLEMS
+        np.random.shuffle(problems)
+
+        initial_params = get_initial_params(LAYER_SHAPES)
         
         def objective_function(params, iteration):
             problem = problems[iteration]
             return get_total_utility(problem, params)
 
+        print(objective_function(initial_params, 0))
+
+        PERCENTAGE_STARTS_NOW = 1
+        
+        reference_problem = generate_problem()
+
+        def print_solution(problem, params):
+            steps, initial_features = problem
+            features = initial_features
+            fake_score = np.zeros(features[0].shape[0])
+
+            string = ""
+
+            for i in range(features[0].shape[0]):
+                print([feature[i, 0] for feature in features])
+
+            task = 0
+            for mask, utility_mask in steps:
+                for i in range(utility_mask.shape[0]):
+                    if utility_mask[i] > 0:
+                        string += " {}] ".format(i)
+
+                scores = model(np.concatenate(features, axis = 1), params).reshape((-1,))
+                fake_score[task] = 0
+                task = np.argmax(scores * mask)
+                string += "{}".format(task)
+                fake_score[task] = 1
+                features = update_features(features, fake_score, mask)
+
+            print(string)
+
         def optimizer_callback(params, iteration, gradient):
-            raise NotImplementedError()
+            print_solution(reference_problem, params)
 
         # TODO start with simple implementation (don't think about gradient).
         # then see if end-to-end works. if not, try manual (REINFORCE) gradient.
+
+        # TODO mask the tasks when task already finished.
+
+        # TODO other formulations
 
         objective_gradient = grad(objective_function)
         trained_params = adam(
             objective_gradient,
             initial_params,
-            step_size = 0.01,
-            num_iters = num_iterations,
+            step_size = 0.1,
+            num_iters = NUM_ITERATIONS,
             callback = optimizer_callback
         )
+
+
+RLSchedulingPolicy().train()
 
 
