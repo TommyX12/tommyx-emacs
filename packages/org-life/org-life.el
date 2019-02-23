@@ -264,10 +264,11 @@ PROCESS is the process under watch, OUTPUT is the output received."
 
 ;; Agenda helper
 
-(defun org-life-agenda-ratio-to-string (ratio &optional face)
-  (let ((text (if (stringp ratio)
-                  ratio
-                (format "%.2f" ratio))))
+(defun org-life-agenda-ratio-to-string (ratio &optional face use-percent)
+  (let ((text (cond
+               ((stringp ratio) ratio)
+               (use-percent (format "%.0f%%" (* 100 ratio)))
+               (t (format "%.2f" ratio)))))
     (if face
         (propertize text 'face face)
       text)))
@@ -674,7 +675,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
                                 'face 'bold)
                     (propertize (org-life-agenda-ratio-to-string pof)
                                 'face 'bold)
-                    (propertize (org-life-agenda-ratio-to-string workload)
+                    (propertize (org-life-agenda-ratio-to-string workload nil t)
                                 'face 'bold))
             "\n")
     (org-life-agenda-render-multi-progress-bar
@@ -715,13 +716,13 @@ PROCESS is the process under watch, OUTPUT is the output received."
                     "Workload:"
                     (org-life-agenda-ratio-to-string
                      workload-with-optimal
-                     'org-life-agenda-stress-best-face)
+                     'org-life-agenda-stress-best-face t)
                     (org-life-agenda-ratio-to-string
                      workload-with-suggested
-                     'org-life-agenda-stress-normal-face)
+                     'org-life-agenda-stress-normal-face t)
                     (org-life-agenda-ratio-to-string
                      workload-without-today
-                     'org-life-agenda-stress-warning-face))
+                     'org-life-agenda-stress-warning-face t))
             "\n")
     ;; (insert (format "| %-20s %10s | %10s | %10s |"
     ;;                 "Extra Time Ratio:"

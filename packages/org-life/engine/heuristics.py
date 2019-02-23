@@ -91,6 +91,12 @@ class GaussianProbabilityEstimator(ProbabilityEstimator):
 
     def get_success_probability(self, task, variable_time, total_time):
         # task is unused in our estimate
+
+        variable_time = max(0, variable_time)
+        total_time = max(0, total_time)
+
+        if variable_time == 0:
+            return 1.0
         
         if total_time == math.inf:
             return 1.0
@@ -580,6 +586,6 @@ class RLSchedulingPolicy(object):
         )
 
 
-RLSchedulingPolicy().train()
+# RLSchedulingPolicy().train()
 
 

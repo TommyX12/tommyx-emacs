@@ -233,11 +233,11 @@
 	`(header-line ((,class :inherit (mode-line))))
 	`(highlight ((,class (:foreground ,base :background ,highlight))))
 	`(hl-line ((,class (:background ,bg2))))
-	`(isearch ((,class (:foreground ,bg1 :background ,mat))))
-	`(lazy-highlight ((,class (:background ,blue-bg-s :underline (:color ,cyan :style line)))))
+	`(isearch ((,class (:foreground ,mat :inverse-video t))))
+	`(lazy-highlight ((,class (:inverse-video t))))
 	`(link ((,class (:foreground ,comment :underline t))))
 	`(link-visited ((,class (:foreground ,comp :underline t))))
-	`(match ((,class (:background ,highlight :foreground ,mat))))
+	`(match ((,class (:foreground ,mat :inverse-video t))))
 	`(minibuffer-prompt ((,class (:inherit bold :foreground ,keyword))))
 	`(page-break-lines ((,class (:foreground ,act2))))
 	`(region ((,class (:background ,highlight))))
@@ -254,9 +254,9 @@
 	`(aw-leading-char-face ((,class (:foreground ,func :weight bold :height 2.0 :box (:line-width 1 :color ,keyword :style released-button)))))
 
 ;;;;; ahs
-	`(ahs-face ((,class (:background ,highlight))))
-	`(ahs-plugin-defalt-face ((,class (:background ,blue-bg :underline (:color ,blue :style line)))))
-	`(ahs-definition-face ((,class (:background ,green-bg-s))))
+	`(ahs-face ((,class (:background ,blue-bg-s :underline (:color ,blue :style line)))))
+	`(ahs-plugin-defalt-face ((,class (:background ,blue-bg :underline (:color ,cyan :style line)))))
+	`(ahs-definition-face ((,class (:background ,green-bg-s :underline (:color ,green :style line)))))
 	`(ahs-plugin-whole-buffer-face ((,class (:background ,mat :foreground ,bg1))))
 
 ;;;;; all the icons

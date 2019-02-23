@@ -46,6 +46,9 @@
 	:states '(motion normal)
   :prefix "SPC p"
 
+	"f" '(counsel-projectile-git-grep
+		:which-key "git grep")
+  
 	"p" '(counsel-projectile-switch-project
 		:which-key "switch project")
 	"w" '(persp-switch

@@ -233,6 +233,7 @@
 (add-hook 'text-mode-hook 'highlight-indentation-mode)
 
 (require 'origami)
+(require 'crosshairs)
 ;; (use-package origami :ensure t)
 (use-package volatile-highlights :ensure t)
 (use-package evil-goggles :ensure t)
@@ -610,6 +611,13 @@
 ; language specific
 
 (use-package auctex :ensure t)
+(use-package kivy-mode :ensure t)
+(use-package cc-mode :ensure t
+  :config
+  (setq c-default-style
+        '((java-mode . "java")
+          (awk-mode . "awk")
+          (other . "linux"))))
 (use-package ess :ensure t
   :config
   (add-hook 'ess-r-mode-hook
@@ -878,8 +886,16 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq-default evil-symbol-word-search t)
 ; auto center after search
 (defun my-center-line (&rest _) (evil-scroll-line-to-center nil))
-;; (advice-add 'evil-ex-search-next :after #'my-center-line)
-;; (advice-add 'evil-ex-search-previous :after #'my-center-line)
+(defun flash-cursor (&rest _)
+  (hl-line-highlight)
+  (let ((ov (make-overlay (point) (- (point) 1))))
+       (overlay-put ov 'priority 9999)
+	     (overlay-put ov 'window (selected-window))
+	     (overlay-put ov 'face 'cursor)
+       (sit-for 1)
+       (delete-overlay ov)))
+;; (advice-add 'evil-ex-search-next :after #'flash-cursor)
+;; (advice-add 'evil-ex-search-previous :after #'flash-cursor)
 (advice-add 'evil-ex-search-word-forward :after #'evil-ex-search-previous)
 (advice-add 'evil-ex-search-unbounded-word-forward :after #'evil-ex-search-previous)
 (advice-add 'evil-ex-search-word-backward :after #'evil-ex-search-next)
@@ -1243,6 +1259,12 @@ Useful for a search overview popup."
   (interactive)
   (let ((sort-fold-case t))
     (call-interactively #'sort-lines)))
+(evil-define-command evil-ex-search-next-flash () :repeat nil
+  (evil-ex-search-next)
+  (flash-cursor))
+(evil-define-command evil-ex-search-previous-flash () :repeat nil
+  (evil-ex-search-previous)
+  (flash-cursor))
 (evil-define-motion fast-move-up () :type exclusive
 	(evil-previous-visual-line 5))
 (evil-define-motion fast-move-down () :type exclusive
@@ -1736,12 +1758,16 @@ command (ran after) is mysteriously incorrect."
 ; repeat last ex command
 (evil-define-key 'motion 'global ",." "@:")
 ; save all
-(evil-define-key 'motion 'global ",wa" 'evil-write-all)
+(evil-define-key 'motion 'global ",DA" 'evil-write-all)
 ; start cmd
 (evil-define-key 'motion 'global ",;" (lambda () (interactive) (start-process-shell-command (format "cmd(%s)" default-directory) nil "start cmd")))
 ; sane tabbing
 (evil-define-key 'insert 'global (kbd "TAB") 'tab-to-tab-stop)
 (evil-define-key 'insert 'global (kbd "<tab>") 'tab-to-tab-stop)
+; highlight after searching
+(dolist (state '(motion normal visual))
+  (evil-define-key state 'global (kbd "n") 'evil-ex-search-next-flash)
+  (evil-define-key state 'global (kbd "N") 'evil-ex-search-previous-flash))
 ; use t instead of * for symbol search
 (evil-define-key 'normal 'global "F" (lambda () (interactive) (save-excursion (evil-ex-search-word-forward))))
 (evil-define-key 'normal 'global "gF" (lambda () (interactive) (save-excursion (evil-ex-search-unbounded-word-forward))))
@@ -2170,6 +2196,8 @@ command (ran after) is mysteriously incorrect."
 	"k" (lambda () (interactive) (call-with-command-hooks 'evil-normal-state "jk"))
 	; jh delete word
 	"h" (lambda () (interactive) (call-with-command-hooks 'evil-delete-backward-word "jh"))
+	; jg move to start of line
+	"g" (lambda () (interactive) (call-with-command-hooks 'evil-first-non-blank "jg"))
 	; jl move to end of line
 	"l" (lambda () (interactive) (call-with-command-hooks 'move-end-of-line "jl"))
 	; jp complete
