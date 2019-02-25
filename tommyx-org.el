@@ -288,6 +288,9 @@ regular expression,
 	:prefix "SPC"
 	:non-normal-prefix "M-SPC"
 
+  "oh" '(helm-org-rifle-org-directory
+    :which-key "helm org rifle")
+
 	"of" '(counsel-org-goto-all ; go to heading of opened org files
 		:which-key "org goto all")
 

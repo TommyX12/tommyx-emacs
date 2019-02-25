@@ -20,6 +20,8 @@
 (require 'dash)
 (require 'spaceline)
 (require 'type-break)
+(require 'url)
+
 ;; (require 'symon)
 
 ;;
@@ -90,6 +92,16 @@
   :type 'integer
   :group 'companion)
 
+(defcustom companion-qod-refresh-time (* 8 60 60)
+  "*Quote-of-the-day refresh interval in seconds."
+  :type 'float
+  :group 'companion)
+
+(defcustom companion-qod-max-string-length 120
+  "*Quote-of-the-day max string length in companion notification."
+  :type 'integer
+  :group 'companion)
+
 ;;
 ;; Faces
 ;;
@@ -122,6 +134,9 @@
 (defvar companion-notif--stack nil)
 (defvar companion-notif--streams nil)
 (defvar companion-notif--screen-time 0)
+
+(defvar companion-qod--last-displayed nil)
+(defvar companion-qod--last-quote "")
 
 ;;
 ;; Major mode definition
@@ -359,9 +374,10 @@ Companion buffer is BUFFER."
 		(content (plist-get info :message))
 		(severity (plist-get info :severity))
 		(data (plist-get info :data))
-		(duration (and (not (plist-get info :persistent)) (or
-			(when (listp data) (plist-get data :duration))
-			companion-notif-default-duration)))
+		(duration (and
+               (not (plist-get info :persistent))
+               (or (when (listp data) (plist-get data :duration))
+			             companion-notif-default-duration)))
 		(id (plist-get info :id))
 		(stream-name (when (listp data) (plist-get data :stream)))
 		(stream (when stream-name (plist-get companion-notif--streams stream-name)))
@@ -446,6 +462,55 @@ Companion buffer is BUFFER."
 	(let ((window-safe-min-height 0) (window-resize-pixelwise t))
 		(message (number-to-string (* n (or powerline-height (frame-char-height)))))
 		(window-resize (selected-window) (round (- (* n (or powerline-height (frame-char-height))) (window-pixel-height) -2)) nil 'safe t)))
+
+(defun companion-qod-callback (status)
+  "Callback for ‘companion-fetch-qod’ command.
+Argument STATUS is the http status of the request."
+  (search-forward "\n\n")
+  (if (not status)
+      (let* ((quote-json (json-read))
+             (quotes (assoc-default
+                      'quotes (assoc-default
+                               'contents quote-json)))
+             (q (aref quotes 0))
+             (quote-string (assoc-default 'quote q))
+             (quote-author (assoc-default 'author q))
+             (quote* (format "%s - %s"
+                             quote-string
+                             quote-author)))
+        (setq companion-qod--last-quote quote*)
+        (message quote*)
+        (companion-notif--alert-notifier
+         (list :message (substring quote*
+                                   0 (min companion-qod-max-string-length
+                                          (length quote*)))
+               :severity 'trivial
+               :persistent t)))
+    (message "Error fetching quote: %s"
+             (assoc-default 'message
+                            (assoc-default 'error (json-read))))))
+
+(defun companion-echo-last-qod ()
+  (interactive)
+  (message companion-qod--last-quote))
+
+(defun companion-fetch-qod ()
+  "Fetches quote of the day from theysaidso.com.
+Taken from https://github.com/narendraj9/quoted-scratch."
+  (interactive)
+  (with-current-buffer
+      (let ((url-request-method "GET")
+            (qod-service-url "http://quotes.rest/qod.json"))
+        (url-retrieve (url-generic-parse-url qod-service-url)
+                      'companion-qod-callback))))
+
+(defun companion-qod--tick ()
+  (let ((time (time-to-seconds)))
+    (when (or (null companion-qod--last-displayed)
+              (> (- time companion-qod--last-displayed)
+                 companion-qod-refresh-time))
+      (companion-fetch-qod)
+      (setq companion-qod--last-displayed time))))
 
 ;;
 ;; Buffer methods
@@ -632,6 +697,7 @@ Companion buffer is BUFFER."
 (add-hook 'window-configuration-change-hook 'companion-update)
 
 (run-at-time 0 3 'companion-notif--tick)
+(run-at-time 0 60 'companion-qod--tick)
 
 
 (provide 'companion)

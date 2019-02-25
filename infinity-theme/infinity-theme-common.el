@@ -960,7 +960,7 @@
 ;;;;; swiper
 	`(swiper-line-face ((,class (:background ,highlight))))
 	`(swiper-match-face-1 ((,class (:inherit bold))))
-	`(swiper-match-face-2 ((,class (:foreground ,head1 :background ,blue-bg-s :underline t :inherit bold))))
+	`(swiper-match-face-2 ((,class (:inverse-video t))))
 	`(swiper-match-face-3 ((,class (:foreground ,head4 :background ,blue-bg-s :underline t))))
 	`(swiper-match-face-4 ((,class (:foreground ,head3 :background ,blue-bg-s :underline t))))
 

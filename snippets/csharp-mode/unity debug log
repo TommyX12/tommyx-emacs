@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: unity debug log
+# key: dlog
+# --
+Debug.Log("$1 = " + ${1:a});$0

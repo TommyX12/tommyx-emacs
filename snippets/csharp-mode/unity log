@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: unity log
+# key: log
+# --
+Debug.Log(${2:"$1"});$0

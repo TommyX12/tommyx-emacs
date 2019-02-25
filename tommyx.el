@@ -115,6 +115,7 @@
 (use-package ht :ensure t)
 (use-package s :ensure t)
 (use-package cl-lib :ensure t)
+(use-package htmlize :ensure t)
 (use-package request :ensure t
 	:config
 	(setq request-backend 'url-retrieve) ; curl is slow on windows
@@ -1758,7 +1759,7 @@ command (ran after) is mysteriously incorrect."
 ; repeat last ex command
 (evil-define-key 'motion 'global ",." "@:")
 ; save all
-(evil-define-key 'motion 'global ",DA" 'evil-write-all)
+(evil-define-key 'motion 'global ",wa" 'evil-write-all)
 ; start cmd
 (evil-define-key 'motion 'global ",;" (lambda () (interactive) (start-process-shell-command (format "cmd(%s)" default-directory) nil "start cmd")))
 ; sane tabbing
@@ -1878,6 +1879,10 @@ command (ran after) is mysteriously incorrect."
 (evil-define-key 'normal 'global ",s" (lambda () (interactive) (evil-ex "s/")))
 (evil-define-key 'normal 'global ",S" (lambda () (interactive) (evil-ex "%s/")))
 (evil-define-key 'visual 'global ",s" (lambda () (interactive) (evil-ex "'<,'>s/")))
+; flycheck error
+(dolist (state '(motion normal visual))
+  (evil-define-key state 'global "[f" 'flycheck-previous-error)
+  (evil-define-key state 'global "]f" 'flycheck-next-error))
 ; argument text object
 (define-key evil-inner-text-objects-map "a" 'evil-inner-arg)
 (define-key evil-outer-text-objects-map "a" 'evil-outer-arg)
@@ -2405,7 +2410,8 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (prefer-coding-system 'utf-8)
 
 ;; scroll-off emulation
-(setq scroll-margin (/ (* (window-total-height) 2) 7))
+;; (setq scroll-margin (/ (* (window-total-height) 2) 7))
+(setq scroll-margin 16)
 
 ;; wrap lines
 (add-hook 'prog-mode-hook (lambda () (setq truncate-lines nil)))
