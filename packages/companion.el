@@ -479,20 +479,23 @@ Argument STATUS is the http status of the request."
                              quote-string
                              quote-author)))
         (setq companion-qod--last-quote quote*)
-        (message quote*)
-        (companion-notif--alert-notifier
-         (list :message (substring quote*
-                                   0 (min companion-qod-max-string-length
-                                          (length quote*)))
-               :severity 'trivial
-               :persistent t)))
+        (companion-show-qod quote*))
     (message "Error fetching quote: %s"
              (assoc-default 'message
                             (assoc-default 'error (json-read))))))
 
-(defun companion-echo-last-qod ()
+(defun companion-show-qod (q)
+  (message q)
+  (companion-notif--alert-notifier
+   (list :message (substring q
+                             0 (min companion-qod-max-string-length
+                                    (length q)))
+         :severity 'trivial
+         :persistent t)))
+
+(defun companion-show-last-qod ()
   (interactive)
-  (message companion-qod--last-quote))
+  (companion-show-qod companion-qod--last-quote))
 
 (defun companion-fetch-qod ()
   "Fetches quote of the day from theysaidso.com.

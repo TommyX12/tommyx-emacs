@@ -737,7 +737,7 @@
 ; custom logo and message
 (setq dashboard-banner-length 250)
 (setq dashboard-banner-logo-title
-	(concat "GNU Emacs " emacs-version " (" system-configuration ")"))
+	(concat "Emacs " emacs-version " (" system-configuration ")"))
 (setq dashboard-startup-banner (expand-file-name "logo.png"
 	(file-name-directory load-file-name)))
 
@@ -845,6 +845,8 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (add-hook 'haskell-mode-hook (lambda () (ycmd-eldoc-mode -1)))
 ; c++
 (evil-define-key 'normal c++-mode-map (kbd "C-]") 'ycmd-goto) ; goto
+; c#
+(evil-define-key 'normal csharp-mode-map (kbd "C-]") 'ycmd-goto) ; goto
 ; java
 (add-to-list 'ycmd-file-type-map '(java-mode "java")) ; file type detection
 (evil-define-key 'normal java-mode-map (kbd "C-]") 'ycmd-goto) ; goto
@@ -1610,6 +1612,8 @@ command (ran after) is mysteriously incorrect."
 		:which-key "split window horizontally")
 	"wv" '((lambda () (interactive) (evil-window-vsplit) (delayed-mode-line-update))
 		:which-key "split window vertically")
+  "ws" '(ace-swap-window
+		:which-key "split window horizontally")
 	"wq" '((lambda () (interactive) (evil-quit) (delayed-mode-line-update))
 		:which-key "close window")
 	"wu" '(winner-undo
