@@ -1612,8 +1612,8 @@ command (ran after) is mysteriously incorrect."
 		:which-key "split window horizontally")
 	"wv" '((lambda () (interactive) (evil-window-vsplit) (delayed-mode-line-update))
 		:which-key "split window vertically")
-  "ws" '(ace-swap-window
-		:which-key "split window horizontally")
+  "wm" '(ace-swap-window
+		:which-key "swap window")
 	"wq" '((lambda () (interactive) (evil-quit) (delayed-mode-line-update))
 		:which-key "close window")
 	"wu" '(winner-undo
@@ -2321,6 +2321,10 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 ;;; misc settings
 
+;; shell
+(cond
+ ((eq system-type 'darwin) (setq explicit-shell-file-name "/usr/local/bin/zsh")))
+
 ;; no alert sounds
 (setq ring-bell-function 'ignore)
 
@@ -2429,6 +2433,9 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 ;; auto start server if on GUI
 (and window-system (server-start))
+
+;; server use different window
+(setq server-window 'pop-to-buffer)
 
 ;; no auto saving
 (add-hook 'prog-mode-hook (lambda () (auto-save-mode -1)))

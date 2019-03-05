@@ -6,6 +6,7 @@
 (require 'org-pomodoro)
 (require 'org-bullets)
 (require 'org-notify)
+(require 'ox-publish)
 (require 'companion)
 (require 'hydra)
 (require 'smartparens)

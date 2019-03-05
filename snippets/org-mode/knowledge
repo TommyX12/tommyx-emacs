@@ -2,9 +2,13 @@
 # name: knowledge template
 # key: knowledge
 # --
+#+TITLE: ${1:`(capitalize (file-name-base (buffer-file-name)))`}
+#+AUTHOR: ${2:TommyX}
+#+DATE: ${3:`(format-time-string "%Y")`:`(format-time-string "%m")`:`(format-time-string "%d")`}
+
 * How-to :h:
 
 * Notes :n:
-
-** questions :q:
+$0
+** Questions :q:
 
