@@ -2,4 +2,4 @@
 # name: unity log
 # key: log
 # --
-Debug.Log(${2:"$1"});$0
+Debug.${1:$$(yas-choose-value '("Log" "LogError" "LogWarning"))}(${3:"$2"});$0
