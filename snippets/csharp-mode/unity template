@@ -10,10 +10,6 @@ using UnityEngine;
 
 public class ${1:`(file-name-base (buffer-file-name))`} : MonoBehaviour {
     
-    public $1() {
-        
-    }
-
     protected void Awake() {
         $0
     }

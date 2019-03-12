@@ -446,21 +446,26 @@
   (global-color-identifiers-mode 1)
 
   ;; extra modes support
-  (dolist (maj-mode '(csharp-mode))
-    (color-identifiers:set-declaration-scan-fn
-     maj-mode 'color-identifiers:cc-mode-get-declarations)
-    (add-to-list
-     'color-identifiers:modes-alist
-     `(,maj-mode . (""
-                    "\\_<\\([a-zA-Z_$]\\(?:\\s_\\|\\sw\\)*\\)"
-                    (nil font-lock-variable-name-face))))))
+  (let ((extra-modes
+         '(csharp-mode
+           glsl-mode)))
+    (dolist (maj-mode extra-modes)
+      (color-identifiers:set-declaration-scan-fn
+       maj-mode 'color-identifiers:cc-mode-get-declarations)
+      (add-to-list
+       'color-identifiers:modes-alist
+       `(,maj-mode . (""
+                      "\\_<\\([a-zA-Z_$]\\(?:\\s_\\|\\sw\\)*\\)"
+                      (nil font-lock-variable-name-face)))))))
 
 (use-package auto-highlight-symbol :ensure t
 	:config
+	(push 'sql-mode ahs-modes)
 	(push 'racket-mode ahs-modes)
 	(push 'haskell-mode ahs-modes)
 	(push 'web-mode ahs-modes)
 	(push 'js2-mode ahs-modes)
+	(push 'glsl-mode ahs-modes)
 	(global-auto-highlight-symbol-mode 1)
 	;; (add-hook 'prog-mode-hook (auto-highlight-symbol-mode 1))
 	;; (add-hook 'html-mode-hook (auto-highlight-symbol-mode 1))
@@ -634,6 +639,11 @@
 (use-package haskell-snippets :ensure t)
 (use-package rust-mode :ensure t)
 (use-package csv-mode :ensure t)
+(use-package glsl-mode :ensure t
+  :config
+  ;; (add-to-list 'auto-mode-alist '("\\.vs\\'" . glsl-mode))
+  ;; (add-to-list 'auto-mode-alist '("\\.fs\\'" . glsl-mode))
+)
 (use-package json-mode :ensure t
   :config
   (setq json-reformat:indent-width 2))
@@ -1540,6 +1550,10 @@ command (ran after) is mysteriously incorrect."
 
 	"cd" '(companion-notif-dismiss
 		:which-key "dismiss notification")
+	"cq" '(companion-show-last-qod
+		:which-key "quote of the day")
+	"cQ" '(companion-fetch-qod
+		:which-key "fetch quote of the day")
 
 	"sf" '((lambda () (interactive)
 		(display-buffer-in-side-window (get-buffer neo-buffer-name) '((side . left))))
@@ -1764,6 +1778,11 @@ command (ran after) is mysteriously incorrect."
 (evil-define-key 'motion 'global ",." "@:")
 ; save all
 (evil-define-key 'motion 'global ",wa" 'evil-write-all)
+; align
+(evil-define-key 'visual 'global ",a"
+  (lambda () (interactive)
+    (let ((current-prefix-arg 4)) ;; emulate C-u
+      (call-interactively 'align-regexp))))
 ; start cmd
 (evil-define-key 'motion 'global ",;" (lambda () (interactive) (start-process-shell-command (format "cmd(%s)" default-directory) nil "start cmd")))
 ; sane tabbing
@@ -2329,6 +2348,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq ring-bell-function 'ignore)
 
 ;; file-type based syntax entry
+(add-hook 'sql-mode-hook (lambda () (modify-syntax-entry ?_ "w")))
 (add-hook 'prog-mode-hook (lambda () (modify-syntax-entry ?_ "w")))
 (add-hook 'lisp-mode-hook (lambda () (modify-syntax-entry ?- "w")))
 (add-hook 'emacs-lisp-mode-hook (lambda () (modify-syntax-entry ?- "w")))
