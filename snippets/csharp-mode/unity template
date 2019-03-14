@@ -10,15 +10,15 @@ using UnityEngine;
 
 public class ${1:`(file-name-base (buffer-file-name))`} : MonoBehaviour {
     
-    protected void Awake() {
+    private void Awake() {
         $0
     }
 
-    protected void Start() {
+    private void Start() {
         
     }
 
-    protected void Update() {
+    private void Update() {
         
     }
 }

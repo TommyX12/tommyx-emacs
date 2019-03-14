@@ -346,6 +346,12 @@ regular expression,
 
 	"jf" '(counsel-org-goto
 		:which-key "org goto")
+
+  "j;" '(org-sort
+    :which-key "org sort")
+
+  "j:" '(org-sort-list
+    :which-key "org list")
 )
 (general-define-key
 	:keymaps 'org-mode-map
@@ -353,8 +359,8 @@ regular expression,
 	:prefix "SPC"
 	:non-normal-prefix "M-SPC"
 
-	"js" '(org-sort
-		:which-key "org sort")
+	;; "js" '(org-sort-list
+	;; 	:which-key "org sort")
 )
 (general-define-key
   :keymaps 'org-mode-map
