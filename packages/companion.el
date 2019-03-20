@@ -497,6 +497,10 @@ Argument STATUS is the http status of the request."
   (interactive)
   (companion-show-qod companion-qod--last-quote))
 
+(defun companion-copy-qod ()
+  (interactive)
+  (kill-new companion-qod--last-quote))
+
 (defun companion-fetch-qod ()
   "Fetches quote of the day from theysaidso.com.
 Taken from https://github.com/narendraj9/quoted-scratch."

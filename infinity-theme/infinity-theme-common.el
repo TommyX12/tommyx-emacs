@@ -305,10 +305,10 @@
 	`(ac-completion-face ((,class (:background ,ttip-bg :foreground ,ttip))))
 
 ;;;;; avy
-	`(avy-lead-face   ((,class (:bold t :background ,green-bg :foreground ,green))))
-	`(avy-lead-face-0 ((,class (:bold t :background ,green-bg :foreground ,yellow))))
-	`(avy-lead-face-1 ((,class (:bold t :background ,green-bg :foreground ,magenta))))
-	`(avy-lead-face-2 ((,class (:bold t :background ,green-bg :foreground ,blue))))
+	`(avy-lead-face   ((,class (:inherit bold :background ,green-bg :foreground ,green))))
+	`(avy-lead-face-0 ((,class (:inherit bold :background ,green-bg :foreground ,yellow))))
+	`(avy-lead-face-1 ((,class (:inherit bold :background ,green-bg :foreground ,magenta))))
+	`(avy-lead-face-2 ((,class (:inherit bold :background ,green-bg :foreground ,blue))))
 
 ;;;;; calfw
 	`(cfw:face-title               ((,class (:foreground ,head1 :height 2.0 :weight bold :inherit variable-pitch))))
@@ -465,7 +465,7 @@
 
 ;;;;; evil
 	`(evil-ex-substitute-matches ((,class (:background ,red-bg :foreground ,red :strike-through t :bold nil))))
-	`(evil-ex-substitute-replacement ((,class (:background ,green-bg :foreground ,green :bold t))))
+	`(evil-ex-substitute-replacement ((,class (:background ,green-bg :foreground ,green :inherit bold))))
 
 ;;;;; evil-goggles
 	`(evil-goggles--pulse-face ((,class (:background ,yellow-bg :foreground ,yellow))))
@@ -598,7 +598,7 @@
 	;; `(helm-header ((,class (:foreground ,base :background ,bg1 :underline nil :box nil))))
 	`(helm-header ((,class (:inherit (header-line)))))
 	`(helm-header-line-left-margin ((,class (:foreground ,keyword :background ,nil))))
-	`(helm-match ((,class (:background ,head1-bg :foreground ,head1 :bold t))))
+	`(helm-match ((,class (:background ,head1-bg :foreground ,head1 :inherit bold))))
 	`(helm-match-item ((,class (:background ,head1-bg :foreground ,head1))))
 	`(helm-moccur-buffer ((,class (:foreground ,var :background ,bg1))))
 	`(helm-selection ((,class (:background ,highlight))))
@@ -942,7 +942,7 @@
 ;;;;; smartparens
 	`(sp-pair-overlay-face ((,class (:background ,bg12))))
 	;; `(sp-show-pair-match-face ((,class (:foreground ,green :background ,green-bg :bold t :underline t))))
-	`(sp-show-pair-match-face ((,class (:foreground ,green :background ,green-bg :bold t :underline t))))
+	`(sp-show-pair-match-face ((,class (:foreground ,green :background ,green-bg :inherit bold :underline t))))
 	`(sp-show-pair-match-content-face ((,class (:background ,bg12))))
 
 ;;;;; smerge

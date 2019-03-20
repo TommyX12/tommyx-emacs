@@ -931,7 +931,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ; push jump list every time entering insert mode
 (add-hook 'evil-insert-state-entry-hook 'evil--jumps-push)
 ; do not remove space when leaving insert mode
-(setq evil-allow-remove-spaces nil)
+(setq evil-allow-remove-spaces t) ;; TODO still allow it.
 (defun my-evil-maybe-remove-spaces (func &rest args)
   (if evil-allow-remove-spaces
       (apply func args)
@@ -1268,6 +1268,41 @@ Useful for a search overview popup."
 ;; (defun fit-window-to-region ()
 ;; 	(interactive)
 ;; 	TODO)
+(defun company-smart-complete ()
+  (interactive)
+  (cond
+   (company-selection-changed
+    (company-complete-selection))
+   (company-candidates
+    (company-select-next))
+   (t
+    (company-auto-begin)
+    (company-select-next))))
+(defun company-complete-number-1 ()
+  (interactive) (company-complete-number 1))
+(defun company-complete-number-2 ()
+  (interactive) (company-complete-number 2))
+(defun company-complete-number-3 ()
+  (interactive) (company-complete-number 3))
+(defun company-complete-number-4 ()
+  (interactive) (company-complete-number 4))
+(defun company-complete-number-5 ()
+  (interactive) (company-complete-number 5))
+(defun company-complete-number-6 ()
+  (interactive) (company-complete-number 6))
+(defun company-complete-number-7 ()
+  (interactive) (company-complete-number 7))
+(defun company-complete-number-8 ()
+  (interactive) (company-complete-number 8))
+(defun company-complete-number-9 ()
+  (interactive) (company-complete-number 9))
+(defun company-complete-number-0 ()
+  (interactive) (company-complete-number 0))
+(defun get-random-element (list)
+  "Returns a random element of LIST."
+  (if (and list (listp list))
+      (nth (random (1- (1+ (length list)))) list)
+    (error "Argument to get-random-element not a list or the list is empty")))
 (defun sort-lines-ignore-case ()
   (interactive)
   (let ((sort-fold-case t))
@@ -1552,6 +1587,8 @@ command (ran after) is mysteriously incorrect."
 		:which-key "dismiss notification")
 	"cq" '(companion-show-last-qod
 		:which-key "quote of the day")
+	"cy" '(companion-copy-qod
+		:which-key "copy quote of the day")
 	"cQ" '(companion-fetch-qod
 		:which-key "fetch quote of the day")
 
@@ -1569,6 +1606,8 @@ command (ran after) is mysteriously incorrect."
 		:which-key "edit")
 	"tr" '(yas-reload-all
 		:which-key "reload")
+  "ti" '(insert-file
+    :which-key "insert file content")
 
 	"ew" '(write-file
 		:which-key "write file")
@@ -1764,8 +1803,13 @@ command (ran after) is mysteriously incorrect."
   (interactive)
   ;; (move-beginning-of-line nil)
   (save-excursion
-    (newline-and-indent))
-  (indent-according-to-mode))
+    (newline))
+  ; TODO: if we want to indent, uncomment this
+  ;; (save-excursion
+  ;;   (newline-and-indent))
+  ;; (indent-according-to-mode)
+)
+; use enter and S-enter to open blank lines. TODO implement numeric prefix arg
 (evil-define-key 'insert 'global (kbd "S-RET") 'smart-open-line-above)
 (evil-define-key 'insert 'global (kbd "<S-return>") 'smart-open-line-above)
 ; undo redo
@@ -1913,10 +1957,10 @@ command (ran after) is mysteriously incorrect."
 (evil-define-key 'motion 'global ",,n" 'narrow-to-defun)
 (evil-define-key 'visual 'global ",,n" 'narrow-to-region)
 (evil-define-key 'motion 'global ",,N" 'widen)
-; use enter and S-enter to open blank lines. TODO implement numeric prefix arg
-(evil-define-key 'normal 'global (kbd "M-o") (lambda () (interactive) (save-excursion (evil-insert-newline-below) (indent-according-to-mode))))
-(evil-define-key 'normal 'global (kbd "C-o") (lambda () (interactive) (save-excursion (evil-insert-newline-above) (indent-according-to-mode))))
-(evil-define-key 'normal 'global (kbd "C-M-o") (lambda () (interactive) (save-excursion (evil-insert-newline-above) (indent-according-to-mode)) (save-excursion (evil-insert-newline-below) (indent-according-to-mode))))
+; TODO: if we want to indent, add (indent-according-to-mode) after inserting newline
+(evil-define-key 'normal 'global (kbd "M-o") (lambda () (interactive) (save-excursion (evil-insert-newline-below))))
+(evil-define-key 'normal 'global (kbd "C-o") (lambda () (interactive) (save-excursion (evil-insert-newline-above))))
+(evil-define-key 'normal 'global (kbd "C-M-o") (lambda () (interactive) (save-excursion (evil-insert-newline-above)) (save-excursion (evil-insert-newline-below))))
 ; neo tree
 (evil-define-key 'motion 'global ",n" (lambda () (interactive) (neotree-show)))
 (evil-define-key 'motion 'global ",N" (lambda () (interactive) (neotree-find)))
@@ -2114,11 +2158,12 @@ command (ran after) is mysteriously incorrect."
 (general-define-key ; use / to enter directory, not ENTER.
 	:keymaps '(counsel-find-file-map)
 	; use return for opening directory
-	"RET" 'ivy-alt-done
-	"<return>" 'ivy-alt-done
+  ; TODO: temporarily disabled
+	;; "RET" 'ivy-alt-done
+	;; "<return>" 'ivy-alt-done
 	"S-RET" 'ivy-immediate-done ; use exact input, not candidate
 	"<S-return>" 'ivy-immediate-done
-	"M-l" 'ivy-alt-done
+	;; "M-l" 'ivy-alt-done
 )
 
 ;; minibuffer
@@ -2216,7 +2261,7 @@ command (ran after) is mysteriously incorrect."
 	(lambda () (interactive)
 		(let ((my-company--company-command-p-override t))
 			(call-with-command-hooks (lambda () (interactive) (self-insert-or-send-raw "j")))))
-	:timeout 0.25
+	:timeout 1.0
 	"j" (lambda () (interactive) (call-with-command-hooks (lambda () (interactive) (self-insert-or-send-raw "j")) "jj"))
 	"t" (lambda () (interactive) (call-with-command-hooks 'insert-todo "jt"))
 	"f" (lambda () (interactive) (call-with-command-hooks 'insert-backslash "jf"))
@@ -2229,27 +2274,20 @@ command (ran after) is mysteriously incorrect."
 	; jl move to end of line
 	"l" (lambda () (interactive) (call-with-command-hooks 'move-end-of-line "jl"))
 	; jp complete
-	"p" (lambda () (interactive)
-        (cond
-         (company-selection-changed
-          (company-complete-selection))
-         (company-candidates
-          (company-select-next))
-         (t
-          (company-auto-begin)
-          (company-select-next))))
+	"p" 'company-smart-complete
+	;; "p" (lambda () (interactive) (call-with-command-hooks 'company-smart-complete "jp"))
   ; j[ skip TabNine
-  "[" 'company-tabnine-call-other-backends
-	"0" (lambda () (interactive) (company-complete-number 0))
-	"1" (lambda () (interactive) (company-complete-number 1))
-	"2" (lambda () (interactive) (company-complete-number 2))
-	"3" (lambda () (interactive) (company-complete-number 3))
-	"4" (lambda () (interactive) (company-complete-number 4))
-	"5" (lambda () (interactive) (company-complete-number 5))
-	"6" (lambda () (interactive) (company-complete-number 6))
-	"7" (lambda () (interactive) (company-complete-number 7))
-	"8" (lambda () (interactive) (company-complete-number 8))
-	"9" (lambda () (interactive) (company-complete-number 9))
+  "[" (lambda () (interactive) (call-with-command-hooks 'company-tabnine-call-other-backends "j["))
+	"0" (lambda () (interactive) (call-with-command-hooks 'company-complete-number-0 "j0"))
+	"1" (lambda () (interactive) (call-with-command-hooks 'company-complete-number-1 "j1"))
+	"2" (lambda () (interactive) (call-with-command-hooks 'company-complete-number-2 "j2"))
+	"3" (lambda () (interactive) (call-with-command-hooks 'company-complete-number-3 "j3"))
+	"4" (lambda () (interactive) (call-with-command-hooks 'company-complete-number-4 "j4"))
+	"5" (lambda () (interactive) (call-with-command-hooks 'company-complete-number-5 "j5"))
+	"6" (lambda () (interactive) (call-with-command-hooks 'company-complete-number-6 "j6"))
+	"7" (lambda () (interactive) (call-with-command-hooks 'company-complete-number-7 "j7"))
+	"8" (lambda () (interactive) (call-with-command-hooks 'company-complete-number-8 "j8"))
+	"9" (lambda () (interactive) (call-with-command-hooks 'company-complete-number-9 "j9"))
 	; j[ context complete (TODO)
 	;; "[" 'evil-complete-next
 	; j[ insert snippet
@@ -2261,7 +2299,7 @@ command (ran after) is mysteriously incorrect."
 	(lambda () (interactive)
 		(let ((my-company--company-command-p-override t))
 			(call-with-command-hooks (lambda () (interactive) (self-insert-or-send-raw "J")))))
-	:timeout 0.25
+	:timeout 1.0
 	"J" (lambda () (interactive) (call-with-command-hooks (lambda () (interactive) (self-insert-or-send-raw "J")) "JJ"))
 	; JV to use counsel yank-pop
 	"V" (lambda () (interactive) (call-with-command-hooks 'counsel-yank-pop "JV"))
@@ -2276,8 +2314,10 @@ command (ran after) is mysteriously incorrect."
 (general-imap "J" 'insert-mode-J-mapping)
 (define-key company-active-map "j" 'insert-mode-j-mapping)
 (define-key company-active-map "J" 'insert-mode-J-mapping)
+(put 'insert-mode-j-mapping 'company-keep t)
+(put 'insert-mode-J-mapping 'company-keep t)
 "Since company-tng-frontend only complete selection when pressing any key that isn't
-a company-mode command (checked with this function), and we want general-key-dispatch
+a company-mode command (checked with `my-company--company-command-p` function), and we want `general-key-dispatch`
 to have \"j\" as a company-mode command (so do not complete) but not to have
 \"jp\" as one (so do completion)."
 ;; (eval-after-load 'company
@@ -2705,6 +2745,29 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq mac-command-modifier 'meta)
 
 ;; encourage taking a break
+(setq type-break-health-quotes
+      '("Decrease chance of death from heart disease"
+        "Increase lifespan"
+        "Decrease chance of dementia"
+        "No longer reverse effect of exercise"
+        "Decrease chance of diabetes"
+        "Decrease chance of leg deep vein thrombosis (DVT), clot that kills"
+        "Decrease chance of anxiety"
+        "Decrease back pain and permanent damage"
+        "Decrease chance of varicose veins"
+        "Decrease chance of death from all types of cancer"
+        "Decrease blood pressure and blood sugar"))
+(defun type-break-my-query-function (prompt)
+  (yes-or-no-p
+   (concat
+    prompt
+    (propertize (format "(!! %s !!) "
+                        (get-random-element
+                         type-break-health-quotes))))))
+(defun type-break-schedule-check (&rest _)
+  (when (null type-break-time-next-break)
+      (type-break-schedule)))
+(setq type-break-query-function 'type-break-my-query-function)
 (setq type-break-interval 1800)
 (setq type-break-good-rest-interval 300)
 (setq type-break-demo-boring-stats t)
@@ -2713,6 +2776,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq type-break-demo-functions '(type-break-demo-boring))
 (type-break-mode 1)
 (type-break-query-mode 1)
+(run-at-time 0 120 'type-break-schedule-check)
 
 ;; eldoc
 (global-eldoc-mode 1)

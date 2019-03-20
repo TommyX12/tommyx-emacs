@@ -394,12 +394,21 @@ regular expression,
   "v" '(org-view-leader
     :which-key "org view and export")
 
-  "vl" '('org-show-all-latex-fragments
+  "vl" '(org-show-all-latex-fragments
     :which-key "preview latex fragment")
 
   "vL" '((lambda () (interactive)
            (org-remove-latex-fragment-image-overlays))
     :which-key "remove latex fragment")
+
+  "vc" '(org-clock-display
+    :which-key "clock display")
+
+  "vC" '(org-clock-remove-overlays
+    :which-key "clock display")
+
+  "vd" '(org-update-all-dblocks
+    :which-key "update dynamic blocks")
 
 	"C-s" '((lambda () (interactive) (org-todo "TODAY"))
 		:which-key "org set TODAY")

@@ -11,8 +11,8 @@
 (setq projectile-switch-project-action 'neotree-projectile-action)
 (setq projectile-globally-ignored-directories (append '("node_modules" "dist" "bin" "build") projectile-globally-ignored-directories))
 
-;; bug fix
-;; (setq projectile-project-compilation-cmd "")
+;; TODO: temporary bug fix
+(setq projectile-project-compilation-cmd "")
 
 ;; helper functions
 (defun project/project-relative-name ()
@@ -46,8 +46,10 @@
 	:states '(motion normal)
   :prefix "SPC p"
 
-	"f" '(counsel-projectile-git-grep
-		:which-key "git grep")
+	"f" '(counsel-rg
+		:which-key "search in directory")
+	"F" '(counsel-projectile-rg
+		:which-key "search project")
   
 	"p" '(counsel-projectile-switch-project
 		:which-key "switch project")
@@ -66,6 +68,8 @@
 		:which-key "compile")
 	"C" '(projectile-compile-project
 		:which-key "compile project")
+  "C-c" '(kill-compilation
+    :which-key "kill compilation")
 
   "t" '(ansi-term
     :which-key "open terminal")
