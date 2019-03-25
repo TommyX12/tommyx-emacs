@@ -162,26 +162,31 @@ class GreedyExpectedUtilityEstimator(ExpectedUtilityEstimator):
         r = self.progress_info.get_amount_left(task_index)
         s = self.max_session_duration
         i = self.index_to_order[task_index]
-        R = self.sorted_task_pressure[i]
+        # R = self.sorted_task_pressure[i]
         w = self.sorted_task_total_time[i] - s
-        l = self.pressure_heuristic
+        # l = self.pressure_heuristic
 
         p_good = self.p_estimator.get_success_probability(
             task,
-            lerp(r - s, R - s, l),
+            r - s,
+            # lerp(r - s, R - s, l),
             w
         )
 
         p_bad = self.p_estimator.get_success_probability(
             task,
-            lerp(r, R, l),
+            r,
+            # lerp(r, R, l),
             w
         )
 
         u = self.u_estimator.get_success_utility(task)
         U = (p_good - p_bad) * u
 
-        U += self.suffix_sum_cache[task_index]
+        # # deprecated heuristic
+        # U += self.suffix_sum_cache[task_index]
+
+        U += self.extra_gain_cache[task_index]
 
         return U / self.max_session_duration
 
@@ -211,34 +216,75 @@ class GreedyExpectedUtilityEstimator(ExpectedUtilityEstimator):
             else:
                 self.sorted_task_total_time[i] = math.inf
 
-        # cache suffix sum
-        self.suffix_sum_cache = [0 for _ in range(len(self.tasks))]
-        prev_gain = 0
-        for i in range(len(self.sorted_tasks) - 1, -1, -1):
+        # cache extra gain
+        self.extra_gain_cache = [0 for _ in range(len(self.tasks))]
+        s = self.max_session_duration
+        peak_i = -1
+        peak_E = 0
+        peak_p_bad = 0
+        total_u = 0
+        peak_total_u = 0
+        for i in range(len(self.sorted_tasks)):
             index, task = self.sorted_tasks[i]
-            s = self.max_session_duration
             w = self.sorted_task_total_time[i] - s
-            r = self.progress_info.get_amount_left(index)
             R = self.sorted_task_pressure[i]
-            l = self.pressure_heuristic
-            p_good = self.p_estimator.get_success_probability(
+            p = self.p_estimator.get_success_probability(
                 task,
-                lerp(r, R - s, l),
-                w
-            )
-            p_bad = self.p_estimator.get_success_probability(
-                task,
-                lerp(r, R, l),
+                R,
                 w
             )
             u = self.u_estimator.get_success_utility(task)
-            # self.logger.log("{}, {}".format(task.priority.value, u))
-            gain = \
-                (p_good - p_bad) * u + \
-                prev_gain
+            total_u += u
+            E = p * u
 
-            self.suffix_sum_cache[index] = prev_gain
-            prev_gain = gain
+            if E > peak_E:
+                peak_E = E
+                peak_i = i
+                peak_p_bad = p
+                peak_total_u = total_u
+        
+        if peak_i > 0:
+            peak_w = self.sorted_task_total_time[peak_i] - s
+            peak_R = self.sorted_task_pressure[peak_i]
+            peak_p_good = self.p_estimator.get_success_probability(
+                None,
+                peak_R - s,
+                peak_w
+            )
+            peak_u = peak_total_u / (peak_i + 1)
+            extra_gain = (peak_p_good - peak_p_bad) * peak_u
+            for i in range(peak_i + 1):
+                index, _ = self.sorted_tasks[i]
+                self.extra_gain_cache[index] = extra_gain
+
+        # # deprecated heuristic
+        # # cache suffix sum
+        # prev_gain = 0
+        # for i in range(len(self.sorted_tasks) - 1, -1, -1):
+        #     index, task = self.sorted_tasks[i]
+        #     s = self.max_session_duration
+        #     w = self.sorted_task_total_time[i] - s
+        #     r = self.progress_info.get_amount_left(index)
+        #     R = self.sorted_task_pressure[i]
+        #     l = self.pressure_heuristic
+        #     p_good = self.p_estimator.get_success_probability(
+        #         task,
+        #         lerp(r, R - s, l),
+        #         w
+        #     )
+        #     p_bad = self.p_estimator.get_success_probability(
+        #         task,
+        #         lerp(r, R, l),
+        #         w
+        #     )
+        #     u = self.u_estimator.get_success_utility(task)
+        #     # self.logger.log("{}, {}".format(task.priority.value, u))
+        #     gain = \
+        #         (p_good - p_bad) * u + \
+        #         prev_gain
+
+        #     self.suffix_sum_cache[index] = prev_gain
+        #     prev_gain = gain
             
         # self.logger.log(" ")
 

@@ -2,4 +2,4 @@
 # name: debug print
 # key: dp
 # --
-printf("`(line-number-at-pos)`: $1 = ${2:%d}\n", ${1:a});$0
+printf("`(buffer-file-name)`:`(line-number-at-pos)`: $1 = ${2:%d}\n", ${1:a});$0

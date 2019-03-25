@@ -51,11 +51,11 @@ class Engine(object):
             mean_scale = 1.1
         )
         utility_estimator = MixedUtilityEstimator()
-        policy = ARPSchedulingPolicy(
-            probability_estimator,
-            utility_estimator
-        )
-        # policy = GreedySchedulingPolicy()
+        # policy = ARPSchedulingPolicy(
+        #     probability_estimator,
+        #     utility_estimator
+        # )
+        policy = GreedySchedulingPolicy()
         return Engine(usable_time_parser, task_filter, task_repeater, progress_counter, planner, stress_analyzer, fragmentizer, probability_estimator, utility_estimator, policy, logger)
 
     def schedule(self, scheduling_request):

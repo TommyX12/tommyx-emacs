@@ -475,7 +475,7 @@ Argument STATUS is the http status of the request."
              (q (aref quotes 0))
              (quote-string (assoc-default 'quote q))
              (quote-author (assoc-default 'author q))
-             (quote* (format "%s - %s"
+             (quote* (format "\"%s\" - %s"
                              quote-string
                              quote-author)))
         (setq companion-qod--last-quote quote*)

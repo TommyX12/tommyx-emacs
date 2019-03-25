@@ -853,7 +853,8 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (add-hook 'org-mode-hook (lambda () (ycmd-eldoc-mode -1)))
 (add-hook 'racket-mode-hook (lambda () (ycmd-eldoc-mode -1)))
 (add-hook 'haskell-mode-hook (lambda () (ycmd-eldoc-mode -1)))
-; c++
+; c/c++
+(evil-define-key 'normal c-mode-map (kbd "C-]") 'ycmd-goto) ; goto
 (evil-define-key 'normal c++-mode-map (kbd "C-]") 'ycmd-goto) ; goto
 ; c#
 (evil-define-key 'normal csharp-mode-map (kbd "C-]") 'ycmd-goto) ; goto

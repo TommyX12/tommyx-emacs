@@ -223,7 +223,7 @@ regular expression,
                  do not add it to `all-org-directory-files'."
   (let ((targets (or dirs (list org-directory)))
         (fex (or file-excludes  "^[#\\.].*$"))
-        (dex (or dir-excludes  "^[#\\.].*$\\|archive"))
+        (dex (or dir-excludes  "^[#\\.].*$\\|archive\\|images"))
         path)
     (dolist (dir targets)
       (if (file-directory-p dir)
