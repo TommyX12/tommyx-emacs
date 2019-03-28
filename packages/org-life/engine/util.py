@@ -6,6 +6,32 @@ def get_traceback():
     '''
     return traceback.format_exc()
 
+def less_than(a, b):
+    return a < b
+
+def lower_bound(arr, first, last, val, comp = None):
+    if comp is None: comp = less_than
+
+    count = last - first
+
+    while count > 0:
+        it = first
+        step = count // 2
+        it += step
+
+        if comp(arr[it], val):
+            it += 1
+            first = it
+            count -= step + 1
+
+        else:
+            count = step
+
+    return first
+
+def linear_map(x, in_min, in_max, out_min, out_max):
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+
 def clamp(x, a, b):
     '''
     Clamp x between a and b.

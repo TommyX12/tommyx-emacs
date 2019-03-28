@@ -68,7 +68,7 @@ class SchedulingPolicy(object):
     def get_max_session_duration(self):
         raise NotImplementedError()
 
-    def get_next(self):
+    def get_next(self, date):
         raise NotImplementedError()
 
     def add(self, task_index, task, task_event):
@@ -297,7 +297,7 @@ class GreedySchedulingPolicy(SchedulingPolicy):
     def initialize(self, direction, tasks, progress_info, schedule):
         self.queue = GreedySchedulingQueue(descending = (direction == FillDirection.EARLY))
 
-    def get_next(self):
+    def get_next(self, date):
         if self.queue.is_empty():
             return None
 
@@ -320,6 +320,61 @@ class GreedySchedulingPolicy(SchedulingPolicy):
 
     def delete(self, task_index):
         self.queue.delete(task_index)
+
+
+class PolynomialSchedulingPolicy(SchedulingPolicy):
+
+    def __init__(self, utility_estimator):
+        self.u_estimator = utility_estimator
+
+    def initialize(self, direction, tasks, progress_info, schedule):
+        # only support direction = FillDirection.EARLY
+        if direction != FillDirection.EARLY:
+            raise ValueError("PolynomialSchedulingPolicy only support direction = FillDirection.EARLY")
+
+        self.tasks = tasks
+        self.session_duration = 1
+
+        self.valid_tasks = set()
+
+    def get_max_session_duration(self):
+        return math.inf
+
+    def set_date(self, date):
+        self.days_from_today = Date.today().days_to(date)
+
+    def get_score(self, task):
+        return self.u_estimator.get_success_utility(task) \
+            * (1.0 / (1.0 + task.get_urgency(self.days_from_today))) \
+            + self.u_estimator.get_session_utility(task, self.session_duration) \
+            / self.session_duration
+
+    def get_next(self, date):
+        if len(self.valid_tasks) == 0:
+            return None
+
+        best_score = -math.inf
+        best_task = None
+
+        self.set_date(date)
+
+        for valid_task in self.valid_tasks:
+            score = self.get_score(self.tasks[valid_task])
+            if score > best_score:
+                best_score = score
+                best_task = valid_task
+
+        return best_task
+
+    def add(self, task_index, task, task_event):
+        self.valid_tasks.add(task_index)
+    
+    def update(self, task_index, date, next_date, duration):
+        pass
+
+    def delete(self, task_index):
+        if task_index in self.valid_tasks:
+            self.valid_tasks.remove(task_index)
 
 
 class ARPSchedulingPolicy(SchedulingPolicy):
@@ -350,7 +405,7 @@ class ARPSchedulingPolicy(SchedulingPolicy):
     def get_max_session_duration(self):
         return self.max_session_duration
 
-    def get_next(self):
+    def get_next(self, date):
         if len(self.valid_tasks) == 0:
             return None
 
@@ -377,18 +432,6 @@ class ARPSchedulingPolicy(SchedulingPolicy):
             self.valid_tasks.remove(task_index)
 
 
-class RLModel(object):
-
-    def __init__(self):
-        pass
-
-    def get_score(self):
-        raise NotImplementedError()
-
-    def get_loss(self):
-        raise NotImplementedError()
-
-
 class RLSchedulingPolicy(object):
 
     def __init__(self):
@@ -403,7 +446,7 @@ class RLSchedulingPolicy(object):
     def get_max_session_duration(self):
         raise NotImplementedError()
 
-    def get_next(self):
+    def get_next(self, date):
         raise NotImplementedError()
 
     def add(self, task_index, task, task_event):

@@ -93,7 +93,7 @@ class Planner(object):
 
             # Fill sessions.
             while True:
-                next_task_index = policy.get_next()
+                next_task_index = policy.get_next(date)
                 if next_task_index is None:
                     break
 

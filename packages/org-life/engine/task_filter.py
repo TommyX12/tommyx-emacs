@@ -49,10 +49,21 @@ class TaskFilter(object):
         result = []
         for i in range(len(tasks)):
             task = tasks[i]
-            if task.status.value == TaskStatusEnum.TODO and task.amount is None:
+            reasons = []
+            if task.status.value == TaskStatusEnum.TODO \
+               and task.amount is None:
+                reasons.append('No Effort')
+
+            # # TODO: not used
+            # if task.status.value == TaskStatusEnum.TODO \
+            #    and task.end.is_max() \
+            #    and not task.has_urgency():
+            #     reasons.append('No Deadline or Urgency')
+
+            if len(reasons) > 0:
                 bad_info_task = BadInfoTask()
                 bad_info_task.id.value = task.id.value
-                bad_info_task.reason.value = 'No Effort'
+                bad_info_task.reason.value = ', '.join(reasons)
 
                 result.append(bad_info_task)
 

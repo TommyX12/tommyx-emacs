@@ -11,7 +11,8 @@ from progress_counter import ProgressCounter
 from planner import Planner
 from stress_analyzer import StressAnalyzer
 from fragmentizer import Fragmentizer
-from heuristics import GreedySchedulingPolicy, ARPSchedulingPolicy, GaussianProbabilityEstimator, MixedUtilityEstimator
+from heuristics import *
+from constants import *
 
 
 class Engine(object):
@@ -20,18 +21,29 @@ class Engine(object):
         self.internal_logger = InternalLogger()
         
         self.usable_time_parser = usable_time_parser
+
         self.task_filter = task_filter
+
         self.task_repeater = task_repeater
+        self.task_repeater.set_logger(self.internal_logger)
+
         self.progress_counter = progress_counter
+
         self.planner = planner
+
         self.stress_analyzer = stress_analyzer
         self.stress_analyzer.set_logger(self.internal_logger)
+
         self.fragmentizer = fragmentizer
+
         self.probability_estimator = probability_estimator
         self.probability_estimator.set_logger(self.internal_logger)
+
         self.utility_estimator = utility_estimator
+
         self.policy = policy
         self.policy.set_logger(self.internal_logger)
+
         self.logger = logger
 
     def create(logger = DummyLogger()):
@@ -51,11 +63,12 @@ class Engine(object):
             mean_scale = 1.1
         )
         utility_estimator = MixedUtilityEstimator()
+        policy = PolynomialSchedulingPolicy(utility_estimator)
         # policy = ARPSchedulingPolicy(
         #     probability_estimator,
         #     utility_estimator
         # )
-        policy = GreedySchedulingPolicy()
+        # policy = GreedySchedulingPolicy()
         return Engine(usable_time_parser, task_filter, task_repeater, progress_counter, planner, stress_analyzer, fragmentizer, probability_estimator, utility_estimator, policy, logger)
 
     def schedule(self, scheduling_request):
@@ -107,7 +120,7 @@ class Engine(object):
         t = debug_timer.pop()
         response.debug += "report bad info tasks: {:.3f}s\n".format(t)
 
-        # task preprocessing and overdue tasks
+        # task preprocessing
         debug_timer.push()
         
         todo_tasks = self.task_filter.get_todo_tasks(tasks)
@@ -229,10 +242,12 @@ class Engine(object):
             late_schedule,
             stress_info,
             config.fragmentation_config
-        )
+        ) if FRAGMENT_ENABLED else []
 
         t = debug_timer.pop()
         response.debug += "fragment tasks: {:.3f}s\n".format(t)
+        if not FRAGMENT_ENABLED:
+            response.debug += "fragmentation temporarily disabled."
 
         # additional stress info
         if True: # can temporarily disable additional stress info

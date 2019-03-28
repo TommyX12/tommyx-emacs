@@ -1,6 +1,9 @@
-import copy, calendar, math
+import copy, calendar, math, re
+
 from datetime import date as DatetimeDate, timedelta
 from enum import Enum
+from constants import *
+import util
 
 
 class Property(object):
@@ -410,6 +413,22 @@ class TaskRepeat(Protocol):
         'value': ObjectProperty(TaskRepeatValue),
     }
 
+class Urgency(PrimitiveProtocol):
+    def __init__(self):
+        PrimitiveProtocol.__init__(self, None)
+
+    def encode(self):
+        # TODO: does not support encoding yet
+        raise NotImplementedError()
+
+    def decode(self, encoded_protocol):
+        if encoded_protocol is None or \
+           not isinstance(encoded_protocol, str) or \
+           len(encoded_protocol.strip()) == 0:
+            self.value = None
+
+        self.value = encoded_protocol
+
 class Task(Protocol):
     properties = {
         'id': ObjectProperty(TaskID),
@@ -421,7 +440,13 @@ class Task(Protocol):
         'priority': ObjectProperty(Priority),
         'repeat': NullableObjectProperty(TaskRepeat),
         'stressless': ObjectProperty(Boolean),
+        'urgency': ObjectProperty(Urgency)
     }
+
+    def __init__(self):
+        Protocol.__init__(self)
+        self.urgency_points = []
+        self.maximum_urgency = INF_URGENCY
 
     def copy(self):
         return copy.deepcopy(self)
@@ -430,6 +455,138 @@ class Task(Protocol):
         Protocol.decode(self, encoded_protocol)
         if self.start > self.end:
             self.start = self.end
+
+        self.parse_urgency()
+
+    def has_deadline(self):
+        return not self.end.is_max()
+
+    def has_urgency(self):
+        return len(self.urgency_points) > 0
+
+    def parse_urgency(self):
+        # - format: =time: urgency, ...=
+        # - there can just be a single number.
+        #   it specifies minimum urgency.
+        # - =time= can be repeating, in which case org is handling repeating
+        # - =time= can be =+n= where =n= is number of day, and it will be computed relative to last curve point
+        # - =urgency= can be =to-deadline= or =to-next=
+
+        today = Date.today()
+
+        urgency = self.urgency.value
+
+        self.urgency_points = []
+
+        def parse_clause(clauses, clause_string):
+            c = [s.strip() for s in clause_string.split(':')]
+            if len(c) == 1:
+                t, u = None, c[0]
+                # minimum urgency
+                self.maximum_urgency = int(u)
+
+            else:
+                t, u = c
+
+            # date information
+            if t is not None:
+                date_match = SINGLE_DATE_INLINE_RE.search(t)
+                if date_match is not None:
+                    # absolute date
+                    t = (DateInfoTypeEnum.ABSOLUTE, today.days_to(Date().decode_self(date_match.group(0))))
+
+                else:
+                    # relative date
+                    t = (DateInfoTypeEnum.RELATIVE, int(t[1:]))
+
+            # urgency information
+            if u == 'to-deadline':
+                # raise NotImplementedError()
+                pass # u = 'to-deadline
+
+            elif u == 'to-next':
+                # raise NotImplementedError()
+                pass # u = 'to-next'
+
+            else:
+                u = int(u)
+
+            return t, u
+
+        if urgency is None:
+            clauses = []
+            
+        else:
+            clauses = [s.strip() for s in urgency.split(',')]
+            clauses = [parse_clause(clauses, s) for s in clauses if len(s) > 0]
+            clauses = [s for s in clauses if s[0] is not None]
+
+        # add clauses to self.urgency_points
+        self.urgency_points += [tuple(c) for c in clauses]
+
+        # parse intermediate information such as relative time
+        for i in range(len(self.urgency_points)):
+            t, u = self.urgency_points[i]
+            if t[0] == DateInfoTypeEnum.RELATIVE:
+                t = self.urgency_points[i - 1][0] + t[1]
+
+            else:
+                t = t[1]
+
+            self.urgency_points[i] = t, u
+
+        for i in range(len(self.urgency_points)):
+            t, u = self.urgency_points[i]
+            if u == 'to-next':
+                u = self.urgency_points[i + 1][0] - t
+
+            elif u == 'to-deadline':
+                u = today.days_to(self.end) - t
+
+            self.urgency_points[i] = t, u
+
+        # if there's deadline, add 1 or 2 deadline related clause depending on the number of clauses
+        if self.has_deadline():
+            if len(self.urgency_points) == 0:
+                self.urgency_points.append((0, today.days_to(self.end)))
+
+            self.urgency_points.append((today.days_to(self.end), 0))
+
+        # sort clauses by time
+        self.urgency_points.sort(key = lambda x : x[0])
+
+    def shift_urgency(self, days):
+        self.urgency_points = [(t + days, u) for t, u in self.urgency_points]
+
+    def get_urgency(self, days_from_today):
+        # interpolation
+
+        if len(self.urgency_points) == 0:
+            return max(self.maximum_urgency, 0)
+
+        i = util.lower_bound(
+            self.urgency_points,
+            0,
+            len(self.urgency_points),
+            days_from_today,
+            lambda a, b: a[0] < b
+        )
+        if i >= len(self.urgency_points):
+            result = self.urgency_points[-1][1]
+
+        elif i == 0:
+            result = self.urgency_points[0][1]
+
+        else:
+            result = util.linear_map(
+                days_from_today,
+                self.urgency_points[i - 1][0],
+                self.urgency_points[i][0],
+                self.urgency_points[i - 1][1],
+                self.urgency_points[i][1]
+            )
+
+        return min(max(result, 0), self.maximum_urgency)
 
 class UsableTimeSelector(PrimitiveProtocol):
     def __init__(self, value = 'default'):
@@ -457,6 +614,10 @@ class SessionTypeEnum(Enum):
     TASK = 0
     FRAGMENT = 1
     OVERLIMIT = 2
+
+class DateInfoTypeEnum(Enum):
+    ABSOLUTE = 0
+    RELATIVE = 1
 
 class SessionType(PrimitiveProtocol):
     def __init__(self, value = SessionTypeEnum.TASK):

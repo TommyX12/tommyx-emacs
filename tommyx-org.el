@@ -388,6 +388,9 @@ regular expression,
   "e" '(org-set-effort
     :which-key "org set effort")
 
+  "e" '(org-set-effort
+    :which-key "org set effort")
+
   "E" '(org-inc-effort
     :which-key "org increase effort")
 
@@ -405,7 +408,7 @@ regular expression,
     :which-key "clock display")
 
   "vC" '(org-clock-remove-overlays
-    :which-key "clock display")
+    :which-key "remove clock display")
 
   "vd" '(org-update-all-dblocks
     :which-key "update dynamic blocks")
@@ -463,6 +466,12 @@ regular expression,
 )
 
 ; org mode
+(evil-define-key 'normal org-mode-map (kbd ",t") 'org-time-stamp)
+(evil-define-key 'normal org-mode-map (kbd ",,t")
+  (lambda () (interactive) (org-time-stamp '(4))))
+(evil-define-key 'normal org-mode-map (kbd ",T") 'org-time-stamp-inactive)
+(evil-define-key 'normal org-mode-map (kbd ",,T")
+  (lambda () (interactive) (org-time-stamp-inactive '(4))))
 (evil-define-key 'normal org-mode-map (kbd ",l") 'org-show-all-latex-fragments)
 (evil-define-key 'normal org-mode-map (kbd ",L")
   (lambda () (interactive)

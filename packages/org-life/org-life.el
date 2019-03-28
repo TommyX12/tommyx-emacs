@@ -91,6 +91,11 @@
   :group 'org-life
   :type 'float)
 
+(defcustom org-life-echo-store-messages nil
+  "Whether to store echo messages to messages buffer."
+  :group 'org-life
+  :type 'boolean)
+
 (defcustom org-life-config-file-path
   (expand-file-name "org-life-config.org"
                     (file-name-directory org-directory))
@@ -330,7 +335,8 @@ PROCESS is the process under watch, OUTPUT is the output received."
       buf)))
 
 (defun org-life-echo (string &rest args)
-  (let (message-log-max)
+  (let ((message-log-max
+         (when org-life-echo-store-messages message-log-max)))
     (apply #'message string args)))
 
 (defmacro org-life-with-config-buffer (&rest body)
@@ -588,11 +594,11 @@ PROCESS is the process under watch, OUTPUT is the output received."
                          (org-duration-from-minutes amount)
                          (if (and (numberp to-finish)
                                   (= to-finish 0))
-                             "Final"
+                             "✓" ; "Final"
                            (org-life-agenda-short-duration to-finish))
                          (if (and (numberp to-deadline)
                                   (= to-deadline 0))
-                             "Due"
+                             "!!!" ; "Due"
                            (org-life-agenda-days-to-string to-deadline))
                          ;; (format "%-5s|" (make-string
                          ;;                 (round (* (min 1.0 lateness) 5))
@@ -863,12 +869,10 @@ PROCESS is the process under watch, OUTPUT is the output received."
   tags
   scheduled
   deadline
-  planned
   effort
   stressless
-  marker
-  project-status
-  children)
+  urgency
+  marker)
 
 (defun org-life-agenda-entry-from-headline (id headline-elem &optional given-tags)
   (let ((todo-type (org-element-property :todo-type headline-elem))
@@ -880,6 +884,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (deadline (org-element-property :deadline headline-elem))
         (effort (org-element-property :EFFORT headline-elem))
         (stressless (org-element-property :STRESSLESS headline-elem))
+        (urgency (org-element-property :URGENCY headline-elem))
         (begin (org-element-property :begin headline-elem)))
     (make-org-life-agenda-entry
      :id id
@@ -892,6 +897,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
      :deadline deadline
      :effort (and effort (org-duration-to-minutes effort))
      :stressless stressless
+     :urgency (or urgency "")
      :marker (org-agenda-new-marker begin))))
 
 (defun org-life-agenda-parse-clock (task-id clock-elem)
@@ -996,7 +1002,10 @@ PROCESS is the process under watch, OUTPUT is the output received."
       (with-current-buffer buffer
         (org-with-wide-buffer
          (unless (derived-mode-p 'org-mode) (error "Agenda file %s is not in Org mode" file))
-         (let ((ast (org-element-parse-buffer granularity)))
+         (let ((ast (progn
+                      (org-life-echo "Parsing file %s ..." file)
+                      (org-element-parse-buffer granularity))))
+           (org-life-echo "Running AST processor for file %s ..." file)
            (setq acc (funcall ast-processor acc ast))))))
     
     acc))
@@ -1202,6 +1211,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
                "max")
          :amount (org-life-agenda-entry-effort task)
          :stressless (org-life-agenda-entry-stressless task)
+         :urgency (org-life-agenda-entry-urgency task)
          :done 0
          :status (cond
                   ((eq 'done
@@ -1284,7 +1294,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
 ;;; Interactive functions
 
 (defun org-life-restart-engine ()
-  "Start/Restart engine."
+  "Start/Restart org-life scheduling engine."
   (interactive)
   (org-life-start-engine))
 

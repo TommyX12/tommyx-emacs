@@ -1,6 +1,7 @@
 import re
 
 from data_structure import *
+from constants import *
 
 
 class UsableTimeParser(object):
@@ -17,25 +18,21 @@ class UsableTimeParser(object):
         'sunday': 6,
     }
 
-    SINGLE_DATE_RE = re.compile(r'^\d+-\d+-\d+$')
-    DATE_RANGE_RE = re.compile(r'^\d+-\d+-\d+\s+-\s+\d+-\d+-\d+$')
-    DATE_RANGE_SPLIT_RE = re.compile(r'\s+-\s+')
-
     def __init__(self):
         pass
 
     def _match_single_date(value):
-        return UsableTimeParser.SINGLE_DATE_RE.match(value) is not None
+        return SINGLE_DATE_RE.match(value) is not None
 
     def _parse_single_date(value):
         components = [int(component) for component in value.split('-')]
         return Date.from_components(*components)
 
     def _match_date_range(value):
-        return UsableTimeParser.DATE_RANGE_RE.match(value) is not None
+        return DATE_RANGE_RE.match(value) is not None
 
     def _parse_date_range(value):
-        dates = UsableTimeParser.DATE_RANGE_SPLIT_RE.split(value)
+        dates = DATE_RANGE_SPLIT_RE.split(value)
         return UsableTimeParser._parse_single_date(dates[0]), UsableTimeParser._parse_single_date(dates[1])
 
     def get_usable_time_dict(self, schedule_start, schedule_end, usable_time_config):

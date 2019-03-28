@@ -178,6 +178,35 @@
 				'(counsel-find-file counsel-file-jump counsel-recentf counsel-projectile-find-file counsel-projectile-find-dir))
 	(all-the-icons-ivy-setup)
 )
+(use-package ivy-rich :ensure t
+  :config
+  (setq
+   ivy-rich--display-transformers-list
+   '(counsel-M-x
+     (:columns
+      ((counsel-M-x-transformer
+        (:width 40))
+       (ivy-rich-counsel-function-docstring
+        (:face font-lock-doc-face))))
+     counsel-describe-function
+     (:columns
+      ((counsel-describe-function-transformer
+        (:width 40))
+       (ivy-rich-counsel-function-docstring
+        (:face font-lock-doc-face))))
+     counsel-describe-variable
+     (:columns
+      ((counsel-describe-variable-transformer
+        (:width 40))
+       (ivy-rich-counsel-variable-docstring
+        (:face font-lock-doc-face))))
+     counsel-recentf
+     (:columns
+      ((ivy-rich-candidate
+        (:width 0.8))
+       (ivy-rich-file-last-modified-time
+        (:face font-lock-comment-face))))))
+  (ivy-rich-mode 1))
 ;; (use-package popwin :ensure t
 ;; 	:config
 ;; 	(setq popwin:adjust-other-windows t)
@@ -1240,6 +1269,15 @@ Useful for a search overview popup."
 	 (concat "  " str))
    cands
    "\n"))
+(defun ivy-format-function-custom (cands)
+  "Transform CANDS into a string for minibuffer."
+  (ivy--format-function-generic
+   (lambda (str)
+     (concat "> " (ivy--add-face (concat str "\n") 'ivy-current-match)))
+   (lambda (str)
+     (concat "  " str "\n"))
+   cands
+   ""))
 (setq ivy-format-function 'ivy-format-function-custom)
 ;; (setq ivy-format-function 'ivy-format-function-default)
 (setq ivy-count-format "%d/%d | ")
@@ -1761,15 +1799,20 @@ command (ran after) is mysteriously incorrect."
 	:states '(motion normal)
 	:prefix "SPC j"
 
-  "e" 'eval-defun
-  "E" 'eval-buffer
+  "e" '(eval-defun
+    :which-key "eval defun")
+  "E" '(eval-buffer
+    :which-key "eval buffer")
 )
 (general-define-key
   :keymaps 'emacs-lisp-mode-map
 	:states '(visual)
 	:prefix "SPC j"
 
-  "e" 'eval-region
+  "e" '((lambda () (interactive)
+          (message "Evaluating region.")
+          (call-interactively 'eval-region))
+    :which-key "eval region")
 )
 
 ;; evil
@@ -2660,6 +2703,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 	'(evil-repeat
 		yas-expand))
 (defun eager-redisplay-mode ()
+  "Minor mode that force redraw after command."
 	(interactive)
 	(if eager-redisplay-mode-on
 		(progn

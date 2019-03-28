@@ -112,7 +112,7 @@ class StressAnalyzer(object):
         #     ))
         #     return None
 
-        pof = max([
+        pofs = [
             1 - p_estimator.get_success_probability(
                 sorted_tasks[i][1],
                 sorted_task_pressure[i],
@@ -120,7 +120,8 @@ class StressAnalyzer(object):
             )
             for i in range(len(sorted_tasks))
             if tasks_mask[sorted_tasks[i][0]] # and debug(i) is None
-        ])
+        ]
+        pof = max(pofs) if len(pofs) > 0 else 0
         # self.logger.log(str([
         #     (1 - p_estimator.get_success_probability(
         #         sorted_tasks[i][1],

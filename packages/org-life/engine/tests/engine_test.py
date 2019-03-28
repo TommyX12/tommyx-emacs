@@ -42,6 +42,9 @@ class EngineTest(unittest.TestCase):
         task5.done.value = 0
         tasks = [task1, task2, task3, task4, task5]
 
+        for task in tasks:
+            task.parse_urgency()
+
         ds1 = DatedSession()
         ds1.date = Date().decode_self('2018-12-02')
         ds1.session.id.value = 1

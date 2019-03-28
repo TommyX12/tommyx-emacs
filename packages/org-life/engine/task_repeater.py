@@ -8,6 +8,9 @@ class TaskRepeater(object):
     def __init__(self):
         pass
 
+    def set_logger(self, logger):
+        self.logger = logger
+
     def repeat_task(self, task, repeat, schedule_start, schedule_end):
         '''
         Generate list of instances of task using repeat.
@@ -73,6 +76,7 @@ class TaskRepeater(object):
                 new_task.end = new_task_end
                 new_task.done.value = 0
                 new_task.repeat = None
+                new_task.shift_urgency(task.end.days_to(new_task_end))
                 result.append(new_task)
 
             old_task_end = new_task_end
