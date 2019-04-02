@@ -647,6 +647,30 @@ Taken from https://github.com/narendraj9/quoted-scratch."
      "No Break"
      'face 'error)))
 
+(spaceline-define-segment companion-emms
+  "A spaceline segment to display EMMS information."
+  (when emms-player-playing-p
+    (let* ((total-playing-time (emms-track-get
+                                (emms-playlist-current-selected-track)
+                                'info-playing-time))
+           (playing-time emms-playing-time))
+
+      (propertize
+       (format "%s[%02d:%02d/%02d:%02d] %s"
+               (if emms-player-paused-p
+                   ""
+                 "♫ ")
+               (/ playing-time 60)
+               (% playing-time 60)
+               (/ total-playing-time 60)
+               (% total-playing-time 60)
+               (file-name-base
+                (emms-track-name
+                 (emms-playlist-current-selected-track))))
+       'face 'font-lock-comment-face))))
+
+
+
 ;; (spaceline-define-segment companion-symon
 ;;   "A spaceline segment to display symon system monitor."
 ;; 	(when-let ((display-fn (car symon--display-fns)))
@@ -666,6 +690,8 @@ Taken from https://github.com/narendraj9/quoted-scratch."
   (org-clock)
   (persp-name)
   (workspace-number)
+  (companion-emms :tight-right t :face companion-face
+                  :priority 99)
 	(" | " :tight t :face companion-face)
   (companion-type-break :tight t :face companion-face)
 	(" | " :tight t :face companion-face)

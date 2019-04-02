@@ -424,6 +424,10 @@
 	`(elfeed-search-title-face ((,class (:foreground ,var))))
 	`(elfeed-search-unread-title-face ((,class (:foreground ,base))))
 
+;;;;; emms
+  `(emms-playlist-track-face ((,class (:foreground ,base))))
+  `(emms-playlist-selected-face ((,class (:inherit font-lock-keyword-face))))
+
 ;;;;; enh-ruby
 	`(enh-ruby-op-face ((,class (:background ,bg1 :foreground ,base))))
 	`(enh-ruby-string-delimiter-face ((,class (:foreground ,str))))

@@ -132,6 +132,9 @@
 	(require 'emms-player-simple)
 	(emms-all)
 	(emms-default-players)
+  ;; plays at random
+  (setq emms-repeat-playlist t)
+  (setq emms-random-playlist t)
 )
 ;; (use-package undo-tree :ensure t)
 (use-package all-the-icons :ensure t)
@@ -1299,14 +1302,87 @@ Useful for a search overview popup."
   (garbage-collect)
 	(yascroll:safe-show-scroll-bar)
   (message "Done.")
-	(beacon-blink)
-  )
+	(beacon-blink))
 
 
 ;;; key bindings util / helper functions and motion
 ;; (defun fit-window-to-region ()
 ;; 	(interactive)
 ;; 	TODO)
+(defun emms-echo-no-error (&optional insertp)
+  "Describe the current EMMS track in the minibuffer.
+If INSERTP is non-nil, insert the description into the current buffer instead.
+This function uses `emms-show-format' to format the current track."
+  (interactive "P")
+  (condition-case nil
+      (progn
+        (let ((string (format emms-show-format
+                              (emms-track-description
+                               (emms-playlist-current-selected-track)))))
+          (message "%s" string))
+        t)
+    (error nil)))
+(defun emms-next-and-echo ()
+  (interactive)
+  (emms-next)
+  (emms-echo-no-error)
+  (sit-for 2))
+(defun emms-previous-and-echo ()
+  (interactive)
+  (emms-previous)
+  (emms-echo-no-error)
+  (sit-for 2))
+(defun emms-seek-backward-more ()
+  (interactive)
+  (emms-seek -30))
+(defun emms-seek-forward-more ()
+  (interactive)
+  (emms-seek 30))
+(defun emms-restart ()
+  (interactive)
+  (emms-seek-to 0))
+(defun counsel-emms-get-playlist-items ()
+  (let (items)
+    (with-current-emms-playlist
+      (save-excursion
+        (beginning-of-buffer)
+        (while (< (point) (point-max))
+          (let ((pos (point))
+                (name (file-name-base
+                       (buffer-substring-no-properties (point)
+                                                       (line-end-position)))))
+            (push (propertize name 'property pos) items))
+          (forward-line)))
+      ;; (split-string (buffer-string) "[\n\r]+" t)
+      )
+    items))
+(defun counsel-emms-play-item (item)
+  (let ((pos (get-text-property 0 'property item)))
+    (with-current-emms-playlist
+      (save-excursion
+        (goto-char pos)
+        (emms-playlist-mode-play-current-track)))))
+(defun counsel-emms-play ()
+  (interactive)
+  (ivy-read "Play track: "
+            (counsel-emms-get-playlist-items)
+            :action #'counsel-emms-play-item))
+(defun emms-show-progress (&rest _)
+  (let* ((total-playing-time (emms-track-get
+                              (emms-playlist-current-selected-track)
+                              'info-playing-time))
+         (playing-time emms-playing-time)
+         (elapsed/total (/ (* 100 emms-playing-time) total-playing-time)))
+    (with-temp-message (format "[%-100s] [%02d:%02d/%02d:%02d] %2d%%"
+                               (make-string elapsed/total ?=)
+                               (/ playing-time 60)
+                               (% playing-time 60)
+                               (/ total-playing-time 60)
+                               (% total-playing-time 60)
+                               elapsed/total)
+      (sit-for 2))))
+(add-hook 'emms-player-seeked-functions #'emms-show-progress 'append)
+
 (defun company-smart-complete ()
   (interactive)
   (cond
@@ -1482,6 +1558,17 @@ command (ran after) is mysteriously incorrect."
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
 ;; hydra
+(defhydra hydra-emms-control ()
+  "EMMS control"
+  ("k" emms-previous-and-echo "previous track")
+  ("j" emms-next-and-echo "next track")
+  ("G" emms-restart "restart")
+  (":" emms-next-and-echo "next track")
+  ("H" emms-seek-backward-more "seek left more")
+  ("L" emms-seek-forward-more "seek right more")
+  ("h" emms-seek-backward "seek left")
+  ("l" emms-seek-forward "seek right")
+  ("p" emms-pause "pause/play"))
 (defhydra hydra-zoom ()
   "zoom"
   ("=" text-scale-increase "in")
@@ -1537,6 +1624,8 @@ command (ran after) is mysteriously incorrect."
 (define-prefix-command 'global-leader-templates)
 (define-prefix-command 'global-leader-files)
 (define-prefix-command 'global-leader-battery)
+(define-prefix-command 'global-leader-music)
+(define-prefix-command 'global-leader-music-playlist)
 ; prefix keys
 (general-define-key
   :keymaps 'override
@@ -1577,6 +1666,8 @@ command (ran after) is mysteriously incorrect."
 		:which-key "files")
   "b" '(global-leader-battery
     :which-key "battery")
+  "m" '(global-leader-music
+    :which-key "music")
 )
 (general-define-key
   :keymaps 'override
@@ -1657,6 +1748,39 @@ command (ran after) is mysteriously incorrect."
     :which-key "instant completion")
   "bC" '((lambda () (interactive) (setq company-idle-delay 0.2))
     :which-key "delayed completion")
+
+  "ml" '(global-leader-music-playlist
+    :which-key "playlist")
+  "mll" '(emms-add-playlist
+    :which-key "add playlist")
+  "mla" '(emms-add-file
+    :which-key "add file")
+  "mld" '(emms-add-directory
+    :which-key "add directory")
+  "mlD" '(emms-add-directory-tree
+    :which-key "add directory recursively")
+  "mls" '(emms-playlist-save
+    :which-key "save playlist")
+  "mlg" '(emms-playlist-mode-go
+    :which-key "go to playlist")
+  "mls" '(emms-sort
+    :which-key "sort playlist")
+  "mlS" '(emms-shuffle
+    :which-key "shuffle playlist")
+  "mlu" '(emms-uniq
+    :which-key "remove playlist duplicates")
+  "mf" '(counsel-emms-play
+    :which-key "play music")
+  "mn" '(hydra-emms-control/body
+    :which-key "music control")
+  "mp" '(emms-pause
+    :which-key "pause music")
+  "mP" '(emms-stop
+    :which-key "stop music")
+  "mr" '(emms-random
+    :which-key "play random music")
+  "mt" '(emms-toggle-repeat-track
+    :which-key "toggle repeat track")
 )
 (general-define-key
   :keymaps 'override
