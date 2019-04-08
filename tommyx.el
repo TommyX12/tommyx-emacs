@@ -1560,6 +1560,7 @@ command (ran after) is mysteriously incorrect."
 ;; hydra
 (defhydra hydra-emms-control ()
   "EMMS control"
+  ("r" emms-random "random track")
   ("k" emms-previous-and-echo "previous track")
   ("j" emms-next-and-echo "next track")
   ("G" emms-restart "restart")
@@ -1761,7 +1762,9 @@ command (ran after) is mysteriously incorrect."
     :which-key "add directory recursively")
   "mls" '(emms-playlist-save
     :which-key "save playlist")
-  "mlg" '(emms-playlist-mode-go
+  "mlg" '((lambda () (interactive)
+            (emms-playlist-mode-go)
+            (emms-playlist-mode-center-current))
     :which-key "go to playlist")
   "mls" '(emms-sort
     :which-key "sort playlist")
@@ -1769,6 +1772,8 @@ command (ran after) is mysteriously incorrect."
     :which-key "shuffle playlist")
   "mlu" '(emms-uniq
     :which-key "remove playlist duplicates")
+  "mlc" '(emms-playlist-clear
+    :which-key "clear playlist")
   "mf" '(counsel-emms-play
     :which-key "play music")
   "mn" '(hydra-emms-control/body

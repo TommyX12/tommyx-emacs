@@ -649,21 +649,28 @@ Taken from https://github.com/narendraj9/quoted-scratch."
 
 (spaceline-define-segment companion-emms
   "A spaceline segment to display EMMS information."
-  (when emms-player-playing-p
+  (when (and emms-player-playing-p
+             (emms-playlist-current-selected-track))
     (let* ((total-playing-time (emms-track-get
                                 (emms-playlist-current-selected-track)
                                 'info-playing-time))
            (playing-time emms-playing-time))
 
       (propertize
-       (format "%s[%02d:%02d/%02d:%02d] %s"
+       (format "%s[%s/%s] %s"
                (if emms-player-paused-p
                    ""
                  "♫ ")
-               (/ playing-time 60)
-               (% playing-time 60)
-               (/ total-playing-time 60)
-               (% total-playing-time 60)
+               (if playing-time
+                   (format "%02d:%02d"
+                           (/ playing-time 60)
+                           (% playing-time 60))
+                 "--:--")
+               (if total-playing-time
+                   (format "%02d:%02d"
+                           (/ total-playing-time 60)
+                           (% total-playing-time 60))
+                 "--:--")
                (file-name-base
                 (emms-track-name
                  (emms-playlist-current-selected-track))))

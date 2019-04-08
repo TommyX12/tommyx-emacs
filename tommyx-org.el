@@ -106,6 +106,9 @@
 (setq org-enforce-todo-dependencies t)
 (setq org-enforce-todo-checkbox-dependencies t)
 
+;; images
+(setq org-image-actual-width nil)
+
 ;; misc
 (setq org-M-RET-may-split-line nil)
 (setq org-fontify-done-headline t)
@@ -400,6 +403,12 @@ regular expression,
   "vl" '(org-show-all-latex-fragments
     :which-key "preview latex fragment")
 
+  "vi" '(org-redisplay-inline-images
+    :which-key "display inline images")
+
+  "vI" '(org-remove-inline-images
+    :which-key "remove inline images")
+
   "vL" '((lambda () (interactive)
            (org-remove-latex-fragment-image-overlays))
     :which-key "remove latex fragment")
@@ -472,10 +481,14 @@ regular expression,
 (evil-define-key 'normal org-mode-map (kbd ",T") 'org-time-stamp-inactive)
 (evil-define-key 'normal org-mode-map (kbd ",,T")
   (lambda () (interactive) (org-time-stamp-inactive '(4))))
-(evil-define-key 'normal org-mode-map (kbd ",l") 'org-show-all-latex-fragments)
+(evil-define-key 'normal org-mode-map (kbd ",l")
+  (lambda () (interactive)
+    (org-show-all-latex-fragments)
+    (org-redisplay-inline-images)))
 (evil-define-key 'normal org-mode-map (kbd ",L")
   (lambda () (interactive)
-    (org-remove-latex-fragment-image-overlays)))
+    (org-remove-latex-fragment-image-overlays)
+    (org-remove-inline-images)))
 (evil-define-key 'normal org-mode-map (kbd ",,l") 'org-toggle-latex-fragment)
 (evil-define-key 'normal org-mode-map (kbd "TAB") 'org-cycle)
 (evil-define-key 'normal org-mode-map (kbd "<tab>") 'org-cycle)

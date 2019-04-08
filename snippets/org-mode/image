@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: image
+# key: image
+# --
+#+attr_org: :width ${2:${1:500}px}
+[[$0]]
