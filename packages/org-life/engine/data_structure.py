@@ -467,7 +467,7 @@ class Task(Protocol):
     def parse_urgency(self):
         # - format: =time: urgency, ...=
         # - there can just be a single number.
-        #   it specifies minimum urgency.
+        #   it specifies maximum urgency.
         # - =time= can be repeating, in which case org is handling repeating
         # - =time= can be =+n= where =n= is number of day, and it will be computed relative to last curve point
         # - =urgency= can be =to-deadline= or =to-next=
@@ -482,7 +482,7 @@ class Task(Protocol):
             c = [s.strip() for s in clause_string.split(':')]
             if len(c) == 1:
                 t, u = None, c[0]
-                # minimum urgency
+                # maximum urgency
                 self.maximum_urgency = int(u)
 
             else:

@@ -132,9 +132,8 @@
 	(require 'emms-player-simple)
 	(emms-all)
 	(emms-default-players)
-  ;; plays at random
   (setq emms-repeat-playlist t)
-  (setq emms-random-playlist t)
+  (setq emms-random-playlist nil)
 )
 ;; (use-package undo-tree :ensure t)
 (use-package all-the-icons :ensure t)
