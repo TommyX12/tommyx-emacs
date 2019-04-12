@@ -1,0 +1,30 @@
+# -*- mode: snippet -*-
+# name: unity ecs component proxy template
+# key: unityecp
+# --
+using System;
+using System.Collections;
+using System.Collections.Generic;
+
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Entities;
+using Unity.Jobs;
+using Unity.Mathematics;
+using Unity.Transforms;
+using UnityEngine;
+
+[RequiresEntityConversion]
+public class ${1:`(file-name-base (buffer-file-name))`}
+    : MonoBehaviour, IConvertGameObjectToEntity {
+    $0
+
+    public void Convert(Entity entity,
+                        EntityManager dstManager,
+                        GameObjectConversionSystem conversionSystem) {
+        var data = new ${2:`(let ((s (file-name-base (buffer-file-name)))) (substring s 0 (- (length s) 5)))`} {
+            
+        };
+        dstManager.AddComponentData(entity, data);
+    }
+}

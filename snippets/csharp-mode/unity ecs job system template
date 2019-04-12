@@ -1,0 +1,35 @@
+# -*- mode: snippet -*-
+# name: unity ecs job system template
+# key: unityejs
+# --
+using System.Collections;
+using System.Collections.Generic;
+
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Entities;
+using Unity.Jobs;
+using Unity.Mathematics;
+using Unity.Transforms;
+using UnityEngine;
+
+public class ${1:`(file-name-base (buffer-file-name))`} : JobComponentSystem {
+    [BurstCompile]
+    struct $1Job
+        : IJobForEach<${2:T}> {
+        public float DeltaTime;
+
+        public void Execute([ReadOnly] ref $2 ${3:t}) {
+            $0
+        }
+    }
+
+    // OnUpdate runs on the main thread.
+    protected override JobHandle OnUpdate(JobHandle inputDependencies) {
+        var job = new $1Job() {
+            DeltaTime = Time.deltaTime
+        };
+
+        return job.Schedule(this, inputDependencies);
+    }
+}
