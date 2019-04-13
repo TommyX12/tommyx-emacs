@@ -13,7 +13,13 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
+[DisableAutoCreation]
 public class ${1:`(file-name-base (buffer-file-name))`} : JobComponentSystem {
+
+    public $1() {
+        
+    }
+
     [BurstCompile]
     struct $1Job
         : IJobForEach<${2:T}> {

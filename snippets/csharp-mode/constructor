@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: constructor
+# key: ctor
+# --
+${2:public} ${1:`(file-name-base (buffer-file-name))`}($3) {
+    $0
+}
