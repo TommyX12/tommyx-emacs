@@ -25,7 +25,7 @@ public class ${1:`(file-name-base (buffer-file-name))`} : JobComponentSystem {
         : IJobForEach<${2:T}> {
         public float DeltaTime;
 
-        public void Execute([ReadOnly] ref $2 ${3:t}) {
+        public void Execute([ReadOnly] ref ${3:T} ${4:t}$5) {
             $0
         }
     }

@@ -278,6 +278,17 @@ regular expression,
 
 ;; key bindings
 (define-prefix-command 'org-view-leader)
+
+(general-define-key
+	:keymaps 'org-mode-map
+	:states '(motion normal visual)
+	:prefix "SPC"
+	:non-normal-prefix "M-SPC"
+
+  "is" '(counsel-org-goto
+    :which-key "org goto headings")
+)
+
 ; global leader
 (general-define-key
   :keymaps 'override
