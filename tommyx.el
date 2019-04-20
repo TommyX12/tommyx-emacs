@@ -1255,10 +1255,10 @@ Useful for a search overview popup."
   (ivy-posframe--display str #'posframe-poshandler-adaptive-top-bottom t))
 (setq ivy-display-function nil)
 (setq ivy-display-functions-alist
-	  '((counsel-irony . ivy-posframe-display-at-point)
-		(ivy-completion-in-region . ivy-posframe-display-at-point)
-		(swiper . ivy-posframe-display-swiper)
+	  '((swiper . ivy-posframe-display-swiper)
 		(swiper-multi . ivy-posframe-display-swiper)
+		(counsel-ag . nil)
+		(counsel-grep . nil)
 		(t . ivy-posframe-display-at-point)))
 (ivy-posframe-enable)
 ; better UI
@@ -2292,8 +2292,6 @@ command (ran after) is mysteriously incorrect."
 	:keymaps '(swiper-map ivy-minibuffer-map counsel-imenu-map)
 	"M-j" 'ivy-next-line
 	"M-k" 'ivy-previous-line
-	"M-S-j" 'ivy-scroll-up-command
-	"M-S-k" 'ivy-scroll-down-command
 	"M-J" 'ivy-scroll-up-command
 	"M-K" 'ivy-scroll-down-command
 	; ivy-next-history-element allows inserting cursor symbol.
@@ -2306,7 +2304,10 @@ command (ran after) is mysteriously incorrect."
 	"S-RET" 'ivy-immediate-done ; use exact input, not candidate
 	"<S-return>" 'ivy-immediate-done
 	"M-l" 'ivy-done
+	"C-M-l" 'ivy-immediate-done
+	"M-L" 'ivy-dispatching-done
 	"M-n" 'ivy-call
+	"M-N" 'ivy-dispatching-call
 	"M-h" 'ivy-backward-kill-word
 	"M-o" 'ivy-occur ; save to temp buffer for manipulation
 
@@ -2321,11 +2322,11 @@ command (ran after) is mysteriously incorrect."
 )
 (general-define-key
 	:keymaps '(swiper-map)
-	"M-n" 'swiper-query-replace
+	"M-s" 'swiper-query-replace
 )
 (general-define-key
 	:keymaps '(swiper-all-map)
-	"M-n" 'swiper-all-query-replace
+	"M-s" 'swiper-all-query-replace
 )
 (general-define-key ; use / to enter directory, not ENTER.
 	:keymaps '(counsel-find-file-map)
