@@ -1,0 +1,10 @@
+# -*- mode: snippet -*-
+# name: yesno
+# key: yn
+# --
+read -p "${2:${1:Are you sure?} [y/n]}" -n 1 -r ${3:reply}
+echo
+if [[ $$3 =~ ^[Yy]$ ]]
+then
+    $0
+fi

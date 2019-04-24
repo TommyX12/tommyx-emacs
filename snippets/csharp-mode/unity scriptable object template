@@ -1,0 +1,23 @@
+# -*- mode: snippet -*-
+# name: unity scriptable object template
+# key: unityso
+# --
+using System;
+using System.Collections;
+using System.Collections.Generic;
+
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.Assertions;
+
+[CreateAssetMenu(fileName = "$1", menuName = "Configs/$1")]
+public class ${1:`(file-name-base (buffer-file-name))`} : ScriptableObject {
+
+    $0
+
+    private void Awake() {
+        
+    }
+
+}
+

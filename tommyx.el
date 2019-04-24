@@ -558,7 +558,10 @@
 	(setq neo-mode-line-type 'default) ; for performance reason
 	(setq neo-auto-indent-point t)
 )
-(use-package magit :ensure t)
+(use-package magit :ensure t
+  :config
+  (setq magit-display-buffer-function
+        #'magit-display-buffer-fullframe-status-v1))
 (use-package page-break-lines :ensure t)
 (use-package dashboard :ensure t :after page-break-lines)
 (use-package org :ensure org-plus-contrib)
@@ -961,7 +964,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; (setq evil-insert-state-cursor '((bar . 4)))
 ;; moved to theme definition
 ; push jump list every time entering insert mode
-(add-hook 'evil-insert-state-entry-hook 'evil--jumps-push)
+(add-hook 'evil-insert-state-entry-hook 'evil-set-jump)
 ; do not remove space when leaving insert mode
 (setq evil-allow-remove-spaces t) ;; TODO still allow it.
 (defun my-evil-maybe-remove-spaces (func &rest args)
@@ -1626,6 +1629,7 @@ command (ran after) is mysteriously incorrect."
 (define-prefix-command 'global-leader-battery)
 (define-prefix-command 'global-leader-music)
 (define-prefix-command 'global-leader-music-playlist)
+(define-prefix-command 'global-leader-version-control)
 ; prefix keys
 (general-define-key
   :keymaps 'override
@@ -1668,6 +1672,8 @@ command (ran after) is mysteriously incorrect."
     :which-key "battery")
   "m" '(global-leader-music
     :which-key "music")
+  "v" '(global-leader-version-control
+    :which-key "version control")
 )
 (general-define-key
   :keymaps 'override
@@ -1785,6 +1791,9 @@ command (ran after) is mysteriously incorrect."
     :which-key "play random music")
   "mt" '(emms-toggle-repeat-track
     :which-key "toggle repeat track")
+
+  "vs" '(magit-status
+    :which-key "magit status")
 )
 (general-define-key
   :keymaps 'override
@@ -2532,8 +2541,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 ;; avy
 (setq-default use-line-nav nil)
-(evil-define-motion adaptive-avy () :type exclusive :repeat nil
-	(evil--jumps-push)
+(evil-define-motion adaptive-avy () :type exclusive :repeat nil :jump t
 	(if use-line-nav (evil-avy-goto-line) (evil-avy-goto-word-0 nil)))
 (evil-define-key 'motion 'global "f" 'adaptive-avy)
 ;; (evil-define-key 'motion 'global "f" 'evil-avy-goto-word-0)

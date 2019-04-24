@@ -1,0 +1,18 @@
+# -*- mode: snippet -*-
+# name: unity simple class template
+# key: unitys
+# --
+using System;
+using System.Collections;
+using System.Collections.Generic;
+
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.Assertions;
+
+public class ${1:`(file-name-base (buffer-file-name))`} {
+
+    $0
+
+}
+
