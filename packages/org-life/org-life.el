@@ -185,6 +185,11 @@
 (defvar org-life--temp-tasks nil)
 (defvar org-life--temp-clocks nil)
 (defvar org-life--response-buffer "")
+(defvar org-life--agenda-data-cache nil)
+(defvar org-life--schedule-data-cache nil)
+(defvar org-life--agenda-keep-cache nil)
+(defvar org-life--agenda-current-view nil)
+(defvar org-life--agenda-keep-markers nil)
 
 ;;; Major mode definition
 
@@ -647,6 +652,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
           "\n\n"
           message))
 
+;; TODO: Bug: last updated will not reflect true update time using the new view system.
 (cl-defun org-life-agenda-render-last-updated ()
   (insert (propertize
            (format-time-string "Last Updated: %Y-%m-%d %H:%M\n")
@@ -1148,48 +1154,54 @@ PROCESS is the process under watch, OUTPUT is the output received."
      usable-time-config)))
 
 (defun org-life-agenda-get-agenda-data ()
-  (org-life-echo "Computing agenda data ...")
-  
-  (setq org-life--temp-id 0)
-  (setq org-life--temp-tasks nil)
-  (setq org-life--temp-clocks nil)
+  (if org-life--agenda-data-cache
+      ;; Return cache if non-nil.
+      org-life--agenda-data-cache
 
-  (org-life-echo "Reading agenda files ...")
-  
-  (org-life-agenda-process-agenda-files
-   '()
-   (lambda (acc ast) ; ast-processor
-     (org-element-map
-         ast ; data
-         'headline ; types
-       #'org-life-agenda-get-tasks-and-clocks ; fun
-       nil ; info
-       nil ; first-match
-       'headline ; no-recursion
-       ))
-   'element)
-  
-  (org-life-echo "Gathering data ...")
-  
-  (let* ((config-elem
-          (org-life-agenda-get-config-elem))
-         (config-data
-          (org-life-agenda-get-config-data config-elem))
-         (tasks
-          org-life--temp-tasks)
-         (clocks
-          org-life--temp-clocks)
-         (usable-time-config
-          (org-life-agenda-get-usable-time-config config-elem)))
+    (org-life-echo "Computing agenda data ...")
     
-    (list :config config-data
-          :usable-time usable-time-config
-          :tasks tasks
-          :clocks clocks
-          :tasks-dict (org-life-agenda-list-to-ht
-                       tasks
-                       (lambda (task)
-                         (org-life-agenda-entry-id task))))))
+    (setq org-life--temp-id 0)
+    (setq org-life--temp-tasks nil)
+    (setq org-life--temp-clocks nil)
+
+    (org-life-echo "Reading agenda files ...")
+    
+    (org-life-agenda-process-agenda-files
+     '()
+     (lambda (acc ast) ; ast-processor
+       (org-element-map
+           ast ; data
+           'headline ; types
+         #'org-life-agenda-get-tasks-and-clocks ; fun
+         nil ; info
+         nil ; first-match
+         'headline ; no-recursion
+         ))
+     'element)
+    
+    (org-life-echo "Gathering data ...")
+    
+    (setq
+     org-life--agenda-data-cache
+     (let* ((config-elem
+             (org-life-agenda-get-config-elem))
+            (config-data
+             (org-life-agenda-get-config-data config-elem))
+            (tasks
+             org-life--temp-tasks)
+            (clocks
+             org-life--temp-clocks)
+            (usable-time-config
+             (org-life-agenda-get-usable-time-config config-elem)))
+       
+       (list :config config-data
+             :usable-time usable-time-config
+             :tasks tasks
+             :clocks clocks
+             :tasks-dict (org-life-agenda-list-to-ht
+                          tasks
+                          (lambda (task)
+                            (org-life-agenda-entry-id task))))))))
 
 (defun org-life-agenda-get-scheduler-request-config (config-data)
   ;; This is in the same format as request.
@@ -1267,29 +1279,35 @@ PROCESS is the process under watch, OUTPUT is the output received."
           :usable_time (org-life-agenda-get-scheduler-request-usable-time
                         (plist-get agenda-data :usable-time)))))
 
-(defun org-life-agenda-get-schedule-data (agenda-data)
-  (let (request
-        response)
+(defun org-life-agenda-get-schedule-data ()
+  (if org-life--schedule-data-cache
+      ;; Return cache if non-nil.
+      org-life--schedule-data-cache
 
-    (org-life-echo "Preparing server request ...")
-    (setq request (org-life-agenda-get-scheduler-request agenda-data))
-    
-    (org-life-echo "Sending server request ...")
-    (setq response (org-life-send-request request))))
+    (setq
+     org-life--schedule-data-cache
+     (let (request
+           response)
+
+       (org-life-echo "Preparing server request ...")
+       (setq request (org-life-agenda-get-scheduler-request
+                      (org-life-agenda-get-agenda-data)))
+       
+       (org-life-echo "Sending server request ...")
+       (setq response (org-life-send-request request))))))
+
+(defun org-life-invalidate-cache ()
+  (setq org-life--agenda-data-cache nil)
+  (setq org-life--schedule-data-cache nil))
 
 ;; Agenda main
 
 (defun org-life-agenda (&rest _)
-  (let (agenda-data
-        schedule-data)
-    
-    (setq agenda-data (org-life-agenda-get-agenda-data))
-    (setq schedule-data (org-life-agenda-get-schedule-data agenda-data))
-    
-    (let ((inhibit-read-only t))
-      (goto-char (point-max))
-      (org-life-agenda-render-agenda :agenda-data agenda-data
-                                     :schedule-data schedule-data))))
+  (unless org-life--agenda-keep-cache
+    (org-life-invalidate-cache))
+  (org-life-agenda-render-view
+   (or org-life--agenda-current-view
+       'main)))
 
 ;;; Interactive functions
 
@@ -1298,7 +1316,34 @@ PROCESS is the process under watch, OUTPUT is the output received."
   (interactive)
   (org-life-start-engine))
 
+(defun org-life-agenda-render-view (view)
+  (let ((inhibit-read-only t))
+    (goto-char (point-max))
+    (cond
+
+     ((eq view 'main)
+      (org-life-agenda-render-agenda
+       :agenda-data (org-life-agenda-get-agenda-data)
+       :schedule-data (org-life-agenda-get-schedule-data)))
+
+     ((eq view 'test)
+      (insert "just testing")))))
+
+;; TODO: Bug: this makes (org-agenda-highlight-todo) not work. Possibly issue with the cache.
+(defun org-life-agenda-show-view (view)
+  (let ((org-life--agenda-keep-markers t)
+        (org-life--agenda-keep-cache t)
+        (org-life--agenda-current-view view))
+    (org-agenda-redo t)))
+
 ;;; Advices
+
+(defun org-life-org-agenda-reset-markers-advice (func &rest args)
+	(unless org-life--agenda-keep-markers
+    (apply func args)))
+
+(advice-add #'org-agenda-reset-markers
+            :around #'org-life-org-agenda-reset-markers-advice)
 
 ;;; Hooks
 

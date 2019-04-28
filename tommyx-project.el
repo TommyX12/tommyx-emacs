@@ -46,10 +46,17 @@
 	:states '(motion normal)
   :prefix "SPC p"
 
-	"f" '(counsel-rg
+	"C-f" '(counsel-rg
 		:which-key "search in directory")
-	"F" '(counsel-projectile-rg
-		:which-key "search project")
+	"C-F" '((lambda () (interactive) (counsel-rg (selection-or-word-at-point)))
+		:which-key "search cursor in directory")
+	"f" '(counsel-projectile-rg
+		:which-key "search in project")
+	"F" '((lambda () (interactive)
+          (let ((counsel-projectile-rg-initial-input
+                 (selection-or-word-at-point t)))
+            (counsel-projectile-rg)))
+		:which-key "search cursor in project")
   
 	"p" '(counsel-projectile-switch-project
 		:which-key "switch project")

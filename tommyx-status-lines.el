@@ -42,14 +42,14 @@
   "Update the mode-line if idling."
   (when (and (current-idle-time) (>= (nth 1 (current-idle-time)) 0.5))
     (delayed-mode-line-update)))
-(defun delayed-mode-line-post-command (&rest _)
+(defun delayed-mode-line-pre-command (&rest _)
   "Reset updating state."
   (setq delayed-mode-line--updating nil))
 ; update event triggers
 (run-with-idle-timer 0.5 t 'delayed-mode-line-update)
 (run-at-time 0 1 'delayed-mode-line-update-if-idle)
 (add-hook 'window-configuration-change-hook 'delayed-mode-line-update)
-(add-hook 'post-command-hook #'delayed-mode-line-post-command)
+(add-hook 'pre-command-hook #'delayed-mode-line-pre-command)
 ;; (advice-add 'select-window :after #'delayed-mode-line-update) ; TODO avy-jump calls this too much
 
 

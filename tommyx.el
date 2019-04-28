@@ -497,6 +497,7 @@
 	(push 'web-mode ahs-modes)
 	(push 'js2-mode ahs-modes)
 	(push 'glsl-mode ahs-modes)
+	(push 'shaderlab-mode ahs-modes)
 	(global-auto-highlight-symbol-mode 1)
 	;; (add-hook 'prog-mode-hook (auto-highlight-symbol-mode 1))
 	;; (add-hook 'html-mode-hook (auto-highlight-symbol-mode 1))
@@ -650,6 +651,7 @@
 
 ; language specific
 
+(require 'shaderlab-mode)
 (use-package auctex :ensure t)
 (use-package kivy-mode :ensure t)
 (use-package cc-mode :ensure t
@@ -1442,7 +1444,7 @@ This function uses `emms-show-format' to format the current track."
 	(interactive)
 	(save-excursion
     (indent-region (point-min) (point-max) nil)))
-(defun selection-or-word-at-point ()
+(defun selection-or-word-at-point (&optional no-symbol)
   (cond
    ;; If there is selection use it
    ((and transient-mark-mode
@@ -1455,12 +1457,14 @@ This function uses `emms-show-format' to format the current track."
    ;; Otherwise, use symbol at point or empty
    (t
     (save-excursion
-      (when (not (looking-at "\\sw"))
-        (while (and (> (point) (point-min)) (= (char-before) ? ))
-          (backward-char)))
-      (format "\\<%s\\>"
-			        (or (word-at-point)
-				          ""))))))
+      (if no-symbol
+          (word-at-point)
+        (when (not (looking-at "\\sw"))
+          (while (and (> (point) (point-min)) (= (char-before) ? ))
+            (backward-char)))
+        (format "\\<%s\\>"
+			          (or (word-at-point)
+				            "")))))))
 (evil-define-motion swiper-movement () :type exclusive
 	(swiper))
 (evil-define-command evil-noh-blink () :repeat nil (interactive)

@@ -248,7 +248,7 @@
 	`(secondary-selection ((,class (:background ,bg3))))
 	`(shadow ((,class (:foreground ,base-dim))))
 	`(success ((,class (:foreground ,suc))))
-	`(tooltip ((,class (:background ,ttip-sl :foreground ,base :bold nil :italic nil :underline nil))))
+	`(tooltip ((,class (:background ,ttip-sl :foreground ,base :italic nil :underline nil))))
 	`(vertical-border ((,class (:foreground ,border :background ,border))))
 	`(border ((,class (:foreground ,border :background ,border))))
 	`(internal-border ((,class (:foreground ,border :background ,border))))
@@ -468,7 +468,7 @@
 	`(ess-paren-face ((,class (:foreground ,blue))))
 
 ;;;;; evil
-	`(evil-ex-substitute-matches ((,class (:background ,red-bg :foreground ,red :strike-through t :bold nil))))
+	`(evil-ex-substitute-matches ((,class (:background ,red-bg :foreground ,red :strike-through t))))
 	`(evil-ex-substitute-replacement ((,class (:background ,green-bg :foreground ,green :inherit bold))))
 
 ;;;;; evil-goggles
@@ -655,10 +655,10 @@
 	`(imenu-list-entry-face-1 ((,class (:inherit org-level-6))))
 	`(imenu-list-entry-face-2 ((,class (:inherit org-level-7))))
 	`(imenu-list-entry-face-3 ((,class (:inherit org-level-8))))
-	`(imenu-list-entry-subalist-face-0 ((,class (:inherit imenu-list-entry-face-0 :bold t))))
-	`(imenu-list-entry-subalist-face-1 ((,class (:inherit imenu-list-entry-face-1 :bold t))))
-	`(imenu-list-entry-subalist-face-2 ((,class (:inherit imenu-list-entry-face-2 :bold t))))
-	`(imenu-list-entry-subalist-face-3 ((,class (:inherit imenu-list-entry-face-3 :bold t))))
+	`(imenu-list-entry-subalist-face-0 ((,class (:inherit (imenu-list-entry-face-0 bold)))))
+	`(imenu-list-entry-subalist-face-1 ((,class (:inherit (imenu-list-entry-face-1 bold)))))
+	`(imenu-list-entry-subalist-face-2 ((,class (:inherit (imenu-list-entry-face-2 bold)))))
+	`(imenu-list-entry-subalist-face-3 ((,class (:inherit (imenu-list-entry-face-3 bold)))))
 
 ;;;;; info
 	`(info-header-xref ((,class (:foreground ,func :underline t))))
@@ -684,7 +684,7 @@
 	`(ivy-posframe ((,class (:inherit default :background ,ttip-bg))))
 
 ;;;;; latex
-	`(font-latex-bold-face ((,class (:bold t))))
+	`(font-latex-bold-face ((,class (:inherit bold))))
 	`(font-latex-italic-face ((,class (:italic t))))
 	`(font-latex-math-face ((,class (:foreground ,comp))))
 	`(font-latex-verbatim-face ((,class (:inherit org-verbatim))))
@@ -696,8 +696,8 @@
 	`(font-latex-sectioning-1-face ((,class (:inherit bold :foreground ,head4 :height 1.3 :background ,head4-bg))))
 	`(font-latex-sectioning-2-face ((,class (:inherit bold :foreground ,head1 :height 1.3 :background ,head1-bg))))
 	`(font-latex-sectioning-3-face ((,class (:inherit bold :foreground ,head2 :height 1.2 :background ,head2-bg))))
-	`(font-latex-sectioning-4-face ((,class (:bold nil :foreground ,head3 :height 1.1 :background ,head3-bg))))
-	`(font-latex-sectioning-5-face ((,class (:bold nil :foreground ,head4 :background ,head4-bg))))
+	`(font-latex-sectioning-4-face ((,class (:foreground ,head3 :height 1.1 :background ,head3-bg))))
+	`(font-latex-sectioning-5-face ((,class (:foreground ,head4 :background ,head4-bg))))
 	`(font-latex-string-face ((,class (:foreground ,str))))
 	`(font-latex-warning-face ((,class (:foreground ,war))))
 
@@ -770,10 +770,10 @@
 ;;;;; markdown
 	`(markdown-header-face-1 ((,class (:inherit bold :foreground ,head1 :height 1.3 :background ,head1-bg))))
 	`(markdown-header-face-2 ((,class (:inherit bold :foreground ,head2 :height 1.2 :background ,head2-bg))))
-	`(markdown-header-face-3 ((,class (:bold nil :foreground ,head3 :height 1.1 :background ,head3-bg))))
-	`(markdown-header-face-4 ((,class (:bold nil :foreground ,head4 :background ,head4-bg))))
-	`(markdown-header-face-5 ((,class (:bold nil :foreground ,head1))))
-	`(markdown-header-face-6 ((,class (:bold nil :foreground ,head2))))
+	`(markdown-header-face-3 ((,class (:foreground ,head3 :height 1.1 :background ,head3-bg))))
+	`(markdown-header-face-4 ((,class (:foreground ,head4 :background ,head4-bg))))
+	`(markdown-header-face-5 ((,class (:foreground ,head1))))
+	`(markdown-header-face-6 ((,class (:foreground ,head2))))
 	`(markdown-table-face ((,class (:foreground ,base :background ,head1-bg))))
 
 ;;;;; mode-line
@@ -859,12 +859,12 @@
   `(org-latex-and-related ((,class (:foreground ,comp))))
 	`(org-level-1 ((,class (:inherit bold :foreground ,head1 :height 1.3 :background ,head1-bg))))
 	`(org-level-2 ((,class (:inherit bold :foreground ,head2 :height 1.2 :background ,head1-bg))))
-	`(org-level-3 ((,class (:bold nil :foreground ,head3 :height 1.1 :background ,head1-bg))))
-	`(org-level-4 ((,class (:bold nil :foreground ,head4 :background ,head1-bg))))
-	`(org-level-5 ((,class (:bold nil :foreground ,head1))))
-	`(org-level-6 ((,class (:bold nil :foreground ,head2))))
-	`(org-level-7 ((,class (:bold nil :foreground ,head3))))
-	`(org-level-8 ((,class (:bold nil :foreground ,head4))))
+	`(org-level-3 ((,class (:foreground ,head3 :height 1.1 :background ,head1-bg))))
+	`(org-level-4 ((,class (:foreground ,head4 :background ,head1-bg))))
+	`(org-level-5 ((,class (:foreground ,head1))))
+	`(org-level-6 ((,class (:foreground ,head2))))
+	`(org-level-7 ((,class (:foreground ,head3))))
+	`(org-level-8 ((,class (:foreground ,head4))))
 	`(org-link ((,class (:underline t :foreground ,comment))))
 	`(org-meta-line ((,class (:foreground ,meta))))
 	`(org-mode-line-clock-overrun ((,class (:foreground ,err))))
@@ -906,7 +906,7 @@
 	`(popup-menu-mouse-face ((,class (:inherit highlight))))
 	`(popup-scroll-bar-background-face ((,class (:background ,bg2))))
 	`(popup-scroll-bar-foreground-face ((,class (:background ,act2))))
-	`(popup-tip-face ((,class (:background ,ttip-sl :foreground ,base :bold nil :italic nil :underline nil))))
+	`(popup-tip-face ((,class (:background ,ttip-sl :foreground ,base :italic nil :underline nil))))
 
 ;;;;; powerline
 	`(powerline-active1 ((,class (:background ,primary-4 :foreground ,base))))
