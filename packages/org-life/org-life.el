@@ -997,14 +997,6 @@ PROCESS is the process under watch, OUTPUT is the output received."
                        (org-get-agenda-file-buffer file)
                      (error "No such file %s" file)))
 
-      (unless org-todo-regexp
-        (dolist (variable '(org-todo-regexp
-                            org-not-done-regexp
-                            org-complex-heading-regexp
-                            org-done-keywords
-                            org-done-keywords-for-agenda))
-          (set variable (buffer-local-value variable buffer))))
-
       (with-current-buffer buffer
         (org-with-wide-buffer
          (unless (derived-mode-p 'org-mode) (error "Agenda file %s is not in Org mode" file))
@@ -1317,6 +1309,14 @@ PROCESS is the process under watch, OUTPUT is the output received."
   (org-life-start-engine))
 
 (defun org-life-agenda-render-view (view)
+  (unless org-todo-regexp
+    (dolist (variable '(org-todo-regexp
+                        org-not-done-regexp
+                        org-complex-heading-regexp
+                        org-done-keywords
+                        org-done-keywords-for-agenda))
+      (set variable (buffer-local-value variable buffer))))
+
   (let ((inhibit-read-only t))
     (goto-char (point-max))
     (cond
@@ -1329,7 +1329,6 @@ PROCESS is the process under watch, OUTPUT is the output received."
      ((eq view 'test)
       (insert "just testing")))))
 
-;; TODO: Bug: this makes (org-agenda-highlight-todo) not work. Possibly issue with the cache.
 (defun org-life-agenda-show-view (view)
   (let ((org-life--agenda-keep-markers t)
         (org-life--agenda-keep-cache t)
