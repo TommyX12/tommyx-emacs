@@ -461,7 +461,20 @@ Companion buffer is BUFFER."
   "Make selected window N row height."
 	(let ((window-safe-min-height 0) (window-resize-pixelwise t))
 		(message (number-to-string (* n (or powerline-height (frame-char-height)))))
-		(window-resize (selected-window) (round (- (* n (or powerline-height (frame-char-height))) (window-pixel-height) -2)) nil 'safe t)))
+		(window-resize
+     (selected-window)
+     (round (-
+             (* n (or powerline-height (frame-char-height)))
+             (window-pixel-height)
+             (if (and
+                  window-divider-mode
+                  (or
+                   (eq window-divider-default-places 't)
+                   (eq window-divider-default-places 'bottom-only)))
+                 (- window-divider-default-bottom-width)
+               0)
+             -2))
+     nil 'safe t)))
 
 (defun companion-qod-callback (status)
   "Callback for ‘companion-fetch-qod’ command.

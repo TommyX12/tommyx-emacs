@@ -1370,7 +1370,8 @@ This function uses `emms-show-format' to format the current track."
   (interactive)
   (ivy-read "Play track: "
             (counsel-emms-get-playlist-items)
-            :action #'counsel-emms-play-item))
+            :action #'counsel-emms-play-item
+            :require-match t))
 (defun emms-show-progress (&rest _)
   (let* ((total-playing-time (emms-track-get
                               (emms-playlist-current-selected-track)
@@ -2006,7 +2007,7 @@ command (ran after) is mysteriously incorrect."
 ; repeat last ex command
 (evil-define-key 'motion 'global ",." "@:")
 ; save all
-(evil-define-key 'motion 'global ",wa" 'evil-write-all)
+(evil-define-key 'motion 'global ",w" 'evil-write-all)
 ; align
 (evil-define-key 'visual 'global ",a"
   (lambda () (interactive)
@@ -2796,10 +2797,21 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (add-hook 'sgml-mode-hook (lambda () (toggle-word-wrap 1)))
 
 ;; window divider
-(setq window-divider-default-places 'right-only)
-(setq window-divider-default-right-width 2)
-(setq window-divider-default-bottom-width 1)
+(setq window-divider-default-places 't)
+(setq window-divider-default-right-width 6)
+(setq window-divider-default-bottom-width 6)
 (window-divider-mode 1)
+
+;; minibuffer background
+;; TODO: failed
+;; (defface minibuffer-background
+;;   '((t (:inherit default)))
+;;   "*Face used for the minibuffer."
+;;   :group 'appearence)
+;; (add-hook 'minibuffer-setup-hook
+;;           (lambda ()
+;;             (make-local-variable 'face-remapping-alist)
+;;             (add-to-list 'face-remapping-alist '(default minibuffer-background))))
 
 ;; undo limits
 (setq undo-limit 1000000)
@@ -2874,18 +2886,18 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 		(delete-overlay hl-insert-region-ov)))
 (defvar hl-insert-region-mode-on nil)
 (defun hl-insert-region-mode ()
-	(interactive)
-	(if hl-insert-region-mode-on
-		(progn
-			(setq hl-insert-region-mode-on nil)
-			(remove-hook 'evil-insert-state-entry-hook 'hl-insert-region-insert-entry)
-			(remove-hook 'evil-insert-state-exit-hook 'hl-insert-region-insert-exit)
-			(message "hl-insert-region mode disabled."))
-		(progn
-			(setq hl-insert-region-mode-on t)
-			(add-hook 'evil-insert-state-entry-hook 'hl-insert-region-insert-entry)
-			(add-hook 'evil-insert-state-exit-hook 'hl-insert-region-insert-exit)
-			(message "hl-insert-region mode enabled."))))
+  (interactive)
+  (if hl-insert-region-mode-on
+    (progn
+      (setq hl-insert-region-mode-on nil)
+      (remove-hook 'evil-insert-state-entry-hook 'hl-insert-region-insert-entry)
+      (remove-hook 'evil-insert-state-exit-hook 'hl-insert-region-insert-exit)
+      (message "hl-insert-region mode disabled."))
+    (progn
+      (setq hl-insert-region-mode-on t)
+      (add-hook 'evil-insert-state-entry-hook 'hl-insert-region-insert-entry)
+      (add-hook 'evil-insert-state-exit-hook 'hl-insert-region-insert-exit)
+      (message "hl-insert-region mode enabled."))))
 ;; (hl-insert-region-mode)
 
 ;; compilation
