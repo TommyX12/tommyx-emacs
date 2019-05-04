@@ -1315,7 +1315,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
                         org-complex-heading-regexp
                         org-done-keywords
                         org-done-keywords-for-agenda))
-      (set variable (buffer-local-value variable buffer))))
+      (set variable (buffer-local-value variable (current-buffer)))))
 
   (let ((inhibit-read-only t))
     (goto-char (point-max))

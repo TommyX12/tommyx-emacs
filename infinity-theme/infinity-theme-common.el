@@ -63,9 +63,11 @@
   (primary+3     (if (eq theme 'dark) (if (has-true-color) "#91ccff" "#268bd2") (if (has-true-color) "#2067cc" "#268bd2")))
   (primary+4     (if (eq theme 'dark) (if (has-true-color) "#bcdfff" "#268bd2") (if (has-true-color) "#1c48ad" "#268bd2")))
 
-  (secondary-4   (if (eq theme 'dark) (if (has-true-color) "#212121" "#268bd2") (if (has-true-color) "#eeeeee" "#268bd2")))
-  (secondary-3   (if (eq theme 'dark) (if (has-true-color) "#424242" "#268bd2") (if (has-true-color) "#d0d0d0" "#268bd2")))
-  (secondary-2   (if (eq theme 'dark) (if (has-true-color) "#616161" "#268bd2") (if (has-true-color) "#bbbbbb" "#268bd2")))
+  (secondary-4   (if (eq theme 'dark) (if (has-true-color) "#202226" "#268bd2") (if (has-true-color) "#eeeeee" "#268bd2")))
+  ;; (secondary-4   (if (eq theme 'dark) (if (has-true-color) "#212121" "#268bd2") (if (has-true-color) "#eeeeee" "#268bd2")))
+  ;; (secondary-3   (if (eq theme 'dark) (if (has-true-color) "#424242" "#268bd2") (if (has-true-color) "#d0d0d0" "#268bd2")))
+  (secondary-3   (if (eq theme 'dark) (if (has-true-color) "#3A3D45" "#268bd2") (if (has-true-color) "#d0d0d0" "#268bd2")))
+  (secondary-2   (if (eq theme 'dark) (if (has-true-color) "#565B66" "#268bd2") (if (has-true-color) "#bbbbbb" "#268bd2")))
   (secondary-1   (if (eq theme 'dark) (if (has-true-color) "#757575" "#268bd2") (if (has-true-color) "#aaaaaa" "#268bd2")))
   (secondary     (if (eq theme 'dark) (if (has-true-color) "#999999" "#268bd2") (if (has-true-color) "#999999" "#268bd2")))
   (secondary+1   (if (eq theme 'dark) (if (has-true-color) "#aaaaaa" "#268bd2") (if (has-true-color) "#757575" "#268bd2")))
@@ -252,9 +254,9 @@
   `(shadow ((,class (:foreground ,base-dim))))
   `(success ((,class (:foreground ,suc))))
   `(tooltip ((,class (:background ,ttip-sl :foreground ,base :italic nil :underline nil))))
-  `(vertical-border ((,class (:foreground ,back-border :background ,back-border))))
-  `(border ((,class (:foreground ,back-border :background ,back-border))))
-  `(internal-border ((,class (:foreground ,back-border :background ,back-border))))
+  `(vertical-border ((,class (:foreground ,base :background ,back-border))))
+  `(border ((,class (:foreground ,base :background ,back-border))))
+  `(internal-border ((,class (:foreground ,base :background ,back-border))))
   `(warning ((,class (:foreground ,war))))
 
 ;;;;; ace-window
@@ -344,6 +346,8 @@
   `(cider-traced-face ((,class :box (:color ,cyan :line-width -1 :style nil))))
 
 ;;;;; companion
+  `(companion-face ((,class (:inherit default))))
+  `(companion-secondary ((,class (:inherit default))))
   `(companion-notif-icon-info ((,class (:foreground ,suc :inherit companion-face))))
   `(companion-notif-icon-warn ((,class (:foreground ,err :inherit companion-face))))
 
@@ -1050,9 +1054,9 @@
   `(whitespace-trailing ((,class (:background ,err :foreground ,war))))
 
 ;;;;; window-divider
-  `(window-divider ((,class (:inherit border))))
-  `(window-divider-first-pixel ((,class (:inherit border))))
-  `(window-divider-last-pixel ((,class (:inherit border))))
+  `(window-divider ((,class (:background ,back-border :foreground ,back-border))))
+  `(window-divider-first-pixel ((,class (:background ,back-border :foreground ,back-border))))
+  `(window-divider-last-pixel ((,class (:background ,back-border :foreground ,back-border))))
 
 ;;;;; yascroll
   `(yascroll:thumb-fringe ((,class (:background ,secondary-2 :foreground ,secondary-2))))

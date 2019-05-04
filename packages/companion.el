@@ -108,9 +108,14 @@
 
 (defface companion-face
   '((t (:inherit header-line)))
-  "*Face used for the banner in companion buffer."
+  "*Face used for the companion buffer."
   :group 'companion :group 'font-lock-highlighting-faces)
 (defvar companion-face 'companion-face)
+(defface companion-secondary
+  '((t (:inherit header-line)))
+  "*Face used for the companion buffer (secondary)."
+  :group 'companion :group 'font-lock-highlighting-faces)
+(defvar companion-secondary 'companion-secondary)
 (defface companion-notif-icon-info
   '((t (:foreground "#67b11d" :inherit companion-face)))
   "*Face used for the icon in companion buffer for info notifications."
@@ -216,7 +221,9 @@ If global companion buffer not exists, create it."
 Companion buffer is BUFFER."
   (companion--with-resizable-window
 	(switch-to-buffer buffer)
-	(setq-local face-remapping-alist '((default companion-face)))
+	(setq-local face-remapping-alist
+              '((default companion-face)
+                (powerline-active2 companion-secondary)))
 	(set-window-parameter window 'no-delete-other-windows t)
 	(set-window-parameter window 'no-other-window t)
 	(set-window-margins window 0 0)

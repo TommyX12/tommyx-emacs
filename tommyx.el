@@ -547,6 +547,11 @@
 	(setq neo-show-hidden-files t)
 	(add-hook 'neotree-mode-hook (lambda ()
 		(hl-line-mode 1)
+    (yascroll-bar-mode -1)
+    (make-local-variable 'face-remapping-alist)
+    (add-to-list 'face-remapping-alist '(default border))
+    (setq-local left-fringe-width 0)
+    (setq-local right-fringe-width 0)
 		(setq-local use-line-nav t)
     (setq-local highlight-indentation-offset 2)
     (highlight-indentation-mode 1)))
@@ -603,6 +608,11 @@
 	(setq imenu-list-idle-update-delay 1)
 	(setq imenu-list-buffer-name "*Outline*")
 	(add-hook 'imenu-list-major-mode-hook (lambda ()
+    (make-local-variable 'face-remapping-alist)
+    (add-to-list 'face-remapping-alist '(default border))
+    (yascroll-bar-mode -1)
+    (setq-local left-fringe-width 0)
+    (setq-local right-fringe-width 0)
 		(hl-line-mode 1)
 		(setq tab-width 2)
 		(whitespace-mode 1)
@@ -744,14 +754,24 @@
 
 ;; yascroll
 (global-yascroll-bar-mode 1)
+(setq yascroll:last-state nil)
 (setq yascroll:delay-to-hide nil)
 (setq yascroll:scroll-bar '(right-fringe left-fringe text-area))
 ; disable in insert mode
-(add-hook 'evil-insert-state-entry-hook (lambda () (yascroll-bar-mode -1)))
-(add-hook 'evil-insert-state-exit-hook (lambda () (yascroll-bar-mode 1)))
+(add-hook 'evil-insert-state-entry-hook
+          (lambda ()
+            (setq yascroll:last-state yascroll-bar-mode)
+            (yascroll-bar-mode -1)))
+(add-hook 'evil-insert-state-exit-hook
+          (lambda () (yascroll-bar-mode (if yascroll:last-state 1 -1))))
 ; auto run on idle timer
-(run-with-idle-timer 0.5 t (lambda ()
-	(when (not (eq evil-state 'insert)) (yascroll:safe-show-scroll-bar))))
+(run-with-idle-timer
+ 0.5
+ t
+ (lambda ()
+   (when (and (not (eq evil-state 'insert))
+              yascroll-bar-mode)
+     (yascroll:safe-show-scroll-bar))))
 
 ;; beacon
 (setq beacon-blink-when-focused nil) ; may cause problem
@@ -766,9 +786,6 @@
 ; disable in insert mode
 ;; (add-hook 'evil-insert-state-entry-hook (lambda () (beacon-mode -1)))
 ;; (add-hook 'evil-insert-state-exit-hook (lambda () (beacon-mode 1)))
-
-;; companion
-(companion-open)
 
 ;; which-function
 (which-function-mode 1)
@@ -2798,8 +2815,8 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 ;; window divider
 (setq window-divider-default-places 't)
-(setq window-divider-default-right-width 6)
-(setq window-divider-default-bottom-width 6)
+(setq window-divider-default-right-width 7)
+(setq window-divider-default-bottom-width 7)
 (window-divider-mode 1)
 
 ;; minibuffer background
@@ -2987,6 +3004,9 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 	(add-hook hook (lambda () (flyspell-mode 1))))
 (dolist (hook '(change-log-mode-hook log-edit-mode-hook))
 	(add-hook hook (lambda () (flyspell-mode -1))))
+
+;; companion
+(companion-open)
 
 ;;; org
 (load-relative "./tommyx-org.el")

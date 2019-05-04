@@ -47,7 +47,7 @@
   (setq delayed-mode-line--updating nil))
 ; update event triggers
 (run-with-idle-timer 0.5 t 'delayed-mode-line-update)
-(run-at-time 0 1 'delayed-mode-line-update-if-idle)
+(run-at-time 0 5 'delayed-mode-line-update-if-idle)
 (add-hook 'window-configuration-change-hook 'delayed-mode-line-update)
 (add-hook 'pre-command-hook #'delayed-mode-line-pre-command)
 ;; (advice-add 'select-window :after #'delayed-mode-line-update) ; TODO avy-jump calls this too much
@@ -139,9 +139,9 @@ in pdf-view mode (enabled by the `pdf-tools' package)."
   (selection-info :priority 95)
   (input-method)
 	(which-function)
-  (status-lines-line-column :priority 99)
-  (buffer-position)
-  (hud :priority 99)
+  (status-lines-line-column :priority 1)
+  (buffer-position :priority 1)
+  (hud :priority 1)
 ))
 
 ;; footer line definition
