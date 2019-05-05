@@ -63,7 +63,8 @@
   (primary+3     (if (eq theme 'dark) (if (has-true-color) "#91ccff" "#268bd2") (if (has-true-color) "#2067cc" "#268bd2")))
   (primary+4     (if (eq theme 'dark) (if (has-true-color) "#bcdfff" "#268bd2") (if (has-true-color) "#1c48ad" "#268bd2")))
 
-  (secondary-4   (if (eq theme 'dark) (if (has-true-color) "#202226" "#268bd2") (if (has-true-color) "#eeeeee" "#268bd2")))
+  (secondary-4   (if (eq theme 'dark) (if (has-true-color) "#1C1D21" "#268bd2") (if (has-true-color) "#eeeeee" "#268bd2")))
+  (secondary-4x  (if (eq theme 'dark) (if (has-true-color) "#242C38" "#268bd2") (if (has-true-color) "#DEDEDE" "#268bd2")))
   ;; (secondary-4   (if (eq theme 'dark) (if (has-true-color) "#212121" "#268bd2") (if (has-true-color) "#eeeeee" "#268bd2")))
   ;; (secondary-3   (if (eq theme 'dark) (if (has-true-color) "#424242" "#268bd2") (if (has-true-color) "#d0d0d0" "#268bd2")))
   (secondary-3   (if (eq theme 'dark) (if (has-true-color) "#3A3D45" "#268bd2") (if (has-true-color) "#d0d0d0" "#268bd2")))
@@ -92,7 +93,8 @@
   (bg3           (if (eq theme 'dark) (if (has-true-color) "#0a1014" "#121212") (if (has-true-color) "#dedede" "#d0d0d0")))
   (bg4           (if (eq theme 'dark) (if (has-true-color) "#080a14" "#080808") (if (has-true-color) "#dadada" "#bcbcbc")))
   (border        (if (eq theme 'dark) (if (has-true-color) "#555555" "#111111") (if (has-true-color) "#aaaaaa" "#b3b9be")))
-  (back-border   (if (eq theme 'dark) (if (has-true-color) "#1D2026" "#121212") (if (has-true-color) "#dedede" "#d0d0d0")))
+  (back-border   (if (eq theme 'dark) (if (has-true-color) "#1C1E24" "#121212") (if (has-true-color) "#dedede" "#d0d0d0")))
+  (back-border2  (if (eq theme 'dark) (if (has-true-color) "#20232A" "#121212") (if (has-true-color) "#E6E6E6" "#d0d0d0")))
   (border-shadow (if (eq theme 'dark) (if (has-true-color) "#060606" "#111111") (if (has-true-color) "#555555" "#b3b9be")))
   (cblk          (if (eq theme 'dark) (if (has-true-color) "#C1C9D5" "#b2b2b2") (if (has-true-color) "#535870" "#5f5f87")))
   (cblk-bg       (if (eq theme 'dark) (if (has-true-color) "#2B2D33" "#262626") (if (has-true-color) "#E3E6F0" "#ffffff")))
@@ -141,7 +143,7 @@
   (suc           (if (eq theme 'dark) (if (has-true-color) "#86dc2f" "#86dc2f") (if (has-true-color) "#42ae2c" "#00af00")))
   (ttip          (if (eq theme 'dark) (if (has-true-color) "#9AA2BA" "#888888") (if (has-true-color) "#79839F" "#5f5f87")))
   (ttip-sl       (if (eq theme 'dark) (if (has-true-color) "#505B79" "#333333") (if (has-true-color) "#C6C9DD" "#afafff")))
-  (ttip-bg       (if (eq theme 'dark) (if (has-true-color) "#343840" "#444444") (if (has-true-color) "#DEE1E8" "#dfdfff")))
+  (ttip-bg       (if (eq theme 'dark) (if (has-true-color) "#363B45" "#444444") (if (has-true-color) "#DEE1E8" "#dfdfff")))
   ;; (type          (if (eq theme 'dark) (if (has-true-color) "#86ac4f" "#86dc2f") (if (has-true-color) "#52883c" "#00af00")))
   (type           (if (eq theme 'dark) (if (has-true-color) "#2cafa5" "#2aa198") (if (has-true-color) "#2d9578" "#2aa198")))
   (var           (if (eq theme 'dark) (if (has-true-color) "#7590db" "#8787d7") (if (has-true-color) "#5A8AB1" "#af5fd7")))
@@ -247,7 +249,8 @@
   `(link-visited ((,class (:foreground ,comp :underline t))))
   `(match ((,class (:foreground ,mat :inverse-video t))))
   `(minibuffer-prompt ((,class (:inherit bold :foreground ,keyword))))
-  `(minibuffer-background ((,class (:inherit default :background ,back-border))))
+  ;; `(minibuffer-background ((,class (:inherit default :background ,back-border))))
+  `(sidebar-background ((,class (:inherit default :background ,back-border2))))
   `(page-break-lines ((,class (:foreground ,act2))))
   `(region ((,class (:background ,highlight))))
   `(secondary-selection ((,class (:background ,bg3))))
@@ -784,7 +787,7 @@
   `(markdown-table-face ((,class (:foreground ,base :background ,head1-bg))))
 
 ;;;;; mode-line
-  `(mode-line           ((,class (:foreground ,base :background ,secondary-4 :box (:color ,border :line-width 1 :style ,(if (eq theme 'dark) 'released-button nil))))))
+  `(mode-line           ((,class (:foreground ,base :background ,secondary-4x :box (:color ,border :line-width 1 :style ,(if (eq theme 'dark) 'released-button nil))))))
   `(mode-line-buffer-id ((,class (:foreground ,func :inherit bold))))
   `(mode-line-inactive  ((,class (:foreground ,base :background ,secondary-4 :box (:color ,border :line-width 1 :style ,(if (eq theme 'dark) 'released-button nil))))))
 

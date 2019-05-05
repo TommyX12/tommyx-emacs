@@ -209,12 +209,12 @@
        (ivy-rich-file-last-modified-time
         (:face font-lock-comment-face))))))
   (ivy-rich-mode 1))
-;; (use-package popwin :ensure t
-;; 	:config
-;; 	(setq popwin:adjust-other-windows t)
-;; 	(popwin-mode 1)
-;; 	(add-hook 'popwin:after-popup-hook (lambda () (run-at-time 0.2 nil 'delayed-mode-line-update)))
-;; )
+(use-package popwin :ensure t
+	:config
+	(setq popwin:adjust-other-windows t)
+	(popwin-mode 1)
+	(add-hook 'popwin:after-popup-hook (lambda () (delayed-mode-line-update)))
+)
 (use-package counsel :ensure t)
 (use-package counsel-projectile :ensure t :after projectile)
 (use-package google-this :ensure t)
@@ -276,11 +276,11 @@
 (use-package smartparens :ensure t
 		 ; don't show in mode display
 		 :diminish smartparens-mode)
-;; (use-package lsp-mode :ensure t)
-;; (use-package lsp-ui :ensure t :after lsp-mode
-;; 	:config
-;; 	;; (add-hook 'lsp-mode-hook 'lsp-ui-mode) ; TODO disabled for performance reasons
-;; )
+(use-package lsp-mode :ensure t)
+(use-package lsp-ui :ensure t :after lsp-mode
+	:config
+	;; (add-hook 'lsp-mode-hook 'lsp-ui-mode) ; TODO disabled for performance reasons
+)
 (use-package company :ensure t)
 (use-package company-posframe :ensure t :after company
 	:config
@@ -549,7 +549,7 @@
 		(hl-line-mode 1)
     (yascroll-bar-mode -1)
     (make-local-variable 'face-remapping-alist)
-    (add-to-list 'face-remapping-alist '(default border))
+    (add-to-list 'face-remapping-alist '(default sidebar-background))
     (setq-local left-fringe-width 0)
     (setq-local right-fringe-width 0)
 		(setq-local use-line-nav t)
@@ -609,7 +609,7 @@
 	(setq imenu-list-buffer-name "*Outline*")
 	(add-hook 'imenu-list-major-mode-hook (lambda ()
     (make-local-variable 'face-remapping-alist)
-    (add-to-list 'face-remapping-alist '(default border))
+    (add-to-list 'face-remapping-alist '(default sidebar-background))
     (yascroll-bar-mode -1)
     (setq-local left-fringe-width 0)
     (setq-local right-fringe-width 0)
@@ -2829,6 +2829,12 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;;           (lambda ()
 ;;             (make-local-variable 'face-remapping-alist)
 ;;             (add-to-list 'face-remapping-alist '(default minibuffer-background))))
+
+;; sidebar face
+(defface sidebar-background
+  '((t (:inherit default)))
+  "*Face used for the sidebar."
+  :group 'appearence)
 
 ;; undo limits
 (setq undo-limit 1000000)

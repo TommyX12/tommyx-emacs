@@ -189,6 +189,7 @@
 (defvar org-life--schedule-data-cache nil)
 (defvar org-life--agenda-keep-cache nil)
 (defvar org-life--agenda-current-view nil)
+(defvar org-life--last-org-buffer nil)
 (defvar org-life--agenda-keep-markers nil)
 
 ;;; Major mode definition
@@ -997,6 +998,8 @@ PROCESS is the process under watch, OUTPUT is the output received."
                        (org-get-agenda-file-buffer file)
                      (error "No such file %s" file)))
 
+      (setq org-life--last-org-buffer buffer)
+
       (with-current-buffer buffer
         (org-with-wide-buffer
          (unless (derived-mode-p 'org-mode) (error "Agenda file %s is not in Org mode" file))
@@ -1309,13 +1312,14 @@ PROCESS is the process under watch, OUTPUT is the output received."
   (org-life-start-engine))
 
 (defun org-life-agenda-render-view (view)
-  (unless org-todo-regexp
+  (when (and org-life--last-org-buffer
+             (null org-todo-regexp))
     (dolist (variable '(org-todo-regexp
                         org-not-done-regexp
                         org-complex-heading-regexp
                         org-done-keywords
                         org-done-keywords-for-agenda))
-      (set variable (buffer-local-value variable (current-buffer)))))
+      (set variable (buffer-local-value variable org-life--last-org-buffer))))
 
   (let ((inhibit-read-only t))
     (goto-char (point-max))
