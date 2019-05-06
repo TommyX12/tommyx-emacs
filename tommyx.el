@@ -118,7 +118,8 @@
 (use-package htmlize :ensure t)
 (use-package request :ensure t
 	:config
-	(setq request-backend 'url-retrieve) ; curl is slow on windows
+  (when (eq system-type 'windows-nt)
+    (setq request-backend 'url-retrieve)) ; curl is slow on windows
 )
 (use-package json :ensure t)
 (use-package unicode-escape :ensure t)

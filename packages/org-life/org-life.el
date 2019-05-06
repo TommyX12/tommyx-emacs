@@ -1312,23 +1312,26 @@ PROCESS is the process under watch, OUTPUT is the output received."
   (org-life-start-engine))
 
 (defun org-life-agenda-render-view (view)
-  (when (and org-life--last-org-buffer
-             (null org-todo-regexp))
-    (dolist (variable '(org-todo-regexp
-                        org-not-done-regexp
-                        org-complex-heading-regexp
-                        org-done-keywords
-                        org-done-keywords-for-agenda))
-      (set variable (buffer-local-value variable org-life--last-org-buffer))))
+  (let ((inhibit-read-only t)
+        (agenda-data (org-life-agenda-get-agenda-data))
+        (schedule-data (org-life-agenda-get-schedule-data)))
 
-  (let ((inhibit-read-only t))
+    (when (and org-life--last-org-buffer
+              (null org-todo-regexp))
+      (dolist (variable '(org-todo-regexp
+                          org-not-done-regexp
+                          org-complex-heading-regexp
+                          org-done-keywords
+                          org-done-keywords-for-agenda))
+        (set variable (buffer-local-value variable org-life--last-org-buffer))))
+
     (goto-char (point-max))
     (cond
 
      ((eq view 'main)
       (org-life-agenda-render-agenda
-       :agenda-data (org-life-agenda-get-agenda-data)
-       :schedule-data (org-life-agenda-get-schedule-data)))
+       :agenda-data agenda-data
+       :schedule-data schedule-data))
 
      ((eq view 'test)
       (insert "just testing")))))
