@@ -275,14 +275,21 @@ PROCESS is the process under watch, OUTPUT is the output received."
 
 ;; Agenda helper
 
-(defun org-life-agenda-ratio-to-string (ratio &optional face use-percent)
+(defun org-life-agenda-float-to-string (float &optional face use-percent)
   (let ((text (cond
-               ((stringp ratio) ratio)
-               (use-percent (format "%.0f%%" (* 100 ratio)))
-               (t (format "%.2f" ratio)))))
+               ((stringp float) float)
+               (use-percent (format "%.0f%%" (* 100 float)))
+               (t (format "%.2f" float)))))
     (if face
         (propertize text 'face face)
       text)))
+
+(defun org-life-agenda-float-to-number (float)
+  (if (numberp float)
+      float
+    (cond ((string-equal float "inf") 1.0e+INF)
+          ((string-equal float "-inf") -1.0e+INF)
+          0.0e+NaN)))
 
 (defun org-life-agenda-days-to-string (integer)
   (if (numberp integer)
@@ -627,8 +634,8 @@ PROCESS is the process under watch, OUTPUT is the output received."
     (insert (propertize
              (format "| Maximum Free Time: %5s | Extra Time Ratio: %5s | Stress: %5s |"
                      (org-duration-from-minutes free-time)
-                     (org-life-agenda-ratio-to-string average-etr)
-                     (org-life-agenda-ratio-to-string average-stress))
+                     (org-life-agenda-float-to-string average-etr)
+                     (org-life-agenda-float-to-string average-stress))
              'face 'org-life-agenda-secondary-face)
             "\n")))
 
@@ -638,15 +645,15 @@ PROCESS is the process under watch, OUTPUT is the output received."
 (cl-defun org-life-agenda-render-block-sub-title (&key title)
   (insert (org-add-props title nil 'face 'bold) "\n"))
 
-(cl-defun org-life-agenda-render-block (&key entries title (entries-renderer nil))
-  (when entries
-    (let ((begin (point))
-          (entries-renderer (or entries-renderer
-                                #'org-life-agenda-render-entries)))
-      (org-life-agenda-render-block-separator)
-      (org-life-agenda-render-block-title title)
-      (funcall entries-renderer :entries entries)
-      (add-text-properties begin (point-max) `(org-agenda-type tags)))))
+;; (cl-defun org-life-agenda-render-block (&key entries title (entries-renderer nil))
+;;   (when entries
+;;     (let ((begin (point))
+;;           (entries-renderer (or entries-renderer
+;;                                 #'org-life-agenda-render-entries)))
+;;       (org-life-agenda-render-block-separator)
+;;       (org-life-agenda-render-block-title title)
+;;       (funcall entries-renderer :entries entries)
+;;       (add-text-properties begin (point-max) `(org-agenda-type tags)))))
 
 (cl-defun org-life-agenda-render-error (&key message)
   (insert (propertize "Error" 'face 'error)
@@ -684,11 +691,11 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (workload-with-suggested (plist-get general-info :workload_with_suggested))
         (workload-without-today (plist-get general-info :workload_without_today)))
     (insert (format "Stress: %5s | Failure Probability: %5s | Workload: %5s"
-                    (propertize (org-life-agenda-ratio-to-string stress)
+                    (propertize (org-life-agenda-float-to-string stress)
                                 'face 'bold)
-                    (propertize (org-life-agenda-ratio-to-string pof)
+                    (propertize (org-life-agenda-float-to-string pof)
                                 'face 'bold)
-                    (propertize (org-life-agenda-ratio-to-string workload nil t)
+                    (propertize (org-life-agenda-float-to-string workload nil t)
                                 'face 'bold))
             "\n")
     (org-life-agenda-render-multi-progress-bar
@@ -715,37 +722,37 @@ PROCESS is the process under watch, OUTPUT is the output received."
             "\n")
     (insert (format "| %-20s %10s | %10s | %10s |"
                     "Failure Probability:"
-                    (org-life-agenda-ratio-to-string
+                    (org-life-agenda-float-to-string
                      pof-with-optimal
                      'org-life-agenda-stress-best-face)
-                    (org-life-agenda-ratio-to-string
+                    (org-life-agenda-float-to-string
                      pof-with-suggested
                      'org-life-agenda-stress-normal-face)
-                    (org-life-agenda-ratio-to-string
+                    (org-life-agenda-float-to-string
                      pof-without-today
                      'org-life-agenda-stress-warning-face))
             "\n")
     (insert (format "| %-20s %10s | %10s | %10s |"
                     "Workload:"
-                    (org-life-agenda-ratio-to-string
+                    (org-life-agenda-float-to-string
                      workload-with-optimal
                      'org-life-agenda-stress-best-face t)
-                    (org-life-agenda-ratio-to-string
+                    (org-life-agenda-float-to-string
                      workload-with-suggested
                      'org-life-agenda-stress-normal-face t)
-                    (org-life-agenda-ratio-to-string
+                    (org-life-agenda-float-to-string
                      workload-without-today
                      'org-life-agenda-stress-warning-face t))
             "\n")
     ;; (insert (format "| %-20s %10s | %10s | %10s |"
     ;;                 "Extra Time Ratio:"
-    ;;                 (org-life-agenda-ratio-to-string
+    ;;                 (org-life-agenda-float-to-string
     ;;                  stress-with-optimal
     ;;                  'org-life-agenda-stress-best-face)
-    ;;                 (org-life-agenda-ratio-to-string
+    ;;                 (org-life-agenda-float-to-string
     ;;                  stress-with-suggested
     ;;                  'org-life-agenda-stress-normal-face)
-    ;;                 (org-life-agenda-ratio-to-string
+    ;;                 (org-life-agenda-float-to-string
     ;;                  stress-without-today
     ;;                  'org-life-agenda-stress-warning-face))
     ;;         "\n")
@@ -829,8 +836,6 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (data (plist-get schedule-data :data)))
     (if (string= status "error")
         (org-life-agenda-render-error :message err)
-      ;; (org-life-agenda-render-block :entries (plist-get agenda-data :tasks)
-      ;;                               :title "Test")
       (let ((tasks-dict (plist-get agenda-data :tasks-dict))
             (general-info (plist-get data :general))
             (alerts (plist-get data :alerts))
@@ -864,6 +869,41 @@ PROCESS is the process under watch, OUTPUT is the output received."
                                       :today today)
           (insert "\n")
           (setq today nil))))))
+
+(cl-defun org-life-agenda-render-task-list (&key agenda-data schedule-data)
+  (org-life-echo "Rendering task list ...")
+  (let ((status (plist-get schedule-data :status))
+        (err (plist-get schedule-data :error))
+        (data (plist-get schedule-data :data)))
+    (if (string= status "error")
+        (org-life-agenda-render-error :message err)
+      
+      (let* ((tasks-dict (plist-get agenda-data :tasks-dict))
+             (general-info (plist-get data :general))
+             (alerts (plist-get data :alerts))
+             (daily-infos (plist-get data :daily_infos))
+             (task-infos (plist-get data :task_infos))
+             (task-infos
+              (sort (copy-sequence task-infos)
+                    (lambda (a b)
+                      (<
+                       (org-life-agenda-float-to-number
+                        (plist-get a :current_urgency))
+                       (org-life-agenda-float-to-number
+                        (plist-get b :current_urgency))))))
+             (debug (plist-get data :debug)))
+
+      (org-life-agenda-render-debug :message debug)
+
+      (dolist (task-info task-infos)
+        (let* ((id (plist-get task-info :id))
+               (entry (ht-get tasks-dict id))
+               (current-urgency (plist-get task-info :current_urgency)))
+        (org-life-agenda-render-entry
+         :prefix (format "| %-8s | "
+                         (org-life-agenda-float-to-string
+                          current-urgency))
+         :entry entry)))))))
 
 ;; Agenda processing
 
@@ -1333,14 +1373,17 @@ PROCESS is the process under watch, OUTPUT is the output received."
        :agenda-data agenda-data
        :schedule-data schedule-data))
 
-     ((eq view 'test)
-      (insert "just testing")))))
+     ((eq view 'task-list)
+      (org-life-agenda-render-task-list
+       :agenda-data agenda-data
+       :schedule-data schedule-data)))))
 
 (defun org-life-agenda-show-view (view)
+  (setq org-life--agenda-current-view view)
   (let ((org-life--agenda-keep-markers t)
-        (org-life--agenda-keep-cache t)
-        (org-life--agenda-current-view view))
-    (org-agenda-redo t)))
+        (org-life--agenda-keep-cache t))
+    (org-agenda-redo t)
+    (goto-char (point-min))))
 
 ;;; Advices
 

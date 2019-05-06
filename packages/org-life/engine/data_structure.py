@@ -180,18 +180,10 @@ class PrimitiveProtocol(Protocol):
 # ============= Implementations =============
 
 
-class Command(PrimitiveProtocol):
-    def __init__(self, value = None):
-        PrimitiveProtocol.__init__(self, value)
-
-class Duration(PrimitiveProtocol):
+class Float(PrimitiveProtocol):
     def __init__(self, value = 0):
         PrimitiveProtocol.__init__(self, value)
 
-class Ratio(PrimitiveProtocol):
-    def __init__(self, value = 0.0):
-        PrimitiveProtocol.__init__(self, value)
-        
     def encode(self):
         if self.value == math.inf:
             return 'inf'
@@ -212,21 +204,23 @@ class Ratio(PrimitiveProtocol):
         else:
             self.value = encoded_protocol
 
-class Days(PrimitiveProtocol):
-    def __init__(self, value = 0):
+class Command(PrimitiveProtocol):
+    def __init__(self, value = None):
         PrimitiveProtocol.__init__(self, value)
 
-class TaskID(PrimitiveProtocol):
-    def __init__(self, value = 0):
-        PrimitiveProtocol.__init__(self, value)
+Duration = Float
+
+Ratio = Float
+
+Days = Float
+
+TaskID = Float
 
 class String(PrimitiveProtocol):
     def __init__(self, value = ""):
         PrimitiveProtocol.__init__(self, value)
 
-class TaskIndex(PrimitiveProtocol):
-    def __init__(self, value = 0):
-        PrimitiveProtocol.__init__(self, value)
+TaskIndex = Float
 
 class Priority(PrimitiveProtocol):
     def __init__(self, value = 0):
@@ -249,7 +243,6 @@ class Boolean(PrimitiveProtocol):
 
         else:
             self.value = encoded_protocol
-
 
 class Date(Protocol):
     '''
@@ -428,6 +421,8 @@ class Urgency(PrimitiveProtocol):
             self.value = None
 
         self.value = encoded_protocol
+
+CurrentUrgency = Float
 
 class Task(Protocol):
     properties = {
@@ -759,6 +754,12 @@ class DailyInfo(Protocol):
         'average_etr': ObjectProperty(Ratio),
     }
 
+class TaskInfo(Protocol):
+    properties = {
+        'id': ObjectProperty(TaskID),
+        'current_urgency': ObjectProperty(CurrentUrgency),
+    }
+
 class PlannerResult(Protocol):
     properties = {
         'impossible_tasks': ListProperty(ImpossibleTask),
@@ -768,6 +769,7 @@ class PlannerResult(Protocol):
 class SchedulingResponse(Protocol):
     properties = {
         'general': ObjectProperty(SchedulingGeneralInfo),
+        'task_infos': ListProperty(TaskInfo),
         'alerts': ObjectProperty(Alerts),
         'daily_infos': ListProperty(DailyInfo),
         'debug': PrimitiveProperty(),
@@ -810,6 +812,10 @@ class StressInfo(Protocol):
         'highest_stress_date': ObjectProperty(Date),
         'daily_stress_infos': DictProperty(DailyStressInfo), # use Date as key
     }
+
+    def encode(self):
+        # TODO: does not support encoding yet
+        raise NotImplementedError()
 
 
 # class TaskProressInfo(Protocol):

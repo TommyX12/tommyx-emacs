@@ -71,6 +71,12 @@ class Engine(object):
         # policy = GreedySchedulingPolicy()
         return Engine(usable_time_parser, task_filter, task_repeater, progress_counter, planner, stress_analyzer, fragmentizer, probability_estimator, utility_estimator, policy, logger)
 
+    def get_task_info(self, task):
+        task_info = TaskInfo()
+        task_info.id.value = task.id.value
+        task_info.current_urgency.value = task.get_urgency(0)
+        return task_info
+
     def schedule(self, scheduling_request):
         # debug
         self.internal_logger.clear()
@@ -378,6 +384,9 @@ class Engine(object):
 
         t = debug_timer.pop()
         response.debug += "total: {:.3f}s\n".format(t)
+
+        # compute task info
+        response.task_infos = [self.get_task_info(task) for task in todo_tasks]
 
         # internal debug logs
         response.debug += '\n'.join(self.internal_logger.get_messages())
