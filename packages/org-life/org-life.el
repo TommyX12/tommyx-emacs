@@ -191,6 +191,7 @@
 (defvar org-life--agenda-current-view nil)
 (defvar org-life--last-org-buffer nil)
 (defvar org-life--agenda-keep-markers nil)
+(defvar org-life--last-updated-time nil)
 
 ;;; Major mode definition
 
@@ -271,7 +272,16 @@ PROCESS is the process under watch, OUTPUT is the output received."
     (setq org-life--response (org-life--decode org-life--response-buffer)
           org-life--response-buffer "")))
 
-;; Agenda
+;;; Agenda
+
+;; Agenda main
+
+(defun org-life-agenda (&rest _)
+  (unless org-life--agenda-keep-cache
+    (org-life-invalidate-cache))
+  (org-life-agenda-render-view
+   (or org-life--agenda-current-view
+       'main)))
 
 ;; Agenda helper
 
@@ -389,521 +399,6 @@ PROCESS is the process under watch, OUTPUT is the output received."
                       (append '(0 0 0)
                               (cdddr (decode-time time))))))
     (time-add time (days-to-time 1))))
-
-;; Agenda renderer
-
-(cl-defun org-life-agenda-render-entry (&key (prefix " ")
-                                             entry
-                                             (face nil))
-  (insert
-   (let ((props (list 'face face
-                      'mouse-face 'highlight
-                      'undone-face 'nil
-                      'done-face 'org-agenda-done
-                      'org-marker (org-life-agenda-entry-marker entry)
-                      'org-hd-marker (org-life-agenda-entry-marker entry)
-                      'todo-state (org-life-agenda-entry-todo-keyword entry)
-                      'org-todo-regexp org-todo-regexp
-                      'org-not-done-regexp org-not-done-regexp
-                      'org-complex-heading-regexp org-complex-heading-regexp
-                      'org-highest-priority org-highest-priority
-                      'org-lowest-priority org-lowest-priority
-                      'tags (mapcar 'org-downcase-keep-props (org-life-agenda-entry-tags entry))
-                      'format `(() ,prefix)))
-         (text
-          (concat prefix
-                  (if (org-life-agenda-entry-todo-keyword entry)
-                      (concat (org-life-agenda-entry-todo-keyword entry) " ")
-                    "")
-                  (if (org-life-agenda-entry-priority entry)
-                      (string ?\[ ?# (org-life-agenda-entry-priority entry) ?\] ? )
-                    "")
-                  (org-life-agenda-entry-text entry)
-                  ;; (let ((deadline (org-life-agenda-entry-deadline entry)))
-                  ;;   (or (and deadline
-                  ;;            (org-timestamp-format deadline "%Y-%m-%d"))
-                  ;;       ""))
-                  (if (org-life-agenda-entry-tags entry)
-                      (concat " :" (mapconcat #'identity (org-life-agenda-entry-tags entry) ":") ":")
-                    ""))))
-
-     (add-text-properties (length prefix) (length text) '(org-heading t) text)
-     (setq text (concat (org-add-props text props) "\n"))
-     (org-agenda-highlight-todo text))))
-
-(cl-defun org-life-agenda-render-block-separator ()
-  (unless (or (bobp) org-agenda-compact-blocks
-              (not org-agenda-block-separator))
-    (insert "\n"
-            ;; (if (stringp org-agenda-block-separator)
-            ;;     org-agenda-block-separator
-            ;;   (make-string (window-text-width) org-agenda-block-separator))
-            ;; "\n"
-            )))
-
-(cl-defun org-life-agenda-render-block-sub-separator ()
-  (insert "\n"))
-
-(cl-defun org-life-agenda-render-multi-progress-bar
-    (&key bar-width
-          progress-list
-          marker-list
-          (fill-char ?=)
-          (empty-char ? )
-          (marker-char ?|)
-          (left-border-char ?|)
-          (right-border-char ?|))
-  (insert (char-to-string left-border-char))
-  
-  (let ((bar-width (max 1 (- bar-width 2)))
-        (cur-progress 0)
-        (cur-width 0))
-    
-    (while progress-list
-      (let ((progress (min (max (caar progress-list) 0.0) 1.0))
-            (face (cdar progress-list)))
-        (when (> progress cur-progress)
-          (let* ((width (round (* (float progress) bar-width)))
-                 (diff (- width cur-width)))
-            (insert (propertize (make-string diff fill-char)
-                                'face face))
-            (setq cur-progress progress)
-            (setq cur-width width)))
-
-        (setq progress-list (cdr progress-list))))
-
-    (let ((diff (- bar-width cur-width)))
-      (insert (propertize (make-string diff empty-char)
-                          'face 'org-life-agenda-empty-progress-face)))
-
-    (dolist (marker marker-list)
-      (let ((pos (min (max (car marker) 0.0) 1.0))
-            (face (cdr marker)))
-        (save-excursion
-          (backward-char)
-          (goto-char (- (point)
-                        (round (* (- 1.0 (float pos))
-                                  (1- bar-width)))))
-          (delete-char 1)
-          (insert (propertize (char-to-string marker-char)
-                              'face face))))))
-  
-  (insert (char-to-string right-border-char)))
-
-(cl-defun org-life-agenda-render-entries (&key entries)
-  (setq entries (sort entries #'org-life-agenda-sort-by-priority))
-  (dolist (entry entries)
-    (org-life-agenda-render-entry :prefix " "
-                                  :entry entry)))
-
-(cl-defun org-life-agenda-render-impossible-task (&key alert-entry
-                                                       tasks-dict)
-  (let* ((id (plist-get alert-entry :id))
-         (amount (plist-get alert-entry :amount))
-         (entry (ht-get tasks-dict id)))
-    (org-life-agenda-render-entry
-     :prefix (concat "| "
-                     (propertize
-                      (format "%-8s" (org-duration-from-minutes amount))
-                      'face 'error)
-                     " | ")
-     :entry entry)))
-
-(cl-defun org-life-agenda-render-bad-estimate-task (&key alert-entry
-                                                         tasks-dict)
-  (let* ((id (plist-get alert-entry :id))
-         (amount (plist-get alert-entry :amount))
-         (done (plist-get alert-entry :done))
-         (entry (ht-get tasks-dict id)))
-    (org-life-agenda-render-entry
-     :prefix (concat "| "
-                     (propertize
-                      (format "%s/%s"
-                              (org-duration-from-minutes done)
-                              (org-duration-from-minutes amount))
-                      'face 'error)
-                     " | ")
-     :entry entry)))
-
-(cl-defun org-life-agenda-render-bad-info-task (&key alert-entry
-                                                     tasks-dict)
-  (let* ((id (plist-get alert-entry :id))
-         (reason (plist-get alert-entry :reason))
-         (entry (ht-get tasks-dict id)))
-    (org-life-agenda-render-entry
-     :prefix (format "| %s | " reason)
-     :entry entry)))
-
-(cl-defun org-life-agenda-render-overdue-task (&key alert-entry
-                                                     tasks-dict)
-  (let* ((id (plist-get alert-entry :id))
-         (days (plist-get alert-entry :days))
-         (entry (ht-get tasks-dict id)))
-    (org-life-agenda-render-entry
-     :prefix (format "| %4s | " (org-life-agenda-days-to-string days))
-     :entry entry)))
-
-(cl-defun org-life-agenda-render-schedule-legend ()
-  (insert (format "| %-5s | %5s | %4s | %s"
-                  "Dur." "Rem." "Due" "Task")
-          "\n"))
-
-(cl-defun org-life-agenda-render-day (&key daily-info
-                                           tasks-dict
-                                           (today nil))
-  (let* ((date-string (plist-get daily-info :date))
-         (usable-time (plist-get daily-info :usable_time))
-         (actual-usable-time (plist-get daily-info :actual_usable_time))
-         (sessions (plist-get daily-info :sessions))
-         (free-time (plist-get daily-info :free_time))
-         (average-stress (plist-get daily-info :average_stress))
-         (average-etr (plist-get daily-info :average_etr))
-         (time (org-life-agenda-date-string-to-time date-string))
-         (weekday (org-life-agenda-time-to-weekday time))
-         (date-string (if today
-                          (propertize date-string
-                                      'face
-                                      'org-agenda-date-today)
-                        (propertize date-string
-                                    'face
-                                    'org-agenda-date)))
-         (weekday-num (cdr weekday))
-         (weekday-text (propertize
-                        (format "● %d-%s"
-                                weekday-num
-                                (car weekday))
-                        'face
-                        (if (or (= weekday-num 6)
-                                (= weekday-num 7))
-                            'org-agenda-date-weekend
-                          'org-agenda-date))))
-    (insert weekday-text " " date-string "  "
-            (propertize
-             (concat (org-duration-from-minutes actual-usable-time) "/"
-                     (org-duration-from-minutes usable-time))
-             'face 'org-life-agenda-secondary-face)
-            " ")
-    (org-life-agenda-render-multi-progress-bar
-     :bar-width 50
-     :progress-list (list (cons (/ (float actual-usable-time) 1440.0)
-                                'org-life-agenda-actual-usable-time-face)
-                          (cons (/ (float usable-time) 1440.0)
-                                'org-life-agenda-usable-time-face))
-     ;; :marker-list (list (cons (/ 8.0 24.0) nil))
-     :fill-char org-life-agenda-progress-fill-char
-     :empty-char org-life-agenda-progress-empty-char
-     :right-border-char ? )
-    (insert "\n")
-    (dolist (session sessions)
-      (let* ((id (plist-get session :id))
-             (amount (plist-get session :amount))
-             (type (plist-get session :type))
-             (weakness (plist-get session :weakness))
-             (to-deadline (plist-get session :to_deadline))
-             (to-finish (plist-get session :to_finish))
-             (entry (ht-get tasks-dict id)))
-        (org-life-agenda-render-entry
-         :prefix (format "| %-5s | %5s | %4s | "
-                         (org-duration-from-minutes amount)
-                         (if (and (numberp to-finish)
-                                  (= to-finish 0))
-                             "✓" ; "Final"
-                           (org-life-agenda-short-duration to-finish))
-                         (if (and (numberp to-deadline)
-                                  (= to-deadline 0))
-                             "!!!" ; "Due"
-                           (org-life-agenda-days-to-string to-deadline))
-                         ;; (format "%-5s|" (make-string
-                         ;;                 (round (* (min 1.0 lateness) 5))
-                         ;;                 ?=))
-                         )
-         :entry entry
-         :face (cond ((and (numberp to-deadline)
-                           (< to-deadline 0))
-                      'org-warning)
-                     ((= weakness
-                         org-life--session-weakness-enum-strong)
-                      'org-agenda-done)
-                     ((= type
-                         org-life--session-type-enum-fragment)
-                      'org-time-grid)
-                     ((= type
-                         org-life--session-type-enum-overlimit)
-                      'org-warning)
-                     (t nil)))))
-    (insert (propertize
-             (format "| Maximum Free Time: %5s | Extra Time Ratio: %5s | Stress: %5s |"
-                     (org-duration-from-minutes free-time)
-                     (org-life-agenda-float-to-string average-etr)
-                     (org-life-agenda-float-to-string average-stress))
-             'face 'org-life-agenda-secondary-face)
-            "\n")))
-
-(cl-defun org-life-agenda-render-block-title (&key title)
-  (insert (org-add-props title nil 'face 'org-agenda-structure) "\n"))
-
-(cl-defun org-life-agenda-render-block-sub-title (&key title)
-  (insert (org-add-props title nil 'face 'bold) "\n"))
-
-;; (cl-defun org-life-agenda-render-block (&key entries title (entries-renderer nil))
-;;   (when entries
-;;     (let ((begin (point))
-;;           (entries-renderer (or entries-renderer
-;;                                 #'org-life-agenda-render-entries)))
-;;       (org-life-agenda-render-block-separator)
-;;       (org-life-agenda-render-block-title title)
-;;       (funcall entries-renderer :entries entries)
-;;       (add-text-properties begin (point-max) `(org-agenda-type tags)))))
-
-(cl-defun org-life-agenda-render-error (&key message)
-  (insert (propertize "Error" 'face 'error)
-          "\n\n"
-          message))
-
-;; TODO: Bug: last updated will not reflect true update time using the new view system.
-(cl-defun org-life-agenda-render-last-updated ()
-  (insert (propertize
-           (format-time-string "Last Updated: %Y-%m-%d %H:%M\n")
-           'face 'org-life-agenda-secondary-face)))
-
-(cl-defun org-life-agenda-render-debug (&key message)
-  (when message
-    (org-life-agenda-render-block-title :title "Debug Messages")
-    (insert (prin1-to-string message) "\n")))
-
-(cl-defun org-life-agenda-render-general-info (&key general-info
-                                                    tasks-dict)
-  (let ((stress (plist-get general-info :stress))
-        (pof (plist-get general-info :pof))
-        (workload (plist-get general-info :workload))
-        (highest-stress-date (plist-get general-info :highest_stress_date))
-        (highest-stress-task (plist-get general-info :highest_stress_task))
-        (stress-with-optimal (plist-get general-info :stress_with_optimal))
-        (stress-with-suggested (plist-get general-info :stress_with_suggested))
-        (stress-without-today (plist-get general-info :stress_without_today))
-        (etr-with-optimal (plist-get general-info :etr_with_optimal))
-        (etr-with-suggested (plist-get general-info :etr_with_suggested))
-        (etr-without-today (plist-get general-info :etr_without_today))
-        (pof-with-optimal (plist-get general-info :pof_with_optimal))
-        (pof-with-suggested (plist-get general-info :pof_with_suggested))
-        (pof-without-today (plist-get general-info :pof_without_today))
-        (workload-with-optimal (plist-get general-info :workload_with_optimal))
-        (workload-with-suggested (plist-get general-info :workload_with_suggested))
-        (workload-without-today (plist-get general-info :workload_without_today)))
-    (insert (format "Stress: %5s | Failure Probability: %5s | Workload: %5s"
-                    (propertize (org-life-agenda-float-to-string stress)
-                                'face 'bold)
-                    (propertize (org-life-agenda-float-to-string pof)
-                                'face 'bold)
-                    (propertize (org-life-agenda-float-to-string workload nil t)
-                                'face 'bold))
-            "\n")
-    (org-life-agenda-render-multi-progress-bar
-     :bar-width (window-text-width)
-     :progress-list (list (cons pof-with-optimal
-                                'org-life-agenda-stress-best-face)
-                          (cons pof-with-suggested
-                                'org-life-agenda-stress-normal-face)
-                          (cons pof-without-today
-                                'org-life-agenda-stress-warning-face))
-     :marker-list (list (cons 0.5 'org-life-agenda-secondary-face)
-                        (cons 0.25 'org-life-agenda-secondary-face)
-                        (cons 0.75 'org-life-agenda-secondary-face)
-                        (cons pof nil))
-     :fill-char org-life-agenda-progress-fill-char
-     :empty-char org-life-agenda-progress-empty-char)
-    (insert "\n")
-    (insert (format "| %-20s %10s | %10s | %10s |"
-                    (propertize "Today's Schedule:"
-                                'face 'bold)
-                    "Optimal"
-                    "Suggested"
-                    "Worst")
-            "\n")
-    (insert (format "| %-20s %10s | %10s | %10s |"
-                    "Failure Probability:"
-                    (org-life-agenda-float-to-string
-                     pof-with-optimal
-                     'org-life-agenda-stress-best-face)
-                    (org-life-agenda-float-to-string
-                     pof-with-suggested
-                     'org-life-agenda-stress-normal-face)
-                    (org-life-agenda-float-to-string
-                     pof-without-today
-                     'org-life-agenda-stress-warning-face))
-            "\n")
-    (insert (format "| %-20s %10s | %10s | %10s |"
-                    "Workload:"
-                    (org-life-agenda-float-to-string
-                     workload-with-optimal
-                     'org-life-agenda-stress-best-face t)
-                    (org-life-agenda-float-to-string
-                     workload-with-suggested
-                     'org-life-agenda-stress-normal-face t)
-                    (org-life-agenda-float-to-string
-                     workload-without-today
-                     'org-life-agenda-stress-warning-face t))
-            "\n")
-    ;; (insert (format "| %-20s %10s | %10s | %10s |"
-    ;;                 "Extra Time Ratio:"
-    ;;                 (org-life-agenda-float-to-string
-    ;;                  stress-with-optimal
-    ;;                  'org-life-agenda-stress-best-face)
-    ;;                 (org-life-agenda-float-to-string
-    ;;                  stress-with-suggested
-    ;;                  'org-life-agenda-stress-normal-face)
-    ;;                 (org-life-agenda-float-to-string
-    ;;                  stress-without-today
-    ;;                  'org-life-agenda-stress-warning-face))
-    ;;         "\n")
-    (insert (format (concat "Highest Stress Date: "
-                            (propertize "%s"
-                                        'face 'org-agenda-date)
-                            " (in %d days)")
-                    highest-stress-date
-                    (- (time-to-days
-                        (org-life-agenda-date-string-to-time
-                         highest-stress-date))
-                       (time-to-days
-                        (current-time))))
-            "\n")
-    (when highest-stress-task
-      (let ((entry (ht-get tasks-dict highest-stress-task)))
-        (org-life-agenda-render-entry :prefix "Highest Stress Task: "
-                                      :entry entry)))))
-
-(cl-defun org-life-agenda-render-alert-entries (&key title
-                                                     alert-entries
-                                                     renderer
-                                                     tasks-dict
-                                                     extra-info-renderer)
-  (when (> (length alert-entries) 0)
-    (org-life-agenda-render-block-sub-separator)
-    (org-life-agenda-render-block-sub-title :title
-                                            (format "%s (%d)"
-                                                    title
-                                                    (length alert-entries)))
-    (dolist (alert-entry alert-entries)
-      (funcall renderer
-               :alert-entry alert-entry
-               :tasks-dict tasks-dict))
-    (when extra-info-renderer
-      (funcall extra-info-renderer
-               :alert-entries alert-entries))))
-
-(cl-defun org-life-agenda-render-impossible-task-extra-info
-    (&key alert-entries)
-  (let ((sum (-reduce-from (lambda (acc entry)
-                             (+ acc (plist-get entry :amount)))
-                           0 alert-entries)))
-    (insert (format "Total Duration: %s\n" (org-duration-from-minutes sum)))))
-
-(cl-defun org-life-agenda-render-alerts (&key alerts
-                                              tasks-dict)
-  (let ((impossible-tasks (plist-get alerts :impossible_tasks))
-        (bad-estimate-tasks (plist-get alerts :bad_estimate_tasks))
-        (bad-info-tasks (plist-get alerts :bad_info_tasks))
-        (overdue-tasks (plist-get alerts :overdue_tasks)))
-    
-    (org-life-agenda-render-alert-entries :title "Impossible Tasks"
-                                          :alert-entries impossible-tasks
-                                          :renderer #'org-life-agenda-render-impossible-task
-                                          :tasks-dict tasks-dict
-                                          :extra-info-renderer
-                                          #'org-life-agenda-render-impossible-task-extra-info)
-
-    (org-life-agenda-render-alert-entries :title "Tasks with Bad Estimate"
-                                          :alert-entries bad-estimate-tasks
-                                          :renderer #'org-life-agenda-render-bad-estimate-task
-                                          :tasks-dict tasks-dict)
-
-    
-    (org-life-agenda-render-alert-entries :title "Tasks with Bad Info"
-                                          :alert-entries bad-info-tasks
-                                          :renderer #'org-life-agenda-render-bad-info-task
-                                          :tasks-dict tasks-dict)
-
-    (org-life-agenda-render-alert-entries :title "Overdue Tasks"
-                                          :alert-entries overdue-tasks
-                                          :renderer #'org-life-agenda-render-overdue-task
-                                          :tasks-dict tasks-dict)))
-
-(cl-defun org-life-agenda-render-agenda (&key agenda-data schedule-data)
-  (org-life-echo "Rendering agenda ...")
-  
-  (let ((status (plist-get schedule-data :status))
-        (err (plist-get schedule-data :error))
-        (data (plist-get schedule-data :data)))
-    (if (string= status "error")
-        (org-life-agenda-render-error :message err)
-      (let ((tasks-dict (plist-get agenda-data :tasks-dict))
-            (general-info (plist-get data :general))
-            (alerts (plist-get data :alerts))
-            (daily-infos (plist-get data :daily_infos))
-            (debug (plist-get data :debug))
-
-            (today t))
-
-        (org-life-agenda-render-debug :message debug)
-        
-        (org-life-agenda-render-last-updated)
-        (org-life-agenda-render-block-sub-separator)
-        
-        (org-life-agenda-render-block-title :title "General")
-        (org-life-agenda-render-general-info :general-info general-info
-                                             :tasks-dict tasks-dict)
-        
-        (org-life-agenda-render-block-separator)
-        
-        (org-life-agenda-render-block-title :title "Alerts")
-        (org-life-agenda-render-alerts :alerts alerts
-                                       :tasks-dict tasks-dict)
-        
-        (org-life-agenda-render-block-separator)
-        
-        (org-life-agenda-render-block-title :title "Schedules")
-        ;; (org-life-agenda-render-schedule-legend)
-        (dolist (daily-info daily-infos)
-          (org-life-agenda-render-day :daily-info daily-info
-                                      :tasks-dict tasks-dict
-                                      :today today)
-          (insert "\n")
-          (setq today nil))))))
-
-(cl-defun org-life-agenda-render-task-list (&key agenda-data schedule-data)
-  (org-life-echo "Rendering task list ...")
-  (let ((status (plist-get schedule-data :status))
-        (err (plist-get schedule-data :error))
-        (data (plist-get schedule-data :data)))
-    (if (string= status "error")
-        (org-life-agenda-render-error :message err)
-      
-      (let* ((tasks-dict (plist-get agenda-data :tasks-dict))
-             (general-info (plist-get data :general))
-             (alerts (plist-get data :alerts))
-             (daily-infos (plist-get data :daily_infos))
-             (task-infos (plist-get data :task_infos))
-             (task-infos
-              (sort (copy-sequence task-infos)
-                    (lambda (a b)
-                      (<
-                       (org-life-agenda-float-to-number
-                        (plist-get a :current_urgency))
-                       (org-life-agenda-float-to-number
-                        (plist-get b :current_urgency))))))
-             (debug (plist-get data :debug)))
-
-      (org-life-agenda-render-debug :message debug)
-
-      (dolist (task-info task-infos)
-        (let* ((id (plist-get task-info :id))
-               (entry (ht-get tasks-dict id))
-               (current-urgency (plist-get task-info :current_urgency)))
-        (org-life-agenda-render-entry
-         :prefix (format "| %-8s | "
-                         (org-life-agenda-float-to-string
-                          current-urgency))
-         :entry entry)))))))
 
 ;; Agenda processing
 
@@ -1324,6 +819,8 @@ PROCESS is the process under watch, OUTPUT is the output received."
      (let (request
            response)
 
+       (setq org-life--last-updated-time (current-time))
+
        (org-life-echo "Preparing server request ...")
        (setq request (org-life-agenda-get-scheduler-request
                       (org-life-agenda-get-agenda-data)))
@@ -1335,21 +832,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
   (setq org-life--agenda-data-cache nil)
   (setq org-life--schedule-data-cache nil))
 
-;; Agenda main
-
-(defun org-life-agenda (&rest _)
-  (unless org-life--agenda-keep-cache
-    (org-life-invalidate-cache))
-  (org-life-agenda-render-view
-   (or org-life--agenda-current-view
-       'main)))
-
-;;; Interactive functions
-
-(defun org-life-restart-engine ()
-  "Start/Restart org-life scheduling engine."
-  (interactive)
-  (org-life-start-engine))
+;; Agenda renderer
 
 (defun org-life-agenda-render-view (view)
   (let ((inhibit-read-only t)
@@ -1378,12 +861,564 @@ PROCESS is the process under watch, OUTPUT is the output received."
        :agenda-data agenda-data
        :schedule-data schedule-data)))))
 
+(cl-defun org-life-agenda-render-entry (&key (prefix " ")
+                                             entry
+                                             (face nil))
+  (insert
+   (let ((props (list 'face face
+                      'mouse-face 'highlight
+                      'undone-face 'nil
+                      'done-face 'org-agenda-done
+                      'org-marker (org-life-agenda-entry-marker entry)
+                      'org-hd-marker (org-life-agenda-entry-marker entry)
+                      'todo-state (org-life-agenda-entry-todo-keyword entry)
+                      'org-todo-regexp org-todo-regexp
+                      'org-not-done-regexp org-not-done-regexp
+                      'org-complex-heading-regexp org-complex-heading-regexp
+                      'org-highest-priority org-highest-priority
+                      'org-lowest-priority org-lowest-priority
+                      'tags (mapcar 'org-downcase-keep-props (org-life-agenda-entry-tags entry))
+                      'format `(() ,prefix)))
+         (text
+          (concat prefix
+                  (if (org-life-agenda-entry-todo-keyword entry)
+                      (concat (org-life-agenda-entry-todo-keyword entry) " ")
+                    "")
+                  (if (org-life-agenda-entry-priority entry)
+                      (string ?\[ ?# (org-life-agenda-entry-priority entry) ?\] ? )
+                    "")
+                  (org-life-agenda-entry-text entry)
+                  ;; (let ((deadline (org-life-agenda-entry-deadline entry)))
+                  ;;   (or (and deadline
+                  ;;            (org-timestamp-format deadline "%Y-%m-%d"))
+                  ;;       ""))
+                  (if (org-life-agenda-entry-tags entry)
+                      (concat " :" (mapconcat #'identity (org-life-agenda-entry-tags entry) ":") ":")
+                    ""))))
+
+     (add-text-properties (length prefix) (length text) '(org-heading t) text)
+     (setq text (concat (org-add-props text props) "\n"))
+     (org-agenda-highlight-todo text))))
+
+(cl-defun org-life-agenda-render-block-separator ()
+  (unless (or (bobp) org-agenda-compact-blocks
+              (not org-agenda-block-separator))
+    (insert "\n"
+            ;; (if (stringp org-agenda-block-separator)
+            ;;     org-agenda-block-separator
+            ;;   (make-string (window-text-width) org-agenda-block-separator))
+            ;; "\n"
+            )))
+
+(cl-defun org-life-agenda-render-block-sub-separator ()
+  (insert "\n"))
+
+(cl-defun org-life-agenda-render-multi-progress-bar
+    (&key bar-width
+          progress-list
+          marker-list
+          (fill-char ?=)
+          (empty-char ? )
+          (marker-char ?|)
+          (left-border-char ?|)
+          (right-border-char ?|))
+  (insert (char-to-string left-border-char))
+  
+  (let ((bar-width (max 1 (- bar-width 2)))
+        (cur-progress 0)
+        (cur-width 0))
+    
+    (while progress-list
+      (let ((progress (min (max (caar progress-list) 0.0) 1.0))
+            (face (cdar progress-list)))
+        (when (> progress cur-progress)
+          (let* ((width (round (* (float progress) bar-width)))
+                 (diff (- width cur-width)))
+            (insert (propertize (make-string diff fill-char)
+                                'face face))
+            (setq cur-progress progress)
+            (setq cur-width width)))
+
+        (setq progress-list (cdr progress-list))))
+
+    (let ((diff (- bar-width cur-width)))
+      (insert (propertize (make-string diff empty-char)
+                          'face 'org-life-agenda-empty-progress-face)))
+
+    (dolist (marker marker-list)
+      (let ((pos (min (max (car marker) 0.0) 1.0))
+            (face (cdr marker)))
+        (save-excursion
+          (backward-char)
+          (goto-char (- (point)
+                        (round (* (- 1.0 (float pos))
+                                  (1- bar-width)))))
+          (delete-char 1)
+          (insert (propertize (char-to-string marker-char)
+                              'face face))))))
+  
+  (insert (char-to-string right-border-char)))
+
+(cl-defun org-life-agenda-render-entries (&key entries)
+  (setq entries (sort entries #'org-life-agenda-sort-by-priority))
+  (dolist (entry entries)
+    (org-life-agenda-render-entry :prefix " "
+                                  :entry entry)))
+
+(cl-defun org-life-agenda-render-impossible-task (&key alert-entry
+                                                       tasks-dict)
+  (let* ((id (plist-get alert-entry :id))
+         (amount (plist-get alert-entry :amount))
+         (entry (ht-get tasks-dict id)))
+    (org-life-agenda-render-entry
+     :prefix (concat "| "
+                     (propertize
+                      (format "%-8s" (org-duration-from-minutes amount))
+                      'face 'error)
+                     " | ")
+     :entry entry)))
+
+(cl-defun org-life-agenda-render-bad-estimate-task (&key alert-entry
+                                                         tasks-dict)
+  (let* ((id (plist-get alert-entry :id))
+         (amount (plist-get alert-entry :amount))
+         (done (plist-get alert-entry :done))
+         (entry (ht-get tasks-dict id)))
+    (org-life-agenda-render-entry
+     :prefix (concat "| "
+                     (propertize
+                      (format "%s/%s"
+                              (org-duration-from-minutes done)
+                              (org-duration-from-minutes amount))
+                      'face 'error)
+                     " | ")
+     :entry entry)))
+
+(cl-defun org-life-agenda-render-bad-info-task (&key alert-entry
+                                                     tasks-dict)
+  (let* ((id (plist-get alert-entry :id))
+         (reason (plist-get alert-entry :reason))
+         (entry (ht-get tasks-dict id)))
+    (org-life-agenda-render-entry
+     :prefix (format "| %s | " reason)
+     :entry entry)))
+
+(cl-defun org-life-agenda-render-overdue-task (&key alert-entry
+                                                     tasks-dict)
+  (let* ((id (plist-get alert-entry :id))
+         (days (plist-get alert-entry :days))
+         (entry (ht-get tasks-dict id)))
+    (org-life-agenda-render-entry
+     :prefix (format "| %4s | " (org-life-agenda-days-to-string days))
+     :entry entry)))
+
+(cl-defun org-life-agenda-render-schedule-legend ()
+  (insert (format "| %-5s | %5s | %4s | %s"
+                  "Dur." "Rem." "Due" "Task")
+          "\n"))
+
+(cl-defun org-life-agenda-render-day (&key daily-info
+                                           tasks-dict
+                                           (today nil))
+  (let* ((date-string (plist-get daily-info :date))
+         (usable-time (plist-get daily-info :usable_time))
+         (actual-usable-time (plist-get daily-info :actual_usable_time))
+         (sessions (plist-get daily-info :sessions))
+         (free-time (plist-get daily-info :free_time))
+         (average-stress (plist-get daily-info :average_stress))
+         (average-etr (plist-get daily-info :average_etr))
+         (time (org-life-agenda-date-string-to-time date-string))
+         (weekday (org-life-agenda-time-to-weekday time))
+         (date-string (if today
+                          (propertize date-string
+                                      'face
+                                      'org-agenda-date-today)
+                        (propertize date-string
+                                    'face
+                                    'org-agenda-date)))
+         (weekday-num (cdr weekday))
+         (weekday-text (propertize
+                        (format "● %d-%s"
+                                weekday-num
+                                (car weekday))
+                        'face
+                        (if (or (= weekday-num 6)
+                                (= weekday-num 7))
+                            'org-agenda-date-weekend
+                          'org-agenda-date))))
+    (insert weekday-text " " date-string "  "
+            (propertize
+             (concat (org-duration-from-minutes actual-usable-time) "/"
+                     (org-duration-from-minutes usable-time))
+             'face 'org-life-agenda-secondary-face)
+            " ")
+    (org-life-agenda-render-multi-progress-bar
+     :bar-width 50
+     :progress-list (list (cons (/ (float actual-usable-time) 1440.0)
+                                'org-life-agenda-actual-usable-time-face)
+                          (cons (/ (float usable-time) 1440.0)
+                                'org-life-agenda-usable-time-face))
+     ;; :marker-list (list (cons (/ 8.0 24.0) nil))
+     :fill-char org-life-agenda-progress-fill-char
+     :empty-char org-life-agenda-progress-empty-char
+     :right-border-char ? )
+    (insert "\n")
+    (dolist (session sessions)
+      (let* ((id (plist-get session :id))
+             (amount (plist-get session :amount))
+             (type (plist-get session :type))
+             (weakness (plist-get session :weakness))
+             (to-deadline (plist-get session :to_deadline))
+             (to-finish (plist-get session :to_finish))
+             (entry (ht-get tasks-dict id)))
+        (org-life-agenda-render-entry
+         :prefix (format "| %-5s | %5s | %4s | "
+                         (org-duration-from-minutes amount)
+                         (if (and (numberp to-finish)
+                                  (= to-finish 0))
+                             "✓" ; "Final"
+                           (org-life-agenda-short-duration to-finish))
+                         (if (and (numberp to-deadline)
+                                  (= to-deadline 0))
+                             "!!!" ; "Due"
+                           (org-life-agenda-days-to-string to-deadline))
+                         ;; (format "%-5s|" (make-string
+                         ;;                 (round (* (min 1.0 lateness) 5))
+                         ;;                 ?=))
+                         )
+         :entry entry
+         :face (cond ((and (numberp to-deadline)
+                           (< to-deadline 0))
+                      'org-warning)
+                     ((= weakness
+                         org-life--session-weakness-enum-strong)
+                      'org-agenda-done)
+                     ((= type
+                         org-life--session-type-enum-fragment)
+                      'org-time-grid)
+                     ((= type
+                         org-life--session-type-enum-overlimit)
+                      'org-warning)
+                     (t nil)))))
+    (insert (propertize
+             (format "| Maximum Free Time: %5s | Extra Time Ratio: %5s | Stress: %5s |"
+                     (org-duration-from-minutes free-time)
+                     (org-life-agenda-float-to-string average-etr)
+                     (org-life-agenda-float-to-string average-stress))
+             'face 'org-life-agenda-secondary-face)
+            "\n")))
+
+(cl-defun org-life-agenda-render-block-title (&key title)
+  (insert (org-add-props title nil 'face 'org-agenda-structure) "\n"))
+
+(cl-defun org-life-agenda-render-block-sub-title (&key title)
+  (insert (org-add-props title nil 'face 'bold) "\n"))
+
+;; (cl-defun org-life-agenda-render-block (&key entries title (entries-renderer nil))
+;;   (when entries
+;;     (let ((begin (point))
+;;           (entries-renderer (or entries-renderer
+;;                                 #'org-life-agenda-render-entries)))
+;;       (org-life-agenda-render-block-separator)
+;;       (org-life-agenda-render-block-title title)
+;;       (funcall entries-renderer :entries entries)
+;;       (add-text-properties begin (point-max) `(org-agenda-type tags)))))
+
+(cl-defun org-life-agenda-render-error (&key message)
+  (insert (propertize "Error" 'face 'error)
+          "\n\n"
+          message))
+
+;; TODO: Bug: last updated will not reflect true update time using the new view system.
+(cl-defun org-life-agenda-render-last-updated ()
+  (insert (propertize
+           (format-time-string "Last Updated: %Y-%m-%d %H:%M\n"
+                               org-life--last-updated-time)
+           'face 'org-life-agenda-secondary-face)))
+
+(cl-defun org-life-agenda-render-debug (&key message)
+  (when message
+    (org-life-agenda-render-block-title :title "Debug Messages")
+    (insert (prin1-to-string message) "\n")))
+
+(cl-defun org-life-agenda-render-general-info (&key general-info
+                                                    tasks-dict)
+  (let ((stress (plist-get general-info :stress))
+        (pof (plist-get general-info :pof))
+        (workload (plist-get general-info :workload))
+        (highest-stress-date (plist-get general-info :highest_stress_date))
+        (highest-stress-task (plist-get general-info :highest_stress_task))
+        (stress-with-optimal (plist-get general-info :stress_with_optimal))
+        (stress-with-suggested (plist-get general-info :stress_with_suggested))
+        (stress-without-today (plist-get general-info :stress_without_today))
+        (etr-with-optimal (plist-get general-info :etr_with_optimal))
+        (etr-with-suggested (plist-get general-info :etr_with_suggested))
+        (etr-without-today (plist-get general-info :etr_without_today))
+        (pof-with-optimal (plist-get general-info :pof_with_optimal))
+        (pof-with-suggested (plist-get general-info :pof_with_suggested))
+        (pof-without-today (plist-get general-info :pof_without_today))
+        (workload-with-optimal (plist-get general-info :workload_with_optimal))
+        (workload-with-suggested (plist-get general-info :workload_with_suggested))
+        (workload-without-today (plist-get general-info :workload_without_today)))
+    (insert (format "Stress: %5s | Failure Probability: %5s | Workload: %5s"
+                    (propertize (org-life-agenda-float-to-string stress)
+                                'face 'bold)
+                    (propertize (org-life-agenda-float-to-string pof)
+                                'face 'bold)
+                    (propertize (org-life-agenda-float-to-string workload nil t)
+                                'face 'bold))
+            "\n")
+    (org-life-agenda-render-multi-progress-bar
+     :bar-width (window-text-width)
+     :progress-list (list (cons pof-with-optimal
+                                'org-life-agenda-stress-best-face)
+                          (cons pof-with-suggested
+                                'org-life-agenda-stress-normal-face)
+                          (cons pof-without-today
+                                'org-life-agenda-stress-warning-face))
+     :marker-list (list (cons 0.5 'org-life-agenda-secondary-face)
+                        (cons 0.25 'org-life-agenda-secondary-face)
+                        (cons 0.75 'org-life-agenda-secondary-face)
+                        (cons pof nil))
+     :fill-char org-life-agenda-progress-fill-char
+     :empty-char org-life-agenda-progress-empty-char)
+    (insert "\n")
+    (insert (format "| %-20s %10s | %10s | %10s |"
+                    (propertize "Today's Schedule:"
+                                'face 'bold)
+                    "Optimal"
+                    "Suggested"
+                    "Worst")
+            "\n")
+    (insert (format "| %-20s %10s | %10s | %10s |"
+                    "Failure Probability:"
+                    (org-life-agenda-float-to-string
+                     pof-with-optimal
+                     'org-life-agenda-stress-best-face)
+                    (org-life-agenda-float-to-string
+                     pof-with-suggested
+                     'org-life-agenda-stress-normal-face)
+                    (org-life-agenda-float-to-string
+                     pof-without-today
+                     'org-life-agenda-stress-warning-face))
+            "\n")
+    (insert (format "| %-20s %10s | %10s | %10s |"
+                    "Workload:"
+                    (org-life-agenda-float-to-string
+                     workload-with-optimal
+                     'org-life-agenda-stress-best-face t)
+                    (org-life-agenda-float-to-string
+                     workload-with-suggested
+                     'org-life-agenda-stress-normal-face t)
+                    (org-life-agenda-float-to-string
+                     workload-without-today
+                     'org-life-agenda-stress-warning-face t))
+            "\n")
+    ;; (insert (format "| %-20s %10s | %10s | %10s |"
+    ;;                 "Extra Time Ratio:"
+    ;;                 (org-life-agenda-float-to-string
+    ;;                  stress-with-optimal
+    ;;                  'org-life-agenda-stress-best-face)
+    ;;                 (org-life-agenda-float-to-string
+    ;;                  stress-with-suggested
+    ;;                  'org-life-agenda-stress-normal-face)
+    ;;                 (org-life-agenda-float-to-string
+    ;;                  stress-without-today
+    ;;                  'org-life-agenda-stress-warning-face))
+    ;;         "\n")
+    (insert (format (concat "Highest Stress Date: "
+                            (propertize "%s"
+                                        'face 'org-agenda-date)
+                            " (in %d days)")
+                    highest-stress-date
+                    (- (time-to-days
+                        (org-life-agenda-date-string-to-time
+                         highest-stress-date))
+                       (time-to-days
+                        (current-time))))
+            "\n")
+    (when highest-stress-task
+      (let ((entry (ht-get tasks-dict highest-stress-task)))
+        (org-life-agenda-render-entry :prefix "Highest Stress Task: "
+                                      :entry entry)))))
+
+(cl-defun org-life-agenda-render-alert-entries (&key title
+                                                     alert-entries
+                                                     renderer
+                                                     tasks-dict
+                                                     extra-info-renderer)
+  (when (> (length alert-entries) 0)
+    (org-life-agenda-render-block-sub-separator)
+    (org-life-agenda-render-block-sub-title :title
+                                            (format "%s (%d)"
+                                                    title
+                                                    (length alert-entries)))
+    (dolist (alert-entry alert-entries)
+      (funcall renderer
+               :alert-entry alert-entry
+               :tasks-dict tasks-dict))
+    (when extra-info-renderer
+      (funcall extra-info-renderer
+               :alert-entries alert-entries))))
+
+(cl-defun org-life-agenda-render-impossible-task-extra-info
+    (&key alert-entries)
+  (let ((sum (-reduce-from (lambda (acc entry)
+                             (+ acc (plist-get entry :amount)))
+                           0 alert-entries)))
+    (insert (format "Total Duration: %s\n" (org-duration-from-minutes sum)))))
+
+(cl-defun org-life-agenda-render-alerts (&key alerts
+                                              tasks-dict)
+  (let ((impossible-tasks (plist-get alerts :impossible_tasks))
+        (bad-estimate-tasks (plist-get alerts :bad_estimate_tasks))
+        (bad-info-tasks (plist-get alerts :bad_info_tasks))
+        (overdue-tasks (plist-get alerts :overdue_tasks)))
+    
+    (org-life-agenda-render-alert-entries :title "Impossible Tasks"
+                                          :alert-entries impossible-tasks
+                                          :renderer #'org-life-agenda-render-impossible-task
+                                          :tasks-dict tasks-dict
+                                          :extra-info-renderer
+                                          #'org-life-agenda-render-impossible-task-extra-info)
+
+    (org-life-agenda-render-alert-entries :title "Tasks with Bad Estimate"
+                                          :alert-entries bad-estimate-tasks
+                                          :renderer #'org-life-agenda-render-bad-estimate-task
+                                          :tasks-dict tasks-dict)
+
+    
+    (org-life-agenda-render-alert-entries :title "Tasks with Bad Info"
+                                          :alert-entries bad-info-tasks
+                                          :renderer #'org-life-agenda-render-bad-info-task
+                                          :tasks-dict tasks-dict)
+
+    (org-life-agenda-render-alert-entries :title "Overdue Tasks"
+                                          :alert-entries overdue-tasks
+                                          :renderer #'org-life-agenda-render-overdue-task
+                                          :tasks-dict tasks-dict)))
+
+(cl-defun org-life-agenda-render-agenda (&key agenda-data
+                                              schedule-data)
+  (org-life-echo "Rendering agenda ...")
+  
+  (let ((status (plist-get schedule-data :status))
+        (err (plist-get schedule-data :error))
+        (data (plist-get schedule-data :data)))
+    (if (string= status "error")
+        (org-life-agenda-render-error :message err)
+      (let ((tasks-dict (plist-get agenda-data :tasks-dict))
+            (general-info (plist-get data :general))
+            (alerts (plist-get data :alerts))
+            (daily-infos (plist-get data :daily_infos))
+            (debug (plist-get data :debug))
+
+            (today t))
+
+        (org-life-agenda-render-debug :message debug)
+        
+        (org-life-agenda-render-last-updated)
+        (org-life-agenda-render-block-sub-separator)
+        
+        (org-life-agenda-render-block-title :title "General")
+        (org-life-agenda-render-general-info :general-info general-info
+                                             :tasks-dict tasks-dict)
+        
+        (org-life-agenda-render-block-separator)
+        
+        (org-life-agenda-render-block-title :title "Alerts")
+        (org-life-agenda-render-alerts :alerts alerts
+                                       :tasks-dict tasks-dict)
+        
+        (org-life-agenda-render-block-separator)
+        
+        (org-life-agenda-render-block-title :title "Schedules")
+        ;; (org-life-agenda-render-schedule-legend)
+        (dolist (daily-info daily-infos)
+          (org-life-agenda-render-day :daily-info daily-info
+                                      :tasks-dict tasks-dict
+                                      :today today)
+          (insert "\n")
+          (setq today nil))))))
+
+(cl-defun org-life-agenda-render-task-list (&key agenda-data schedule-data)
+  (org-life-echo "Rendering task list ...")
+  (let ((status (plist-get schedule-data :status))
+        (err (plist-get schedule-data :error))
+        (data (plist-get schedule-data :data)))
+    (if (string= status "error")
+        (org-life-agenda-render-error :message err)
+      
+      (let* ((tasks-dict (plist-get agenda-data :tasks-dict))
+             (general-info (plist-get data :general))
+             (alerts (plist-get data :alerts))
+             (daily-infos (plist-get data :daily_infos))
+             (task-infos (plist-get data :task_infos))
+             (task-infos
+              (sort (copy-sequence task-infos)
+                    (lambda (a b)
+                      (<
+                       (org-life-agenda-float-to-number
+                        (plist-get a :current_urgency))
+                       (org-life-agenda-float-to-number
+                        (plist-get b :current_urgency))))))
+             (debug (plist-get data :debug)))
+
+      (org-life-agenda-render-debug :message debug)
+
+      (org-life-agenda-render-last-updated)
+      (org-life-agenda-render-block-sub-separator)
+
+      (org-life-agenda-render-block-title :title "Task List")
+
+      (insert (propertize (format "| %-8s | Task \n" "Urgency")
+                          'face 'bold))
+
+      (dolist (task-info task-infos)
+        (let* ((id (plist-get task-info :id))
+               (entry (ht-get tasks-dict id))
+               (current-urgency (plist-get task-info :current_urgency)))
+        (org-life-agenda-render-entry
+         :prefix (format "| %-8s | "
+                         (org-life-agenda-float-to-string
+                          current-urgency))
+         :entry entry)))))))
+
 (defun org-life-agenda-show-view (view)
   (setq org-life--agenda-current-view view)
   (let ((org-life--agenda-keep-markers t)
         (org-life--agenda-keep-cache t))
     (org-agenda-redo t)
     (goto-char (point-min))))
+
+;;; Interactive functions
+
+(defun org-life-restart-engine ()
+  "Start/Restart org-life scheduling engine."
+  (interactive)
+  (org-life-start-engine))
+
+(defun ivy-org-life-agenda-show-view ()
+  (interactive)
+  ;; TODO: Add check for when not in agenda buffer
+  (let* ((candidates
+          (mapcar
+           (lambda (item) (propertize (car item) 'property (cdr item)))
+           '(("Main" . main) ("Task List" . task-list)))))
+    (ivy-read
+     "Select view: "
+     candidates
+     :action
+     (lambda (str)
+       (org-life-agenda-show-view (get-text-property 0 'property str))))))
+
+(defun org-life-agenda-show-main ()
+  (interactive)
+  (org-life-agenda-show-view 'main))
+
+(defun org-life-agenda-show-task-list ()
+  (interactive)
+  (org-life-agenda-show-view 'task-list))
 
 ;;; Advices
 

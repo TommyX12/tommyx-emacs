@@ -61,9 +61,11 @@
 	(interactive)
 	(if (bound-and-true-p buffer-face-mode)
 		(buffer-face-mode -1)
-		(buffer-face-set '(:family "Arial"))
-	)
-)
+    (cond
+	   ((find-font (font-spec :name "Helvetica"))
+	    (buffer-face-set '(:family "Helvetica")))
+     (t
+      (buffer-face-set '(:family "Arial"))))))
 
 ;; full screen automatically
 (toggle-frame-fullscreen)
@@ -128,14 +130,17 @@
 	(setq alert-default-style 'companion)
 )
 (use-package emms :ensure t
-	:config 
+	:config
 	(require 'emms-setup)
 	(require 'emms-player-simple)
 	(emms-all)
 	(emms-default-players)
   (setq emms-repeat-playlist t)
   (setq emms-random-playlist nil)
-)
+  (add-hook 'emms-playlist-mode-hook
+            (lambda ()
+              (hl-line-mode 1)
+              (setq-local use-line-nav t))))
 ;; (use-package undo-tree :ensure t)
 (use-package all-the-icons :ensure t)
 (use-package evil :ensure t)
@@ -210,12 +215,12 @@
        (ivy-rich-file-last-modified-time
         (:face font-lock-comment-face))))))
   (ivy-rich-mode 1))
-(use-package popwin :ensure t
-	:config
-	(setq popwin:adjust-other-windows t)
-	(popwin-mode 1)
-	(add-hook 'popwin:after-popup-hook (lambda () (delayed-mode-line-update)))
-)
+;; TODO: There is a bug. Might cause closing some window to close emacs.
+;; (use-package popwin :ensure t
+;; 	:config
+;; 	(setq popwin:adjust-other-windows t)
+;; 	(popwin-mode 1)
+;; 	(add-hook 'popwin:after-popup-hook (lambda () (delayed-mode-line-update))))
 (use-package counsel :ensure t)
 (use-package counsel-projectile :ensure t :after projectile)
 (use-package google-this :ensure t)

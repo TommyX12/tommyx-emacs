@@ -386,7 +386,12 @@ class Engine(object):
         response.debug += "total: {:.3f}s\n".format(t)
 
         # compute task info
+        debug_timer.push()
+
         response.task_infos = [self.get_task_info(task) for task in todo_tasks]
+
+        t = debug_timer.pop()
+        response.debug += "compute task info: {:.3f}s\n".format(t)
 
         # internal debug logs
         response.debug += '\n'.join(self.internal_logger.get_messages())

@@ -85,7 +85,7 @@ class TaskRepeater(object):
 
     def repeat(self, tasks, schedule_start, schedule_end):
         '''
-        Modify tasks to have all repeat instances generated
+        Generate all repeat instances of task in tasks.
         '''
 
         result = []

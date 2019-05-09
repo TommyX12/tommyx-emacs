@@ -268,6 +268,15 @@ regular expression,
   (org-remove-latex-fragment-image-overlays)
   (org-toggle-latex-fragment '(16)))
 
+(defun org-focus ()
+  "Fold all subtrees except ones relevant to the current."
+  (interactive)
+  (org-overview)
+  (org-reveal '(4))
+  (org-show-entry)
+  (org-show-children)
+  (recenter nil))
+
 ;; hydra
 (defhydra hydra-org-nav ()
   "org heading navigation"
@@ -571,7 +580,9 @@ regular expression,
 	(kbd "C-;") 'org-cycle
 
 	"X" 'outline-show-all
-	"Z" 'org-shifttab ; cycle global visibility
+	"Z" 'org-focus
+  ;; Just use shift-tab itself
+	;; "Z" org-shifttab ; cycle global visibility
 
   "t" 'hydra-org-nav/body
 
@@ -670,6 +681,15 @@ regular expression,
 
 	"ji" '(org-agenda-clock-in
 		:which-key "clock in")
+
+  "jxv" '(ivy-org-life-agenda-show-view
+    :which-key "org-life show view")
+
+  "jxm" '(org-life-agenda-show-main
+    :which-key "org-life main")
+
+  "jxt" '(org-life-agenda-show-task-list
+    :which-key "org-life task list")
 )
 (general-define-key
   :keymaps 'org-agenda-mode-map

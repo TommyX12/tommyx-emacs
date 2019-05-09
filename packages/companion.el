@@ -487,22 +487,23 @@ Companion buffer is BUFFER."
   "Callback for ‘companion-fetch-qod’ command.
 Argument STATUS is the http status of the request."
   (search-forward "\n\n")
-  (if (not status)
-      (let* ((quote-json (json-read))
-             (quotes (assoc-default
-                      'quotes (assoc-default
-                               'contents quote-json)))
-             (q (aref quotes 0))
-             (quote-string (assoc-default 'quote q))
-             (quote-author (assoc-default 'author q))
-             (quote* (format "\"%s\" - %s"
-                             quote-string
-                             quote-author)))
-        (setq companion-qod--last-quote quote*)
-        (companion-show-qod quote*))
-    (message "Error fetching quote: %s"
-             (assoc-default 'message
-                            (assoc-default 'error (json-read))))))
+  (ignore-errors
+    (if (not status)
+        (let* ((quote-json (json-read))
+               (quotes (assoc-default
+                        'quotes (assoc-default
+                                 'contents quote-json)))
+               (q (aref quotes 0))
+               (quote-string (assoc-default 'quote q))
+               (quote-author (assoc-default 'author q))
+               (quote* (format "\"%s\" - %s"
+                               quote-string
+                               quote-author)))
+          (setq companion-qod--last-quote quote*)
+          (companion-show-qod quote*))
+      (message "Error fetching quote: %s"
+               (assoc-default 'message
+                              (assoc-default 'error (json-read)))))))
 
 (defun companion-show-qod (q)
   (message q)
@@ -528,9 +529,11 @@ Taken from https://github.com/narendraj9/quoted-scratch."
   (with-current-buffer
       (let ((url-request-method "GET")
             (qod-service-url "http://quotes.rest/qod.json"))
-        (url-retrieve (url-generic-parse-url qod-service-url)
-                      'companion-qod-callback))))
+        (ignore-errors
+          (url-retrieve (url-generic-parse-url qod-service-url)
+                        'companion-qod-callback)))))
 
+;; TODO: bug: set-buffer nil when calling this without internet.
 (defun companion-qod--tick ()
   (let ((time (time-to-seconds)))
     (when (or (null companion-qod--last-displayed)
