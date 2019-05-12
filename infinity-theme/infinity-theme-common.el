@@ -898,6 +898,8 @@
   `(org-verse ((,class (:inherit org-block :slant italic))))
   `(org-warning ((,class (:foreground ,war :inherit org-priority))))
   `(org-life-agenda-secondary-face ((,class (:foreground ,base-dim))))
+  `(org-life-agenda-session-face-1 ((,class (:background ,blue-bg))))
+  `(org-life-agenda-session-face-2 ((,class (:background ,green-bg-s))))
   `(org-life-agenda-empty-progress-face ((,class (:inherit bold :foreground ,bg14))))
   `(org-life-agenda-stress-best-face ((,class (:inherit bold :foreground ,war))))
   `(org-life-agenda-stress-normal-face ((,class (:inherit bold :foreground ,func))))

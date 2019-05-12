@@ -143,6 +143,16 @@
   "Face for secondary text (such as certain statistics) for org-life-agenda."
   :group 'org-life)
 
+(defface org-life-agenda-session-face-1
+  '((t (:inherit default)))
+  "First face for daily sessions for org-life-agenda."
+  :group 'org-life)
+
+(defface org-life-agenda-session-face-2
+  '((t (:inherit highlight)))
+  "Second face for daily sessions for org-life-agenda."
+  :group 'org-life)
+
 (defface org-life-agenda-empty-progress-face
   '((t ()))
   "Face to highlight empty progress for org-life-agenda."
@@ -863,7 +873,9 @@ PROCESS is the process under watch, OUTPUT is the output received."
 
 (cl-defun org-life-agenda-render-entry (&key (prefix " ")
                                              entry
-                                             (face nil))
+                                             (face nil)
+                                             (session-duration nil)
+                                             (overlay-face nil))
   (insert
    (let ((props (list 'face face
                       'mouse-face 'highlight
@@ -898,7 +910,16 @@ PROCESS is the process under watch, OUTPUT is the output received."
 
      (add-text-properties (length prefix) (length text) '(org-heading t) text)
      (setq text (concat (org-add-props text props) "\n"))
-     (org-agenda-highlight-todo text))))
+     (org-agenda-highlight-todo text)))
+  (when session-duration
+    (save-excursion
+      (previous-line)
+      (let ((line-height (if (< session-duration 30) 1.0 (+ 0.5 (/ session-duration 60))))
+            (ov (make-overlay (point-at-bol) (1+ (point-at-eol)))))
+        (when overlay-face
+          (overlay-put ov 'face overlay-face))
+        (overlay-put ov 'line-height line-height)
+        (overlay-put ov 'line-spacing (1- line-height))))))
 
 (cl-defun org-life-agenda-render-block-separator ()
   (unless (or (bobp) org-agenda-compact-blocks
@@ -1020,7 +1041,8 @@ PROCESS is the process under watch, OUTPUT is the output received."
 (cl-defun org-life-agenda-render-day (&key daily-info
                                            tasks-dict
                                            (today nil))
-  (let* ((date-string (plist-get daily-info :date))
+  (let* ((overlay-face-alt nil)
+         (date-string (plist-get daily-info :date))
          (usable-time (plist-get daily-info :usable_time))
          (actual-usable-time (plist-get daily-info :actual_usable_time))
          (sessions (plist-get daily-info :sessions))
@@ -1099,7 +1121,12 @@ PROCESS is the process under watch, OUTPUT is the output received."
                      ((= type
                          org-life--session-type-enum-overlimit)
                       'org-warning)
-                     (t nil)))))
+                     (t nil))
+         :session-duration amount
+         :overlay-face (if overlay-face-alt
+                           'org-life-agenda-session-face-2
+                         'org-life-agenda-session-face-1)))
+      (setq overlay-face-alt (not overlay-face-alt)))
     (insert (propertize
              (format "| Maximum Free Time: %5s | Extra Time Ratio: %5s | Stress: %5s |"
                      (org-duration-from-minutes free-time)
