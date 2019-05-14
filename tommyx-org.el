@@ -747,12 +747,6 @@ regular expression,
 		:which-key "capture save")
 )
 
-;; refresh all org files
-(update-all-org-directory-files)
-
-;; org directory external config
-(load (expand-file-name "org-config.el" org-directory))
-
 ;; do not use org-super-agenda-header-map
 (setq org-super-agenda-header-map (make-sparse-keymap))
 
@@ -760,17 +754,24 @@ regular expression,
 ;; temporarily disabled
 ;; (org-notify-start 60)
 
-;; other agenda views
+(when org-directory
+  ;; refresh all org files
+  (update-all-org-directory-files)
 
-;; my org-life
-(add-to-list 'load-path
-	(expand-file-name "packages/org-life" (file-name-directory load-file-name)))
-(require 'org-life)
-(setq org-life-config-file-path
-      (expand-file-name "org-life-config.org"
-                        (file-name-directory org-directory)))
-(push
- '("x" "org-life agenda"
-   ((org-life-agenda ""
-                     ())))
- org-agenda-custom-commands)
+  ;; org directory external config
+  (load (expand-file-name "org-config.el" org-directory))
+  ;; other agenda views
+
+  ;; my org-life
+  (add-to-list 'load-path
+	             (expand-file-name "packages/org-life" (file-name-directory load-file-name)))
+  (require 'org-life)
+  (setq org-life-config-file-path
+        (expand-file-name "org-life-config.org"
+                          (file-name-directory org-directory)))
+  (push
+   '("x" "org-life agenda"
+     ((org-life-agenda ""
+                       ())))
+   org-agenda-custom-commands))
+

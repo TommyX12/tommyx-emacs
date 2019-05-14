@@ -8,7 +8,7 @@
 ;; (setq ispell-really-hunspell t)
 
 ;; org
-(setq org-directory "~/notes/org") ; remove this if you are not me.
+(setq org-directory "~/notes/org") ; set this to nil if you are not me.
 (setq use-light-theme nil) ; set to t if you want to startup with light theme.
 
 ;; ycmd
