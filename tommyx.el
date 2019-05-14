@@ -10,7 +10,7 @@
 (add-to-list 'load-path
 	(expand-file-name "packages/company-tabnine" (file-name-directory load-file-name)))
 (add-to-list 'load-path
-	(expand-file-name "packages/highlight-indentation" (file-name-directory load-file-name)))
+	(expand-file-name "packages/Highlight-Indentation-for-Emacs" (file-name-directory load-file-name)))
 
 ;;; themes
 ; (load-theme 'spacemacs-dark t)

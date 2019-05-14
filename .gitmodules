@@ -1,0 +1,4 @@
+[submodule "packages/Highlight-Indentation-for-Emacs"]
+	path = packages/Highlight-Indentation-for-Emacs
+	url = https://github.com/TommyX12/Highlight-Indentation-for-Emacs.git
+	branch = master
