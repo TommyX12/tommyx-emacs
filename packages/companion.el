@@ -526,7 +526,7 @@ Argument STATUS is the http status of the request."
   "Fetches quote of the day from theysaidso.com.
 Taken from https://github.com/narendraj9/quoted-scratch."
   (interactive)
-  (with-current-buffer
+  (with-temp-buffer
       (let ((url-request-method "GET")
             (qod-service-url "http://quotes.rest/qod.json"))
         (ignore-errors
