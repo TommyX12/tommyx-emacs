@@ -2,3 +2,7 @@
 	path = packages/Highlight-Indentation-for-Emacs
 	url = https://github.com/TommyX12/Highlight-Indentation-for-Emacs.git
 	branch = master
+[submodule "packages/company-tabnine"]
+	path = packages/company-tabnine
+	url = https://github.com/TommyX12/company-tabnine.git
+	branch = master
