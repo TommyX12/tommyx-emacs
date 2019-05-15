@@ -17,7 +17,6 @@
 (setq doom-themes-enable-bold t
 	  doom-themes-enable-italic t)
 (setq dark-theme 'infinity-dark)
-
 (setq light-theme 'infinity-light)
 (if (and (boundp 'use-light-theme) use-light-theme)
 	(load-theme light-theme t)

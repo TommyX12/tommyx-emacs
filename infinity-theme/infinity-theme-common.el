@@ -144,6 +144,7 @@
   (ttip          (if (eq theme 'dark) (if (has-true-color) "#9AA2BA" "#888888") (if (has-true-color) "#79839F" "#5f5f87")))
   (ttip-sl       (if (eq theme 'dark) (if (has-true-color) "#505B79" "#333333") (if (has-true-color) "#C6C9DD" "#afafff")))
   (ttip-bg       (if (eq theme 'dark) (if (has-true-color) "#323740" "#444444") (if (has-true-color) "#DEE1E8" "#dfdfff")))
+  (ttip-bg2      (if (eq theme 'dark) (if (has-true-color) "#1F3866" "#444444") (if (has-true-color) "#DEE1E8" "#dfdfff")))
   ;; (type          (if (eq theme 'dark) (if (has-true-color) "#86ac4f" "#86dc2f") (if (has-true-color) "#52883c" "#00af00")))
   (type           (if (eq theme 'dark) (if (has-true-color) "#2cafa5" "#2aa198") (if (has-true-color) "#2d9578" "#2aa198")))
   (var           (if (eq theme 'dark) (if (has-true-color) "#7590db" "#8787d7") (if (has-true-color) "#5A8AB1" "#af5fd7")))
@@ -206,6 +207,7 @@
 )
 
   (setq evil-normal-state-cursor `(box ,primary+1))
+  ;; (setq cursor-in-non-selected-windows evil-normal-state-cursor)
   (setq evil-insert-state-cursor `(box ,base))
   (setq evil-emacs-state-cursor `(box ,emacs))
   (setq evil-replace-state-cursor `(box ,war))
@@ -362,9 +364,9 @@
   `(company-scrollbar-bg ((,class (:background ,bg2))))
   `(company-scrollbar-fg ((,class (:background ,act2))))
   `(company-template-field ((,class (:inherit region))))
-  `(company-tooltip ((,class (:background ,ttip-bg :foreground ,base))))
+  `(company-tooltip ((,class (:background ,back-border :foreground ,base))))
   `(company-tooltip-annotation ((,class (:foreground ,type))))
-  `(company-tooltip-common ((,class (:background ,ttip-bg :foreground ,keyword))))
+  `(company-tooltip-common ((,class (:background ,back-border :foreground ,keyword))))
   `(company-tooltip-common-selection ((,class (:foreground ,base))))
   `(company-tooltip-mouse ((,class (:inherit highlight))))
   `(company-tooltip-search ((,class (:inherit match))))
@@ -683,7 +685,7 @@
   `(info-title-4 ((,class (:height 1.2))))
 
 ;;;;; ivy
-  `(ivy-current-match ((,class (:background ,bg2))))
+  `(ivy-current-match ((,class (:background ,blue-bg-s))))
   `(ivy-minibuffer-match-face-1 ((,class (:underline t))))
   `(ivy-minibuffer-match-face-2 ((,class (:foreground ,head1 :underline t))))
   `(ivy-minibuffer-match-face-3 ((,class (:foreground ,head4 :underline t))))
@@ -691,7 +693,7 @@
   `(ivy-remote ((,class (:foreground ,cyan))))
 
 ;;;;; ivy-posframe
-  `(ivy-posframe ((,class (:inherit default :background ,ttip-bg))))
+  `(ivy-posframe ((,class (:inherit default :background ,back-border))))
 
 ;;;;; latex
   `(font-latex-bold-face ((,class (:inherit bold))))
