@@ -123,14 +123,15 @@ in pdf-view mode (enabled by the `pdf-tools' package)."
          ;; 'local-map (make-mode-line-mouse-map 'mouse-1 'vc-ediff
 				))))
 
-  :face mode-line
-  :when (not (equal '(0 0 0) (spaceline-all-the-icons--git-statistics))))
+  :face 'mode-line
+  :when (and active ; TODO: might help performance
+             (not (equal '(0 0 0) (spaceline-all-the-icons--git-statistics)))))
 
 
 ;; header line definition
 (setq status-lines-header-segments-left `(
   (window-number :face highlight-face :priority 99)
-  ((buffer-modified status-lines-mode-icon-colored buffer-id remote-host) :face mode-line)
+  ((buffer-modified status-lines-mode-icon-colored buffer-id remote-host) :face 'mode-line)
   (purpose :priority 94)
 ))
 (setq status-lines-header-segments-right `(
