@@ -28,10 +28,10 @@
 	 ((and (eq system-type 'ms-dos)
          (find-font (font-spec :name "Consolas")))
 	  (setq selected-font "Consolas"))
+   ((find-font (font-spec :name "Fira Mono"))
+    (setq selected-font "Fira Mono"))
    ((find-font (font-spec :name "Source Code Pro"))
     (setq selected-font "Source Code Pro"))
-   ((find-font (font-spec :name "Fira Code"))
-    (setq selected-font "Fira Code"))
    ((find-font (font-spec :name "DejaVu Sans Mono"))
     (setq selected-font "DejaVu Sans Mono"))
    (t
@@ -139,7 +139,9 @@
   (add-hook 'emms-playlist-mode-hook
             (lambda ()
               (hl-line-mode 1)
-              (setq-local use-line-nav t))))
+              (setq-local use-line-nav t)))
+  (when (and (bound-and-true-p emms-default-music-dir))
+    (emms-add-directory-tree emms-default-music-dir)))
 ;; (use-package undo-tree :ensure t)
 (use-package all-the-icons :ensure t)
 (use-package evil :ensure t)

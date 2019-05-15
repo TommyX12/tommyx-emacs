@@ -14,6 +14,10 @@
 ;; ycmd
 ;; (setq ycmd-server-python-command "python3")
 
+;; emms
+;; (setq mpg123-path "D:/data/projects/new/Tools/tommyx-emacs/third_party/mpg123/mpg123.exe")
+(setq emms-default-music-dir "~/data/files/music") ; set this to nil if you don't have one.
+
 ;; others
 ;; (setq font-size-small 130)
 ;; (setq font-size-big 150)
@@ -30,6 +34,3 @@
 
 ;; org
 (setq org-agenda-files (append org-agenda-files '()))
-
-;; emms
-;; (setq mpg123-path "D:/data/projects/new/Tools/tommyx-emacs/third_party/mpg123/mpg123.exe")
