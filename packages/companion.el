@@ -636,7 +636,7 @@ Taken from https://github.com/narendraj9/quoted-scratch."
   "A spaceline segment to display battery status."
 	(if battery-status-function
 		(propertize
-			(battery-format "[%p]%b %t"
+			(battery-format " | [%p]%b %t | "
 			(funcall battery-status-function))
 		'face 'bold)
 	nil))
@@ -724,9 +724,7 @@ Taken from https://github.com/narendraj9/quoted-scratch."
                   :priority 99)
 	(" | " :tight t :face 'companion-face)
   (companion-type-break :tight t :face 'companion-face)
-	(" | " :tight t :face 'companion-face)
   (companion-battery :tight t :face 'companion-face)
-	(" | " :tight t :face 'companion-face)
 	;; (companion-symon :face 'companion-face :tight t)
 	(companion-system-load :face 'companion-face :tight t)
 	(" | " :tight t :face 'companion-face)
