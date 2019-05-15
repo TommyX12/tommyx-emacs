@@ -1212,34 +1212,42 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 	(min-width . 50)
 	(refresh . 1)
 	))
+; misc
+(setq ivy-height 12)
+(setq ivy-height-alist nil) ; all ivy should have same height
+(setq ivy-posframe-height (truncate (* ivy-height 1.1)))
+(setq ivy-posframe-border-width 1)
 (defun ivy-posframe--display (str &optional poshandler full-width) ; override
   "Show STR in ivy's posframe."
-  (if (not (ivy-posframe-workable-p))
-	  (ivy-display-function-fallback str)
-	(with-selected-window (ivy--get-window ivy-last)
-	  (when (get-buffer ivy-posframe-buffer)
-      (with-current-buffer ivy-posframe-buffer
-      (setq-local tab-width 2)))
-	  (posframe-show
-	   ivy-posframe-buffer
-	   :font ivy-posframe-font
-	   :string
-	   (with-current-buffer (get-buffer-create " *Minibuf-1*")
-		 (let ((point (point))
-			   (string (if ivy-posframe--ignore-prompt
-						   str
-						 (concat (buffer-string) "  " str))))
-		   (add-text-properties (- point 1) point '(face ivy-posframe-cursor) string)
-		   string))
-	   :position (point)
-	   :poshandler poshandler
-	   :background-color (face-attribute 'ivy-posframe :background)
-	   :foreground-color (face-attribute 'ivy-posframe :foreground)
-	   :height (truncate (* 1.1 ivy-height))
-	   :width (window-width) ; (if full-width (window-width) nil)
-	   :min-height 10
-	   :min-width 50
-	   :override-parameters ivy-posframe-parameters))))
+  (if (not (posframe-workable-p))
+	    (ivy-display-function-fallback str)
+    (setq ivy-posframe--display-p t)
+    (with-ivy-window
+	    (posframe-show
+	     ivy-posframe-buffer
+	     :font ivy-posframe-font
+	     :string
+       (with-current-buffer (window-buffer (active-minibuffer-window))
+         (let ((point (point))
+               (string (if ivy-posframe--ignore-prompt
+                           str
+                         (concat (buffer-string) "  " str))))
+           (add-text-properties (- point 1) point '(face ivy-posframe-cursor) string)
+           string))
+	     :position (point)
+	     :poshandler poshandler
+       :background-color (face-attribute 'ivy-posframe :background nil t)
+       :foreground-color (face-attribute 'ivy-posframe :foreground nil t)
+	     ;; :height (truncate (* 1.1 ivy-height))
+	     ;; :width (window-width) ; (if full-width (window-width) nil)
+	     ;; :min-height 10
+	     ;; :min-width 50
+       :height ivy-posframe-height
+       :width (window-width)
+       :min-height (or ivy-posframe-min-height (+ ivy-height 1))
+       :min-width (or ivy-posframe-min-width (round (* (frame-width) 0.62)))
+       :internal-border-width ivy-posframe-border-width
+	     :override-parameters ivy-posframe-parameters))))
 (defun posframe-poshandler-adaptive-top-bottom (info)
   "Posframe's position handler.
 
@@ -1311,9 +1319,6 @@ Useful for a search overview popup."
 (setq ivy-format-function 'ivy-format-function-custom)
 ;; (setq ivy-format-function 'ivy-format-function-default)
 (setq ivy-count-format "%d/%d | ")
-; misc
-(setq ivy-height 12)
-(setq ivy-height-alist nil) ; all ivy should have same height
 
 
 ;;; heavy tasks
