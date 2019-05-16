@@ -115,6 +115,11 @@
 (setq org-fontify-whole-heading-line t)
 (setq org-super-agenda-fontify-whole-header-line t) ; this doesn't work
 (setq org-imenu-depth 4)
+;; new version of org has angular brackets which messes with rainbow delimiters
+(add-hook 'org-mode-hook
+          (lambda ()
+            (modify-syntax-entry ?< ".")
+            (modify-syntax-entry ?> ".")))
 
 ;; agenda configs
 (setq org-agenda-dim-blocked-tasks t)

@@ -284,9 +284,7 @@
 (use-package rainbow-delimiters :ensure t
   :config
   (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
-  ;; TODO: disabled because org-mode has a bug
-  ;; (add-hook 'text-mode-hook #'rainbow-delimiters-mode)
-  )
+  (add-hook 'text-mode-hook #'rainbow-delimiters-mode))
 (use-package avy :ensure t)
 (use-package smartparens :ensure t
 		 ; don't show in mode display
