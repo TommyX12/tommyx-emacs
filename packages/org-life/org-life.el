@@ -77,7 +77,7 @@
 
 (defcustom org-life-engine-command
   (list
-   (if (eq system-type 'darwin)
+   (if (not (eq system-type 'windows-nt))
        "python3"
      "python")
    (expand-file-name "engine/main.py"
@@ -262,7 +262,13 @@ Only parse plist, not alist."
   "Decode engine response MSG, and return the decoded object."
   (let ((json-array-type 'list)
         (json-object-type 'plist))
-    (json-read-from-string msg)))
+    (condition-case error-data
+        (json-read-from-string msg)
+      (error
+       (format "error-symbol: %s\nsignal-data: %s\nreceived-message: %s\n"
+               (prin1-to-string (car error-data))
+               (prin1-to-string (cdr error-data))
+               (prin1-to-string msg))))))
 
 (defun org-life--engine-process-sentinel (process event)
   "Sentinel for engine process.
@@ -715,7 +721,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
          nil ; info
          nil ; first-match
          'headline ; no-recursion
-         ))
+         e)
      'element)
     
     (org-life-echo "Gathering data ...")
@@ -848,27 +854,31 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (agenda-data (org-life-agenda-get-agenda-data))
         (schedule-data (org-life-agenda-get-schedule-data)))
 
-    (when (and org-life--last-org-buffer
-              (null org-todo-regexp))
-      (dolist (variable '(org-todo-regexp
-                          org-not-done-regexp
-                          org-complex-heading-regexp
-                          org-done-keywords
-                          org-done-keywords-for-agenda))
-        (set variable (buffer-local-value variable org-life--last-org-buffer))))
+    (if (stringp schedule-data) ; error in request
+        (org-life-agenda-render-error
+         :message schedule-data)
 
-    (goto-char (point-max))
-    (cond
+      (when (and org-life--last-org-buffer
+                 (null org-todo-regexp))
+        (dolist (variable '(org-todo-regexp
+                            org-not-done-regexp
+                            org-complex-heading-regexp
+                            org-done-keywords
+                            org-done-keywords-for-agenda))
+          (set variable (buffer-local-value variable org-life--last-org-buffer))))
 
-     ((eq view 'main)
-      (org-life-agenda-render-agenda
-       :agenda-data agenda-data
-       :schedule-data schedule-data))
+      (goto-char (point-max))
+      (cond
 
-     ((eq view 'task-list)
-      (org-life-agenda-render-task-list
-       :agenda-data agenda-data
-       :schedule-data schedule-data)))))
+       ((eq view 'main)
+        (org-life-agenda-render-agenda
+         :agenda-data agenda-data
+         :schedule-data schedule-data))
+
+       ((eq view 'task-list)
+        (org-life-agenda-render-task-list
+         :agenda-data agenda-data
+         :schedule-data schedule-data))))))
 
 (cl-defun org-life-agenda-render-entry (&key (prefix " ")
                                              entry
