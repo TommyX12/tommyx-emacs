@@ -579,7 +579,7 @@ regular expression,
 	;; ;; (kbd "C-l") (lambda () (interactive) (outline-show-entry) (outline-show-children))
 	(kbd "C-;") 'org-cycle
 
-	"X" 'outline-show-all
+	"X" 'org-show-all
 	"Z" 'org-focus
   ;; Just use shift-tab itself, or C-u tab
 	;; "Z" org-shifttab ; cycle global visibility
