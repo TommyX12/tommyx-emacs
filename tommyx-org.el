@@ -759,7 +759,10 @@ regular expression,
   (update-all-org-directory-files)
 
   ;; org directory external config
-  (load (expand-file-name "org-config.el" org-directory))
+  (let ((external-config-path
+         (expand-file-name "org-config.el" org-directory)))
+    (when (file-exists-p external-config-path)
+      (load external-config-path)))
   ;; other agenda views
 
   ;; my org-life
