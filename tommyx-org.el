@@ -581,7 +581,7 @@ regular expression,
 
 	"X" 'outline-show-all
 	"Z" 'org-focus
-  ;; Just use shift-tab itself
+  ;; Just use shift-tab itself, or C-u tab
 	;; "Z" org-shifttab ; cycle global visibility
 
   "t" 'hydra-org-nav/body
@@ -767,8 +767,7 @@ regular expression,
 	             (expand-file-name "packages/org-life" (file-name-directory load-file-name)))
   (require 'org-life)
   (setq org-life-config-file-path
-        (expand-file-name "org-life-config.org"
-                          (file-name-directory org-directory)))
+        (expand-file-name "org-life-config.org" org-directory))
   (push
    '("x" "org-life agenda"
      ((org-life-agenda ""

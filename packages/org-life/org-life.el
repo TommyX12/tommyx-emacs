@@ -97,8 +97,7 @@
   :type 'boolean)
 
 (defcustom org-life-config-file-path
-  (expand-file-name "org-life-config.org"
-                    (file-name-directory org-directory))
+  (expand-file-name "org-life-config.org" org-directory)
   "Path to org-life config file."
   :group 'org-life
   :type 'string)
