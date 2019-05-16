@@ -2597,7 +2597,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 ;; shell
 (cond
- ((eq system-type 'darwin) (setq explicit-shell-file-name "/usr/local/bin/zsh")))
+ ((not (eq system-type 'windows-nt)) (setq explicit-shell-file-name "/usr/local/bin/zsh")))
 
 ;; no alert sounds
 (setq ring-bell-function 'ignore)

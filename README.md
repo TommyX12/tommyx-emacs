@@ -14,3 +14,4 @@
 
 - Run `M-x all-the-icons-install-fonts` to install icon fonts.
 - Run `M-x company-tabnine-install-binary` to install company TabNine.
+- Install other dependencies as they come up, such as `rg`.
