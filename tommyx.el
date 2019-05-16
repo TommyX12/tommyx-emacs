@@ -1,3 +1,6 @@
+;; emergency key setting for debug
+(global-set-key (kbd "C-M-X") 'execute-extended-command)
+
 ;;; add directories to load-path
 ;; TODO make sure these overrides package archive install directories
 (add-to-list 'load-path (file-name-directory load-file-name))
