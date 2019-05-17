@@ -500,8 +500,15 @@
        'color-identifiers:modes-alist
        `(,maj-mode . (""
                       "\\_<\\([a-zA-Z_$]\\(?:\\s_\\|\\sw\\)*\\)"
-                      (nil font-lock-variable-name-face)))))))
-
+                      (nil font-lock-variable-name-face))))))
+  (let ((extra-modes
+         '(typescript-mode)))
+    (dolist (maj-mode extra-modes)
+      (add-to-list
+       'color-identifiers:modes-alist
+       `(,maj-mode . ("[^.][[:space:]]*"
+                     "\\_<\\([a-zA-Z_$]\\(?:\\s_\\|\\sw\\)*\\)"
+                     (nil font-lock-variable-name-face)))))))
 (use-package auto-highlight-symbol :ensure t
 	:config
 	(push 'sql-mode ahs-modes)
@@ -510,6 +517,7 @@
 	(push 'web-mode ahs-modes)
 	(push 'js2-mode ahs-modes)
 	(push 'glsl-mode ahs-modes)
+	(push 'typescript-mode ahs-modes)
 	(push 'shaderlab-mode ahs-modes)
 	(global-auto-highlight-symbol-mode 1)
 	;; (add-hook 'prog-mode-hook (auto-highlight-symbol-mode 1))
@@ -1297,6 +1305,7 @@ Useful for a search overview popup."
 	  '((swiper . ivy-posframe-display-swiper)
 		(swiper-multi . ivy-posframe-display-swiper)
 		(counsel-ag . nil)
+		(counsel-rg . nil)
 		(counsel-grep . nil)
 		(t . ivy-posframe-display-at-point)))
 (ivy-posframe-enable)
@@ -1783,6 +1792,8 @@ command (ran after) is mysteriously incorrect."
 
 	"ew" '(write-file
 		:which-key "write file")
+	"er" '(rename-buffer
+		:which-key "rename buffer")
 	"ea" '(evil-write-all
 		:which-key "write all files")
 
@@ -2704,6 +2715,9 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; wrap lines
 (add-hook 'prog-mode-hook (lambda () (setq truncate-lines nil)))
 (add-hook 'text-mode-hook (lambda () (setq truncate-lines nil)))
+
+;; subword motion
+;; (global-subword-mode t) ; TODO this makes evil cursor word search not work
 
 ;; auto load if changed
 (global-auto-revert-mode t)
