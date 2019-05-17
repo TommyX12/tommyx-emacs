@@ -721,7 +721,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
          nil ; info
          nil ; first-match
          'headline ; no-recursion
-         e)
+         ))
      'element)
     
     (org-life-echo "Gathering data ...")
