@@ -459,10 +459,10 @@ PROCESS is the process under watch, OUTPUT is the output received."
 
 (defun org-life-agenda-parse-clock (task-id clock-elem)
   (let* ((timestamp (org-element-property :value clock-elem))
-         (start (org-timestamp--to-internal-time timestamp))
+         (start (org-timestamp-to-time timestamp))
          (end (if (eq (org-element-property :status clock-elem) 'running)
                   (current-time)
-                (org-timestamp--to-internal-time timestamp t)))
+                (org-timestamp-to-time timestamp t)))
          (session-data-list nil))
 
     (when (time-less-p start end)
