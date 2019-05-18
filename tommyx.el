@@ -1232,9 +1232,10 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (setq ivy-initial-inputs-alist nil)
 ; enable fuzzy, except for swiper
 (setq ivy-re-builders-alist
-	  '((swiper . ivy--regex-ignore-order)
-		(swiper-multi . ivy--regex-plus)
-		(t		. ivy--regex-fuzzy)))
+	    '((swiper . ivy--regex-ignore-order)
+        (counsel-rg . ivy--regex-ignore-order)
+		    (swiper-multi . ivy--regex-plus)
+		    (t		. ivy--regex-fuzzy)))
 ; enable wrapping
 (setq ivy-wrap t)
 (setq ivy-action-wrap t)
