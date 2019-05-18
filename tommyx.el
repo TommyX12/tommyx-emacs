@@ -148,7 +148,11 @@
 ;; (use-package undo-tree :ensure t)
 (use-package all-the-icons :ensure t)
 (use-package evil :ensure t)
-(use-package evil-collection :ensure t :after evil)
+(use-package evil-collection :ensure t :after evil
+  :init
+  ;; do not allow certain keys to be used by evil-collection
+  (setq evil-collection-key-blacklist
+        '("K")))
 (use-package evil-visualstar :ensure t)
 (use-package evil-surround :ensure t)
 (use-package evil-args :ensure t)
@@ -294,7 +298,9 @@
 	:config
 	;; (add-hook 'lsp-mode-hook 'lsp-ui-mode) ; TODO disabled for performance reasons
 )
-(use-package company :ensure t)
+(use-package company :ensure t
+  :config
+  (make-local-variable 'company-backends))
 (use-package company-posframe :ensure t :after company
 	:config
 	; company posframe (childframe)
@@ -332,16 +338,18 @@
 (use-package company-flx :ensure t)
 ;; (use-package company-lsp :ensure t :after lsp-mode
 ;; 	:config
-;; 	(push 'company-lsp company-backends)
-;; )
+;;   (setq-default company-backends
+;;                 (cons #'company-lsp company-backends)))
 (use-package company-ycmd :ensure t 
   :config
-  (add-to-list 'company-backends #'company-ycmd))
+  (setq-default company-backends
+                (cons #'company-ycmd company-backends)))
 
 ;; (require 'company-tabnine)
 (use-package company-tabnine :ensure t :after company
   :config
-  (add-to-list 'company-backends #'company-tabnine)
+  (setq-default company-backends
+                (cons #'company-tabnine company-backends))
 
   ;; workaround for company-flx-mode and other transformers
   (setq company-tabnine--disable-next-transform nil)
@@ -683,7 +691,7 @@
 ; language specific
 
 (require 'shaderlab-mode)
-(use-package auctex :ensure t)
+(use-package auctex :defer t :ensure t)
 (use-package kivy-mode :ensure t)
 (use-package cc-mode :ensure t
   :config
@@ -695,7 +703,7 @@
   :config
   (add-hook 'ess-r-mode-hook
             (lambda ()
-              (setq company-backends
+              (setq-local company-backends
                     (let ((b #'company-tabnine))
                       (cons b (remove b company-backends)))))))
 (use-package csharp-mode :ensure t)
@@ -706,6 +714,23 @@
 (use-package haskell-snippets :ensure t)
 (use-package rust-mode :ensure t)
 (use-package csv-mode :ensure t)
+(use-package tide :ensure t
+  :config
+  (defun setup-tide-mode ()
+    (interactive)
+    (tide-setup)
+    (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
+    (tide-hl-identifier-mode +1)
+    (setq-local company-backends
+                (let ((b #'company-tide))
+                  (cons b (remove b company-backends))))
+    (setq-local company-backends
+                (let ((b #'company-tabnine))
+                  (cons b (remove b company-backends)))))
+  ;; formats the buffer before saving
+  ;; TODO: we don't want this for now
+  ;; (add-hook 'before-save-hook 'tide-format-before-save)
+  (add-hook 'typescript-mode-hook #'setup-tide-mode))
 (use-package glsl-mode :ensure t
   :config
   ;; (add-to-list 'auto-mode-alist '("\\.vs\\'" . glsl-mode))
@@ -922,11 +947,12 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ; generic file types
 (add-hook 'prog-mode-hook (lambda () (ycmd-mode 1)))
 (add-hook 'text-mode-hook (lambda () (ycmd-mode 1)))
-; BUG: remove eldoc mode from certain other modes. (ycmd freezes)
+; TODO: bug: remove eldoc mode from certain other modes. (ycmd freezes)
 (add-hook 'text-mode-hook (lambda () (ycmd-eldoc-mode -1)))
 (add-hook 'org-mode-hook (lambda () (ycmd-eldoc-mode -1)))
 (add-hook 'racket-mode-hook (lambda () (ycmd-eldoc-mode -1)))
 (add-hook 'haskell-mode-hook (lambda () (ycmd-eldoc-mode -1)))
+(add-hook 'typescript-mode-hook (lambda () (ycmd-mode -1)))
 ; c/c++
 (evil-define-key 'normal c-mode-map (kbd "C-]") 'ycmd-goto) ; goto
 (evil-define-key 'normal c++-mode-map (kbd "C-]") 'ycmd-goto) ; goto
@@ -1137,14 +1163,14 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; (add-hook 'prog-mode-hook 'visual-indentation-mode)
 
 ;; evil-visualstar
-(global-evil-visualstar-mode)
+(global-evil-visualstar-mode 1)
 
 ;; general
 (general-evil-setup)
 (general-auto-unbind-keys)
 
 ;; flycheck
-(global-flycheck-mode)
+(global-flycheck-mode 1)
 ; BUG: temporarily disable for some modes
 (add-hook 'haskell-mode-hook (lambda () (flycheck-mode -1)))
 
@@ -2654,6 +2680,20 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ))
 (add-hook 'json-mode-hook (lambda ()
   (setq-local tab-width 2)
+  (setq-local evil-shift-width tab-width)
+	(setq-local highlight-indentation-offset 4)
+  (setq-local js-indent-level 2)
+))
+(add-hook 'css-mode-hook (lambda ()
+  (setq-local tab-width 2)
+  (setq-local evil-shift-width tab-width)
+	(setq-local highlight-indentation-offset 4)
+  (setq-local web-mode-css-indent-offset 2)
+  (setq-local css-indent-offset 2)
+))
+(add-hook 'typescript-mode-hook (lambda ()
+  (setq-local tab-width 2)
+  (setq-local typescript-indent-level 2)
   (setq-local evil-shift-width tab-width)
 	(setq-local highlight-indentation-offset 4)
   (setq-local js-indent-level 2)

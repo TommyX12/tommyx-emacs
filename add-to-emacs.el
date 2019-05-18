@@ -1,5 +1,5 @@
 
-;; pre-load configurations
+;;; before-load configurations
 
 (setq tommyx-config-path "~/tommyx-emacs/")
 
@@ -22,9 +22,11 @@
 ;; (setq font-size-small 130)
 ;; (setq font-size-big 150)
 
+;;; load tommyx configuration
+
 (load (expand-file-name "tommyx.el" tommyx-config-path))
 
-;; post-load configurations
+;;; after-load configurations
 
 ;; flyspell
 ;; (add-to-list 'ispell-extra-args "--sug-mode=ultra")
