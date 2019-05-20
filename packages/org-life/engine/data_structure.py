@@ -348,6 +348,7 @@ class Config(Protocol):
         'scheduling_days': ObjectProperty(Days),
         'daily_info_days': ObjectProperty(Days),
         'fragmentation_config': ObjectProperty(FragmentationConfig),
+        'random_power': ObjectProperty(Float),
     }
 
 class TaskStatusEnum(Enum):

@@ -77,6 +77,7 @@ class EngineTest(unittest.TestCase):
         config.scheduling_days.value = 10
         config.daily_info_days.value = 8
         config.fragmentation_config = fragmentation_config
+        config.random_power.value = 1
         scheduling_request = SchedulingRequest()
         scheduling_request.config = config
         scheduling_request.tasks = tasks

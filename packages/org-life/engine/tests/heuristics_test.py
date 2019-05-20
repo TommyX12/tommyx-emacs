@@ -36,7 +36,8 @@ class HeuristicsTest(unittest.TestCase):
             # ]
             plt.plot(X, Y)
             
-        plt.show()
+        # TODO: not shown
+        # plt.show()
 
 if __name__ == '__main__':
     unittest.main()

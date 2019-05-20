@@ -325,7 +325,12 @@ class GreedySchedulingPolicy(SchedulingPolicy):
 class PolynomialSchedulingPolicy(SchedulingPolicy):
 
     def __init__(self, utility_estimator):
+        # A float. If 0, no randomness, always pick the highest score.
+        self.random_power = 0
         self.u_estimator = utility_estimator
+
+    def set_random_power(self, random_power):
+        self.random_power = random_power
 
     def initialize(self, direction, tasks, progress_info, schedule):
         # only support direction = FillDirection.EARLY
@@ -336,6 +341,8 @@ class PolynomialSchedulingPolicy(SchedulingPolicy):
         self.session_duration = 1
 
         self.valid_tasks = set()
+
+        self.sampler = Sampler(None, seed = schedule.schedule_start.encode())
 
     def get_max_session_duration(self):
         return math.inf
@@ -358,11 +365,28 @@ class PolynomialSchedulingPolicy(SchedulingPolicy):
 
         self.set_date(date)
 
-        for valid_task in self.valid_tasks:
-            score = self.get_score(self.tasks[valid_task])
-            if score > best_score:
-                best_score = score
-                best_task = valid_task
+        if self.random_power == 0:
+            for valid_task in self.valid_tasks:
+                score = self.get_score(self.tasks[valid_task])
+                if score > best_score:
+                    best_score = score
+                    best_task = valid_task
+
+        else:
+            valid_tasks_list = list(self.valid_tasks)
+            scores = [
+                self.get_score(self.tasks[valid_task])
+                for valid_task in valid_tasks_list
+            ]
+            # normalize for numerical stability
+            max_score = max(scores)
+            if max_score <= 0:
+                max_score = 1
+            for i in range(len(scores)):
+                scores[i] = (scores[i] / max_score) ** self.random_power
+
+            self.sampler.set_distribution(scores)
+            best_task = self.sampler.sample(valid_tasks_list)
 
         return best_task
 

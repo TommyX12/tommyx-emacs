@@ -135,6 +135,11 @@
   :group 'org-life
   :type 'integer)
 
+(defcustom org-life-agenda-visualize-probability nil
+  "Whether agenda visualization use failure probability instead of workload."
+  :group 'org-life
+  :type 'boolean)
+
 ;;; Faces
 
 (defface org-life-agenda-secondary-face
@@ -596,6 +601,9 @@ PROCESS is the process under watch, OUTPUT is the output received."
              (make-prop :DAILY_INFO_DAYS
                         '(:daily_info_days)
                         (string-to-number val))
+             (make-prop :RANDOM_POWER
+                        '(:random_power)
+                        (string-to-number val))
              (make-prop :FRAGMENTATION_CONFIG.MIN_EXTRA_TIME_RATIO
                         '(:fragmentation_config :min_extra_time_ratio)
                         (string-to-number val))
@@ -949,9 +957,10 @@ PROCESS is the process under watch, OUTPUT is the output received."
           marker-list
           (fill-char ?=)
           (empty-char ? )
-          (marker-char ?|)
           (left-border-char ?|)
-          (right-border-char ?|))
+          (right-border-char ?|)
+          (min-value 0.0)
+          (max-value 1.0))
   (insert (char-to-string left-border-char))
   
   (let ((bar-width (max 1 (- bar-width 2)))
@@ -959,8 +968,11 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (cur-width 0))
     
     (while progress-list
-      (let ((progress (min (max (caar progress-list) 0.0) 1.0))
-            (face (cdar progress-list)))
+      (let* ((progress (/ (- (org-life-agenda-float-to-number (caar progress-list))
+                             min-value)
+                          (- max-value min-value)))
+             (progress (min (max progress 0.0) 1.0))
+             (face (cdar progress-list)))
         (when (> progress cur-progress)
           (let* ((width (round (* (float progress) bar-width)))
                  (diff (- width cur-width)))
@@ -976,8 +988,12 @@ PROCESS is the process under watch, OUTPUT is the output received."
                           'face 'org-life-agenda-empty-progress-face)))
 
     (dolist (marker marker-list)
-      (let ((pos (min (max (car marker) 0.0) 1.0))
-            (face (cdr marker)))
+      (let* ((pos (/ (- (org-life-agenda-float-to-number (car marker))
+                        min-value)
+                     (- max-value min-value)))
+             (pos (min (max pos 0.0) 1.0))
+             (face (cadr marker))
+             (marker-char (caddr marker)))
         (save-excursion
           (backward-char)
           (goto-char (- (point)
@@ -1089,7 +1105,6 @@ PROCESS is the process under watch, OUTPUT is the output received."
                                 'org-life-agenda-actual-usable-time-face)
                           (cons (/ (float usable-time) 1440.0)
                                 'org-life-agenda-usable-time-face))
-     ;; :marker-list (list (cons (/ 8.0 24.0) nil))
      :fill-char org-life-agenda-progress-fill-char
      :empty-char org-life-agenda-progress-empty-char
      :right-border-char ? )
@@ -1204,20 +1219,40 @@ PROCESS is the process under watch, OUTPUT is the output received."
                     (propertize (org-life-agenda-float-to-string workload nil t)
                                 'face 'bold))
             "\n")
-    (org-life-agenda-render-multi-progress-bar
-     :bar-width (window-text-width)
-     :progress-list (list (cons pof-with-optimal
-                                'org-life-agenda-stress-best-face)
-                          (cons pof-with-suggested
-                                'org-life-agenda-stress-normal-face)
-                          (cons pof-without-today
-                                'org-life-agenda-stress-warning-face))
-     :marker-list (list (cons 0.5 'org-life-agenda-secondary-face)
-                        (cons 0.25 'org-life-agenda-secondary-face)
-                        (cons 0.75 'org-life-agenda-secondary-face)
-                        (cons pof nil))
-     :fill-char org-life-agenda-progress-fill-char
-     :empty-char org-life-agenda-progress-empty-char)
+    (let (value-1 value-2 value-3 marker-list min-value max-value)
+      (if org-life-agenda-visualize-probability
+          (setq value-1 pof-with-optimal
+                value-2 pof-with-suggested
+                value-3 pof-without-today
+                marker-list (list (list 0.25 'org-life-agenda-secondary-face ?|)
+                                  (list 0.5 'org-life-agenda-secondary-face ?|)
+                                  (list 0.75 'org-life-agenda-secondary-face ?|)
+                                  (list pof nil ?+))
+                min-value 0.0
+                max-value 1.0)
+        (setq value-1 workload-with-optimal
+              value-2 workload-with-suggested
+              value-3 workload-without-today
+              marker-list (list (list 0.25 'org-life-agenda-secondary-face ?|)
+                                (list 0.5 'org-life-agenda-secondary-face ?|)
+                                (list 0.75 'org-life-agenda-secondary-face ?|)
+                                (list 1.0 'org-life-agenda-secondary-face ?!)
+                                (list workload nil ?+))
+              min-value 0.0
+              max-value 1.5))
+      (org-life-agenda-render-multi-progress-bar
+       :bar-width (window-text-width)
+       :progress-list (list (cons value-1
+                                  'org-life-agenda-stress-best-face)
+                            (cons value-2
+                                  'org-life-agenda-stress-normal-face)
+                            (cons value-3
+                                  'org-life-agenda-stress-warning-face))
+       :marker-list marker-list
+       :fill-char org-life-agenda-progress-fill-char
+       :empty-char org-life-agenda-progress-empty-char
+       :min-value min-value
+       :max-value max-value))
     (insert "\n")
     (insert (format "| %-20s %10s | %10s | %10s |"
                     (propertize "Today's Schedule:"

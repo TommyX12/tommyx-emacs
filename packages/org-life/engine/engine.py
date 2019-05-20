@@ -95,6 +95,8 @@ class Engine(object):
         dated_sessions.sort(key = lambda x : x.date)
         usable_time_config = scheduling_request.usable_time
 
+        self.policy.set_random_power(config.random_power.value)
+
         response = SchedulingResponse()
         for i in range(config.daily_info_days.value):
             daily_info = DailyInfo()
