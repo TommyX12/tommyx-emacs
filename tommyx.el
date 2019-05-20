@@ -289,7 +289,30 @@
   :config
   (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
   (add-hook 'text-mode-hook #'rainbow-delimiters-mode))
-(use-package avy :ensure t)
+(use-package avy :ensure t
+  :config
+  ;; avy
+  (defun avy-handler-tommyx (char)
+    (let (dispatch)
+      (cond ((setq dispatch (assoc char avy-dispatch-alist))
+             (setq avy-action (cdr dispatch))
+             (throw 'done 'restart))
+            ;; Let f exit avy
+            ((memq char '(?f 27 ?\C-g))
+             ;; exit silently
+             (throw 'done 'exit))
+            ((eq char ??)
+             (avy-show-dispatch-help)
+             (throw 'done 'restart))
+            ((mouse-event-p char)
+             (signal 'user-error (list "Mouse event not handled" char)))
+            (t
+             (message "No such candidate: %s, hit `C-g' to quit."
+                      (if (characterp char) (string char) char))))))
+  (setq avy-handler-function 'avy-handler-tommyx)
+  (setq avy-keys '(?w ?e ?r ?u ?i ?o ?p ?a ?s ?d ?g ?h ?j ?k ?l ?v ?n))
+  (setq avy-all-windows nil)
+  (setq avy-goto-word-0-regexp "\\(\\<\\sw\\|\n\\)"))
 (use-package smartparens :ensure t
 		 ; don't show in mode display
 		 :diminish smartparens-mode)
@@ -1048,11 +1071,6 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 ;; evil-surround
 (global-evil-surround-mode 1)
-
-;; avy
-(setq avy-keys '(?w ?e ?r ?u ?i ?o ?p ?a ?s ?d ?g ?h ?j ?k ?l ?v ?n))
-(setq avy-all-windows nil)
-(setq avy-goto-word-0-regexp "\\(\\<\\sw\\|\n\\)")
 
 ;; undo-tree
 ; attempt to fix bug
