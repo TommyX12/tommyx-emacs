@@ -142,7 +142,14 @@ class StressAnalyzer(object):
             if not tasks_mask[sorted_tasks[i][0]]:
                 continue
 
-            workload = sorted_task_pressure[i] / sorted_task_total_time[i] if sorted_task_total_time[i] != 0 else math.inf
+            workload = 0
+            if sorted_task_total_time[i] == 0:
+                if sorted_task_pressure[i] != 0:
+                    workload = math.inf
+
+            else:
+                workload = sorted_task_pressure[i] / sorted_task_total_time[i]
+
             if workload > highest_workload and not sorted_tasks[i][1].end.is_max():
                 highest_workload = workload
                 highest_workload_date = max(schedule_start, sorted_tasks[i][1].end)
