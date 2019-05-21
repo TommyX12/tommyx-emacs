@@ -277,6 +277,7 @@
 (setq highlight-indentation-blank-lines t)
 (add-hook 'prog-mode-hook 'highlight-indentation-mode)
 (add-hook 'text-mode-hook 'highlight-indentation-mode)
+(add-hook 'protobuf-mode-hook 'highlight-indentation-mode)
 
 (require 'origami)
 (require 'crosshairs)
@@ -550,6 +551,7 @@
 	(push 'glsl-mode ahs-modes)
 	(push 'typescript-mode ahs-modes)
 	(push 'shaderlab-mode ahs-modes)
+	(push 'protobuf-mode ahs-modes)
 	(global-auto-highlight-symbol-mode 1)
 	;; (add-hook 'prog-mode-hook (auto-highlight-symbol-mode 1))
 	;; (add-hook 'html-mode-hook (auto-highlight-symbol-mode 1))
@@ -1835,6 +1837,10 @@ command (ran after) is mysteriously incorrect."
   "ti" '(insert-file
     :which-key "insert file content")
 
+  "eq" '(save-buffers-kill-terminal
+    :which-key "quit emacs")
+  "eQ" '(save-buffers-kill-emacs
+    :which-key "quit emacs process")
 	"ew" '(write-file
 		:which-key "write file")
 	"er" '(rename-buffer
@@ -2702,6 +2708,11 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   (setq-local evil-shift-width tab-width)
 	(setq-local highlight-indentation-offset 4)
   (setq-local js-indent-level 2)
+))
+(add-hook 'protobuf-mode-hook (lambda ()
+  (setq-local tab-width 2)
+  (setq-local evil-shift-width tab-width)
+	(setq-local highlight-indentation-offset 4)
 ))
 (add-hook 'css-mode-hook (lambda ()
   (setq-local tab-width 2)
