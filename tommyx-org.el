@@ -693,7 +693,7 @@ regular expression,
   "jxm" '(org-life-agenda-show-main
     :which-key "org-life main")
 
-  "jxt" '(org-life-agenda-show-task-list
+  "jxl" '(org-life-agenda-show-task-list
     :which-key "org-life task list")
 )
 (general-define-key
