@@ -988,6 +988,8 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (evil-define-key 'normal java-mode-map (kbd "C-]") 'ycmd-goto) ; goto
 ; python
 (evil-define-key 'normal python-mode-map (kbd "C-]") 'ycmd-goto) ; goto
+; typescript
+(evil-define-key 'normal typescript-mode-map (kbd "C-]") 'tide-jump-to-definition) ; goto
 ; elisp
 (add-hook 'emacs-lisp-mode-hook (lambda () (ycmd-mode -1))) ; disable ycm
 (add-hook 'java-mode-hook (lambda () (ycmd-mode -1))) ; TODO bug

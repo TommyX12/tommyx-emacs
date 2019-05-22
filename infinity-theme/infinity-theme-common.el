@@ -1029,9 +1029,9 @@
   `(web-mode-constant-face ((,class (:inherit ,font-lock-constant-face))))
   `(web-mode-doctype-face ((,class (:inherit ,font-lock-comment-face))))
   `(web-mode-function-name-face ((,class (:inherit ,font-lock-function-name-face))))
-  `(web-mode-html-attr-name-face ((,class (:foreground ,func))))
-  `(web-mode-html-attr-value-face ((,class (:foreground ,keyword))))
-  `(web-mode-html-tag-face ((,class (:foreground ,keyword))))
+  `(web-mode-html-attr-name-face ((,class (:foreground ,keyword))))
+  `(web-mode-html-attr-value-face ((,class (:foreground ,str))))
+  `(web-mode-html-tag-face ((,class (:foreground ,type))))
   `(web-mode-keyword-face ((,class (:foreground ,keyword))))
   `(web-mode-string-face ((,class (:foreground ,str))))
   `(web-mode-symbol-face ((,class (:foreground ,type))))
@@ -1105,4 +1105,3 @@
 )
 
 (provide 'infinity-theme-common)
-
