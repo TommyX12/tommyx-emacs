@@ -107,6 +107,8 @@
    :show_debug_messages nil
    :scheduling_days 365
    :daily_info_days 14
+   :random_power 1
+   :default_urgency 40
    :fragmentation_config (list
                           :min_extra_time_ratio 1.0
                           :max_percentage 0.5
@@ -370,12 +372,16 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (string-to-number (format-time-string "%u" time))))
 
 (defun org-life-get-buffer (file)
-  "Get a buffer visiting FILE."
+  "Get a buffer visiting FILE, in org-mode."
   (let ((buf (org-find-base-buffer-visiting file)))
-    (if buf
-        buf
-      (setq buf (find-file-noselect file))
-      buf)))
+    (unless buf
+      (setq buf (find-file-noselect file)))
+    (unless (eq (buffer-local-value 'major-mode buf)
+                'org-mode)
+      (message (prin1-to-string buf))
+      (with-current-buffer buf
+        (org-mode)))
+    buf))
 
 (defun org-life-echo (string &rest args)
   (let ((message-log-max
@@ -595,14 +601,14 @@ PROCESS is the process under watch, OUTPUT is the output received."
              (make-prop :SCHEDULING_DAYS
                         '(:scheduling_days)
                         (string-to-number val))
-             (make-prop :SCHEDULING_DAYS
-                        '(:scheduling_days)
-                        (string-to-number val))
              (make-prop :DAILY_INFO_DAYS
                         '(:daily_info_days)
                         (string-to-number val))
              (make-prop :RANDOM_POWER
                         '(:random_power)
+                        (string-to-number val))
+             (make-prop :DEFAULT_URGENCY
+                        '(:default_urgency)
                         (string-to-number val))
              (make-prop :FRAGMENTATION_CONFIG.MIN_EXTRA_TIME_RATIO
                         '(:fragmentation_config :min_extra_time_ratio)
@@ -1063,11 +1069,57 @@ PROCESS is the process under watch, OUTPUT is the output received."
                   "Dur." "Rem." "Due" "Task")
           "\n"))
 
+(cl-defun org-life-agenda-render-sessions (&key sessions
+                                                tasks-dict)
+  (let ((overlay-face-alt nil))
+   (dolist (session sessions)
+    (let* ((id (plist-get session :id))
+           (amount (plist-get session :amount))
+           (type (plist-get session :type))
+           (weakness (plist-get session :weakness))
+           (to-deadline (plist-get session :to_deadline))
+           (to-finish (plist-get session :to_finish))
+           (entry (ht-get tasks-dict id)))
+      (org-life-agenda-render-entry
+       :prefix (format "| %-5s | %5s | %4s | "
+                       (org-duration-from-minutes amount)
+                       (if (and (numberp to-finish)
+                                (= to-finish 0))
+                           "✓" ; "Final"
+                         (org-life-agenda-short-duration to-finish))
+                       (if (and (numberp to-deadline)
+                                (= to-deadline 0))
+                           "!!!" ; "Due"
+                         (org-life-agenda-days-to-string to-deadline))
+                       ;; (format "%-5s|" (make-string
+                       ;;                 (round (* (min 1.0 lateness) 5))
+                       ;;                 ?=))
+                       )
+       :entry entry
+       :face (cond ((and (numberp to-deadline)
+                         (< to-deadline 0))
+                    'org-warning)
+                   ((= weakness
+                       org-life--session-weakness-enum-strong)
+                    'org-agenda-done)
+                   ((= type
+                       org-life--session-type-enum-fragment)
+                    'org-time-grid)
+                   ((= type
+                       org-life--session-type-enum-overlimit)
+                    'org-warning)
+                   (t nil))
+       :session-duration amount
+       :overlay-face (if overlay-face-alt
+                         'org-life-agenda-session-face-2
+                       'org-life-agenda-session-face-1)))
+    (setq overlay-face-alt (not overlay-face-alt)))))
+
 (cl-defun org-life-agenda-render-day (&key daily-info
                                            tasks-dict
-                                           (today nil))
-  (let* ((overlay-face-alt nil)
-         (date-string (plist-get daily-info :date))
+                                           (today nil)
+                                           (today-optimal-sessions nil))
+  (let* ((date-string (plist-get daily-info :date))
          (usable-time (plist-get daily-info :usable_time))
          (actual-usable-time (plist-get daily-info :actual_usable_time))
          (sessions (plist-get daily-info :sessions))
@@ -1109,55 +1161,20 @@ PROCESS is the process under watch, OUTPUT is the output received."
      :empty-char org-life-agenda-progress-empty-char
      :right-border-char ? )
     (insert "\n")
-    (dolist (session sessions)
-      (let* ((id (plist-get session :id))
-             (amount (plist-get session :amount))
-             (type (plist-get session :type))
-             (weakness (plist-get session :weakness))
-             (to-deadline (plist-get session :to_deadline))
-             (to-finish (plist-get session :to_finish))
-             (entry (ht-get tasks-dict id)))
-        (org-life-agenda-render-entry
-         :prefix (format "| %-5s | %5s | %4s | "
-                         (org-duration-from-minutes amount)
-                         (if (and (numberp to-finish)
-                                  (= to-finish 0))
-                             "✓" ; "Final"
-                           (org-life-agenda-short-duration to-finish))
-                         (if (and (numberp to-deadline)
-                                  (= to-deadline 0))
-                             "!!!" ; "Due"
-                           (org-life-agenda-days-to-string to-deadline))
-                         ;; (format "%-5s|" (make-string
-                         ;;                 (round (* (min 1.0 lateness) 5))
-                         ;;                 ?=))
-                         )
-         :entry entry
-         :face (cond ((and (numberp to-deadline)
-                           (< to-deadline 0))
-                      'org-warning)
-                     ((= weakness
-                         org-life--session-weakness-enum-strong)
-                      'org-agenda-done)
-                     ((= type
-                         org-life--session-type-enum-fragment)
-                      'org-time-grid)
-                     ((= type
-                         org-life--session-type-enum-overlimit)
-                      'org-warning)
-                     (t nil))
-         :session-duration amount
-         :overlay-face (if overlay-face-alt
-                           'org-life-agenda-session-face-2
-                         'org-life-agenda-session-face-1)))
-      (setq overlay-face-alt (not overlay-face-alt)))
+    (org-life-agenda-render-sessions :sessions sessions
+                                     :tasks-dict tasks-dict)
     (insert (propertize
              (format "| Maximum Free Time: %5s | Extra Time Ratio: %5s | Stress: %5s |"
                      (org-duration-from-minutes free-time)
                      (org-life-agenda-float-to-string average-etr)
                      (org-life-agenda-float-to-string average-stress))
              'face 'org-life-agenda-secondary-face)
-            "\n")))
+            "\n")
+    (when (and today today-optimal-sessions)
+      (insert "\n")
+      (org-life-agenda-render-block-sub-title :title "Optimal")
+      (org-life-agenda-render-sessions :sessions today-optimal-sessions
+                                       :tasks-dict tasks-dict))))
 
 (cl-defun org-life-agenda-render-block-title (&key title)
   (insert (org-add-props title nil 'face 'org-agenda-structure) "\n"))
@@ -1382,6 +1399,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
             (general-info (plist-get data :general))
             (alerts (plist-get data :alerts))
             (daily-infos (plist-get data :daily_infos))
+            (today-optimal-sessions (plist-get data :today_optimal_sessions))
             (debug (plist-get data :debug))
 
             (today t))
@@ -1408,7 +1426,9 @@ PROCESS is the process under watch, OUTPUT is the output received."
         (dolist (daily-info daily-infos)
           (org-life-agenda-render-day :daily-info daily-info
                                       :tasks-dict tasks-dict
-                                      :today today)
+                                      :today today
+                                      :today-optimal-sessions
+                                      today-optimal-sessions)
           (insert "\n")
           (setq today nil))))))
 

@@ -25,18 +25,18 @@ class Fragmentizer(object):
         date = schedule_start
 
         max_used_ratio = etr_to_used_ratio(min_etr)
-        
+
         while date <= schedule_end:
             acc_free_time = stress_info.daily_stress_infos[date].acc_free_time.value
             acc_usable_time += schedule.get_usable_time(date)
-            
+
             current_stress = None
             if acc_usable_time > 0:
                 current_stress = 1.0 - (float(acc_free_time) / acc_usable_time)
 
             else:
                 current_stress = 0.0
-                
+
             if current_stress >= max_used_ratio:
                 result = 0
                 break
@@ -64,9 +64,11 @@ class Fragmentizer(object):
         min_fragment_size = fragmentation_config.min_fragment_size.value
 
         # compute maximum time we can have
-        
-        max_amount_by_max_percentage = self._get_max_amount_by_max_percentage(max_percentage, schedule)
-        max_amount_by_min_etr = self._get_max_amount_by_min_etr(min_etr, schedule, stress_info)
+
+        max_amount_by_max_percentage = self._get_max_amount_by_max_percentage(
+            max_percentage, schedule)
+        max_amount_by_min_etr = self._get_max_amount_by_min_etr(
+            min_etr, schedule, stress_info)
         max_amount = min(max_amount_by_max_percentage, max_amount_by_min_etr)
 
         if max_amount <= 0:
@@ -80,14 +82,15 @@ class Fragmentizer(object):
         result = []
 
         weights = [1 for task in tasks]
-        sampler = Sampler(weights, seed = schedule_start.encode())
-        num_fragments, fragment_size = self._divide_evenly(max_amount, preferred_fragment_size)
+        sampler = Sampler(seed=schedule_start.encode())
+        num_fragments, fragment_size = self._divide_evenly(
+            max_amount, preferred_fragment_size)
         if fragment_size < min_fragment_size:
             return []
 
         for i in range(num_fragments):
-            fragment = sampler.sample(tasks)
-            
+            fragment = sampler.sample(weights, tasks)
+
             session = Session()
             session.id.value = fragment.id.value
             session.amount.value = fragment_size
@@ -106,6 +109,7 @@ class Fragmentizer(object):
 def main():
     import doctest
     doctest.testmod()
+
 
 if __name__ == '__main__':
     main()

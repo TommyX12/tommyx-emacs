@@ -2,18 +2,19 @@
 (global-set-key (kbd "M-C-X") 'execute-extended-command)
 
 ;;; add directories to load-path
+(setq tommyx-config-path (file-name-directory load-file-name))
 ;; TODO make sure these overrides package archive install directories
-(add-to-list 'load-path (file-name-directory load-file-name))
+(add-to-list 'load-path tommyx-config-path)
 (add-to-list 'load-path
-	(expand-file-name "infinity-theme" (file-name-directory load-file-name)))
+	(expand-file-name "infinity-theme" tommyx-config-path))
 (add-to-list 'custom-theme-load-path
-	(expand-file-name "infinity-theme" (file-name-directory load-file-name)))
+	(expand-file-name "infinity-theme" tommyx-config-path))
 (add-to-list 'load-path
-	(expand-file-name "packages" (file-name-directory load-file-name)))
+	(expand-file-name "packages" tommyx-config-path))
 (add-to-list 'load-path
-	(expand-file-name "packages/company-tabnine" (file-name-directory load-file-name)))
+	(expand-file-name "packages/company-tabnine" tommyx-config-path))
 (add-to-list 'load-path
-	(expand-file-name "packages/Highlight-Indentation-for-Emacs" (file-name-directory load-file-name)))
+  (expand-file-name "packages/Highlight-Indentation-for-Emacs" tommyx-config-path))
 
 ;;; themes
 ; (load-theme 'spacemacs-dark t)
@@ -268,20 +269,21 @@
 ;; (require 'highlight-indent-guides) ; my own version
 ;; (require 'indent-hint)
 
-;; (use-package highlight-indentation :ensure t
-;;   :config
-;;   (add-hook 'prog-mode-hook 'highlight-indentation-mode)
-;;   (add-hook 'text-mode-hook 'highlight-indentation-mode))
-
-(require 'highlight-indentation)
-(setq highlight-indentation-blank-lines t)
-(add-hook 'prog-mode-hook 'highlight-indentation-mode)
-(add-hook 'text-mode-hook 'highlight-indentation-mode)
-(add-hook 'protobuf-mode-hook 'highlight-indentation-mode)
+(use-package highlight-indentation :ensure t
+  ;; TODO: we want to load our own version
+  :config
+  (load (expand-file-name
+         "packages/Highlight-Indentation-for-Emacs/highlight-indentation.el"
+         tommyx-config-path))
+  (setq highlight-indentation-blank-lines t)
+  (add-hook 'prog-mode-hook 'highlight-indentation-mode)
+  (add-hook 'text-mode-hook 'highlight-indentation-mode)
+  (add-hook 'protobuf-mode-hook 'highlight-indentation-mode))
 
 (require 'origami)
 (require 'crosshairs)
 ;; (use-package origami :ensure t)
+(use-package format-all :ensure t)
 (use-package volatile-highlights :ensure t)
 (use-package evil-goggles :ensure t)
 (use-package flycheck :ensure t)
@@ -739,6 +741,22 @@
 (use-package haskell-snippets :ensure t)
 (use-package rust-mode :ensure t)
 (use-package csv-mode :ensure t)
+(use-package elpy :ensure t
+  :init
+  (elpy-enable)
+
+  :config
+  (add-hook 'python-mode-hook (lambda () (flycheck-mode -1)))
+  (setq elpy-rpc-timeout 2.5)
+  (defun setup-elpy-mode ()
+    (interactive)
+    (setq-local company-idle-delay 0)
+    (setq-local company-backends
+                (let ((b #'company-tabnine))
+                  (cons b (remove b company-backends))))
+    (add-hook 'before-save-hook #'elpy-format-code nil 'local))
+
+  (add-hook 'elpy-mode-hook #'setup-elpy-mode))
 (use-package tide :ensure t
   :config
   (defun setup-tide-mode ()
@@ -873,12 +891,12 @@
 (setq dashboard-banner-logo-title
 	(concat "Emacs " emacs-version " (" system-configuration ")"))
 (setq dashboard-startup-banner (expand-file-name "logo.png"
-	(file-name-directory load-file-name)))
+	tommyx-config-path))
 
 ;; yasnippet
 (add-hook 'after-init-hook 'yas-global-mode)
 (add-to-list 'yas-snippet-dirs (expand-file-name "snippets"
-	(file-name-directory load-file-name)))
+	tommyx-config-path))
 (setq company-continue-commands (-snoc company-continue-commands 'yas-insert-snippet)) ; make company break completion
 
 ;; company
@@ -958,26 +976,30 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 ;; ycmd
 (setq ycmd-global-config (expand-file-name "third_party/ycmd/.ycm_extra_conf.py"
-	(file-name-directory load-file-name)))
+	tommyx-config-path))
 (unless (boundp 'ycmd-server-python-command)
   (setq ycmd-server-python-command "python"))
 (setq ycmd-server-command `(,ycmd-server-python-command "-u" ,(expand-file-name "third_party/ycmd/ycmd/"
-	(file-name-directory load-file-name))))
+	tommyx-config-path)))
 ; TODO disabled
 ;; (add-hook 'ycmd-mode-hook 'company-ycmd-setup) ; already manually added
 (add-hook 'ycmd-mode-hook 'flycheck-ycmd-setup)
 (add-hook 'ycmd-mode-hook (lambda () (interactive) (when (ycmd-major-mode-to-file-types major-mode) (ycmd-eldoc-setup))))
 ; attempt to improve performance
 (setq company-ycmd-request-sync-timeout 0)
-; generic file types
-(add-hook 'prog-mode-hook (lambda () (ycmd-mode 1)))
-(add-hook 'text-mode-hook (lambda () (ycmd-mode 1)))
-; TODO: bug: remove eldoc mode from certain other modes. (ycmd freezes)
+; file types activation
+(add-hook 'c++-mode-hook (lambda () (ycmd-mode 1)))
+(add-hook 'csharp-mode-hook (lambda () (ycmd-mode 1)))
+;; TODO: enable ycmd when you actually need to
+;; (add-hook 'java-mode-hook (lambda () (ycmd-mode 1)))
+;; (add-hook 'text-mode-hook (lambda () (ycmd-mode 1)))
+; TODO: bug: remove eldoc (ycmd freezes) and ycmd mode from certain other modes.
 (add-hook 'text-mode-hook (lambda () (ycmd-eldoc-mode -1)))
 (add-hook 'org-mode-hook (lambda () (ycmd-eldoc-mode -1)))
 (add-hook 'racket-mode-hook (lambda () (ycmd-eldoc-mode -1)))
 (add-hook 'haskell-mode-hook (lambda () (ycmd-eldoc-mode -1)))
 (add-hook 'typescript-mode-hook (lambda () (ycmd-mode -1)))
+(add-hook 'python-mode-hook (lambda () (ycmd-mode -1)))
 ; c/c++
 (evil-define-key 'normal c-mode-map (kbd "C-]") 'ycmd-goto) ; goto
 (evil-define-key 'normal c++-mode-map (kbd "C-]") 'ycmd-goto) ; goto
@@ -987,7 +1009,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (add-to-list 'ycmd-file-type-map '(java-mode "java")) ; file type detection
 (evil-define-key 'normal java-mode-map (kbd "C-]") 'ycmd-goto) ; goto
 ; python
-(evil-define-key 'normal python-mode-map (kbd "C-]") 'ycmd-goto) ; goto
+(evil-define-key 'normal python-mode-map (kbd "C-]") 'elpy-goto-definition) ; goto
 ; typescript
 (evil-define-key 'normal typescript-mode-map (kbd "C-]") 'tide-jump-to-definition) ; goto
 ; elisp
@@ -3028,6 +3050,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 ;; compilation
 (setq compilation-scroll-output 'first-error)
+(setq compilation-window-height 20)
 
 ;; indentation guide using whitespace mode
 (setq whitespace-style '(

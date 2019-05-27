@@ -12,12 +12,17 @@ def used_ratio_to_etr(used_ratio):
         else (1.0 / used_ratio) - 1.0
     )
 
+
 def etr_to_used_ratio(etr):
     return (
         0.0
         if etr == math.inf
         else 1.0 / (1.0 + etr)
     )
+
+
+def tuple_sampler_key_function(x):
+    return x[0]
 
 
 class TaskIndexFinder(object):
@@ -48,10 +53,10 @@ class TaskIndexFinder(object):
 
 
 class ScheduleFiller(object):
-    
+
     def __init__(self, schedule, direction):
         self.initialize(schedule, direction)
-        
+
     def initialize(self, schedule, direction):
         self.schedule = schedule
 
@@ -78,7 +83,7 @@ class ScheduleFiller(object):
     def _get_schedule_date_late(date):
         return date.add_days(-1)
 
-    def fill(self, task_id, amount, date_from, date_to, weakness = SessionWeaknessEnum.WEAK, session_type = SessionTypeEnum.TASK, task_index = 0, total_amount = 0):
+    def fill(self, task_id, amount, date_from, date_to, weakness=SessionWeaknessEnum.WEAK, session_type=SessionTypeEnum.TASK, task_index=0, total_amount=0):
         '''
         Fill task_id with amount from 00:00 of date_from to 00:00 of date_to.
         The concept of "before" is determined by fill direction,
@@ -89,7 +94,7 @@ class ScheduleFiller(object):
 
         date = date_from
         amount_filled = 0
-        
+
         # while date < date_to
         while self.is_before(date, date_to):
             if amount <= 0:
@@ -109,7 +114,7 @@ class ScheduleFiller(object):
                 session.weakness.value = weakness
                 if total_amount >= 0:
                     session.to_finish = Duration(total_amount)
-                    
+
                 session.task_index = TaskIndex(task_index)
                 self.schedule.add_session(schedule_date, session)
 
@@ -119,10 +124,10 @@ class ScheduleFiller(object):
 
     def _is_before_early(date1, date2):
         return date1 < date2
-    
+
     def _is_before_late(date1, date2):
         return date1 > date2
-    
+
 
 class GreedySchedulingQueue(object):
     '''
@@ -130,7 +135,7 @@ class GreedySchedulingQueue(object):
     Data must be unique and hashable.
     '''
 
-    def __init__(self, descending = False):
+    def __init__(self, descending=False):
         self.heap = []
         self.indices = {}
         self.comp = None
@@ -145,12 +150,12 @@ class GreedySchedulingQueue(object):
 
     def _comp_descending(a, b):
         return b < a
-    
+
     def clear(self):
         '''
         Clears the queue.
         '''
-        
+
         self.heap = []
         self.indices = {}
 
@@ -173,11 +178,11 @@ class GreedySchedulingQueue(object):
         self.heap.append((data, priority))
         self.indices[data] = len(self.heap) - 1
         self._float_up(len(self.heap) - 1)
-    
+
     def delete(self, data):
         if data not in self.indices:
             return
-            
+
         index = self.indices[data]
         old_priority = self.heap[index][1]
         new_data, priority = self.heap[len(self.heap) - 1]
@@ -196,7 +201,7 @@ class GreedySchedulingQueue(object):
 
         else:
             self._float_down(index)
-    
+
     def _float_down(self, i):
         '''
         Pushes the i-th entry downward on the heap when necessary.
@@ -248,7 +253,7 @@ class GreedySchedulingQueue(object):
 
 
 class DateIterator(object):
-    
+
     def __init__(self, start, end, direction):
         if start > end:
             raise ValueError()
@@ -259,7 +264,7 @@ class DateIterator(object):
         self.start = start
         self.end = end
         self.has_next = None
-        
+
         if direction == FillDirection.EARLY:
             self.date = start
             self.delta = 1
@@ -281,7 +286,7 @@ class DateIterator(object):
 
     def next(self):
         if not self.has_next():
-            return None # Can be optimized.
+            return None  # Can be optimized.
 
         date = self.date
         self.date = self.date.add_days(self.delta)
@@ -303,7 +308,7 @@ class TaskEvent(object):
     '''
     Describes a point in time (00:00 of self.date) where an event occur for a task.
     Can either be TaskEventType.TASK_START or TaskEventType.TASK_END.
-    
+
     Note that TASK_START may be the deadline of task if scheduling backward.
     '''
 
@@ -320,7 +325,7 @@ class TaskEvent(object):
 
 class TaskEventsIterator(object):
 
-    def __init__(self, tasks, start, end, direction, tasks_mask = None):
+    def __init__(self, tasks, start, end, direction, tasks_mask=None):
         '''
         TODO
         Start and end represents 00:00 of that day.
@@ -340,7 +345,7 @@ class TaskEventsIterator(object):
                 return date
 
             return date.add_days(1)
-        
+
         for i in range(len(tasks)):
             if tasks_mask is not None and not tasks_mask[i]:
                 continue
@@ -364,11 +369,11 @@ class TaskEventsIterator(object):
             ))
 
         if direction == FillDirection.EARLY:
-            self.task_events.sort(key = lambda x: x.date)
+            self.task_events.sort(key=lambda x: x.date)
             self.is_before = TaskEventsIterator._is_before_early
 
         elif direction == FillDirection.LATE:
-            self.task_events.sort(key = lambda x: x.date, reverse = True)
+            self.task_events.sort(key=lambda x: x.date, reverse=True)
             self.is_before = TaskEventsIterator._is_before_late
 
         else:
@@ -401,7 +406,7 @@ class TaskEventsIterator(object):
 
     def _is_before_early(date1, date2):
         return date1 < date2
-    
+
     def _is_before_late(date1, date2):
         return date1 > date2
 
@@ -411,24 +416,33 @@ class Sampler(object):
     TODO: Needs testing.
     '''
 
-    def __init__(self, distribution, seed = None):
+    def __init__(self, seed=None, key=None):
         if seed is not None:
             self.random = random.Random(seed)
 
         else:
             self.random = random.Random()
 
-        self.set_distribution(distribution)
+        if key is not None:
+            self.key = key
 
-    def set_distribution(self, distribution):
-        self.distribution = distribution
+        else:
+            self.key = lambda x: x
 
-    def sample(self, values = None):
-        choice = self.random.random() * sum(self.distribution)
-        i, total= 0, self.distribution[0]
+    def shuffle(self, array):
+        self.random.shuffle(array)
+
+    def uniform(self, start, end):
+        return self.random.uniform(start, end)
+
+    def choice(self, array):
+        return self.random.choice(array)
+
+    def sample(self, distribution, values=None):
+        choice = self.random.random() * sum(distribution)
+        i, total = 0, distribution[0]
         while choice > total:
             i += 1
-            total += self.distribution[i]
-            
-        return values[i] if values is not None else i
+            total += distribution[i]
 
+        return values[i] if values is not None else i

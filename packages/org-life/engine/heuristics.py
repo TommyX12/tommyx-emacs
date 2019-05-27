@@ -2,6 +2,7 @@ import math
 
 from data_structure import *
 from scheduling_util import *
+from constants import *
 import util
 
 
@@ -19,7 +20,7 @@ class ProbabilityEstimator(object):
 
     def get_success_probability(self, task, variable_time, total_time):
         raise NotImplementedError()
-    
+
 
 class UtilityEstimator(object):
 
@@ -34,7 +35,7 @@ class UtilityEstimator(object):
 
     def get_session_utility(self, task, duration):
         raise NotImplementedError()
-    
+
 
 class ExpectedUtilityEstimator(object):
 
@@ -73,14 +74,14 @@ class SchedulingPolicy(object):
 
     def add(self, task_index, task, task_event):
         raise NotImplementedError()
-    
+
     def update(self, task_index, date, next_date, duration):
         raise NotImplementedError()
 
     def delete(self, task_index):
         raise NotImplementedError()
 
-    
+
 class GaussianProbabilityEstimator(ProbabilityEstimator):
 
     def __init__(self, variable_time_std, total_time_std, mean_scale):
@@ -97,13 +98,14 @@ class GaussianProbabilityEstimator(ProbabilityEstimator):
 
         if variable_time == 0:
             return 1.0
-        
+
         if total_time == math.inf:
             return 1.0
 
         x = 0
         mean = (variable_time * self.mean_scale) - total_time
-        std = abs(variable_time) * self.variable_time_std + abs(total_time) * self.total_time_std
+        std = abs(variable_time) * self.variable_time_std + \
+            abs(total_time) * self.total_time_std
         if std == 0:
             std = 0.00001
 
@@ -123,7 +125,7 @@ class MixedUtilityEstimator(UtilityEstimator):
     def get_session_utility(self, task, duration):
         # TODO elaborate
         return 0.0
-    
+
 
 class GreedyExpectedUtilityEstimator(ExpectedUtilityEstimator):
 
@@ -138,19 +140,20 @@ class GreedyExpectedUtilityEstimator(ExpectedUtilityEstimator):
         self.schedule = schedule
         self.max_session_duration = max_session_duration
         self.pressure_heuristic = pressure_heuristic
-        
+
         # sort tasks by deadline
         self.sorted_tasks = [(i, tasks[i]) for i in range(len(tasks))]
-        self.sorted_tasks.sort(key = lambda x : x[1].end)
+        self.sorted_tasks.sort(key=lambda x: x[1].end)
 
         # compute link from index back to order
         self.index_to_order = [0 for _ in range(len(tasks))]
         for i in range(len(self.sorted_tasks)):
             self.index_to_order[self.sorted_tasks[i][0]] = i
-    
+
         # initialization
         self.sorted_task_pressure = [0 for _ in range(len(self.sorted_tasks))]
-        self.sorted_task_total_time = [0 for _ in range(len(self.sorted_tasks))]
+        self.sorted_task_total_time = [
+            0 for _ in range(len(self.sorted_tasks))]
 
         self.update()
 
@@ -190,24 +193,26 @@ class GreedyExpectedUtilityEstimator(ExpectedUtilityEstimator):
 
         return U / self.max_session_duration
 
-    def update(self, task_index = None, on_date = None, duration = None):
+    def update(self, task_index=None, on_date=None, duration=None):
         '''
         Right now we simply re-read from reference to data passed in from initialize()
         '''
         # compute early schedule and total & variable time
-        self.start_day = self.schedule.get_schedule_start().add_days(-1) # -1 is useful
+        self.start_day = self.schedule.get_schedule_start().add_days(-1)  # -1 is useful
         end_day = self.schedule.get_schedule_end()
         self.schedule_days = self.start_day.days_to(end_day)
         schedule_free_time_until = [0 for _ in range(self.schedule_days)]
         for i in range(1, self.schedule_days):
-            schedule_free_time_until[i] = self.schedule.get_free_time(self.start_day.add_days(i)) + schedule_free_time_until[i - 1]
+            schedule_free_time_until[i] = self.schedule.get_free_time(
+                self.start_day.add_days(i)) + schedule_free_time_until[i - 1]
 
         prev_variable_time = 0
         for i in range(len(self.sorted_tasks)):
-            variable_time = self.progress_info.get_amount_left(self.sorted_tasks[i][0]) + prev_variable_time
+            variable_time = self.progress_info.get_amount_left(
+                self.sorted_tasks[i][0]) + prev_variable_time
             self.sorted_task_pressure[i] = variable_time
             prev_variable_time = variable_time
-            
+
         for i in range(len(self.sorted_tasks)):
             due = max(0, self.start_day.days_to(self.sorted_tasks[i][1].end))
             if due < self.schedule_days:
@@ -242,7 +247,7 @@ class GreedyExpectedUtilityEstimator(ExpectedUtilityEstimator):
                 peak_i = i
                 peak_p_bad = p
                 peak_total_u = total_u
-        
+
         if peak_i > 0:
             peak_w = self.sorted_task_total_time[peak_i] - s
             peak_R = self.sorted_task_pressure[peak_i]
@@ -285,7 +290,7 @@ class GreedyExpectedUtilityEstimator(ExpectedUtilityEstimator):
 
         #     self.suffix_sum_cache[index] = prev_gain
         #     prev_gain = gain
-            
+
         # self.logger.log(" ")
 
 
@@ -295,7 +300,8 @@ class GreedySchedulingPolicy(SchedulingPolicy):
         pass
 
     def initialize(self, direction, tasks, progress_info, schedule):
-        self.queue = GreedySchedulingQueue(descending = (direction == FillDirection.EARLY))
+        self.queue = GreedySchedulingQueue(
+            descending=(direction == FillDirection.EARLY))
 
     def get_next(self, date):
         if self.queue.is_empty():
@@ -314,7 +320,7 @@ class GreedySchedulingPolicy(SchedulingPolicy):
              if task.priority is not None
              else math.inf)
         )
-    
+
     def update(self, task_index, date, next_date, duration):
         pass
 
@@ -327,22 +333,27 @@ class PolynomialSchedulingPolicy(SchedulingPolicy):
     def __init__(self, utility_estimator):
         # A float. If 0, no randomness, always pick the highest score.
         self.random_power = 0
+        self.default_urgency = INF_URGENCY
         self.u_estimator = utility_estimator
 
     def set_random_power(self, random_power):
         self.random_power = random_power
 
+    def set_default_urgency(self, default_urgency):
+        self.default_urgency = default_urgency
+
     def initialize(self, direction, tasks, progress_info, schedule):
         # only support direction = FillDirection.EARLY
         if direction != FillDirection.EARLY:
-            raise ValueError("PolynomialSchedulingPolicy only support direction = FillDirection.EARLY")
+            raise ValueError(
+                "PolynomialSchedulingPolicy only support direction = FillDirection.EARLY")
 
         self.tasks = tasks
         self.session_duration = 1
 
         self.valid_tasks = set()
 
-        self.sampler = Sampler(None, seed = schedule.schedule_start.encode())
+        self.sampler = Sampler(seed=schedule.schedule_start.encode())
 
     def get_max_session_duration(self):
         return math.inf
@@ -351,16 +362,14 @@ class PolynomialSchedulingPolicy(SchedulingPolicy):
         self.days_from_today = Date.today().days_to(date)
 
     def get_score(self, task):
-        return self.u_estimator.get_success_utility(task) \
-            * (1.0 / (1.0 + task.get_urgency(self.days_from_today))) \
-            + self.u_estimator.get_session_utility(task, self.session_duration) \
-            / self.session_duration
+        # TODO: This assumes utility is positive, and the final score is lower the better.
+        return task.get_urgency(self.days_from_today, self.default_urgency) / self.u_estimator.get_success_utility(task)
 
     def get_next(self, date):
         if len(self.valid_tasks) == 0:
             return None
 
-        best_score = -math.inf
+        best_score = math.inf
         best_task = None
 
         self.set_date(date)
@@ -368,7 +377,7 @@ class PolynomialSchedulingPolicy(SchedulingPolicy):
         if self.random_power == 0:
             for valid_task in self.valid_tasks:
                 score = self.get_score(self.tasks[valid_task])
-                if score > best_score:
+                if score < best_score:
                     best_score = score
                     best_task = valid_task
 
@@ -378,21 +387,45 @@ class PolynomialSchedulingPolicy(SchedulingPolicy):
                 self.get_score(self.tasks[valid_task])
                 for valid_task in valid_tasks_list
             ]
-            # normalize for numerical stability
-            max_score = max(scores)
-            if max_score <= 0:
-                max_score = 1
-            for i in range(len(scores)):
-                scores[i] = (scores[i] / max_score) ** self.random_power
 
-            self.sampler.set_distribution(scores)
-            best_task = self.sampler.sample(valid_tasks_list)
+            # if self.logger is not None:
+            #     self.logger.log('------')
+            #     self.logger.log(str(scores))
+
+            # "normalize"
+
+            max_score = max(scores)
+            if max_score > 1:
+                max_score = 1
+
+            for i in range(len(scores)):
+                scores[i] = 1.0 / \
+                    (1.0 + (scores[i] + 1 - max_score) / self.random_power)
+
+            # Now scores[i] is from 0 to 1, and the max element = 1
+
+            scores = sorted(zip(scores, valid_tasks_list))
+
+            # if self.logger is not None:
+            #     self.logger.log(str(scores))
+
+            pivot = min(util.lower_bound(scores, 0, len(scores),
+                                         self.sampler.uniform(0, 1),
+                                         comp=lambda a, b: a[0] < b),
+                        len(scores) - 1)
+
+            # if self.logger is not None:
+            #     self.logger.log(str(pivot))
+
+            best_task = self.sampler.choice(scores[pivot:])[1]
+
+            # self.logger = None
 
         return best_task
 
     def add(self, task_index, task, task_event):
         self.valid_tasks.add(task_index)
-    
+
     def update(self, task_index, date, next_date, duration):
         pass
 
@@ -412,7 +445,8 @@ class ARPSchedulingPolicy(SchedulingPolicy):
     def initialize(self, direction, tasks, progress_info, schedule):
         # only support direction = FillDirection.EARLY
         if direction != FillDirection.EARLY:
-            raise ValueError("ARPSchedulingPolicy only support direction = FillDirection.EARLY")
+            raise ValueError(
+                "ARPSchedulingPolicy only support direction = FillDirection.EARLY")
 
         self.max_session_duration = 1 * 60
         self.pressure_heuristic = 0.1
@@ -436,7 +470,8 @@ class ARPSchedulingPolicy(SchedulingPolicy):
         best_gain = -math.inf
         best_task = None
         for valid_task in self.valid_tasks:
-            gain = self.estimator.get_expected_utility_gain_per_duration(valid_task, self.max_session_duration)
+            gain = self.estimator.get_expected_utility_gain_per_duration(
+                valid_task, self.max_session_duration)
             if gain > best_gain:
                 best_gain = gain
                 best_task = valid_task
@@ -447,7 +482,7 @@ class ARPSchedulingPolicy(SchedulingPolicy):
 
     def add(self, task_index, task, task_event):
         self.valid_tasks.add(task_index)
-    
+
     def update(self, task_index, date, next_date, duration):
         self.estimator.update(task_index, next_date, duration)
 
@@ -475,7 +510,7 @@ class RLSchedulingPolicy(object):
 
     def add(self, task_index, task, task_event):
         raise NotImplementedError()
-    
+
     def update(self, task_index, date, next_date, duration):
         raise NotImplementedError()
 
@@ -497,17 +532,17 @@ class RLSchedulingPolicy(object):
 
         def softmax(x):
             e_x = np.exp(x - np.max(x))
-            return e_x / e_x.sum(axis = 0)
+            return e_x / e_x.sum(axis=0)
 
         def get_initial_features(tasks):
             '''
             - amount left
             - time to deadline
             - utility
-            
+
             note that they are column vectors.
             '''
-            
+
             amount = np.array([
                 amount
                 for start, end, amount, utility in tasks
@@ -527,8 +562,9 @@ class RLSchedulingPolicy(object):
 
         def update_features(old_features, scores, mask):
             old_amount, old_days_to_deadline, old_utility = old_features
-            
-            amount = old_amount + (mask.reshape((-1, 1)) * scores.reshape((-1, 1)))
+
+            amount = old_amount + (mask.reshape((-1, 1))
+                                   * scores.reshape((-1, 1)))
             days_to_deadline = old_days_to_deadline - 1
             utility = old_utility
 
@@ -536,9 +572,10 @@ class RLSchedulingPolicy(object):
 
         def generate_problem():
             tasks = []
-            
+
             for i in range(NUM_TASKS):
-                start = 0 if np.random.rand() < PERCENTAGE_STARTS_NOW else np.random.randint(0, NUM_STEPS - 2)
+                start = 0 if np.random.rand() < PERCENTAGE_STARTS_NOW else np.random.randint(
+                    0, NUM_STEPS - 2)
                 end = np.random.randint(0, NUM_STEPS - 1)
                 if start > end:
                     start, end = end, start
@@ -546,7 +583,8 @@ class RLSchedulingPolicy(object):
                 if end == start:
                     end = end + 1
 
-                amount = np.random.normal(TASK_LENGTH_MEAN, TASK_LENGTH_STD) * (end - start)
+                amount = np.random.normal(
+                    TASK_LENGTH_MEAN, TASK_LENGTH_STD) * (end - start)
                 if amount < 0:
                     amount = -amount
 
@@ -558,7 +596,7 @@ class RLSchedulingPolicy(object):
 
             for i in range(len(tasks)):
                 start, end, amount, utility = tasks[i]
-                
+
                 # time, is_end, task_index
                 task_points.append((start, False, i))
                 task_points.append((end + 1, True, i))
@@ -573,14 +611,14 @@ class RLSchedulingPolicy(object):
 
             for i in range(NUM_STEPS):
                 loss_mask_list = [0 for _ in range(len(tasks))]
-                
+
                 while j < len(task_points) and task_points[j][0] <= i:
                     time, is_end, task_index = task_points[j]
                     if is_end:
                         mask_list[task_index] = 0
                         loss_mask_list[task_index] = 1
 
-                    else: # is start
+                    else:  # is start
                         mask_list[task_index] = 1
 
                     j += 1
@@ -607,12 +645,14 @@ class RLSchedulingPolicy(object):
         def get_initial_params(layer_shapes):
             params = []
             for i in range(len(layer_shapes) - 1):
-                W = np.random.normal(0, 1 / layer_shapes[i], (layer_shapes[i], layer_shapes[i + 1]))
-                b = np.random.normal(0, 1 / layer_shapes[i], (layer_shapes[i + 1],))
+                W = np.random.normal(
+                    0, 1 / layer_shapes[i], (layer_shapes[i], layer_shapes[i + 1]))
+                b = np.random.normal(
+                    0, 1 / layer_shapes[i], (layer_shapes[i + 1],))
                 params.append((W, b))
 
             return params
-        
+
         def model(data, params):
             output = data
             for W, b in params:
@@ -629,7 +669,8 @@ class RLSchedulingPolicy(object):
                 utility = get_utility(initial_features, features, utility_mask)
                 total_utility = total_utility + utility
 
-                scores = model(np.concatenate(features, axis = 1), params).reshape((-1,))
+                scores = model(np.concatenate(features, axis=1),
+                               params).reshape((-1,))
                 features = update_features(features, scores, mask)
 
             return total_utility
@@ -637,13 +678,13 @@ class RLSchedulingPolicy(object):
         NUM_PROBLEMS = 5
         NUM_ITERATIONS = 1000
         LAYER_SHAPES = [3, 8, 1]
-        
+
         problems = [generate_problem() for _ in range(NUM_PROBLEMS)]
         problems *= NUM_ITERATIONS // NUM_PROBLEMS
         np.random.shuffle(problems)
 
         initial_params = get_initial_params(LAYER_SHAPES)
-        
+
         def objective_function(params, iteration):
             problem = problems[iteration]
             return get_total_utility(problem, params)
@@ -651,7 +692,7 @@ class RLSchedulingPolicy(object):
         print(objective_function(initial_params, 0))
 
         PERCENTAGE_STARTS_NOW = 1
-        
+
         reference_problem = generate_problem()
 
         def print_solution(problem, params):
@@ -670,7 +711,8 @@ class RLSchedulingPolicy(object):
                     if utility_mask[i] > 0:
                         string += " {}] ".format(i)
 
-                scores = model(np.concatenate(features, axis = 1), params).reshape((-1,))
+                scores = model(np.concatenate(features, axis=1),
+                               params).reshape((-1,))
                 fake_score[task] = 0
                 task = np.argmax(scores * mask)
                 string += "{}".format(task)
@@ -693,12 +735,10 @@ class RLSchedulingPolicy(object):
         trained_params = adam(
             objective_gradient,
             initial_params,
-            step_size = 0.1,
-            num_iters = NUM_ITERATIONS,
-            callback = optimizer_callback
+            step_size=0.1,
+            num_iters=NUM_ITERATIONS,
+            callback=optimizer_callback
         )
 
 
 # RLSchedulingPolicy().train()
-
-

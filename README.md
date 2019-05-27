@@ -10,8 +10,12 @@
   ```
 - Copy the content of `add-to-emacs.el` to your emacs configuration (such as `~/.emacs`). Make sure to change parts of it (such as path to `tommyx-emacs`) after copying.
 
-## Additional Installation
+## Dependency Installation
 
-- Run `M-x all-the-icons-install-fonts` to install icon fonts.
-- Run `M-x company-tabnine-install-binary` to install company TabNine.
-- Install other dependencies as they come up, such as `rg`, `ycmd`.
+- `all-the-icons`
+  - Run `M-x all-the-icons-install-fonts`.
+- `company-tabnine`
+  - Run `M-x company-tabnine-install-binary`.
+- `rg`
+- `ycmd`
+- `elpy`

@@ -1,4 +1,8 @@
-import sys, traceback, random, time
+import sys
+import traceback
+import random
+import time
+
 
 def get_traceback():
     '''
@@ -6,11 +10,19 @@ def get_traceback():
     '''
     return traceback.format_exc()
 
+
 def less_than(a, b):
     return a < b
 
-def lower_bound(arr, first, last, val, comp = None):
-    if comp is None: comp = less_than
+
+def lower_bound(arr, first, last, val, comp=None):
+    '''
+    Return the index, in the slice of "arr" denoted by ["first", "last"),
+    pointing to the first element that is greater than or equal to "val",
+    using "comp" as a less-than operator.
+    '''
+    if comp is None:
+        comp = less_than
 
     count = last - first
 
@@ -29,8 +41,10 @@ def lower_bound(arr, first, last, val, comp = None):
 
     return first
 
+
 def linear_map(x, in_min, in_max, out_min, out_max):
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+
 
 def clamp(x, a, b):
     '''
@@ -47,8 +61,9 @@ def clamp(x, a, b):
 
     return min(max(x, a), b)
 
+
 class PerformanceTimer(object):
-    
+
     def __init__(self):
         self.time_stack = []
 

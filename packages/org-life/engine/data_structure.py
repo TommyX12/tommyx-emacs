@@ -1,4 +1,7 @@
-import copy, calendar, math, re
+import copy
+import calendar
+import math
+import re
 
 from datetime import date as DatetimeDate, timedelta
 from enum import Enum
@@ -20,13 +23,13 @@ class Property(object):
     def decode(self, encoded):
         raise NotImplementedError()
 
-    
+
 class PrimitiveProperty(Property):
-    
-    def __init__(self, default_value = None):
+
+    def __init__(self, default_value=None):
         Property.__init__(self)
         self.default_value = default_value
-        
+
     def get_default_value(self):
         return copy.deepcopy(self.default_value)
 
@@ -36,7 +39,7 @@ class PrimitiveProperty(Property):
     def decode(self, encoded):
         return encoded
 
-    
+
 class ObjectProperty(Property):
 
     def __init__(self, prop_type):
@@ -55,7 +58,7 @@ class ObjectProperty(Property):
 
 class NullableObjectProperty(ObjectProperty):
 
-    def __init__(self, prop_type, default_non_null = False):
+    def __init__(self, prop_type, default_non_null=False):
         ObjectProperty.__init__(self, prop_type)
         self.default_non_null = default_non_null
 
@@ -71,7 +74,7 @@ class NullableObjectProperty(ObjectProperty):
     def decode(self, encoded_prop):
         return self.prop_type().decode_self(encoded_prop) if encoded_prop is not None else None
 
-    
+
 class ListProperty(Property):
 
     def __init__(self, prop_type):
@@ -93,9 +96,9 @@ class ListProperty(Property):
             for encoded_prop in encoded_props
         ] if encoded_props is not None else []
 
-    
+
 class DictProperty(Property):
-    
+
     def __init__(self, prop_type):
         Property.__init__(self)
         self.prop_type = prop_type
@@ -151,22 +154,23 @@ class Protocol(object):
                 continue
 
             prop = props[prop_name]
-            self.set_property(prop_name, prop.decode(encoded_protocol[prop_name]))
+            self.set_property(prop_name, prop.decode(
+                encoded_protocol[prop_name]))
 
     def get_property(self, prop_name):
         return self.__dict__[prop_name]
 
     def set_property(self, prop_name, value):
         self.__dict__[prop_name] = value
-        
-        return self # allows chaining
-    
+
+        return self  # allows chaining
+
 
 class PrimitiveProtocol(Protocol):
-    
+
     properties = {}
 
-    def __init__(self, default_value = None):
+    def __init__(self, default_value=None):
         Protocol.__init__(self)
         self.value = default_value
 
@@ -175,19 +179,19 @@ class PrimitiveProtocol(Protocol):
 
     def decode(self, encoded_protocol):
         self.value = encoded_protocol
-    
+
 
 # ============= Implementations =============
 
 
 class Float(PrimitiveProtocol):
-    def __init__(self, value = 0):
+    def __init__(self, value=0):
         PrimitiveProtocol.__init__(self, value)
 
     def encode(self):
         if self.value == math.inf:
             return 'inf'
-        
+
         elif self.value == -math.inf:
             return '-inf'
 
@@ -197,16 +201,18 @@ class Float(PrimitiveProtocol):
     def decode(self, encoded_protocol):
         if encoded_protocol == 'inf':
             self.value = math.inf
-        
+
         elif encoded_protocol == '-inf':
             self.value = -math.inf
 
         else:
             self.value = encoded_protocol
 
+
 class Command(PrimitiveProtocol):
-    def __init__(self, value = None):
+    def __init__(self, value=None):
         PrimitiveProtocol.__init__(self, value)
+
 
 Duration = Float
 
@@ -216,16 +222,19 @@ Days = Float
 
 TaskID = Float
 
+
 class String(PrimitiveProtocol):
-    def __init__(self, value = ""):
+    def __init__(self, value=""):
         PrimitiveProtocol.__init__(self, value)
+
 
 TaskIndex = Float
 
+
 class Priority(PrimitiveProtocol):
-    def __init__(self, value = 0):
+    def __init__(self, value=0):
         PrimitiveProtocol.__init__(self, value)
-        
+
     def decode(self, encoded_protocol):
         if encoded_protocol is None:
             self.value = math.inf
@@ -233,8 +242,9 @@ class Priority(PrimitiveProtocol):
         else:
             self.value = encoded_protocol
 
+
 class Boolean(PrimitiveProtocol):
-    def __init__(self, value = False):
+    def __init__(self, value=False):
         PrimitiveProtocol.__init__(self, value)
 
     def decode(self, encoded_protocol):
@@ -244,18 +254,19 @@ class Boolean(PrimitiveProtocol):
         else:
             self.value = encoded_protocol
 
+
 class Date(Protocol):
     '''
     TODO: Add tests.
     '''
 
-    def __init__(self, date_object = None):
+    def __init__(self, date_object=None):
         Protocol.__init__(self)
         if date_object is None:
             date_object = DatetimeDate.today()
 
         self._date = date_object
-        
+
     def encode(self):
         return '-'.join([str(x) for x in [self._date.year, self._date.month, self._date.day]])
 
@@ -285,7 +296,8 @@ class Date(Protocol):
             self._date = DatetimeDate.today()
 
         else:
-            components = [int(component) for component in encoded_protocol.split('-')]
+            components = [int(component)
+                          for component in encoded_protocol.split('-')]
             self._date = DatetimeDate(*components)
 
     def today():
@@ -304,18 +316,20 @@ class Date(Protocol):
         return (date._date - self._date).days
 
     def add_days(self, days):
-        return Date(self._date + timedelta(days = days))
+        return Date(self._date + timedelta(days=days))
 
     def add_months(self, months):
         new_year = self._date.year + ((self._date.month + months - 1) // 12)
         new_months = ((self._date.month + months - 1) % 12) + 1
-        new_day = min(self._date.day, calendar.monthrange(new_year, new_months)[1])
+        new_day = min(self._date.day, calendar.monthrange(
+            new_year, new_months)[1])
         return Date.from_components(new_year, new_months, new_day)
 
     def add_years(self, years):
         new_year = self._date.year + years
         new_months = self._date.month
-        new_day = min(self._date.day, calendar.monthrange(new_year, new_months)[1])
+        new_day = min(self._date.day, calendar.monthrange(
+            new_year, new_months)[1])
         return Date.from_components(new_year, new_months, new_day)
 
     def __eq__(self, date):
@@ -333,6 +347,7 @@ class Date(Protocol):
         '''
         return hash(self._date)
 
+
 class FragmentationConfig(Protocol):
     properties = {
         'min_extra_time_ratio': ObjectProperty(Ratio),
@@ -341,22 +356,14 @@ class FragmentationConfig(Protocol):
         'min_fragment_size': ObjectProperty(Duration),
     }
 
-class Config(Protocol):
-    properties = {
-        'show_debug_messages': ObjectProperty(Boolean),
-        'today': ObjectProperty(Date),
-        'scheduling_days': ObjectProperty(Days),
-        'daily_info_days': ObjectProperty(Days),
-        'fragmentation_config': ObjectProperty(FragmentationConfig),
-        'random_power': ObjectProperty(Float),
-    }
 
 class TaskStatusEnum(Enum):
     TODO = 0
     DONE = 1
 
+
 class TaskStatus(PrimitiveProtocol):
-    def __init__(self, value = TaskStatusEnum.TODO):
+    def __init__(self, value=TaskStatusEnum.TODO):
         PrimitiveProtocol.__init__(self, value)
 
     def encode(self):
@@ -365,12 +372,14 @@ class TaskStatus(PrimitiveProtocol):
     def decode(self, encoded_protocol):
         self.value = TaskStatusEnum(encoded_protocol)
 
+
 class TaskRepeatTypeEnum(Enum):
     NORMAL = 0
     RESTART = 1
 
+
 class TaskRepeatType(PrimitiveProtocol):
-    def __init__(self, value = TaskRepeatTypeEnum.NORMAL):
+    def __init__(self, value=TaskRepeatTypeEnum.NORMAL):
         PrimitiveProtocol.__init__(self, value)
 
     def encode(self):
@@ -379,6 +388,7 @@ class TaskRepeatType(PrimitiveProtocol):
     def decode(self, encoded_protocol):
         self.value = TaskRepeatTypeEnum(encoded_protocol)
 
+
 class TaskRepeatUnitEnum(Enum):
     NONE = 0
     DAY = 1
@@ -386,8 +396,9 @@ class TaskRepeatUnitEnum(Enum):
     MONTH = 3
     YEAR = 4
 
+
 class TaskRepeatUnit(PrimitiveProtocol):
-    def __init__(self, value = TaskRepeatUnitEnum.DAY):
+    def __init__(self, value=TaskRepeatUnitEnum.DAY):
         PrimitiveProtocol.__init__(self, value)
 
     def encode(self):
@@ -396,9 +407,11 @@ class TaskRepeatUnit(PrimitiveProtocol):
     def decode(self, encoded_protocol):
         self.value = TaskRepeatUnitEnum(encoded_protocol)
 
+
 class TaskRepeatValue(PrimitiveProtocol):
-    def __init__(self, value = 1):
+    def __init__(self, value=1):
         PrimitiveProtocol.__init__(self, value)
+
 
 class TaskRepeat(Protocol):
     properties = {
@@ -406,6 +419,7 @@ class TaskRepeat(Protocol):
         'unit': ObjectProperty(TaskRepeatUnit),
         'value': ObjectProperty(TaskRepeatValue),
     }
+
 
 class Urgency(PrimitiveProtocol):
     def __init__(self):
@@ -423,7 +437,9 @@ class Urgency(PrimitiveProtocol):
 
         self.value = encoded_protocol
 
-CurrentUrgency = Float
+
+UrgencyValue = Float
+
 
 class Task(Protocol):
     properties = {
@@ -442,11 +458,11 @@ class Task(Protocol):
     def __init__(self):
         Protocol.__init__(self)
         self.urgency_points = []
-        self.maximum_urgency = INF_URGENCY
+        self.maximum_urgency = None
 
     def copy(self):
         return copy.deepcopy(self)
-    
+
     def decode(self, encoded_protocol):
         Protocol.decode(self, encoded_protocol)
         if self.start > self.end:
@@ -489,7 +505,8 @@ class Task(Protocol):
                 date_match = SINGLE_DATE_INLINE_RE.search(t)
                 if date_match is not None:
                     # absolute date
-                    t = (DateInfoTypeEnum.ABSOLUTE, today.days_to(Date().decode_self(date_match.group(0))))
+                    t = (DateInfoTypeEnum.ABSOLUTE, today.days_to(
+                        Date().decode_self(date_match.group(0))))
 
                 else:
                     # relative date
@@ -498,11 +515,11 @@ class Task(Protocol):
             # urgency information
             if u == 'to-deadline':
                 # raise NotImplementedError()
-                pass # u = 'to-deadline
+                pass  # u = 'to-deadline
 
             elif u == 'to-next':
                 # raise NotImplementedError()
-                pass # u = 'to-next'
+                pass  # u = 'to-next'
 
             else:
                 u = int(u)
@@ -511,7 +528,7 @@ class Task(Protocol):
 
         if urgency is None:
             clauses = []
-            
+
         else:
             clauses = [s.strip() for s in urgency.split(',')]
             clauses = [parse_clause(clauses, s) for s in clauses if len(s) > 0]
@@ -549,16 +566,21 @@ class Task(Protocol):
             self.urgency_points.append((today.days_to(self.end), 0))
 
         # sort clauses by time
-        self.urgency_points.sort(key = lambda x : x[0])
+        self.urgency_points.sort(key=lambda x: x[0])
 
     def shift_urgency(self, days):
         self.urgency_points = [(t + days, u) for t, u in self.urgency_points]
 
-    def get_urgency(self, days_from_today):
+    def get_urgency(self, days_from_today, default_urgency=INF_URGENCY):
         # interpolation
 
         if len(self.urgency_points) == 0:
-            return max(self.maximum_urgency, 0)
+            return max(
+                0,
+                default_urgency
+                if self.maximum_urgency is None
+                else self.maximum_urgency
+            )
 
         i = util.lower_bound(
             self.urgency_points,
@@ -582,17 +604,35 @@ class Task(Protocol):
                 self.urgency_points[i][1]
             )
 
-        return min(max(result, 0), self.maximum_urgency)
+        if self.maximum_urgency is None:
+            return max(result, 0)
+
+        else:
+            return max(min(result, self.maximum_urgency), 0)
+
+
+class Config(Protocol):
+    properties = {
+        'show_debug_messages': ObjectProperty(Boolean),
+        'today': ObjectProperty(Date),
+        'scheduling_days': ObjectProperty(Days),
+        'daily_info_days': ObjectProperty(Days),
+        'fragmentation_config': ObjectProperty(FragmentationConfig),
+        'random_power': ObjectProperty(Float),
+        'default_urgency': ObjectProperty(UrgencyValue),
+    }
+
 
 class UsableTimeSelector(PrimitiveProtocol):
-    def __init__(self, value = 'default'):
+    def __init__(self, value='default'):
         PrimitiveProtocol.__init__(self, value)
-        
+
     def encode(self):
         return self.value
 
     def decode(self, encoded_protocol):
         self.value = encoded_protocol.lower()
+
 
 class UsableTimeConfigEntry(Protocol):
     properties = {
@@ -600,23 +640,27 @@ class UsableTimeConfigEntry(Protocol):
         'duration': ObjectProperty(Duration),
     }
 
+
 class SessionStressInfo(Protocol):
     properties = {
         'acc_amount': ObjectProperty(Duration),
         'stress': ObjectProperty(Ratio),
     }
 
+
 class SessionTypeEnum(Enum):
     TASK = 0
     FRAGMENT = 1
     OVERLIMIT = 2
 
+
 class DateInfoTypeEnum(Enum):
     ABSOLUTE = 0
     RELATIVE = 1
 
+
 class SessionType(PrimitiveProtocol):
-    def __init__(self, value = SessionTypeEnum.TASK):
+    def __init__(self, value=SessionTypeEnum.TASK):
         PrimitiveProtocol.__init__(self, value)
 
     def encode(self):
@@ -625,12 +669,14 @@ class SessionType(PrimitiveProtocol):
     def decode(self, encoded_protocol):
         self.value = SessionTypeEnum(encoded_protocol)
 
+
 class SessionWeaknessEnum(Enum):
     STRONG = 0
     WEAK = 1
 
+
 class SessionWeakness(PrimitiveProtocol):
-    def __init__(self, value = SessionWeaknessEnum.WEAK):
+    def __init__(self, value=SessionWeaknessEnum.WEAK):
         PrimitiveProtocol.__init__(self, value)
 
     def encode(self):
@@ -638,6 +684,7 @@ class SessionWeakness(PrimitiveProtocol):
 
     def decode(self, encoded_protocol):
         self.value = SessionWeaknessEnum(encoded_protocol)
+
 
 class Session(Protocol):
     properties = {
@@ -659,13 +706,14 @@ class Session(Protocol):
         new_session.weakness.value = weakness_value
         return new_session
 
+
 class DatedSession(Protocol):
     properties = {
         'date': ObjectProperty(Date),
         'session': ObjectProperty(Session),
     }
 
-    def __init__(self, date = None, session = None):
+    def __init__(self, date=None, session=None):
         Protocol.__init__(self)
         if date is not None:
             self.date = date
@@ -679,6 +727,7 @@ class DatedSession(Protocol):
         new_dated_session = self.copy()
         new_dated_session.session.weakness.value = weakness_value
         return new_dated_session
+
 
 class SchedulingRequest(Protocol):
     properties = {
@@ -711,11 +760,13 @@ class SchedulingGeneralInfo(Protocol):
         'workload_without_today': ObjectProperty(Ratio),
     }
 
+
 class ImpossibleTask(Protocol):
     properties = {
         'id': ObjectProperty(TaskID),
         'amount': ObjectProperty(Duration),
     }
+
 
 class BadEstimateTask(Protocol):
     properties = {
@@ -724,17 +775,20 @@ class BadEstimateTask(Protocol):
         'done': ObjectProperty(Duration),
     }
 
+
 class BadInfoTask(Protocol):
     properties = {
         'id': ObjectProperty(TaskID),
         'reason': ObjectProperty(String),
     }
 
+
 class OverdueTask(Protocol):
     properties = {
         'id': ObjectProperty(TaskID),
         'days': ObjectProperty(Days),
     }
+
 
 class Alerts(Protocol):
     properties = {
@@ -743,6 +797,7 @@ class Alerts(Protocol):
         'bad_info_tasks': ListProperty(BadInfoTask),
         'overdue_tasks': ListProperty(OverdueTask),
     }
+
 
 class DailyInfo(Protocol):
     properties = {
@@ -755,11 +810,13 @@ class DailyInfo(Protocol):
         'average_etr': ObjectProperty(Ratio),
     }
 
+
 class TaskInfo(Protocol):
     properties = {
         'id': ObjectProperty(TaskID),
-        'current_urgency': ObjectProperty(CurrentUrgency),
+        'current_urgency': ObjectProperty(UrgencyValue),
     }
+
 
 class PlannerResult(Protocol):
     properties = {
@@ -767,20 +824,24 @@ class PlannerResult(Protocol):
         'progress_info': PrimitiveProperty(),
     }
 
+
 class SchedulingResponse(Protocol):
     properties = {
         'general': ObjectProperty(SchedulingGeneralInfo),
         'task_infos': ListProperty(TaskInfo),
         'alerts': ObjectProperty(Alerts),
         'daily_infos': ListProperty(DailyInfo),
+        'today_optimal_sessions': ListProperty(Session),
         'debug': PrimitiveProperty(),
     }
+
 
 class EngineRequest(Protocol):
     properties = {
         'command': PrimitiveProperty(),
         'args': PrimitiveProperty(),
     }
+
 
 class EngineResponse(Protocol):
     properties = {
@@ -789,11 +850,13 @@ class EngineResponse(Protocol):
         'data': PrimitiveProperty(),
     }
 
+
 class FreeTimeInfo(Protocol):
     properties = {
         'free_time': ObjectProperty(Duration),
         'average_stress': ObjectProperty(Ratio),
     }
+
 
 class DailyStressInfo(Protocol):
     properties = {
@@ -803,6 +866,7 @@ class DailyStressInfo(Protocol):
         'acc_failure_prob': ObjectProperty(Ratio),
     }
 
+
 class StressInfo(Protocol):
     '''
     TODO: This is not yet encodable, since it intends to use Date as key.
@@ -811,7 +875,7 @@ class StressInfo(Protocol):
         'extra_time_ratio': ObjectProperty(Ratio),
         'overall_stress': ObjectProperty(Ratio),
         'highest_stress_date': ObjectProperty(Date),
-        'daily_stress_infos': DictProperty(DailyStressInfo), # use Date as key
+        'daily_stress_infos': DictProperty(DailyStressInfo),  # use Date as key
     }
 
     def encode(self):
@@ -827,21 +891,22 @@ class StressInfo(Protocol):
 #     def __init__(self, initial_progress = 0):
 #         Protocol.__init__(self)
 #         self.amount_done.value = initial_progress
-    
+
 #     def copy(self):
 #         return copy.deepcopy(self)
 
 
 class ProgressInfo():
-    
-    def __init__(self, tasks, amount_left = None, ignore_task_done = False):
+
+    def __init__(self, tasks, amount_left=None, ignore_task_done=False):
         self.tasks = tasks
         if amount_left is None:
             if ignore_task_done:
                 self.amount_left = [task.amount.value for task in tasks]
 
             else:
-                self.amount_left = [task.amount.value - task.done.value for task in tasks]
+                self.amount_left = [task.amount.value -
+                                    task.done.value for task in tasks]
 
         else:
             self.amount_left = amount_left
@@ -851,10 +916,10 @@ class ProgressInfo():
 
     def get_amount_done(self, task_index):
         return self.tasks[task_index].amount.value - self.amount_left[task_index]
-    
+
     def add_amount_done(self, task_index, amount_done):
         self.amount_left[task_index] -= amount_done
-    
+
     def get_amount_left(self, task_index):
         return max(0, self.amount_left[task_index])
 
@@ -870,7 +935,8 @@ class ProgressInfo():
         Also, make sure the other progress_info don't record task.done.
         '''
         for task_index in range(len(self.amount_left)):
-            self.add_amount_done(task_index, progress_info.get_amount_done(task_index))
+            self.add_amount_done(
+                task_index, progress_info.get_amount_done(task_index))
 
     def combine(self, progress_info):
         '''
@@ -879,15 +945,17 @@ class ProgressInfo():
         result = self.copy()
         result.add_progress(progress_info)
         return result
-    
+
 
 class FillDirection(Enum):
     EARLY = 0
     LATE = 1
 
+
 class SessionOrder(Enum):
     NONE = 0
     AMOUNT = 1
+
 
 class DailySchedule(object):
 
@@ -948,17 +1016,17 @@ class DailySchedule(object):
             self._sessions.append(session)
             id_to_session_dict[task_id] = session
 
-    def get_sessions(self, order = None):
+    def get_sessions(self, order=None):
         if order == SessionOrder.AMOUNT:
             return sorted(self._sessions,
-                          key = lambda x : x.amount.value,
-                          reverse = True)
+                          key=lambda x: x.amount.value,
+                          reverse=True)
 
         return self._sessions
 
 
 class Schedule(object):
-    
+
     def __init__(self, schedule_start, schedule_end, daily_schedules):
         self.schedule_start = schedule_start
         self.schedule_end = schedule_end
@@ -966,23 +1034,23 @@ class Schedule(object):
 
     def get_schedule_start(self):
         return self.schedule_start
-    
+
     def get_schedule_end(self):
         return self.schedule_end
-    
-    def copy(self, schedule_start = None, schedule_end = None):
+
+    def copy(self, schedule_start=None, schedule_end=None):
         if schedule_start is None:
             schedule_start = self.schedule_start.copy()
-            
+
         if schedule_end is None:
             schedule_end = self.schedule_end.copy()
-        
+
         daily_schedules = {}
         date = schedule_start
         while date <= schedule_end:
             daily_schedules[date] = self.daily_schedules[date].copy()
             date = date.add_days(1)
-            
+
         return Schedule(schedule_start, schedule_end, daily_schedules)
 
     def add_session(self, date, session):
@@ -998,11 +1066,11 @@ class Schedule(object):
             date, session = dated_session.date, dated_session.session
             if date in self.daily_schedules:
                 self.daily_schedules[date].add_session(session)
-    
-    def get_sessions(self, date, order = None):
+
+    def get_sessions(self, date, order=None):
         return self.daily_schedules[date].get_sessions(order)
 
-    def get_all_sessions(self, from_date = None, to_date = None, order = None):
+    def get_all_sessions(self, from_date=None, to_date=None, order=None):
         '''
         Return a list of all sessions from from_date to to_date (inclusive).
         '''
@@ -1037,11 +1105,11 @@ class Schedule(object):
 
     def from_usable_time_dict(schedule_start, schedule_end, usable_time_dict):
         daily_schedules = {}
-        
+
         date = schedule_start
         while date <= schedule_end:
             daily_schedules[date] = DailySchedule(
-                usable_time = usable_time_dict[date].value,
+                usable_time=usable_time_dict[date].value,
             )
             date = date.add_days(1)
 
@@ -1069,5 +1137,3 @@ class Schedule(object):
             ]
         ])
         return "==========\n" + s + "==========\n"
-
-

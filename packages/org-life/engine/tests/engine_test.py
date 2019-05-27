@@ -1,14 +1,13 @@
+import unittest
+from usable_time_parser import *
+from data_structure import *
+from engine import *
 import test_util
 test_util.allow_parent_import()
 
-from engine import *
-from data_structure import *
-from usable_time_parser import *
-
-import unittest
 
 class EngineTest(unittest.TestCase):
-    
+
     def test_engine(self):
         task1 = Task()
         task1.id.value = 1
@@ -61,23 +60,25 @@ class EngineTest(unittest.TestCase):
         ds3.session.amount.value = 50
         ds3.session.weakness.value = SessionWeaknessEnum.STRONG
         dated_sessions = [ds1, ds2, ds3]
-        
+
         schedule_start = Date().decode_self('2018-11-30')
         schedule_end = Date().decode_self('2018-12-06')
-        usable_time_config = [UsableTimeConfigEntry().decode_self({'selector':'default','duration':480})]
+        usable_time_config = [UsableTimeConfigEntry().decode_self(
+            {'selector': 'default', 'duration': 480})]
 
         fragmentation_config = FragmentationConfig()
         fragmentation_config.max_percentage.value = 0.2
         fragmentation_config.min_extra_time_ratio.value = 0.8
         fragmentation_config.preferred_fragment_size.value = 60
         fragmentation_config.min_fragment_size.value = 30
-        
+
         config = Config()
         config.today = schedule_start
         config.scheduling_days.value = 10
         config.daily_info_days.value = 8
         config.fragmentation_config = fragmentation_config
         config.random_power.value = 1
+        config.default_urgency.value = 40
         scheduling_request = SchedulingRequest()
         scheduling_request.config = config
         scheduling_request.tasks = tasks
@@ -86,7 +87,7 @@ class EngineTest(unittest.TestCase):
 
         engine = Engine.create()
         r = engine.schedule(scheduling_request).encode()
-        print(r)
+        # print(r)
         # For now this simply tests if there are any obvious error.
 
 
