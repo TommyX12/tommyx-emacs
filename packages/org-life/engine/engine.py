@@ -71,10 +71,10 @@ class Engine(object):
         # policy = GreedySchedulingPolicy()
         return Engine(usable_time_parser, task_filter, task_repeater, progress_counter, planner, stress_analyzer, fragmentizer, probability_estimator, utility_estimator, policy, logger)
 
-    def get_task_info(self, task, default_urgency):
+    def get_task_info(self, task, policy):
         task_info = TaskInfo()
         task_info.id.value = task.id.value
-        task_info.current_urgency.value = task.get_urgency(0, default_urgency)
+        task_info.current_score.value = policy.get_score(task, 0)
         return task_info
 
     def schedule(self, scheduling_request):
@@ -365,6 +365,20 @@ class Engine(object):
         t = debug_timer.pop()
         response.debug += "additional stress info: {:.3f}s\n".format(t)
 
+        # compute task info
+        debug_timer.push()
+
+        self.policy.initialize(
+            FillDirection.EARLY, schedulable_tasks, strong_progress, early_schedule)
+        response.task_infos = [
+            self.get_task_info(task, self.policy)
+            # TODO: this is using todo_tasks, not schedulable_tasks.
+            for task in todo_tasks
+        ]
+
+        t = debug_timer.pop()
+        response.debug += "compute task info: {:.3f}s\n".format(t)
+
         # schedule suggestion for deadline tasks
         debug_timer.push()
 
@@ -408,17 +422,6 @@ class Engine(object):
 
         t = debug_timer.pop()
         response.debug += "total: {:.3f}s\n".format(t)
-
-        # compute task info
-        debug_timer.push()
-
-        response.task_infos = [
-            self.get_task_info(task, config.default_urgency.value)
-            for task in todo_tasks
-        ]
-
-        t = debug_timer.pop()
-        response.debug += "compute task info: {:.3f}s\n".format(t)
 
         # internal debug logs
         response.debug += '\n'.join(self.internal_logger.get_messages())

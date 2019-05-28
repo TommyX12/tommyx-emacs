@@ -3,6 +3,7 @@ from data_structure import *
 from scheduling_util import *
 import util
 
+
 class TaskFilter(object):
 
     def __init__(self):
@@ -51,7 +52,7 @@ class TaskFilter(object):
             task = tasks[i]
             reasons = []
             if task.status.value == TaskStatusEnum.TODO \
-               and task.amount is None:
+               and (task.amount is None or task.amount.value <= 0):
                 reasons.append('No Effort')
 
             # # TODO: not used
@@ -87,4 +88,3 @@ class TaskFilter(object):
                 result.append(overdue_task)
 
         return result
-

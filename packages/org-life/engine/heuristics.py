@@ -72,6 +72,9 @@ class SchedulingPolicy(object):
     def get_next(self, date):
         raise NotImplementedError()
 
+    def get_score(self, task, days_from_today):
+        raise NotImplementedError()
+
     def add(self, task_index, task, task_event):
         raise NotImplementedError()
 
@@ -361,9 +364,12 @@ class PolynomialSchedulingPolicy(SchedulingPolicy):
     def set_date(self, date):
         self.days_from_today = Date.today().days_to(date)
 
-    def get_score(self, task):
+    def get_score(self, task, days_from_today):
         # TODO: This assumes utility is positive, and the final score is lower the better.
-        return task.get_urgency(self.days_from_today, self.default_urgency) / self.u_estimator.get_success_utility(task)
+        return task.get_urgency(days_from_today, self.default_urgency) / self.u_estimator.get_success_utility(task)
+
+    def get_current_score(self, task):
+        raise NotImplementedError()
 
     def get_next(self, date):
         if len(self.valid_tasks) == 0:
@@ -376,7 +382,8 @@ class PolynomialSchedulingPolicy(SchedulingPolicy):
 
         if self.random_power == 0:
             for valid_task in self.valid_tasks:
-                score = self.get_score(self.tasks[valid_task])
+                score = self.get_score(
+                    self.tasks[valid_task], self.days_from_today)
                 if score < best_score:
                     best_score = score
                     best_task = valid_task
@@ -384,7 +391,7 @@ class PolynomialSchedulingPolicy(SchedulingPolicy):
         else:
             valid_tasks_list = list(self.valid_tasks)
             scores = [
-                self.get_score(self.tasks[valid_task])
+                self.get_score(self.tasks[valid_task], self.days_from_today)
                 for valid_task in valid_tasks_list
             ]
 

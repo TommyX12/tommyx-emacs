@@ -1450,9 +1450,9 @@ PROCESS is the process under watch, OUTPUT is the output received."
                     (lambda (a b)
                       (<
                        (org-life-agenda-float-to-number
-                        (plist-get a :current_urgency))
+                        (plist-get a :current_score))
                        (org-life-agenda-float-to-number
-                        (plist-get b :current_urgency))))))
+                        (plist-get b :current_score))))))
              (debug (plist-get data :debug)))
 
       (org-life-agenda-render-debug :message debug)
@@ -1462,17 +1462,17 @@ PROCESS is the process under watch, OUTPUT is the output received."
 
       (org-life-agenda-render-block-title :title "Task List")
 
-      (insert (propertize (format "| %-8s | Task \n" "Urgency")
+      (insert (propertize (format "| %-8s | Task \n" "Score")
                           'face 'bold))
 
       (dolist (task-info task-infos)
         (let* ((id (plist-get task-info :id))
                (entry (ht-get tasks-dict id))
-               (current-urgency (plist-get task-info :current_urgency)))
+               (current-score (plist-get task-info :current_score)))
         (org-life-agenda-render-entry
          :prefix (format "| %-8s | "
                          (org-life-agenda-float-to-string
-                          current-urgency))
+                          current-score))
          :entry entry)))))))
 
 (defun org-life-agenda-show-view (view)

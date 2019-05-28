@@ -814,7 +814,7 @@ class DailyInfo(Protocol):
 class TaskInfo(Protocol):
     properties = {
         'id': ObjectProperty(TaskID),
-        'current_urgency': ObjectProperty(UrgencyValue),
+        'current_score': ObjectProperty(UrgencyValue),
     }
 
 
