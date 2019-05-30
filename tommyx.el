@@ -1375,6 +1375,7 @@ Useful for a search overview popup."
 (setq ivy-display-functions-alist
 	  '((swiper . ivy-posframe-display-swiper)
 		(swiper-multi . ivy-posframe-display-swiper)
+		(swiper-all . ivy-posframe-display-swiper)
 		(counsel-ag . nil)
 		(counsel-rg . nil)
 		(counsel-grep . nil)
@@ -1991,8 +1992,8 @@ command (ran after) is mysteriously incorrect."
 		:which-key "other file")
 	"ir" '(counsel-recentf
 		:which-key "recent files")
-	"ig" '(counsel-projectile-grep
-		:which-key "project search")
+	;; "ig" '(counsel-projectile-grep
+	;; 	:which-key "project search")
 	"if" '(counsel-find-file
 		:which-key "files")
 
