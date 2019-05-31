@@ -212,8 +212,18 @@
 )
 (org-notify-add 'default '(:time "1h" :actions nil :period "2m" :duration 60))
 
+;; automatic capturing
+
+;; TODO: make this a defcustom
+(defvar org-auto-capture-targets nil)
+;; TODO: function for specifying the automation matching patterns for each capture target
+;; TODO: function for processing a list of items, such as from phone inbox. sanitize tag by trimming both sides
+;; TODO: function for identifying which pattern it belongs to. pre-process all targets into hashmap, make sure there's no duplicates
+;; TODO: function for actions to be taken, such as automatic capture. simply call (org-capture-string string capture-key) (org-capture-finalize)
+
 ;; scanning all org files
-(defvar all-org-directory-files nil 
+
+(defvar all-org-directory-files nil
   "List of all org files in org-directory.
 Update with 'update-all-org-directory-files'.")
 
@@ -221,12 +231,12 @@ Update with 'update-all-org-directory-files'.")
     (&optional recurse dirs file-excludes dir-excludes)
   "Fill the variable `all-org-directory-files'.
 Optional parameters:
-  recurse        If `t', scan the directory recusively.
-  dirs           A list of directories to scan for *.org files.
-  file-excludes  Regular expression. If a filename matches this regular
+  RECURSE        If t, scan the directory recusively.
+  DIRS           A list of directories to scan for *.org files.
+  FILE-EXCLUDES  Regular expression.  If a filename matches this regular
 expression,
                  do not add it to `all-org-directory-files'.
-  dir-excludes   Regular expression. If a directory name matches this
+  DIR-EXCLUDES   Regular expression.  If a directory name matches this
 regular expression,
                  do not add it to `all-org-directory-files'."
   (let ((targets (or dirs (list org-directory)))
@@ -256,6 +266,7 @@ regular expression,
   (find-org-files t))
 
 ;; key binding helpers
+
 (defun org-up-heading-custom ()
   (interactive)
   (if (org-at-heading-p)
