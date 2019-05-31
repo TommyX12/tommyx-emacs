@@ -48,7 +48,7 @@
 
 	"C-f" '(counsel-rg
 		:which-key "search in directory")
-	"C-F" '((lambda () (interactive) (counsel-rg (selection-or-word-at-point)))
+	(kbd "C-S-F") '((lambda () (interactive) (counsel-rg (selection-or-word-at-point)))
 		:which-key "search cursor in directory")
 	"f" '(counsel-projectile-rg
 		:which-key "search in project")
