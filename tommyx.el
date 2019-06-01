@@ -152,8 +152,10 @@
 (use-package evil-collection :ensure t :after evil
   :init
   ;; do not allow certain keys to be used by evil-collection
-  (setq evil-collection-key-blacklist
-        '("K")))
+  ;; TODO: We disabled J and K to encourage ivy use
+  ;; (setq evil-collection-key-blacklist
+  ;;       '("K"))
+  )
 (use-package evil-visualstar :ensure t)
 (use-package evil-surround :ensure t)
 (use-package evil-args :ensure t)
@@ -2182,8 +2184,9 @@ command (ran after) is mysteriously incorrect."
  "l" 'evil-forward-word-end
  
  ;; faster movement
- "K" 'fast-move-up
- "J" 'fast-move-down
+ ;; TODO: this is disabled to encourage using ivy.
+ ;; "K" 'fast-move-up
+ ;; "J" 'fast-move-down
  "H" 'evil-backward-WORD-begin
  "L" 'evil-forward-WORD-end
  "G" 'evil-first-non-blank
