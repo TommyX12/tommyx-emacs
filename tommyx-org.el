@@ -215,8 +215,8 @@
 
 ;; automatic capturing
 
-(defconst org-auto-capture-delete-flag "@delete ")
-(defconst org-auto-capture-delete-flag-regexp "@delete ")
+(defconst org-auto-capture-delete-flag "# (deleted) ")
+(defconst org-auto-capture-delete-flag-regexp "# (deleted) ")
 (defconst org-auto-capture-heading-regexp "\\*+ ")
 
 ;; TODO: make these a defcustom
@@ -250,23 +250,25 @@
     (insert org-auto-capture-delete-flag)))
 (defun org-auto-capture-parse-line (line)
   ;; TODO
-  (string-match "^\\([^:]+\\):\\(.+\\)" line)
-  (let ((pattern (match-string 1 line))
-        (content (match-string 2 line)))
-    (when (and pattern content)
-      `(:pattern ,(string-trim (downcase pattern)) :content ,(string-trim content)))))
+  (unless (string-match-p "^[ \t]*$" line)
+    (string-match "^\\([^:]+\\):\\(.+\\)" line)
+    (let ((pattern (match-string 1 line))
+          (content (match-string 2 line)))
+      (when (and pattern content)
+        `(:pattern ,(string-trim (downcase pattern)) :content ,(string-trim content))))))
 (defun org-auto-capture-delete-marked-subtree ()
   "Delete all lines marked to be deleted from current line to the end of current subtree."
   (interactive)
-  (let ((last-point -1))
-    (while (progn
-             (beginning-of-line)
-             (and (not (looking-at org-auto-capture-heading-regexp))
-                  (not (= (point) last-point))))
-      (if (looking-at org-auto-capture-delete-flag-regexp)
-          (delete-region (point-at-bol) (1+ (point-at-eol)))
-        (setq last-point (point))
-        (next-logical-line)))))
+  (save-excursion
+    (let ((last-point -1))
+      (while (progn
+               (beginning-of-line)
+               (and (not (looking-at org-auto-capture-heading-regexp))
+                    (not (= (point) last-point))))
+        (if (looking-at org-auto-capture-delete-flag-regexp)
+            (delete-region (point-at-bol) (1+ (point-at-eol)))
+          (setq last-point (point))
+          (next-logical-line))))))
 (defun org-auto-capture-process-subtree ()
   "Perform auto capture from current line to the end of current subtree."
   (interactive)
@@ -295,8 +297,8 @@
                 (setq loop-running nil)
               (next-logical-line)))
            ((not (ht-contains? target-map (downcase pattern)))
-            (setq loop-running nil)
-            (error "Error: pattern \"%s\" does not exist" pattern))
+            (message "Error: pattern \"%s\" does not exist" pattern)
+            (next-logical-line))
            (t
             (let* ((config (ht-get target-map (downcase pattern)))
                    (capture-key (car config))
@@ -306,7 +308,8 @@
                   (setq loop-running nil)
                 (unless (plist-get action-return :no-mark-delete)
                   (org-auto-capture-mark-delete))
-                (next-logical-line)))))))))))
+                (next-logical-line))))))
+        (redisplay))))))
 
 ;; scanning all org files
 
