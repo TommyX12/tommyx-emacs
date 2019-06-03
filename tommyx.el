@@ -29,9 +29,9 @@
 ;; set font
 (if (not (boundp 'selected-font)) (progn
   (cond
-	 ((and (eq system-type 'ms-dos)
+   ((and (eq system-type 'ms-dos)
          (find-font (font-spec :name "Consolas")))
-	  (setq selected-font "Consolas"))
+   (setq selected-font "Consolas"))
    ((find-font (font-spec :name "Fira Mono"))
     (setq selected-font "Fira Mono"))
    ((find-font (font-spec :name "Source Code Pro"))
