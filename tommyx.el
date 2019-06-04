@@ -1427,6 +1427,14 @@ Useful for a search overview popup."
 ;; (defun fit-window-to-region ()
 ;; 	(interactive)
 ;; 	TODO)
+(defun execute-buffer-as-sh ()
+  (interactive)
+  (let (compile-command)
+    (compile (buffer-string))))
+(defun execute-region-as-sh ()
+  (interactive)
+  (let (compile-command)
+    (compile (buffer-substring (region-beginning) (region-end)))))
 (defun emms-echo-no-error (&optional insertp)
   "Describe the current EMMS track in the minibuffer.
 If INSERTP is non-nil, insert the description into the current buffer instead.
@@ -2075,6 +2083,23 @@ command (ran after) is mysteriously incorrect."
           (message "Evaluating region.")
           (call-interactively 'eval-region))
     :which-key "eval region")
+)
+
+(general-define-key
+  :keymaps 'sh-mode-map
+	:states '(motion normal)
+	:prefix "SPC j"
+
+  "E" '(execute-buffer-as-sh
+    :which-key "execute buffer")
+)
+(general-define-key
+  :keymaps 'sh-mode-map
+	:states '(visual)
+	:prefix "SPC j"
+
+  "e" '(execute-region-as-sh
+    :which-key "execute region")
 )
 
 ;; evil

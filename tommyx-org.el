@@ -882,4 +882,3 @@ regular expression,
      ((org-life-agenda ""
                        ())))
    org-agenda-custom-commands))
-
