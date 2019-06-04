@@ -401,13 +401,14 @@ class PolynomialSchedulingPolicy(SchedulingPolicy):
 
             # "normalize"
 
-            max_score = max(scores)
-            if max_score > 1:
-                max_score = 1
-
             for i in range(len(scores)):
                 scores[i] = 1.0 / \
-                    (1.0 + (scores[i] + 1 - max_score) / self.random_power)
+                    (1.0 + scores[i] / self.random_power)
+
+            max_score = max(scores)
+            if max_score > 0:
+                for i in range(len(scores)):
+                    scores[i] /= max_score
 
             # Now scores[i] is from 0 to 1, and the max element = 1
 
