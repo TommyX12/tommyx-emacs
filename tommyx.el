@@ -450,8 +450,8 @@ Useful for a search overview popup."
   (setq ivy-display-function nil)
   (setq ivy-display-functions-alist
 	      '((swiper . ivy-posframe-display-swiper)
-		      (swiper-multi . ivy-posframe-display-swiper)
-		      (swiper-all . ivy-posframe-display-swiper)
+		      (swiper-multi . nil)
+		      (swiper-all . nil)
 		      (counsel-ag . nil)
 		      (counsel-rg . nil)
 		      (counsel-grep . nil)
@@ -688,8 +688,8 @@ Useful for a search overview popup."
       (cond ((setq dispatch (assoc char avy-dispatch-alist))
              (setq avy-action (cdr dispatch))
              (throw 'done 'restart))
-            ;; Let f exit avy
-            ((memq char '(?f 27 ?\C-g))
+            ;; Let f and tab exit avy
+            ((memq char '(?f ?\t 27 ?\C-g))
              ;; exit silently
              (throw 'done 'exit))
             ((eq char ??)
@@ -2611,6 +2611,8 @@ command (ran after) is mysteriously incorrect."
 	"M-N" 'ivy-dispatching-call
 	"M-h" 'ivy-backward-kill-word
 	"M-o" 'ivy-occur ; save to temp buffer for manipulation
+  "<tab>" 'ivy-posframe-avy
+  "TAB" 'ivy-posframe-avy
 
 	"j" (general-key-dispatch 'self-insert-command
 		:timeout 0.25
@@ -2624,6 +2626,8 @@ command (ran after) is mysteriously incorrect."
 (general-define-key
 	:keymaps '(swiper-map)
 	"M-s" 'swiper-query-replace
+  "<tab>" 'ivy-posframe-swiper-avy
+  "TAB" 'ivy-posframe-swiper-avy
 )
 (general-define-key
 	:keymaps '(swiper-all-map)
