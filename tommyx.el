@@ -77,20 +77,6 @@
 (menu-bar-mode -1)
 
 
-;;; packages settings before loading
-
-;; evil
-(setq evil-want-Y-yank-to-eol t)
-(setq evil-want-integration nil)
-; https://github.com/emacs-evil/evil-collection/issues/60
-(setq evil-want-keybinding nil)
-(setq evil-search-module 'evil-search)
-
-;; evil-collection
-(setq evil-collection-company-use-tng nil)
-(setq evil-collection-setup-minibuffer nil)
-
-
 ;;; initialize packages
 (require 'package)
 
@@ -115,23 +101,34 @@
 (require 'font-lock+)
 (require 'hl-line+)
 (require 'info+)
+
 (use-package package-lint :ensure t)
+
 (use-package dash :ensure t)
+
 (use-package ht :ensure t)
+
 (use-package s :ensure t)
+
 (use-package cl-lib :ensure t)
+
 (use-package htmlize :ensure t)
+
 (use-package request :ensure t
 	:config
   (when (eq system-type 'windows-nt)
     (setq request-backend 'url-retrieve)) ; curl is slow on windows
 )
+
 (use-package json :ensure t)
+
 (use-package unicode-escape :ensure t)
+
 (use-package alert :ensure t
 	:config
 	(setq alert-default-style 'companion)
 )
+
 (use-package emms :ensure t
 	:config
 	(require 'emms-setup)
@@ -146,49 +143,321 @@
               (setq-local use-line-nav t)))
   (when (and (bound-and-true-p emms-default-music-dir))
     (emms-add-directory-tree emms-default-music-dir)))
-;; (use-package undo-tree :ensure t)
+
+;; (use-package undo-tree :ensure t
+;;   :config
+;;   ;; attempt to fix bug
+;;   (setq undo-tree-enable-undo-in-region nil)
+;;   ;; persistent undo
+;;   (setq undo-tree-auto-save-history t)
+;;   (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/history"))))
+
 (use-package all-the-icons :ensure t)
-(use-package evil :ensure t)
+
+(use-package evil :ensure t
+  :init
+  (setq evil-want-Y-yank-to-eol t)
+  (setq evil-want-integration nil)
+                                        ; https://github.com/emacs-evil/evil-collection/issues/60
+  (setq evil-want-keybinding nil)
+  (setq evil-search-module 'evil-search)
+
+  :config
+  (evil-mode 1) ; use evil-mode at startup
+  (global-undo-tree-mode -1) ; do not use unto tree due to bugs
+                                        ; split to the right and below
+  (setq evil-split-window-below t)
+  (setq evil-vsplit-window-right t)
+  (setq evil-ex-substitute-global t)
+  (setq evil-move-cursor-back nil)
+  (setq evil-move-beyond-eol t)
+  (setq-default evil-symbol-word-search t)
+                                        ; auto center after search
+  (defun my-center-line (&rest _) (evil-scroll-line-to-center nil))
+  (defun flash-cursor (&rest _)
+    (hl-line-highlight)
+    (let ((ov (make-overlay (point) (- (point) 1))))
+      (overlay-put ov 'priority 9999)
+	    (overlay-put ov 'window (selected-window))
+	    (overlay-put ov 'face 'cursor)
+      (sit-for 1)
+      (delete-overlay ov)))
+  ;; (advice-add 'evil-ex-search-next :after #'flash-cursor)
+  ;; (advice-add 'evil-ex-search-previous :after #'flash-cursor)
+  (advice-add 'evil-ex-search-word-forward :after #'evil-ex-search-previous)
+  (advice-add 'evil-ex-search-unbounded-word-forward :after #'evil-ex-search-previous)
+  (advice-add 'evil-ex-search-word-backward :after #'evil-ex-search-next)
+  (defun my-search-previous (&rest _) (evil-ex-search-previous))
+  (defun my-search-next (&rest _) (evil-ex-search-next))
+  (advice-add 'evil-visualstar/begin-search-forward :after #'my-search-previous)
+  (advice-add 'evil-visualstar/begin-search-backward :after #'my-search-next)
+  ;; no magic for search
+  (setq evil-magic nil) ; doesn't work
+  ;; search highlight persist
+  (global-evil-search-highlight-persist) ; doesn't work
+  (setq evil-search-highlight-persist-all-windows t)
+  ;; no echoing
+  (setq evil-insert-state-message nil)
+  (setq evil-visual-state-message nil)
+  (setq evil-replace-state-message nil)
+  ;; custom cursor
+  ;; (setq evil-insert-state-cursor '((bar . 4)))
+  ;; moved to theme definition
+  ;; push jump list every time entering insert mode
+  (add-hook 'evil-insert-state-entry-hook 'evil-set-jump)
+  ;; do not remove space when leaving insert mode
+  (setq evil-allow-remove-spaces t) ;; TODO still allow it.
+  (defun my-evil-maybe-remove-spaces (func &rest args)
+    (if evil-allow-remove-spaces
+        (apply func args)
+      (setq evil-maybe-remove-spaces nil)
+      (apply func args)))
+  (advice-add #'evil-maybe-remove-spaces :around #'my-evil-maybe-remove-spaces))
+
 (use-package evil-collection :ensure t :after evil
   :init
+  (setq evil-collection-company-use-tng nil)
+  (setq evil-collection-setup-minibuffer nil)
   ;; do not allow certain keys to be used by evil-collection
   ;; TODO: We disabled J and K to encourage ivy use
   ;; (setq evil-collection-key-blacklist
   ;;       '("K"))
-  )
-(use-package evil-visualstar :ensure t)
-(use-package evil-surround :ensure t)
+
+  :config
+  (delete 'neotree evil-collection-mode-list)
+  (delete 'company evil-collection-mode-list)
+  (evil-collection-init))
+
+(use-package evil-visualstar :ensure t
+  :config
+  (global-evil-visualstar-mode 1))
+
+(use-package evil-surround :ensure t
+  :config
+  (global-evil-surround-mode 1))
+
 (use-package evil-args :ensure t)
+
 (use-package evil-matchit :ensure t :defer t)
+
 (use-package evil-numbers :ensure t)
+
 (use-package evil-exchange :ensure t
 	:config
 	(setq evil-exchange-key (kbd "x"))
 	(setq evil-exchange-cancel-key (kbd ",x"))
 	(evil-exchange-install)
 )
+
 (use-package evil-search-highlight-persist :ensure t)
+
 (use-package evil-nerd-commenter :ensure t)
+
 (use-package hydra :ensure t
 	:config
 	(setq lv-use-separator t)
 	(setq hydra-lv nil)
 )
+
 (use-package projectile :ensure t)
 (require 'per-frame-header-mode-line)
+
 (use-package smex :ensure t)
-(use-package helm :ensure t)
-(use-package helm-flx :ensure t)
-(use-package helm-descbinds :ensure t)
-(use-package helm-describe-modes :ensure t)
+
+(use-package helm :ensure t
+  :config
+  (require 'helm-config)
+  ;; (setq helm-display-function 'helm-display-buffer-in-own-frame
+  ;;		   helm-display-buffer-reuse-frame t
+  ;;		   helm-use-undecorated-frame-option t)
+  ;; (helm-mode 1)
+  (helm-autoresize-mode 1) ; always auto resize window
+  (setq helm-autoresize-max-height 40)
+  (setq helm-autoresize-min-height 40)
+  (setq helm-split-window-inside-p t)
+  (setq helm-full-frame nil)
+  (setq helm-recentf-fuzzy-match t)
+  (setq helm-buffers-fuzzy-matching t)
+  (setq helm-recentf-fuzzy-match t)
+  (setq helm-locate-fuzzy-match t)
+  (setq helm-M-x-fuzzy-match t)
+  (setq helm-semantic-fuzzy-match t)
+  (setq helm-imenu-fuzzy-match t)
+  (setq helm-apropos-fuzzy-match t)
+  (setq helm-lisp-fuzzy-completion t)
+  (setq helm-session-fuzzy-match t)
+  (setq helm-etags-fuzzy-match t)
+  (setq helm-mode-fuzzy-match t)
+  (setq helm-completion-in-region-fuzzy-match t)
+  (setq helm-move-to-line-cycle-in-source nil)
+  (setq helm-ff-file-name-history-use-recentf t)
+  (setq helm-follow-mode-persistent t)
+  (setq helm-source-names-using-follow '("Occur")))
+
+(use-package helm-flx :ensure t
+  :config
+  (setq helm-flx-for-helm-find-files t
+	      helm-flx-for-helm-locate t)
+  (helm-flx-mode +1))
+
+(use-package helm-descbinds :ensure t
+  :config
+  (helm-descbinds-mode))
+
+(use-package helm-describe-modes :ensure t
+  :config
+  (global-set-key [remap describe-mode] #'helm-describe-modes))
+
 (use-package helm-swoop :ensure t
 	:config
-	(setq helm-swoop-split-with-multiple-windows t)
-)
-(use-package helm-projectile :ensure t :after projectile)
+	(setq helm-swoop-split-with-multiple-windows t))
+
+(use-package helm-projectile :ensure t :after projectile
+  (helm-projectile-on))
+
 (use-package swiper-helm :ensure t)
-(use-package ivy :ensure t)
-(use-package ivy-posframe :ensure t :after ivy)
+
+(use-package ivy :ensure t
+  :config
+  ;; main
+  (ivy-mode 1)
+  (counsel-mode 1)
+  ;; remove initial input in ivy commands
+  (setq ivy-initial-inputs-alist nil)
+  ;; enable fuzzy, except for swiper
+  (setq ivy-re-builders-alist
+	      '((swiper . ivy--regex-ignore-order)
+          (counsel-rg . ivy--regex-ignore-order)
+		      (swiper-multi . ivy--regex-plus)
+		      (t		. ivy--regex-fuzzy)))
+  ;; enable wrapping
+  (setq ivy-wrap t)
+  (setq ivy-action-wrap t)
+  ;; add recent files and bookmarks to ivy-switch-buffer
+  (setq ivy-use-virtual-buffers t)
+  ;; misc
+  (setq ivy-height 12)
+  (setq ivy-height-alist nil) ; all ivy should have same height
+  ;; display functions
+  ;; better UI
+  (defun ivy-format-function-custom (cands)
+    "Transform CANS into a string for minibuffer."
+    (ivy--format-function-generic
+     (lambda (str)
+	     (concat "> " (ivy--add-face str 'ivy-current-match)))
+     (lambda (str)
+	     (concat "  " str))
+     cands
+     "\n"))
+  (defun ivy-format-function-custom (cands)
+    "Transform CANDS into a string for minibuffer."
+    (ivy--format-function-generic
+     (lambda (str)
+       (concat "> " (ivy--add-face (concat str "\n") 'ivy-current-match)))
+     (lambda (str)
+       (concat "  " str "\n"))
+     cands
+     ""))
+  (setq ivy-format-function 'ivy-format-function-custom)
+  ;; (setq ivy-format-function 'ivy-format-function-default)
+  (setq ivy-count-format "%d/%d | "))
+
+(use-package ivy-posframe :ensure t :after ivy
+  :config
+  
+  (setq ivy-posframe-parameters '(
+	                                (width . 50)
+	                                (border-width . 1)
+	                                (internal-border-width . 1)
+                                  (undecorated . t)
+	                                (min-width . 50)
+	                                (refresh . 1)
+	                                ))
+  (setq ivy-posframe-height (truncate (* ivy-height 1.1)))
+  (setq ivy-posframe-border-width 1)
+  (defun ivy-posframe--display (str &optional poshandler full-width) ; override
+    "Show STR in ivy's posframe."
+    (if (not (posframe-workable-p))
+	      (ivy-display-function-fallback str)
+      (setq ivy-posframe--display-p t)
+      (with-ivy-window
+	      (posframe-show
+	       ivy-posframe-buffer
+	       :font ivy-posframe-font
+	       :string
+         (with-current-buffer (window-buffer (active-minibuffer-window))
+           (let ((point (point))
+                 (string (if ivy-posframe--ignore-prompt
+                             str
+                           (concat (buffer-string) "  " str))))
+             (add-text-properties (- point 1) point '(face ivy-posframe-cursor) string)
+             string))
+	       :position (point)
+	       :poshandler poshandler
+         :background-color (face-attribute 'ivy-posframe :background nil t)
+         :foreground-color (face-attribute 'ivy-posframe :foreground nil t)
+	       ;; :height (truncate (* 1.1 ivy-height))
+	       ;; :width (window-width) ; (if full-width (window-width) nil)
+	       ;; :min-height 10
+	       ;; :min-width 50
+         :height ivy-posframe-height
+         :width (window-width)
+         :min-height (or ivy-posframe-min-height (+ ivy-height 1))
+         :min-width (or ivy-posframe-min-width (round (* (frame-width) 0.62)))
+         :internal-border-width ivy-posframe-border-width
+	       :override-parameters ivy-posframe-parameters))))
+  (defun posframe-poshandler-adaptive-top-bottom (info)
+    "Posframe's position handler.
+
+Get a position which let posframe stay onto current window's
+top or bottom side without blocking center content.
+Useful for a search overview popup."
+    (let* (
+				   (posframe (plist-get info :posframe))
+				   (parent-frame (plist-get info :parent-frame))
+				   (frame-height (frame-pixel-height parent-frame))
+				   (window (plist-get info :parent-window))
+				   (window-left (window-pixel-left window))
+				   (window-top (window-pixel-top window))
+				   (window-height (window-pixel-height window))
+				   (posframe-height (frame-pixel-height posframe))
+				   (modeline-height (window-mode-line-height)))
+		  (cond
+		   (t; (<= (/ window-height posframe-height) 3.0)
+			  (if (<= (+ window-top (/ window-height 2.0)) (/ frame-height 2.0))
+				    (cons ; bottom
+					   window-left
+					   (min (- frame-height modeline-height posframe-height)
+						      (+ window-top window-height)
+					        )
+				     )
+				  (cons ; top
+					 window-left
+					 (max 0
+						    (- window-top posframe-height)
+					      )
+				   )
+			    )
+		    )
+		   ;; (t
+		   ;; 	(cons ; window bottom
+		   ;; 		window-left
+		   ;; 		(+ window-top window-height (- 0 modeline-height posframe-height)))
+		   ;; )
+		   )))
+  (defun ivy-posframe-display-swiper (str)
+    (ivy-posframe--display str #'posframe-poshandler-adaptive-top-bottom t))
+  (setq ivy-display-function nil)
+  (setq ivy-display-functions-alist
+	      '((swiper . ivy-posframe-display-swiper)
+		      (swiper-multi . ivy-posframe-display-swiper)
+		      (swiper-all . ivy-posframe-display-swiper)
+		      (counsel-ag . nil)
+		      (counsel-rg . nil)
+		      (counsel-grep . nil)
+		      (t . ivy-posframe-display-at-point)))
+  (ivy-posframe-enable))
+
 (use-package all-the-icons-ivy :ensure t :after ivy
 	:config
 	(setq all-the-icons-ivy-buffer-commands
@@ -197,6 +466,7 @@
 				'(counsel-find-file counsel-file-jump counsel-recentf counsel-projectile-find-file counsel-projectile-find-dir))
 	(all-the-icons-ivy-setup)
 )
+
 (use-package ivy-rich :ensure t
   :config
   (setq
@@ -227,6 +497,7 @@
         (:face font-lock-comment-face))))))
   (ivy-rich-mode 1))
 ;; TODO: There is a bug. Might cause closing some window to close emacs.
+
 ;; (use-package popwin :ensure t
 ;; 	:config
 ;; 	(setq popwin:adjust-other-windows t)
@@ -255,8 +526,20 @@
 (use-package spacemacs-theme :ensure t :defer t)
 (use-package doom-themes :ensure t :defer t)
 (use-package ace-window :ensure t)
-(use-package general :ensure t)
-(use-package beacon :ensure t)
+(use-package general :ensure t
+  :config
+  (general-evil-setup)
+  (general-auto-unbind-keys))
+(use-package beacon :ensure t
+  :config
+  (setq beacon-blink-when-focused nil) ; may cause problem
+  (setq beacon-blink-when-buffer-changes t)
+  (setq beacon-blink-when-window-changes t)
+  (setq beacon-blink-when-window-scrolls t)
+  (setq beacon-blink-duration 0.15)
+  (setq beacon-blink-delay 0.15)
+  (setq beacon-size 15)
+  (setq beacon-color "#2499ff"))
 ;; (use-package highlight-indent-guides :ensure t
 ;;   :config
 ;;   (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
@@ -283,17 +566,120 @@
   (add-hook 'protobuf-mode-hook 'highlight-indentation-mode))
 
 (require 'origami)
+(add-to-list 'origami-parser-alist
+	'(python-mode . origami-indent-parser))
+;; (global-origami-mode 1)
+
 (require 'crosshairs)
 ;; (use-package origami :ensure t)
+
 (use-package format-all :ensure t)
-(use-package volatile-highlights :ensure t)
-(use-package evil-goggles :ensure t)
-(use-package flycheck :ensure t)
-(use-package flyspell-lazy :ensure t)
+
+(use-package volatile-highlights :ensure t
+  :config
+  ;; (vhl/define-extension 'evil
+  ;; 						 'evil-normal-state)
+  ;; (with-eval-after-load 'evil
+  ;; 	   (vhl/install-extension 'evil)
+  ;; 	   (vhl/load-extension 'evil)) 
+  (vhl/define-extension 'undo-tree
+					              'undo-tree-move
+					              'undo-tree-yank)
+  (with-eval-after-load 'undo-tree
+	  (vhl/install-extension 'undo-tree)
+	  (vhl/load-extension 'undo-tree))
+  (volatile-highlights-mode 1))
+
+(use-package evil-goggles :ensure t
+  :config
+  (setq evil-goggles-pulse nil)
+  (setq evil-goggles-duration 1)
+  (setq evil-goggles-async-duration 1)
+  (setq evil-goggles-blocking-duration 1)
+  (setq evil-goggles--commands
+	      '((evil-yank
+           :face evil-goggles-yank-face
+           :switch evil-goggles-enable-yank
+           :advice evil-goggles--generic-async-advice)
+          (evil-join
+           :face evil-goggles-join-face
+           :switch evil-goggles-enable-join
+           :advice evil-goggles--join-advice)
+          (evil-join-whitespace
+           :face evil-goggles-join-face
+           :switch evil-goggles-enable-join
+           :advice evil-goggles--join-advice)
+          (evil-fill-and-move
+           :face evil-goggles-fill-and-move-face
+           :switch evil-goggles-enable-fill-and-move
+           :advice evil-goggles--generic-async-advice)
+          (evil-shift-left
+           :face evil-goggles-shift-face
+           :switch evil-goggles-enable-shift
+           :advice evil-goggles--generic-async-advice)
+          (evil-shift-right
+           :face evil-goggles-shift-face
+           :switch evil-goggles-enable-shift
+           :advice evil-goggles--generic-async-advice)
+          (evil-org-<
+           :face evil-goggles-shift-face
+           :switch evil-goggles-enable-shift
+           :advice evil-goggles--generic-async-advice)
+          (evil-org->
+           :face evil-goggles-shift-face
+           :switch evil-goggles-enable-shift
+           :advice evil-goggles--generic-async-advice)
+          (evil-surround-region
+           :face evil-goggles-surround-face
+           :switch evil-goggles-enable-surround
+           :advice evil-goggles--generic-async-advice)
+          (evil-commentary
+           :face evil-goggles-commentary-face
+           :switch evil-goggles-enable-commentary
+           :advice evil-goggles--generic-async-advice)
+          (evilnc-comment-operator
+           :face evil-goggles-nerd-commenter-face
+           :switch evil-goggles-enable-nerd-commenter
+           :advice evil-goggles--generic-async-advice)
+          (evil-replace-with-register
+           :face evil-goggles-replace-with-register-face
+           :switch evil-goggles-enable-replace-with-register
+           :advice evil-goggles--generic-async-advice-1)
+          (evil-set-marker
+           :face evil-goggles-set-marker-face
+           :switch evil-goggles-enable-set-marker
+           :advice evil-goggles--set-marker-advice)
+          (evil-record-macro
+           :face evil-goggles-record-macro-face
+           :switch evil-goggles-enable-record-macro
+           :advice evil-goggles--record-macro-advice)
+          (evil-paste-before
+           :face evil-goggles-paste-face
+           :switch evil-goggles-enable-paste
+           :advice evil-goggles--paste-advice :after t)
+          (evil-paste-after
+           :face evil-goggles-paste-face
+           :switch evil-goggles-enable-paste
+           :advice evil-goggles--paste-advice :after t)))
+  (evil-goggles-mode 1))
+
+(use-package flycheck :ensure t
+  :config
+  (global-flycheck-mode 1)
+  ;; BUG: temporarily disable for some modes
+  (add-hook 'haskell-mode-hook (lambda () (flycheck-mode -1))))
+
+(use-package flyspell-lazy :ensure t
+  :config
+  (flyspell-lazy-mode 1)
+  (setq flyspell-lazy-idle-seconds 2.5)
+  (setq flyspell-lazy-window-idle-seconds 5))
+
 (use-package rainbow-delimiters :ensure t
   :config
   (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
   (add-hook 'text-mode-hook #'rainbow-delimiters-mode))
+
 (use-package avy :ensure t
   :config
   ;; avy
@@ -318,17 +704,114 @@
   (setq avy-keys '(?w ?e ?r ?u ?i ?o ?p ?a ?s ?d ?g ?h ?j ?k ?l ?v ?n))
   (setq avy-all-windows nil)
   (setq avy-goto-word-0-regexp "\\(\\<\\sw\\|\n\\)"))
+
 (use-package smartparens :ensure t
-		 ; don't show in mode display
-		 :diminish smartparens-mode)
+  :config
+  (require 'smartparens-config)
+  (smartparens-global-mode 1)
+  (show-smartparens-global-mode 1)
+  (setq sp-show-pair-from-inside t) ; TODO can set to false if overlay problem concerns us
+  (setq smartparens-strict-mode nil)
+  (setq sp-cancel-autoskip-on-backward-movement nil)
+  ;; (setq show-paren-style 'expression)
+  ;; (show-paren-mode 1)
+                                        ; auto expanison of brackets
+  (sp-local-pair 'prog-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
+  (sp-local-pair 'text-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
+  (sp-local-pair 'prog-mode "[" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
+  (sp-local-pair 'text-mode "[" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
+  (sp-local-pair 'prog-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
+  (sp-local-pair 'text-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
+  ;; (defun remove-parens-overlay (&rest _) (sp-remove-active-pair-overlay))
+  ;; (advice-add 'evil-normal-state :after #'remove-parens-overlay)
+
+  ;; don't show in mode display
+  :diminish smartparens-mode)
+
 (use-package lsp-mode :ensure t)
+
 (use-package lsp-ui :ensure t :after lsp-mode
 	:config
 	;; (add-hook 'lsp-mode-hook 'lsp-ui-mode) ; TODO disabled for performance reasons
 )
+
 (use-package company :ensure t
   :config
-  (make-local-variable 'company-backends))
+  (make-local-variable 'company-backends)
+  (add-hook 'after-init-hook 'global-company-mode)
+  (company-tng-configure-default)
+  ;; (company-quickhelp-mode)
+  (setq my-company--company-command-p-override nil)
+  (defun my-company--company-command-p (func &rest args)
+	  "Patch company-mode to treat key sequences like \"jp\" not a company-mode command.
+
+Since company-tng-frontend only complete selection when pressing any key that isn't
+a company-mode command (checked with this function), and we want general-key-dispatch
+to have \"j\" as a company-mode command (so do not complete) but not to have
+\"jp\" as one (so do completion)."
+	  (if my-company--company-command-p-override
+		    nil ; treat all command as breaking company completion
+		  (let ((return (apply func args)))
+
+			  ;; (message
+			  ;; 	(concat "debug: "
+			  ;; 					(prin1-to-string company-selection-changed) " "
+			  ;; 					(prin1-to-string return) " "
+			  ;; 					(prin1-to-string (and return (not (numberp return)))) " "
+			  ;; 					(prin1-to-string args)))
+
+			  (and return (not (numberp return))))))
+  (advice-add #'company--company-command-p :around #'my-company--company-command-p)
+  ;; make evil-normal-state abort completion. note that this works only if 'not is the
+  ;; first element in company-continue-commands.
+  (setq company-continue-commands (-snoc company-continue-commands 'evil-normal-state))
+
+  (eval-after-load 'company
+    '(progn
+		   
+		   (global-set-key (kbd "M-1") (lambda (interactive) (company-complete-number 1)))
+		   (global-set-key (kbd "M-2") (lambda (interactive) (company-complete-number 2)))
+		   (global-set-key (kbd "M-3") (lambda (interactive) (company-complete-number 3)))
+		   (global-set-key (kbd "M-4") (lambda (interactive) (company-complete-number 4)))
+		   (global-set-key (kbd "M-5") (lambda (interactive) (company-complete-number 5)))
+		   (global-set-key (kbd "M-6") (lambda (interactive) (company-complete-number 6)))
+		   (global-set-key (kbd "M-7") (lambda (interactive) (company-complete-number 7)))
+		   (global-set-key (kbd "M-8") (lambda (interactive) (company-complete-number 8)))
+		   (global-set-key (kbd "M-9") (lambda (interactive) (company-complete-number 9)))
+		   (global-set-key (kbd "M-0") (lambda (interactive) (company-complete-number 0)))
+		   (define-key company-active-map (kbd "C-h") nil)
+		   (define-key company-active-map (kbd "C-z") 'company-show-doc-buffer)
+                                        ; C-z when company open will show help for that symbol in another window.
+		   (define-key company-active-map (kbd "S-TAB") 'company-select-previous)
+		   (define-key company-active-map (kbd "<S-tab>") 'company-select-previous)))
+  (setq company-frontends
+	      '(company-tng-frontend
+		      company-pseudo-tooltip-frontend
+		      ;; company-preview-frontend
+		      company-echo-metadata-frontend))
+  (setq company-idle-delay 0)
+  (setq company-tooltip-align-annotations t)
+  ;; (setq company-idle-delay 0.2)
+  (setq company-selection-wrap-around t)
+  (setq company-show-numbers t)
+  (setq company-quickhelp-delay nil) ; we will manually trigger the help
+  (setq company-require-match 'never)
+  (setq company-dabbrev-downcase nil)
+  (setq company-dabbrev-ignore-case nil)
+  (setq company-dabbrev-other-buffers t)
+  ;; (with-eval-after-load 'company
+  ;;   (setq-default company-transformers '())
+  ;;   ; fix bug with custom completer
+  ;;   (company-flx-mode 1)
+  ;;   (company-flx-mode -1)
+  ;;   ;; (delete #'company-flx-transformer company-transformers)
+  ;;   (advice-add 'company-capf :around #'company-flx-company-capf-advice)
+  ;;   (add-hook 'emacs-lisp-mode-hook (lambda () (setq-local company-transformers '(company-flx-transformer))))
+  ;;   (add-hook 'css-mode-hook (lambda () (setq-local company-transformers '(company-flx-transformer)))))
+  (with-eval-after-load 'company
+    (company-flx-mode 1))
+  (setq company-flx-limit 256))
+
 (use-package company-posframe :ensure t :after company
 	:config
 	; company posframe (childframe)
@@ -360,20 +843,26 @@
 	(when (require 'desktop nil 'noerror)
 		(push '(company-posframe-mode . nil)
 			desktop-minor-mode-table)))
+
 ;; (use-package company-box :ensure t :after company
 ;; 	:hook (company-mode-hook . company-box-mode))
+
 (use-package company-quickhelp :ensure t)
+
 (use-package company-flx :ensure t)
+
 ;; (use-package company-lsp :ensure t :after lsp-mode
 ;; 	:config
 ;;   (setq-default company-backends
 ;;                 (cons #'company-lsp company-backends)))
+
 (use-package company-ycmd :ensure t 
   :config
   (setq-default company-backends
                 (cons #'company-ycmd company-backends)))
 
 ;; (require 'company-tabnine)
+
 (use-package company-tabnine :ensure t :after company
   :config
   (setq-default company-backends
@@ -397,6 +886,12 @@
   )
 
 (use-package yasnippet :ensure t
+  :config
+  (add-hook 'after-init-hook 'yas-global-mode)
+  (add-to-list 'yas-snippet-dirs
+               (expand-file-name "snippets" tommyx-config-path))
+  (setq company-continue-commands (-snoc company-continue-commands 'yas-insert-snippet)) ; make company break completion
+
   :bind
   (:map yas-minor-mode-map
 	      ("TAB" . nil)
@@ -408,44 +903,106 @@
 	      ("<tab>" . nil)
 	      ("S-TAB" . nil)
 	      ("<S-tab>" . nil)))
-(use-package ycmd :ensure t)
+
+(use-package ycmd :ensure t
+  :config
+  (setq ycmd-global-config (expand-file-name "third_party/ycmd/.ycm_extra_conf.py"
+	                                           tommyx-config-path))
+  (unless (boundp 'ycmd-server-python-command)
+    (setq ycmd-server-python-command "python"))
+  (setq ycmd-server-command `(,ycmd-server-python-command "-u" ,(expand-file-name "third_party/ycmd/ycmd/"
+	                                                                                tommyx-config-path)))
+  ;; TODO group these into respective language mode.
+  ;; TODO disabled
+  ;; (add-hook 'ycmd-mode-hook 'company-ycmd-setup) ; already manually added
+  (add-hook 'ycmd-mode-hook 'flycheck-ycmd-setup)
+  (add-hook 'ycmd-mode-hook (lambda () (interactive) (when (ycmd-major-mode-to-file-types major-mode) (ycmd-eldoc-setup))))
+                                        ; attempt to improve performance
+  (setq company-ycmd-request-sync-timeout 0)
+                                        ; file types activation
+  (add-hook 'c++-mode-hook (lambda () (ycmd-mode 1)))
+  (add-hook 'csharp-mode-hook (lambda () (ycmd-mode 1)))
+  ;; TODO: enable ycmd when you actually need to
+  ;; (add-hook 'java-mode-hook (lambda () (ycmd-mode 1)))
+  ;; (add-hook 'text-mode-hook (lambda () (ycmd-mode 1)))
+  ;; TODO: bug: remove eldoc (ycmd freezes) and ycmd mode from certain other modes.
+  (add-hook 'text-mode-hook (lambda () (ycmd-eldoc-mode -1)))
+  (add-hook 'org-mode-hook (lambda () (ycmd-eldoc-mode -1)))
+  (add-hook 'racket-mode-hook (lambda () (ycmd-eldoc-mode -1)))
+  (add-hook 'haskell-mode-hook (lambda () (ycmd-eldoc-mode -1)))
+  (add-hook 'typescript-mode-hook (lambda () (ycmd-mode -1)))
+  (add-hook 'python-mode-hook (lambda () (ycmd-mode -1)))
+                                        ; c/c++
+  (evil-define-key 'normal c-mode-map (kbd "C-]") 'ycmd-goto) ; goto
+  (evil-define-key 'normal c++-mode-map (kbd "C-]") 'ycmd-goto) ; goto
+                                        ; c#
+  (evil-define-key 'normal csharp-mode-map (kbd "C-]") 'ycmd-goto) ; goto
+                                        ; java
+  (add-to-list 'ycmd-file-type-map '(java-mode "java")) ; file type detection
+  (evil-define-key 'normal java-mode-map (kbd "C-]") 'ycmd-goto) ; goto
+                                        ; python
+  (evil-define-key 'normal python-mode-map (kbd "C-]") 'elpy-goto-definition) ; goto
+                                        ; typescript
+  (evil-define-key 'normal typescript-mode-map (kbd "C-]") 'tide-jump-to-definition) ; goto
+                                        ; elisp
+  (add-hook 'emacs-lisp-mode-hook (lambda () (ycmd-mode -1))) ; disable ycm
+  (add-hook 'java-mode-hook (lambda () (ycmd-mode -1))) ; TODO bug
+                                        ; css
+  (add-hook 'css-mode-hook (lambda () (ycmd-mode -1))))
+
 (use-package flycheck-ycmd :ensure t)
+
 (use-package yasnippet-snippets :ensure t)
+
 (use-package powerline :ensure t)
+
 (use-package powerline-evil :ensure t)
+
 (use-package spaceline :ensure t)
+
 (use-package spaceline-all-the-icons :ensure t :after all-the-icons spaceline
 	:config
 	;; (spaceline-all-the-icons-theme)
 )
+
 ;; (use-package ecb :ensure t
 ;; 	:config
 ;; 	(require 'ecb)
 ;; 	(setq ecb-layout-name "right1")
 ;; )
+
 ;; (use-package sublimity :ensure t
 ;; 	:config
 ;; 	(require 'sublimity-scroll
 ;; 	(require 'sublimity-map)
 ;; 	(require 'sublimity-attractive)
 ;; )
+
 ;; (use-package minimap :ensure t
 ;; 	:config
 ;; )
+
 (use-package winum :ensure t
 	:config
 	(winum-mode)
 )
+
 ;; (use-package symon :ensure t
 ;; 	:config
 ;; 	(symon-mode)
 ;; )
-(use-package which-func :ensure t)
+
+(use-package which-func :ensure t
+  :config
+  (which-function-mode 1))
+
 (use-package workgroups :ensure t)
+
 ;; (use-package persp-mode :ensure t
 ;; 	:config
 ;; 	(persp-mode)
 ;; )
+
 (use-package git-gutter :ensure t
   :config
   (setq
@@ -456,6 +1013,7 @@
 	 git-gutter:deleted-sign " "
    git-gutter:visual-line nil)
   (global-git-gutter-mode +1))
+
 ;; (use-package git-gutter-fringe :ensure t
 ;;   :config
 
@@ -512,7 +1070,29 @@
 ;;    git-gutter:window-width nil)
 
 ;;   (global-git-gutter-mode +1))
-(use-package yascroll :ensure t)
+
+(use-package yascroll :ensure t
+  :config
+  (global-yascroll-bar-mode 1)
+  (setq yascroll:last-state nil)
+  (setq yascroll:delay-to-hide nil)
+  (setq yascroll:scroll-bar '(right-fringe left-fringe text-area))
+                                        ; disable in insert mode
+  (add-hook 'evil-insert-state-entry-hook
+            (lambda ()
+              (setq yascroll:last-state yascroll-bar-mode)
+              (yascroll-bar-mode -1)))
+  (add-hook 'evil-insert-state-exit-hook
+            (lambda () (yascroll-bar-mode (if yascroll:last-state 1 -1))))
+                                        ; auto run on idle timer
+  (run-with-idle-timer
+   0.5
+   t
+   (lambda ()
+     (when (and (not (eq evil-state 'insert))
+                yascroll-bar-mode)
+       (yascroll:safe-show-scroll-bar)))))
+
 (use-package color-identifiers-mode :ensure t
   :config
   ;; color-identifiers-mode
@@ -545,6 +1125,7 @@
        `(,maj-mode . ("[^.][[:space:]]*"
                      "\\_<\\([a-zA-Z_$]\\(?:\\s_\\|\\sw\\)*\\)"
                      (nil font-lock-variable-name-face)))))))
+
 (use-package auto-highlight-symbol :ensure t
 	:config
 	(push 'sql-mode ahs-modes)
@@ -596,6 +1177,7 @@
                        (nth 2 hl))))))
 
 )
+
 (use-package neotree :ensure t
 	:config
 	
@@ -622,33 +1204,70 @@
 	(setq neo-mode-line-type 'default) ; for performance reason
 	(setq neo-auto-indent-point t)
 )
+
 (use-package magit :ensure t
   :config
   (setq magit-display-buffer-function
         #'magit-display-buffer-fullframe-status-v1))
+
 (use-package page-break-lines :ensure t)
-(use-package dashboard :ensure t :after page-break-lines)
+
+(use-package dashboard :ensure t :after page-break-lines
+  :config
+  (dashboard-setup-startup-hook)
+  (add-hook 'dashboard-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
+  (setq dashboard-items '((recents  . 5)
+			                    (projects . 5)
+						              (bookmarks . 5)))
+  ;; custom logo and message
+  (setq dashboard-banner-length 250)
+  (setq dashboard-banner-logo-title
+	      (concat "Emacs " emacs-version " (" system-configuration ")"))
+  (setq dashboard-startup-banner (expand-file-name "logo.png"
+	                                                 tommyx-config-path)))
+
 (use-package org :ensure org-plus-contrib)
+
 (use-package org-super-agenda :ensure t)
+
 (use-package org-journal :ensure t)
+
 (use-package org-pomodoro :ensure t)
+
 (use-package org-bullets :ensure t
 	:config)
+
 (use-package org-preview-html :ensure t
   :config)
+
 (use-package helm-org-rifle :ensure t
   :config)
+
 (use-package outshine :ensure t
   :config)
+
 (use-package load-relative :ensure t)
+
 ;; (use-package fancy-battery :ensure t)
+
 (use-package rainbow-mode :ensure t)
-(use-package highlight-numbers :ensure t)
+
+(use-package highlight-numbers :ensure t
+  :config
+  ;; TODO: move these into respective modes
+  (add-hook 'prog-mode-hook #'highlight-numbers-mode)
+  (add-hook 'json-mode-hook (lambda ()
+                              (highlight-numbers-mode -1)))
+  ;; (add-hook 'text-mode-hook #'highlight-numbers-mode)
+)
+
 (use-package highlight-operators :ensure t
   :config)
+
 (use-package hl-todo :ensure t
 	:config
 	(global-hl-todo-mode)) ; TODO 
+
 (use-package emmet-mode :ensure t
 	:config
 	(add-hook 'sgml-mode-hook 'emmet-mode)
@@ -659,6 +1278,7 @@
 	(setq emmet-indentation 2)
 	:bind (:map emmet-mode-keymap
 		("C-j" . nil)))
+
 (use-package imenu-list :ensure t :after neotree
 	:config
 	(setq imenu-list-position 'right)
@@ -710,6 +1330,7 @@
                    'action #'imenu-list--action-goto-entry)
     (insert "\n")))
 )
+
 ;; (use-package window-purpose :ensure t :after neotree imenu-list
 ;; 	:config
 ;; 	(purpose-mode)
@@ -720,14 +1341,18 @@
 ; language specific
 
 (require 'shaderlab-mode)
+
 (use-package auctex :defer t :ensure t)
+
 (use-package kivy-mode :ensure t)
+
 (use-package cc-mode :ensure t
   :config
   (setq c-default-style
         '((java-mode . "java")
           (awk-mode . "awk")
           (other . "linux"))))
+
 (use-package ess :ensure t
   :config
   (add-hook 'ess-r-mode-hook
@@ -735,14 +1360,23 @@
               (setq-local company-backends
                     (let ((b #'company-tabnine))
                       (cons b (remove b company-backends)))))))
+
 (use-package csharp-mode :ensure t)
+
 (use-package markdown-mode :ensure t)
+
 (use-package markdown-mode+ :ensure t)
+
 (use-package racket-mode :ensure t)
+
 (use-package haskell-mode :ensure t)
+
 (use-package haskell-snippets :ensure t)
+
 (use-package rust-mode :ensure t)
+
 (use-package csv-mode :ensure t)
+
 (use-package elpy :ensure t
   :init
   (elpy-enable)
@@ -759,6 +1393,7 @@
     (add-hook 'before-save-hook #'elpy-format-code nil 'local))
 
   (add-hook 'elpy-mode-hook #'setup-elpy-mode))
+
 (use-package tide :ensure t
   :config
   (defun setup-tide-mode ()
@@ -776,18 +1411,22 @@
   ;; TODO: we don't want this for now
   ;; (add-hook 'before-save-hook 'tide-format-before-save)
   (add-hook 'typescript-mode-hook #'setup-tide-mode))
+
 (use-package glsl-mode :ensure t
   :config
   ;; (add-to-list 'auto-mode-alist '("\\.vs\\'" . glsl-mode))
   ;; (add-to-list 'auto-mode-alist '("\\.fs\\'" . glsl-mode))
 )
+
 (use-package json-mode :ensure t
   :config
   (setq json-reformat:indent-width 2))
+
 ;; (use-package vue-mode :ensure t
 ;;	   :config
 ;;	   (setq mmm-submode-decoration-level 0)
 ;; )
+
 (use-package web-mode :ensure t
 	:config
 	(setq web-mode-enable-auto-expanding t)
@@ -806,19 +1445,23 @@
 	; use for vue files
 	(add-to-list 'auto-mode-alist '("\\.vue\\'" . web-mode))
 )
+
 (use-package js2-mode :ensure t
 	:config
 	(add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
 	(setq js2-strict-missing-semi-warning nil)
 )
+
 (use-package counsel-css :ensure t
 	:config
 	(add-hook 'css-mode-hook 'counsel-css-imenu-setup)
 )
+
 ;; (use-package lsp-python :ensure t :after lsp-mode
 ;; 	:config
 ;; 	(add-hook 'python-mode-hook #'lsp-python-enable)
 ;; )
+
 ;; (use-package lsp-javascript-typescript :ensure t :after lsp-mode
 ;; 	:config
 ;; 	(add-hook 'js-mode-hook #'lsp-javascript-typescript-enable)
@@ -827,6 +1470,7 @@
 ;; 	(add-hook 'js3-mode-hook #'lsp-javascript-typescript-enable) ;; for js3-mode support
 ;; 	(add-hook 'rjsx-mode #'lsp-javascript-typescript-enable) ;; for rjsx-mode support
 ;; )
+
 ;; (use-package js2-refactor :ensure t)
 
 ; fun
@@ -840,368 +1484,41 @@
 (load-relative "./tommyx-status-lines.el")
 
 ;; dashboard
-(dashboard-setup-startup-hook)
-(add-hook 'dashboard-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
 
 ;; yascroll
-(global-yascroll-bar-mode 1)
-(setq yascroll:last-state nil)
-(setq yascroll:delay-to-hide nil)
-(setq yascroll:scroll-bar '(right-fringe left-fringe text-area))
-; disable in insert mode
-(add-hook 'evil-insert-state-entry-hook
-          (lambda ()
-            (setq yascroll:last-state yascroll-bar-mode)
-            (yascroll-bar-mode -1)))
-(add-hook 'evil-insert-state-exit-hook
-          (lambda () (yascroll-bar-mode (if yascroll:last-state 1 -1))))
-; auto run on idle timer
-(run-with-idle-timer
- 0.5
- t
- (lambda ()
-   (when (and (not (eq evil-state 'insert))
-              yascroll-bar-mode)
-     (yascroll:safe-show-scroll-bar))))
 
 ;; beacon
-(setq beacon-blink-when-focused nil) ; may cause problem
-(setq beacon-blink-when-buffer-changes t)
-(setq beacon-blink-when-window-changes t)
-(setq beacon-blink-when-window-scrolls t)
-(setq beacon-blink-duration 0.15)
-(setq beacon-blink-delay 0.15)
-(setq beacon-size 15)
-(setq beacon-color "#2499ff")
 ;; (beacon-mode 1)
 ; disable in insert mode
 ;; (add-hook 'evil-insert-state-entry-hook (lambda () (beacon-mode -1)))
 ;; (add-hook 'evil-insert-state-exit-hook (lambda () (beacon-mode 1)))
 
 ;; which-function
-(which-function-mode 1)
-(add-hook 'prog-mode-hook #'which-function-mode)
-(add-hook 'prog-mode-hook (lambda () (interactive)
-	))
 
 ;; dashboard
-(setq dashboard-items '((recents  . 5)
-			(projects . 5)
-						(bookmarks . 5)))
-; custom logo and message
-(setq dashboard-banner-length 250)
-(setq dashboard-banner-logo-title
-	(concat "Emacs " emacs-version " (" system-configuration ")"))
-(setq dashboard-startup-banner (expand-file-name "logo.png"
-	tommyx-config-path))
 
 ;; yasnippet
-(add-hook 'after-init-hook 'yas-global-mode)
-(add-to-list 'yas-snippet-dirs (expand-file-name "snippets"
-	tommyx-config-path))
-(setq company-continue-commands (-snoc company-continue-commands 'yas-insert-snippet)) ; make company break completion
 
 ;; company
-(add-hook 'after-init-hook 'global-company-mode)
-(company-tng-configure-default)
-;; (company-quickhelp-mode)
-(setq my-company--company-command-p-override nil)
-(defun my-company--company-command-p (func &rest args)
-	"Patch company-mode to treat key sequences like \"jp\" not a company-mode command.
-
-Since company-tng-frontend only complete selection when pressing any key that isn't
-a company-mode command (checked with this function), and we want general-key-dispatch
-to have \"j\" as a company-mode command (so do not complete) but not to have
-\"jp\" as one (so do completion)."
-	(if my-company--company-command-p-override
-		nil ; treat all command as breaking company completion
-		(let ((return (apply func args)))
-
-			;; (message
-			;; 	(concat "debug: "
-			;; 					(prin1-to-string company-selection-changed) " "
-			;; 					(prin1-to-string return) " "
-			;; 					(prin1-to-string (and return (not (numberp return)))) " "
-			;; 					(prin1-to-string args)))
-
-			(and return (not (numberp return))))))
-(advice-add #'company--company-command-p :around #'my-company--company-command-p)
-;; make evil-normal-state abort completion. note that this works only if 'not is the
-;; first element in company-continue-commands.
-(setq company-continue-commands (-snoc company-continue-commands 'evil-normal-state))
-
-(eval-after-load 'company
-  '(progn
-		 
-		(global-set-key (kbd "M-1") (lambda (interactive) (company-complete-number 1)))
-		(global-set-key (kbd "M-2") (lambda (interactive) (company-complete-number 2)))
-		(global-set-key (kbd "M-3") (lambda (interactive) (company-complete-number 3)))
-		(global-set-key (kbd "M-4") (lambda (interactive) (company-complete-number 4)))
-		(global-set-key (kbd "M-5") (lambda (interactive) (company-complete-number 5)))
-		(global-set-key (kbd "M-6") (lambda (interactive) (company-complete-number 6)))
-		(global-set-key (kbd "M-7") (lambda (interactive) (company-complete-number 7)))
-		(global-set-key (kbd "M-8") (lambda (interactive) (company-complete-number 8)))
-		(global-set-key (kbd "M-9") (lambda (interactive) (company-complete-number 9)))
-		(global-set-key (kbd "M-0") (lambda (interactive) (company-complete-number 0)))
-		(define-key company-active-map (kbd "C-h") nil)
-		(define-key company-active-map (kbd "C-z") 'company-show-doc-buffer)
-			; C-z when company open will show help for that symbol in another window.
-		(define-key company-active-map (kbd "S-TAB") 'company-select-previous)
-		(define-key company-active-map (kbd "<S-tab>") 'company-select-previous)))
-(setq company-frontends
-	  '(company-tng-frontend
-		company-pseudo-tooltip-frontend
-		;; company-preview-frontend
-		company-echo-metadata-frontend))
-(setq company-idle-delay 0)
-(setq company-tooltip-align-annotations t)
-;; (setq company-idle-delay 0.2)
-(setq company-selection-wrap-around t)
-(setq company-show-numbers t)
-(setq company-quickhelp-delay nil) ; we will manually trigger the help
-(setq company-require-match 'never)
-(setq company-dabbrev-downcase nil)
-(setq company-dabbrev-ignore-case nil)
-(setq company-dabbrev-other-buffers t)
-;; (with-eval-after-load 'company
-;;   (setq-default company-transformers '())
-;;   ; fix bug with custom completer
-;;   (company-flx-mode 1)
-;;   (company-flx-mode -1)
-;;   ;; (delete #'company-flx-transformer company-transformers)
-;;   (advice-add 'company-capf :around #'company-flx-company-capf-advice)
-;;   (add-hook 'emacs-lisp-mode-hook (lambda () (setq-local company-transformers '(company-flx-transformer))))
-;;   (add-hook 'css-mode-hook (lambda () (setq-local company-transformers '(company-flx-transformer)))))
-(with-eval-after-load 'company
-  (company-flx-mode 1))
-(setq company-flx-limit 256)
 
 ;; ycmd
-(setq ycmd-global-config (expand-file-name "third_party/ycmd/.ycm_extra_conf.py"
-	tommyx-config-path))
-(unless (boundp 'ycmd-server-python-command)
-  (setq ycmd-server-python-command "python"))
-(setq ycmd-server-command `(,ycmd-server-python-command "-u" ,(expand-file-name "third_party/ycmd/ycmd/"
-	tommyx-config-path)))
-; TODO disabled
-;; (add-hook 'ycmd-mode-hook 'company-ycmd-setup) ; already manually added
-(add-hook 'ycmd-mode-hook 'flycheck-ycmd-setup)
-(add-hook 'ycmd-mode-hook (lambda () (interactive) (when (ycmd-major-mode-to-file-types major-mode) (ycmd-eldoc-setup))))
-; attempt to improve performance
-(setq company-ycmd-request-sync-timeout 0)
-; file types activation
-(add-hook 'c++-mode-hook (lambda () (ycmd-mode 1)))
-(add-hook 'csharp-mode-hook (lambda () (ycmd-mode 1)))
-;; TODO: enable ycmd when you actually need to
-;; (add-hook 'java-mode-hook (lambda () (ycmd-mode 1)))
-;; (add-hook 'text-mode-hook (lambda () (ycmd-mode 1)))
-; TODO: bug: remove eldoc (ycmd freezes) and ycmd mode from certain other modes.
-(add-hook 'text-mode-hook (lambda () (ycmd-eldoc-mode -1)))
-(add-hook 'org-mode-hook (lambda () (ycmd-eldoc-mode -1)))
-(add-hook 'racket-mode-hook (lambda () (ycmd-eldoc-mode -1)))
-(add-hook 'haskell-mode-hook (lambda () (ycmd-eldoc-mode -1)))
-(add-hook 'typescript-mode-hook (lambda () (ycmd-mode -1)))
-(add-hook 'python-mode-hook (lambda () (ycmd-mode -1)))
-; c/c++
-(evil-define-key 'normal c-mode-map (kbd "C-]") 'ycmd-goto) ; goto
-(evil-define-key 'normal c++-mode-map (kbd "C-]") 'ycmd-goto) ; goto
-; c#
-(evil-define-key 'normal csharp-mode-map (kbd "C-]") 'ycmd-goto) ; goto
-; java
-(add-to-list 'ycmd-file-type-map '(java-mode "java")) ; file type detection
-(evil-define-key 'normal java-mode-map (kbd "C-]") 'ycmd-goto) ; goto
-; python
-(evil-define-key 'normal python-mode-map (kbd "C-]") 'elpy-goto-definition) ; goto
-; typescript
-(evil-define-key 'normal typescript-mode-map (kbd "C-]") 'tide-jump-to-definition) ; goto
-; elisp
-(add-hook 'emacs-lisp-mode-hook (lambda () (ycmd-mode -1))) ; disable ycm
-(add-hook 'java-mode-hook (lambda () (ycmd-mode -1))) ; TODO bug
-; css
-(add-hook 'css-mode-hook (lambda () (ycmd-mode -1)))
 
 ;; smartparens
-(require 'smartparens-config)
-(smartparens-global-mode 1)
-(show-smartparens-global-mode 1)
-(setq sp-show-pair-from-inside t) ; TODO can set to false if overlay problem concerns us
-(setq smartparens-strict-mode nil)
-(setq sp-cancel-autoskip-on-backward-movement nil)
-;; (setq show-paren-style 'expression)
-;; (show-paren-mode 1)
-; auto expanison of brackets
-(sp-local-pair 'prog-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
-(sp-local-pair 'text-mode "{" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
-(sp-local-pair 'prog-mode "[" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
-(sp-local-pair 'text-mode "[" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
-(sp-local-pair 'prog-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
-(sp-local-pair 'text-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
-;; (defun remove-parens-overlay (&rest _) (sp-remove-active-pair-overlay))
-;; (advice-add 'evil-normal-state :after #'remove-parens-overlay)
-
 ;; evil
-(evil-mode 1) ; use evil-mode at startup
-(global-undo-tree-mode -1) ; do not use unto tree due to bugs
-; split to the right and below
-(setq evil-split-window-below t)
-(setq evil-vsplit-window-right t)
-(setq evil-ex-substitute-global t)
-(setq evil-move-cursor-back nil)
-(setq evil-move-beyond-eol t)
-(setq-default evil-symbol-word-search t)
-; auto center after search
-(defun my-center-line (&rest _) (evil-scroll-line-to-center nil))
-(defun flash-cursor (&rest _)
-  (hl-line-highlight)
-  (let ((ov (make-overlay (point) (- (point) 1))))
-       (overlay-put ov 'priority 9999)
-	     (overlay-put ov 'window (selected-window))
-	     (overlay-put ov 'face 'cursor)
-       (sit-for 1)
-       (delete-overlay ov)))
-;; (advice-add 'evil-ex-search-next :after #'flash-cursor)
-;; (advice-add 'evil-ex-search-previous :after #'flash-cursor)
-(advice-add 'evil-ex-search-word-forward :after #'evil-ex-search-previous)
-(advice-add 'evil-ex-search-unbounded-word-forward :after #'evil-ex-search-previous)
-(advice-add 'evil-ex-search-word-backward :after #'evil-ex-search-next)
-(defun my-search-previous (&rest _) (evil-ex-search-previous))
-(defun my-search-next (&rest _) (evil-ex-search-next))
-(advice-add 'evil-visualstar/begin-search-forward :after #'my-search-previous)
-(advice-add 'evil-visualstar/begin-search-backward :after #'my-search-next)
-; no magic for search
-(setq evil-magic nil) ; doesn't work
-; search highlight persist
-(global-evil-search-highlight-persist) ; doesn't work
-(setq evil-search-highlight-persist-all-windows t)
-; no echoing
-(setq evil-insert-state-message nil)
-(setq evil-visual-state-message nil)
-(setq evil-replace-state-message nil)
-; custom cursor
-;; (setq evil-insert-state-cursor '((bar . 4)))
-;; moved to theme definition
-; push jump list every time entering insert mode
-(add-hook 'evil-insert-state-entry-hook 'evil-set-jump)
-; do not remove space when leaving insert mode
-(setq evil-allow-remove-spaces t) ;; TODO still allow it.
-(defun my-evil-maybe-remove-spaces (func &rest args)
-  (if evil-allow-remove-spaces
-      (apply func args)
-    (setq evil-maybe-remove-spaces nil)
-    (apply func args)))
-(advice-add #'evil-maybe-remove-spaces :around #'my-evil-maybe-remove-spaces)
 
 ;; highlight numbers
-(add-hook 'prog-mode-hook #'highlight-numbers-mode)
-(add-hook 'json-mode-hook (lambda ()
-                            (highlight-numbers-mode -1)))
-;; (add-hook 'text-mode-hook #'highlight-numbers-mode)
 
 ;; evil-surround
-(global-evil-surround-mode 1)
 
 ;; undo-tree
-; attempt to fix bug
-(setq undo-tree-enable-undo-in-region nil)
-; persistent undo
-(setq undo-tree-auto-save-history t)
-(setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/history")))
 
 ;; volatile-highlight
-;; (vhl/define-extension 'evil
-;; 						 'evil-normal-state)
-;; (with-eval-after-load 'evil
-;; 	   (vhl/install-extension 'evil)
-;; 	   (vhl/load-extension 'evil)) 
-(vhl/define-extension 'undo-tree
-					  'undo-tree-move
-					  'undo-tree-yank)
-(with-eval-after-load 'undo-tree
-	(vhl/install-extension 'undo-tree)
-	(vhl/load-extension 'undo-tree))
-(volatile-highlights-mode 1)
 
 ;; evil-goggles
-(setq evil-goggles-pulse nil)
-(setq evil-goggles-duration 1)
-(setq evil-goggles-async-duration 1)
-(setq evil-goggles-blocking-duration 1)
-(setq evil-goggles--commands
-	    '((evil-yank
-         :face evil-goggles-yank-face
-         :switch evil-goggles-enable-yank
-         :advice evil-goggles--generic-async-advice)
-        (evil-join
-         :face evil-goggles-join-face
-         :switch evil-goggles-enable-join
-         :advice evil-goggles--join-advice)
-        (evil-join-whitespace
-         :face evil-goggles-join-face
-         :switch evil-goggles-enable-join
-         :advice evil-goggles--join-advice)
-        (evil-fill-and-move
-         :face evil-goggles-fill-and-move-face
-         :switch evil-goggles-enable-fill-and-move
-         :advice evil-goggles--generic-async-advice)
-        (evil-shift-left
-         :face evil-goggles-shift-face
-         :switch evil-goggles-enable-shift
-         :advice evil-goggles--generic-async-advice)
-        (evil-shift-right
-         :face evil-goggles-shift-face
-         :switch evil-goggles-enable-shift
-         :advice evil-goggles--generic-async-advice)
-        (evil-org-<
-         :face evil-goggles-shift-face
-         :switch evil-goggles-enable-shift
-         :advice evil-goggles--generic-async-advice)
-        (evil-org->
-         :face evil-goggles-shift-face
-         :switch evil-goggles-enable-shift
-         :advice evil-goggles--generic-async-advice)
-        (evil-surround-region
-         :face evil-goggles-surround-face
-         :switch evil-goggles-enable-surround
-         :advice evil-goggles--generic-async-advice)
-        (evil-commentary
-         :face evil-goggles-commentary-face
-         :switch evil-goggles-enable-commentary
-         :advice evil-goggles--generic-async-advice)
-        (evilnc-comment-operator
-         :face evil-goggles-nerd-commenter-face
-         :switch evil-goggles-enable-nerd-commenter
-         :advice evil-goggles--generic-async-advice)
-        (evil-replace-with-register
-         :face evil-goggles-replace-with-register-face
-         :switch evil-goggles-enable-replace-with-register
-         :advice evil-goggles--generic-async-advice-1)
-        (evil-set-marker
-         :face evil-goggles-set-marker-face
-         :switch evil-goggles-enable-set-marker
-         :advice evil-goggles--set-marker-advice)
-        (evil-record-macro
-         :face evil-goggles-record-macro-face
-         :switch evil-goggles-enable-record-macro
-         :advice evil-goggles--record-macro-advice)
-        (evil-paste-before
-         :face evil-goggles-paste-face
-         :switch evil-goggles-enable-paste
-         :advice evil-goggles--paste-advice :after t)
-        (evil-paste-after
-         :face evil-goggles-paste-face
-         :switch evil-goggles-enable-paste
-         :advice evil-goggles--paste-advice :after t)))
-(evil-goggles-mode 1)
 
 ;; evil-collection
-(delete 'neotree evil-collection-mode-list)
-(delete 'company evil-collection-mode-list)
-(evil-collection-init)
 
 ;; flyspell lazy
-(flyspell-lazy-mode 1)
-(setq flyspell-lazy-idle-seconds 2.5)
-(setq flyspell-lazy-window-idle-seconds 5)
 
 ;; highlight indent guides (currently disabled)
 
@@ -1209,202 +1526,24 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; (add-hook 'prog-mode-hook 'visual-indentation-mode)
 
 ;; evil-visualstar
-(global-evil-visualstar-mode 1)
 
 ;; general
-(general-evil-setup)
-(general-auto-unbind-keys)
 
 ;; flycheck
-(global-flycheck-mode 1)
-; BUG: temporarily disable for some modes
-(add-hook 'haskell-mode-hook (lambda () (flycheck-mode -1)))
 
 ;; helm
-(require 'helm-config)
-;; (setq helm-display-function 'helm-display-buffer-in-own-frame
-;;		   helm-display-buffer-reuse-frame t
-;;		   helm-use-undecorated-frame-option t)
-;; (helm-mode 1)
-(helm-autoresize-mode 1) ; always auto resize window
-(setq helm-autoresize-max-height 40)
-(setq helm-autoresize-min-height 40)
-(setq helm-split-window-inside-p t)
-(setq helm-full-frame nil)
-(setq helm-recentf-fuzzy-match t)
-(setq helm-buffers-fuzzy-matching t)
-(setq helm-recentf-fuzzy-match t)
-(setq helm-locate-fuzzy-match t)
-(setq helm-M-x-fuzzy-match t)
-(setq helm-semantic-fuzzy-match t)
-(setq helm-imenu-fuzzy-match t)
-(setq helm-apropos-fuzzy-match t)
-(setq helm-lisp-fuzzy-completion t)
-(setq helm-session-fuzzy-match t)
-(setq helm-etags-fuzzy-match t)
-(setq helm-mode-fuzzy-match t)
-(setq helm-completion-in-region-fuzzy-match t)
-(setq recentf-max-menu-items 250)
-(setq recentf-max-saved-items 250)
-(setq helm-move-to-line-cycle-in-source nil)
-(setq helm-ff-file-name-history-use-recentf t)
-(setq helm-follow-mode-persistent t)
-(setq helm-source-names-using-follow '("Occur"))
 
 ;; helm-flx
-(setq helm-flx-for-helm-find-files t
-	  helm-flx-for-helm-locate t)
-(helm-flx-mode +1)
 
 ;; helm-descbinds
-(helm-descbinds-mode)
 
 ;; helm-descbinds-mode
-(global-set-key [remap describe-mode] #'helm-describe-modes)
 
 ;; helm-projectile
-(helm-projectile-on)
 
 ;; origami
-(add-to-list 'origami-parser-alist
-	'(python-mode . origami-indent-parser))
-;; (global-origami-mode 1)
 
 ;; ivy, counsel and swiper
-; main
-(ivy-mode 1)
-(counsel-mode 1)
-; remove initial input in ivy commands
-(setq ivy-initial-inputs-alist nil)
-; enable fuzzy, except for swiper
-(setq ivy-re-builders-alist
-	    '((swiper . ivy--regex-ignore-order)
-        (counsel-rg . ivy--regex-ignore-order)
-		    (swiper-multi . ivy--regex-plus)
-		    (t		. ivy--regex-fuzzy)))
-; enable wrapping
-(setq ivy-wrap t)
-(setq ivy-action-wrap t)
-; add recent files and bookmarks to ivy-switch-buffer
-(setq ivy-use-virtual-buffers t)
-; display functions
-(setq ivy-posframe-parameters '(
-	(width . 50)
-	(border-width . 1)
-	(internal-border-width . 1)
-  (undecorated . t)
-	(min-width . 50)
-	(refresh . 1)
-	))
-; misc
-(setq ivy-height 12)
-(setq ivy-height-alist nil) ; all ivy should have same height
-(setq ivy-posframe-height (truncate (* ivy-height 1.1)))
-(setq ivy-posframe-border-width 1)
-(defun ivy-posframe--display (str &optional poshandler full-width) ; override
-  "Show STR in ivy's posframe."
-  (if (not (posframe-workable-p))
-	    (ivy-display-function-fallback str)
-    (setq ivy-posframe--display-p t)
-    (with-ivy-window
-	    (posframe-show
-	     ivy-posframe-buffer
-	     :font ivy-posframe-font
-	     :string
-       (with-current-buffer (window-buffer (active-minibuffer-window))
-         (let ((point (point))
-               (string (if ivy-posframe--ignore-prompt
-                           str
-                         (concat (buffer-string) "  " str))))
-           (add-text-properties (- point 1) point '(face ivy-posframe-cursor) string)
-           string))
-	     :position (point)
-	     :poshandler poshandler
-       :background-color (face-attribute 'ivy-posframe :background nil t)
-       :foreground-color (face-attribute 'ivy-posframe :foreground nil t)
-	     ;; :height (truncate (* 1.1 ivy-height))
-	     ;; :width (window-width) ; (if full-width (window-width) nil)
-	     ;; :min-height 10
-	     ;; :min-width 50
-       :height ivy-posframe-height
-       :width (window-width)
-       :min-height (or ivy-posframe-min-height (+ ivy-height 1))
-       :min-width (or ivy-posframe-min-width (round (* (frame-width) 0.62)))
-       :internal-border-width ivy-posframe-border-width
-	     :override-parameters ivy-posframe-parameters))))
-(defun posframe-poshandler-adaptive-top-bottom (info)
-  "Posframe's position handler.
-
-Get a position which let posframe stay onto current window's
-top or bottom side without blocking center content.
-Useful for a search overview popup."
-  (let* (
-				(posframe (plist-get info :posframe))
-				(parent-frame (plist-get info :parent-frame))
-				(frame-height (frame-pixel-height parent-frame))
-				(window (plist-get info :parent-window))
-				(window-left (window-pixel-left window))
-				(window-top (window-pixel-top window))
-				(window-height (window-pixel-height window))
-				(posframe-height (frame-pixel-height posframe))
-				(modeline-height (window-mode-line-height)))
-		(cond
-		(t; (<= (/ window-height posframe-height) 3.0)
-			(if (<= (+ window-top (/ window-height 2.0)) (/ frame-height 2.0))
-				(cons ; bottom
-					window-left
-					(min (- frame-height modeline-height posframe-height)
-						(+ window-top window-height)
-					)
-				)
-				(cons ; top
-					window-left
-					(max 0
-						(- window-top posframe-height)
-					)
-				)
-			)
-		)
-		;; (t
-		;; 	(cons ; window bottom
-		;; 		window-left
-		;; 		(+ window-top window-height (- 0 modeline-height posframe-height)))
-		;; )
-		)))
-(defun ivy-posframe-display-swiper (str)
-  (ivy-posframe--display str #'posframe-poshandler-adaptive-top-bottom t))
-(setq ivy-display-function nil)
-(setq ivy-display-functions-alist
-	  '((swiper . ivy-posframe-display-swiper)
-		(swiper-multi . ivy-posframe-display-swiper)
-		(swiper-all . ivy-posframe-display-swiper)
-		(counsel-ag . nil)
-		(counsel-rg . nil)
-		(counsel-grep . nil)
-		(t . ivy-posframe-display-at-point)))
-(ivy-posframe-enable)
-; better UI
-(defun ivy-format-function-custom (cands)
-  "Transform CANS into a string for minibuffer."
-  (ivy--format-function-generic
-   (lambda (str)
-	 (concat "> " (ivy--add-face str 'ivy-current-match)))
-   (lambda (str)
-	 (concat "  " str))
-   cands
-   "\n"))
-(defun ivy-format-function-custom (cands)
-  "Transform CANDS into a string for minibuffer."
-  (ivy--format-function-generic
-   (lambda (str)
-     (concat "> " (ivy--add-face (concat str "\n") 'ivy-current-match)))
-   (lambda (str)
-     (concat "  " str "\n"))
-   cands
-   ""))
-(setq ivy-format-function 'ivy-format-function-custom)
-;; (setq ivy-format-function 'ivy-format-function-default)
-(setq ivy-count-format "%d/%d | ")
 
 
 ;;; heavy tasks
@@ -2274,6 +2413,8 @@ command (ran after) is mysteriously incorrect."
 (evil-define-key 'motion 'global ",z" 'evil-comfortable-recenter)
 ; do not re-copy when pasting in visual mode
 (evil-define-key 'visual 'global "p" (lambda () (interactive) (call-interactively 'evil-visual-paste) (pop-kill-ring)))
+; sort lines
+(evil-define-key 'visual 'global ",,s" 'sort-lines)
 ; substitute command
 (evil-define-key 'normal 'global ",s" (lambda () (interactive) (evil-ex "s/")))
 (evil-define-key 'normal 'global ",S" (lambda () (interactive) (evil-ex "%s/")))
@@ -2711,6 +2852,10 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 
 ;;; misc settings
+
+;; recent files
+(setq recentf-max-menu-items 500)
+(setq recentf-max-saved-items 500)
 
 ;; shell
 (cond
