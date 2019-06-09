@@ -184,13 +184,13 @@
       (delete-overlay ov)))
   ;; (advice-add 'evil-ex-search-next :after #'flash-cursor)
   ;; (advice-add 'evil-ex-search-previous :after #'flash-cursor)
-  (advice-add 'evil-ex-search-word-forward :after #'evil-ex-search-previous)
-  (advice-add 'evil-ex-search-unbounded-word-forward :after #'evil-ex-search-previous)
-  (advice-add 'evil-ex-search-word-backward :after #'evil-ex-search-next)
-  (defun my-search-previous (&rest _) (evil-ex-search-previous))
-  (defun my-search-next (&rest _) (evil-ex-search-next))
-  (advice-add 'evil-visualstar/begin-search-forward :after #'my-search-previous)
-  (advice-add 'evil-visualstar/begin-search-backward :after #'my-search-next)
+  ;; (advice-add 'evil-ex-search-word-forward :after #'evil-ex-search-previous)
+  ;; (advice-add 'evil-ex-search-unbounded-word-forward :after #'evil-ex-search-previous)
+  ;; (advice-add 'evil-ex-search-word-backward :after #'evil-ex-search-next)
+  ;; (defun my-search-previous (&rest _) (evil-ex-search-previous))
+  ;; (defun my-search-next (&rest _) (evil-ex-search-next))
+  ;; (advice-add 'evil-visualstar/begin-search-forward :after #'my-search-previous)
+  ;; (advice-add 'evil-visualstar/begin-search-backward :after #'my-search-next)
   ;; no magic for search
   (setq evil-magic nil) ; doesn't work
   ;; search highlight persist
@@ -532,6 +532,10 @@ Useful for a search overview popup."
   (general-auto-unbind-keys))
 (use-package beacon :ensure t
   :config
+  ;; (beacon-mode 1)
+  ;; ;; disable in insert mode
+  ;; (add-hook 'evil-insert-state-entry-hook (lambda () (beacon-mode -1)))
+  ;; (add-hook 'evil-insert-state-exit-hook (lambda () (beacon-mode 1)))
   (setq beacon-blink-when-focused nil) ; may cause problem
   (setq beacon-blink-when-buffer-changes t)
   (setq beacon-blink-when-window-changes t)
@@ -1335,10 +1339,13 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; 	:config
 ;; 	(purpose-mode)
 ;; )
-(require 'companion)
-(require 'smart-completer)
 
-; language specific
+(require 'companion)
+(companion-open)
+
+;; (require 'smart-completer)
+
+;;; language specific packages
 
 (require 'shaderlab-mode)
 
@@ -1473,80 +1480,10 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 ;; (use-package js2-refactor :ensure t)
 
-; fun
-
-(use-package landmark :ensure t)
-
-
-;;; package settings
-
-;; status lines
-(load-relative "./tommyx-status-lines.el")
-
-;; dashboard
-
-;; yascroll
-
-;; beacon
-;; (beacon-mode 1)
-; disable in insert mode
-;; (add-hook 'evil-insert-state-entry-hook (lambda () (beacon-mode -1)))
-;; (add-hook 'evil-insert-state-exit-hook (lambda () (beacon-mode 1)))
-
-;; which-function
-
-;; dashboard
-
-;; yasnippet
-
-;; company
-
-;; ycmd
-
-;; smartparens
-;; evil
-
-;; highlight numbers
-
-;; evil-surround
-
-;; undo-tree
-
-;; volatile-highlight
-
-;; evil-goggles
-
-;; evil-collection
-
-;; flyspell lazy
-
-;; highlight indent guides (currently disabled)
-
-;; visual indentation mode
-;; (add-hook 'prog-mode-hook 'visual-indentation-mode)
-
-;; evil-visualstar
-
-;; general
-
-;; flycheck
-
-;; helm
-
-;; helm-flx
-
-;; helm-descbinds
-
-;; helm-descbinds-mode
-
-;; helm-projectile
-
-;; origami
-
-;; ivy, counsel and swiper
-
-
-;;; heavy tasks
+;;; key bindings util / helper functions and motion
+;; (defun fit-window-to-region ()
+;; 	(interactive)
+;; 	TODO)
 (defun update-heavy-tasks () (interactive)
   "Update all the heavy tasks."
   (message "Updating heavy tasks...")
@@ -1560,12 +1497,6 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 	(yascroll:safe-show-scroll-bar)
   (message "Done.")
 	(beacon-blink))
-
-
-;;; key bindings util / helper functions and motion
-;; (defun fit-window-to-region ()
-;; 	(interactive)
-;; 	TODO)
 (defun execute-buffer-as-sh ()
   (interactive)
   (let (compile-command)
@@ -1877,298 +1808,133 @@ command (ran after) is mysteriously incorrect."
 )
 (evil-define-key 'normal 'global "t" 'hydra-move/body)
 
-;; global leader
-;; (define-prefix-command 'global-leader)
-(define-prefix-command 'global-leader-window)
-(define-prefix-command 'global-leader-helm)
-(define-prefix-command 'global-leader-navigation)
-(define-prefix-command 'global-leader-project)
-(define-prefix-command 'global-leader-org)
-(define-prefix-command 'global-leader-appearance)
-(define-prefix-command 'global-leader-appearance-theme)
-(define-prefix-command 'global-leader-appearance-font)
-(define-prefix-command 'global-leader-mode-specific)
-(define-prefix-command 'global-leader-companion)
-(define-prefix-command 'global-leader-sidebar)
-(define-prefix-command 'global-leader-templates)
-(define-prefix-command 'global-leader-files)
-(define-prefix-command 'global-leader-battery)
-(define-prefix-command 'global-leader-music)
-(define-prefix-command 'global-leader-music-playlist)
-(define-prefix-command 'global-leader-version-control)
-; prefix keys
-(general-define-key
-  :keymaps 'override
-  :states '(motion normal visual)
-  
-  "SPC" 'global-leader)
+;; leader keys
+(general-create-definer global-leader-def
+  :prefix-command 'global-leader
+  :prefix "SPC")
 
+;; (define-prefix-command 'global-leader)
+(general-create-definer global-leader-window-def
+  :prefix-command 'global-leader-window
+  :prefix "SPC w")
+(general-create-definer global-leader-helm-def
+  :prefix-command 'global-leader-helm
+  :prefix "SPC h")
+(general-create-definer global-leader-navigation-def
+  :prefix-command 'global-leader-navigation
+  :prefix "SPC i")
+(general-create-definer global-leader-project-def
+  :prefix-command 'global-leader-project
+  :prefix "SPC p")
+(general-create-definer global-leader-org-def
+  :prefix-command 'global-leader-org
+  :prefix "SPC o")
+(general-create-definer global-leader-appearance-def
+  :prefix-command 'global-leader-appearance
+  :prefix "SPC a")
+(general-create-definer global-leader-appearance-theme-def
+  :prefix-command 'global-leader-appearance-theme
+  :prefix "SPC a t")
+(general-create-definer global-leader-appearance-font-def
+  :prefix-command 'global-leader-appearance-font
+  :prefix "SPC a f")
+(general-create-definer global-leader-mode-specific-def
+  :prefix-command 'global-leader-mode-specific
+  :prefix "SPC j")
+(general-create-definer global-leader-companion-def
+  :prefix-command 'global-leader-companion
+  :prefix "SPC c")
+(general-create-definer global-leader-sidebar-def
+  :prefix-command 'global-leader-sidebar
+  :prefix "SPC s")
+(general-create-definer global-leader-templates-def
+  :prefix-command 'global-leader-templates
+  :prefix "SPC t")
+(general-create-definer global-leader-files-def
+  :prefix-command 'global-leader-files
+  :prefix "SPC e")
+(general-create-definer global-leader-battery-def
+  :prefix-command 'global-leader-battery
+  :prefix "SPC b")
+(general-create-definer global-leader-music-def
+  :prefix-command 'global-leader-music
+  :prefix "SPC m")
+(general-create-definer global-leader-music-playlist-def
+  :prefix-command 'global-leader-music-playlist
+  :prefix "SPC m p")
+(general-create-definer global-leader-version-control-def
+  :prefix-command 'global-leader-version-control
+  :prefix "SPC v")
+
+;; Allow global leader to be non-overridable
 (general-define-key
-  :keymaps 'override
+ :keymaps 'override
+ :states '(motion normal visual)
+ 
+ "SPC" 'global-leader)
+
+(global-leader-def
 	:states '(motion normal visual)
-  :prefix "SPC"
 
 	"w" '(global-leader-window
-		:which-key "window")
+		    :which-key "window")
 	"h" '(global-leader-helm
-		:which-key "helm")
+		    :which-key "helm")
 	"i" '(global-leader-navigation
-		:which-key "navigation")
+		    :which-key "navigation")
 	"o" '(global-leader-org
-		:which-key "org")
+		    :which-key "org")
 	"j" '(global-leader-mode-specific
-		:which-key "mode specific")
+		    :which-key "mode specific")
 	"a" '(global-leader-appearance
-		:which-key "appearance")
-	"at" '(global-leader-appearance-theme
-		:which-key "theme")
-	"af" '(global-leader-appearance-font
-		:which-key "font")
+		    :which-key "appearance")
 	"p" '(global-leader-project
-		:which-key "project + workspace")
+		    :which-key "project + workspace")
 	"c" '(global-leader-companion
-		:which-key "companion")
+		    :which-key "companion")
 	"s" '(global-leader-sidebar
-		:which-key "side bar")
+		    :which-key "side bar")
 	"t" '(global-leader-templates
-		:which-key "templates")
+		    :which-key "templates")
 	"e" '(global-leader-files
-		:which-key "files")
+		    :which-key "files")
   "b" '(global-leader-battery
-    :which-key "battery")
+        :which-key "battery")
   "m" '(global-leader-music
-    :which-key "music")
+        :which-key "music")
   "v" '(global-leader-version-control
-    :which-key "version control")
-)
-(general-define-key
-  :keymaps 'override
-	:states '(motion normal visual)
-	:prefix "SPC"
-	:non-normal-prefix "M-SPC"
+        :which-key "version control")
 
-	"is" '(counsel-semantic-or-imenu
-		:which-key "semantic item")
-
-	"iS" '((lambda () (interactive) (call-interactively 'imenu))
-		:which-key "semantic item tree")
-
-	"x" '(counsel-M-x
-		:which-key "counsel M-x")
-
+  "x" '(counsel-M-x
+        :which-key "counsel M-x")
 	"g" '(google-this-search
-		:which-key "Google")
-
+		    :which-key "Google")
 	";" '(eval-expression
-		:which-key "eval lisp")
+		    :which-key "eval lisp"))
 
-	"hx" '(helm-M-x
-		:which-key "helm M-x")
-	"ho" '(helm-occur
-		:which-key "helm occur")
-	"hs" '(helm-swoop
-		:which-key "helm swoop")
-
-	"atl" '((lambda () (interactive) (change-theme light-theme))
-		:which-key "light theme")
-	"atd" '((lambda () (interactive) (change-theme dark-theme))
-		:which-key "dark theme")
-  "aF" '((lambda () (interactive) (toggle-frame-fullscreen))
-    :which-key "toggle full-screen")
-	
-	"afs" '(set-to-small-font
-		:which-key "small font")
-	"afb" '(set-to-big-font
-		:which-key "big font")
-	"afz" '(hydra-zoom/body
-		:which-key "zoom buffer font")
-	"afr" '(toggle-readable-buffer-font
-		:which-key "toggle readable buffer font")
-
-	"cd" '(companion-notif-dismiss
-		:which-key "dismiss notification")
-	"cq" '(companion-show-last-qod
-		:which-key "quote of the day")
-	"cy" '(companion-copy-qod
-		:which-key "copy quote of the day")
-	"cQ" '(companion-fetch-qod
-		:which-key "fetch quote of the day")
-
-	"sf" '((lambda () (interactive)
-		(display-buffer-in-side-window (get-buffer neo-buffer-name) '((side . left))))
-		:which-key "files")
-
-	"so" '((lambda () (interactive)
-		(display-buffer-in-side-window (get-buffer imenu-list-buffer-name) '((side . left))))
-		:which-key "outline")
-
-	"tn" '(yas-new-snippet
-		:which-key "new")
-	"te" '(yas-visit-snippet-file
-		:which-key "edit")
-	"tr" '(yas-reload-all
-		:which-key "reload")
-  "ti" '(insert-file
-    :which-key "insert file content")
-
-  "eq" '(save-buffers-kill-terminal
-    :which-key "quit emacs")
-  "eQ" '(save-buffers-kill-emacs
-    :which-key "quit emacs process")
-	"ew" '(write-file
-		:which-key "write file")
-	"er" '(rename-buffer
-		:which-key "rename buffer")
-	"ea" '(evil-write-all
-		:which-key "write all files")
-
-  "bc" '((lambda () (interactive) (setq company-idle-delay 0))
-    :which-key "instant completion")
-  "bC" '((lambda () (interactive) (setq company-idle-delay 0.2))
-    :which-key "delayed completion")
-
-  "ml" '(global-leader-music-playlist
-    :which-key "playlist")
-  "mll" '(emms-add-playlist
-    :which-key "add playlist")
-  "mla" '(emms-add-file
-    :which-key "add file")
-  "mld" '(emms-add-directory
-    :which-key "add directory")
-  "mlD" '(emms-add-directory-tree
-    :which-key "add directory recursively")
-  "mls" '(emms-playlist-save
-    :which-key "save playlist")
-  "mlg" '((lambda () (interactive)
-            (emms-playlist-mode-go)
-            (emms-playlist-mode-center-current))
-    :which-key "go to playlist")
-  "mls" '(emms-sort
-    :which-key "sort playlist")
-  "mlS" '(emms-shuffle
-    :which-key "shuffle playlist")
-  "mlu" '(emms-uniq
-    :which-key "remove playlist duplicates")
-  "mlc" '(emms-playlist-clear
-    :which-key "clear playlist")
-  "mf" '(counsel-emms-play
-    :which-key "play music")
-  "mn" '(hydra-emms-control/body
-    :which-key "music control")
-  "mp" '(emms-pause
-    :which-key "pause music")
-  "mP" '(emms-stop
-    :which-key "stop music")
-  "mr" '(emms-random
-    :which-key "play random music")
-  "mt" '(emms-toggle-repeat-track
-    :which-key "toggle repeat track")
-
-  "vs" '(magit-status
-    :which-key "magit status")
-)
-(general-define-key
-  :keymaps 'override
-	:states '(visual)
-	:prefix "SPC"
-	:non-normal-prefix "M-SPC"
+(global-leader-def
+  :states '(visual)
 
 	"f" '(swiper-movement
 		:which-key "search")
-
 	"F" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
 		:which-key "search selection")
 	"C-f" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
-		:which-key "search selection in all buffers")
+		:which-key "search selection in all buffers"))
 
-  ; not working
-  ;; "wp" '(peek-region-in-split
-  ;;   :which-key "peek region in split")
-)
-(general-define-key
-  :keymaps 'override
-	:states '(motion normal)
-	:prefix "SPC"
-	:non-normal-prefix "M-SPC"
+(global-leader-def
+  :states '(motion normal)
 
 	"f" '(swiper
 		:which-key "search")
 	"C-f" '(swiper-all
 		:which-key "search in all buffers")
-
 	"F" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
 		:which-key "search cursor word")
 	"C-S-f" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
 		:which-key "search cursor word in all buffers")
-
-	"wh" '((lambda () (interactive) (evil-window-left 1) (delayed-mode-line-update))
-		:which-key "move to window left")
-	"wj" '((lambda () (interactive) (evil-window-down 1) (delayed-mode-line-update))
-		:which-key "move to window down")
-	"wk" '((lambda () (interactive) (evil-window-up 1) (delayed-mode-line-update))
-		:which-key "move to window up")
-	"wl" '((lambda () (interactive) (evil-window-right 1) (delayed-mode-line-update))
-		:which-key "move to window right")
-	"wd" '((lambda () (interactive) (evil-window-split) (delayed-mode-line-update))
-		:which-key "split window horizontally")
-	"wv" '((lambda () (interactive) (evil-window-vsplit) (delayed-mode-line-update))
-		:which-key "split window vertically")
-  "wm" '(ace-swap-window
-		:which-key "swap window")
-	"wq" '((lambda () (interactive) (evil-quit) (delayed-mode-line-update))
-		:which-key "close window")
-	"wu" '(winner-undo
-		:which-key "undo window config")
-	"wU" '(winner-redo
-		:which-key "redo window config")
-  "wp" '(peek-region-in-split
-    :which-key "peek region in split")
-	"wt" '((lambda () (interactive) (evil-window-set-height 12))
-		:which-key "make into terminal height")
-
 	"n" '(ivy-switch-buffer
 		:which-key "switch buffer")
-
-	"ii" '(ivy-resume
-		:which-key "ivy resume")
-	;; "ip" '(counsel-projectile
-	;; 	:which-key "counsel projectile")
-	"ip" '(counsel-projectile-find-file
-		:which-key "project files")
-	"i <tab>" '(projectile-find-other-file
-		:which-key "other file")
-	"i TAB" '(projectile-find-other-file
-		:which-key "other file")
-	"ir" '(counsel-recentf
-		:which-key "recent files")
-	;; "ig" '(counsel-projectile-grep
-	;; 	:which-key "project search")
-	"if" '(counsel-find-file
-		:which-key "files")
-
-	"hh" '(helm-resume
-		:which-key "helm resume")
-	"hm" '(helm-mini
-		:which-key "helm mini")
-	"hp" '(helm-projectile
-		:which-key "helm projectile")
-	"hP" '(helm-projectile-switch-project
-		:which-key "helm projectile project")
-	"h C-p" '(helm-projectile-find-file-in-known-projects
-		:which-key "helm projectile all")
-	"h <tab>" '(helm-projectile-find-other-file ; cpp vs h switching
-		:which-key "helm projectile other file")
-	"h TAB" '(helm-projectile-find-other-file ; cpp vs h switching
-		:which-key "helm projectile other file")
-	"hr" '(helm-recentf
-		:which-key "helm recentf")
-	"hg" '(helm-projectile-grep
-		:which-key "helm projectile grep")
-	"hf" '(helm-find-files
-		:which-key "helm find files")
-	"hF" '(helm-for-files
-		:which-key "helm for files")
-
 	"0" '((lambda () (interactive) (winum-select-window-0-or-10) (delayed-mode-line-update))
 		:which-key "move to window 0")
 	"1"	 '((lambda () (interactive) (winum-select-window-1) (delayed-mode-line-update))
@@ -2189,17 +1955,243 @@ command (ran after) is mysteriously incorrect."
 		:which-key "move to window 8")
 	"9"	 '((lambda () (interactive) (winum-select-window-9) (delayed-mode-line-update))
 		:which-key "move to window 9")
-
 	"TAB" '((lambda () (interactive) (switch-to-buffer (other-buffer)) (delayed-mode-line-update))
 		:which-key "switch to other buffer")
-
   "q" '(kill-this-buffer
-		:which-key "kill current buffer")
-)
-; create fake key to represent move to window keys
+		:which-key "kill current buffer"))
+;; create fake key to represent move to window keys
 (push '(("SPC 0") . ("SPC [0-9]" . "move to window [0-9]")) which-key-replacement-alist)
-; hide other keys
+;; hide other keys
 (push '(("SPC [1-9]") . t) which-key-replacement-alist)
+
+(global-leader-window-def
+  :states '(motion normal)
+
+  "h" '((lambda () (interactive) (evil-window-left 1) (delayed-mode-line-update))
+		    :which-key "move to window left")
+	"j" '((lambda () (interactive) (evil-window-down 1) (delayed-mode-line-update))
+		    :which-key "move to window down")
+	"k" '((lambda () (interactive) (evil-window-up 1) (delayed-mode-line-update))
+		    :which-key "move to window up")
+	"l" '((lambda () (interactive) (evil-window-right 1) (delayed-mode-line-update))
+		    :which-key "move to window right")
+	"d" '((lambda () (interactive) (evil-window-split) (delayed-mode-line-update))
+		    :which-key "split window horizontally")
+	"v" '((lambda () (interactive) (evil-window-vsplit) (delayed-mode-line-update))
+		    :which-key "split window vertically")
+  "m" '(ace-swap-window
+		    :which-key "swap window")
+	"q" '((lambda () (interactive) (evil-quit) (delayed-mode-line-update))
+		    :which-key "close window")
+	"u" '(winner-undo
+		    :which-key "undo window config")
+	"U" '(winner-redo
+		    :which-key "redo window config")
+  "p" '(peek-region-in-split
+        :which-key "peek region in split")
+	"t" '((lambda () (interactive) (evil-window-set-height 12))
+		    :which-key "make into terminal height"))
+
+(global-leader-navigation-def
+  :states '(motion normal visual)
+
+  "s" '(counsel-semantic-or-imenu
+		     :which-key "semantic item")
+	"S" '((lambda () (interactive) (call-interactively 'imenu))
+		     :which-key "semantic item tree"))
+
+(global-leader-navigation-def
+  :states '(motion normal)
+
+  "i" '(ivy-resume
+		    :which-key "ivy resume")
+	;; "ip" '(counsel-projectile
+	;; 	:which-key "counsel projectile")
+	"p" '(counsel-projectile-find-file
+		    :which-key "project files")
+	"<tab>" '(projectile-find-other-file
+		        :which-key "other file")
+	"TAB" '(projectile-find-other-file
+		      :which-key "other file")
+	"r" '(counsel-recentf
+		    :which-key "recent files")
+	;; "g" '(counsel-projectile-grep
+	;; 	:which-key "project search")
+	"f" '(counsel-find-file
+		    :which-key "files"))
+
+(global-leader-helm-def
+  :states '(motion normal visual)
+  
+	"x" '(helm-M-x
+		     :which-key "helm M-x")
+	"o" '(helm-occur
+		     :which-key "helm occur")
+	"s" '(helm-swoop
+		    :which-key "helm swoop"))
+
+(global-leader-helm-def
+  :states '(motion normal)
+
+  "h" '(helm-resume
+		    :which-key "helm resume")
+	"m" '(helm-mini
+		    :which-key "helm mini")
+	"p" '(helm-projectile
+		    :which-key "helm projectile")
+	"P" '(helm-projectile-switch-project
+		    :which-key "helm projectile project")
+	"C-p" '(helm-projectile-find-file-in-known-projects
+		      :which-key "helm projectile all")
+	"<tab>" '(helm-projectile-find-other-file ; cpp vs h switching
+		        :which-key "helm projectile other file")
+	"TAB" '(helm-projectile-find-other-file ; cpp vs h switching
+		      :which-key "helm projectile other file")
+	"r" '(helm-recentf
+		    :which-key "helm recentf")
+	"g" '(helm-projectile-grep
+		    :which-key "helm projectile grep")
+	"f" '(helm-find-files
+		    :which-key "helm find files")
+	"F" '(helm-for-files
+		    :which-key "helm for files"))
+
+(global-leader-appearance-def
+  :states '(motion normal visual)
+
+	"t" '(global-leader-appearance-theme
+		    :which-key "theme")
+	"f" '(global-leader-appearance-font
+		    :which-key "font")
+
+  "F" '((lambda () (interactive) (toggle-frame-fullscreen))
+        :which-key "toggle full-screen"))
+
+(global-leader-appearance-theme-def
+  :states '(motion normal visual)
+
+	"l" '((lambda () (interactive) (change-theme light-theme))
+		    :which-key "light theme")
+	"d" '((lambda () (interactive) (change-theme dark-theme))
+		    :which-key "dark theme"))
+
+(global-leader-appearance-font-def
+  :states '(motion normal visual)
+  
+	"s" '(set-to-small-font
+		    :which-key "small font")
+	"b" '(set-to-big-font
+		    :which-key "big font")
+	"z" '(hydra-zoom/body
+		    :which-key "zoom buffer font")
+	"r" '(toggle-readable-buffer-font
+		    :which-key "toggle readable buffer font"))
+
+(global-leader-companion-def
+  :states '(motion normal visual)
+
+  "d" '(companion-notif-dismiss
+		    :which-key "dismiss notification")
+	"q" '(companion-show-last-qod
+		    :which-key "quote of the day")
+	"y" '(companion-copy-qod
+		    :which-key "copy quote of the day")
+	"Q" '(companion-fetch-qod
+		    :which-key "fetch quote of the day"))
+
+(global-leader-sidebar-def
+  :states '(motion normal visual)
+
+  "f" '((lambda () (interactive)
+		      (display-buffer-in-side-window (get-buffer neo-buffer-name) '((side . left))))
+		    :which-key "files")
+	"o" '((lambda () (interactive)
+		      (display-buffer-in-side-window (get-buffer imenu-list-buffer-name) '((side . left))))
+		    :which-key "outline"))
+
+(global-leader-templates-def
+  :states '(motion normal visual)
+
+  "n" '(yas-new-snippet
+		    :which-key "new")
+	"e" '(yas-visit-snippet-file
+		    :which-key "edit")
+	"r" '(yas-reload-all
+		    :which-key "reload")
+  "i" '(insert-file
+        :which-key "insert file content"))
+
+(global-leader-files-def
+  :states '(motion normal visual)
+
+  "q" '(save-buffers-kill-terminal
+        :which-key "quit emacs")
+  "Q" '(save-buffers-kill-emacs
+        :which-key "quit emacs process")
+	"w" '(write-file
+		    :which-key "write file")
+	"r" '(rename-buffer
+		    :which-key "rename buffer")
+	"a" '(evil-write-all
+		    :which-key "write all files"))
+
+(global-leader-battery-def
+  :states '(motion normal visual)
+
+  "c" '((lambda () (interactive) (setq company-idle-delay 0))
+        :which-key "instant completion")
+  "C" '((lambda () (interactive) (setq company-idle-delay 0.2))
+        :which-key "delayed completion"))
+
+(global-leader-music-def
+  :states '(motion normal visual)
+
+  "l" '(global-leader-music-playlist
+        :which-key "playlist")
+  "f" '(counsel-emms-play
+        :which-key "play music")
+  "n" '(hydra-emms-control/body
+        :which-key "music control")
+  "p" '(emms-pause
+        :which-key "pause music")
+  "P" '(emms-stop
+        :which-key "stop music")
+  "r" '(emms-random
+        :which-key "play random music")
+  "t" '(emms-toggle-repeat-track
+        :which-key "toggle repeat track"))
+
+(global-leader-music-playlist-def
+  :states '(motion normal visual)
+
+  "l" '(emms-add-playlist
+        :which-key "add playlist")
+  "a" '(emms-add-file
+        :which-key "add file")
+  "d" '(emms-add-directory
+        :which-key "add directory")
+  "D" '(emms-add-directory-tree
+        :which-key "add directory recursively")
+  "s" '(emms-playlist-save
+        :which-key "save playlist")
+  "g" '((lambda () (interactive)
+          (emms-playlist-mode-go)
+          (emms-playlist-mode-center-current))
+        :which-key "go to playlist")
+  "s" '(emms-sort
+        :which-key "sort playlist")
+  "S" '(emms-shuffle
+        :which-key "shuffle playlist")
+  "u" '(emms-uniq
+        :which-key "remove playlist duplicates")
+  "c" '(emms-playlist-clear
+        :which-key "clear playlist"))
+
+(global-leader-version-control-def
+  :states '(motion normal visual)
+
+  "s" '(magit-status
+        :which-key "magit status"))
 
 ;; mode specific leader
 
@@ -2306,10 +2298,14 @@ command (ran after) is mysteriously incorrect."
 (dolist (state '(motion normal visual))
   (evil-define-key state 'global (kbd "n") 'evil-ex-search-next-flash)
   (evil-define-key state 'global (kbd "N") 'evil-ex-search-previous-flash))
-; use t instead of * for symbol search
+; use F instead of * for symbol search
 (evil-define-key 'normal 'global "F" (lambda () (interactive) (save-excursion (evil-ex-search-word-forward))))
 (evil-define-key 'normal 'global "gF" (lambda () (interactive) (save-excursion (evil-ex-search-unbounded-word-forward))))
-(evil-define-key 'visual 'global "F" 'evil-visualstar/begin-search-forward)
+(evil-define-key 'visual 'global "F" (lambda () (interactive) (save-excursion (call-interactively 'evil-visualstar/begin-search-forward))))
+(evil-define-key 'normal 'global (kbd "M-n") 'evil-ex-search-word-forward)
+(evil-define-key 'normal 'global (kbd "M-N") 'evil-ex-search-word-backward)
+(evil-define-key 'visual 'global (kbd "M-n") 'evil-visualstar/begin-search-forward)
+(evil-define-key 'visual 'global (kbd "M-N") 'evil-visualstar/begin-search-backward)
 ; faster surround
 (evil-define-key 'normal 'global "s" 'evil-surround-edit)
 (evil-define-key 'normal 'global "S" 'evil-Surround-edit)
@@ -3320,8 +3316,10 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (dolist (hook '(change-log-mode-hook log-edit-mode-hook))
 	(add-hook hook (lambda () (flyspell-mode -1))))
 
-;; companion
-(companion-open)
+;;; status line
+(load-relative "./tommyx-status-lines.el")
+;; TODO: The following fix bug with companion's separator
+(companion-compile)
 
 ;;; org
 (load-relative "./tommyx-org.el")
