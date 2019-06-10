@@ -138,6 +138,11 @@
 (setq org-agenda-skip-scheduled-if-deadline-is-shown t)
 (setq org-agenda-move-date-from-past-immediately-to-today t)
 (org-super-agenda-mode)
+(add-hook
+ 'org-agenda-mode-hook
+ (lambda ()
+   (hl-line-mode 1)
+   (setq-local use-line-nav t)))
 (evil-set-initial-state 'org-agenda-mode 'motion)
 (setq org-agenda-time-grid '((daily today)
                              (800 1000 1200 1400 1600 1800 2000)

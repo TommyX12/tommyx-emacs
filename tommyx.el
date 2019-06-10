@@ -1,7 +1,9 @@
 ;; emergency key setting for debug
 (global-set-key (kbd "C-M-x") 'execute-extended-command)
 
+
 ;;; add directories to load-path
+
 (setq tommyx-config-path (file-name-directory load-file-name))
 ;; TODO make sure these overrides package archive install directories
 (add-to-list 'load-path tommyx-config-path)
@@ -16,7 +18,8 @@
 (add-to-list 'load-path
              (expand-file-name "packages/Highlight-Indentation-for-Emacs" tommyx-config-path))
 
-;;; general settings
+
+;;; general settings before package load
 
 ;; theme
 (setq doom-themes-enable-bold t
@@ -59,6 +62,15 @@
 (scroll-bar-mode -1)
 (menu-bar-mode -1)
 
+;; add _ as word syntax
+(add-hook 'prog-mode-hook (lambda () (modify-syntax-entry ?_ "w")))
+(add-hook 'emacs-lisp-mode-hook (lambda () (modify-syntax-entry ?- "w")))
+(add-hook
+   'nxml-mode-hook
+   (lambda ()
+     (modify-syntax-entry ?- "w")
+     (modify-syntax-entry ?_ "w")))
+
 ;; compilation
 (setq compilation-scroll-output 'first-error)
 (setq compilation-window-height 20)
@@ -85,6 +97,20 @@
 ;;  (top-or-bottom-pos . -5)))
 ;; (mouse-avoidance-mode 'banish)
 ;; (mouse-avoidance-mode 'none)
+
+;; indent settings
+(setq default-indent-tabs-mode nil)
+(setq-default indent-tabs-mode default-indent-tabs-mode) ; use tabs instead of space
+(setq-default tab-width 4)
+(setq-default evil-shift-width tab-width)
+(setq-default backward-delete-char-untabify-method 'nil)
+(add-hook 'prog-mode-hook (lambda () (setq evil-shift-width tab-width)))
+(add-hook
+ 'emacs-lisp-mode-hook
+ (lambda ()
+   (setq-local indent-tabs-mode nil)
+   (setq-local tab-width 2)
+   (setq-local evil-shift-width tab-width)))
 
 ;; flyspell
 (setq flyspell-issue-message-flag nil)
@@ -237,74 +263,9 @@
 ;; save clipboard onto kill ring
 (setq save-interprogram-paste-before-kill t)
 
-;; fringe bitmap
-(define-fringe-bitmap 'flycheck-fringe-bitmap-double-arrow
-  [#b00000000
-   #b00000000
-   #b00001110
-   #b00011111
-   #b00011111
-   #b00011111
-   #b00001110
-   #b00000000
-   #b00000000])
-(define-fringe-bitmap 'right-arrow
-  [#b01110000
-   #b00111000
-   #b00011100
-   #b00001110
-   #b00001110
-   #b00011100
-   #b00111000
-   #b01110000])
-(define-fringe-bitmap 'left-arrow
-  [#b00001110
-   #b00011100
-   #b00111000
-   #b01110000
-   #b01110000
-   #b00111000
-   #b00011100
-   #b00001110])
-(define-fringe-bitmap 'right-curly-arrow
-  [#b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000])
-(define-fringe-bitmap 'left-curly-arrow
-  [#b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000])
-
 ;; word wrap
 (add-hook 'prog-mode-hook (lambda () (toggle-word-wrap 1)))
 (add-hook 'text-mode-hook (lambda () (toggle-word-wrap 1)))
-(add-hook 'sgml-mode-hook (lambda () (toggle-word-wrap 1)))
 
 ;; window divider
 (setq window-divider-default-places 't)
@@ -427,6 +388,7 @@
       (message "hl-insert-region mode enabled."))))
 ;; (hl-insert-region-mode)
 
+
 ;;; initialize packages
 
 (require 'package)
@@ -443,6 +405,7 @@
   (package-install 'use-package))
 
 (eval-when-compile (require 'use-package))
+
 
 ;;; general packages
 
@@ -940,8 +903,7 @@ Useful for a search overview popup."
          tommyx-config-path))
   (setq highlight-indentation-blank-lines t)
   (add-hook 'prog-mode-hook 'highlight-indentation-mode)
-  (add-hook 'text-mode-hook 'highlight-indentation-mode)
-  (add-hook 'protobuf-mode-hook 'highlight-indentation-mode))
+  (add-hook 'text-mode-hook 'highlight-indentation-mode))
 
 (require 'origami)
 (add-to-list 'origami-parser-alist
@@ -1043,9 +1005,7 @@ Useful for a search overview popup."
 
 (use-package flycheck :ensure t
   :config
-  (global-flycheck-mode 1)
-  ;; BUG: temporarily disable for some modes
-  (add-hook 'haskell-mode-hook (lambda () (flycheck-mode -1))))
+  (global-flycheck-mode 1))
 
 (use-package flyspell-lazy :ensure t
   :config
@@ -1291,45 +1251,20 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
                                              tommyx-config-path))
   (unless (boundp 'ycmd-server-python-command)
     (setq ycmd-server-python-command "python"))
-  (setq ycmd-server-command `(,ycmd-server-python-command "-u" ,(expand-file-name "third_party/ycmd/ycmd/"
-                                                                                  tommyx-config-path)))
+  (setq ycmd-server-command
+        `(,ycmd-server-python-command
+          "-u"
+          ,(expand-file-name "third_party/ycmd/ycmd/"
+                             tommyx-config-path)))
   ;; TODO group these into respective language mode.
   ;; TODO disabled
   ;; (add-hook 'ycmd-mode-hook 'company-ycmd-setup) ; already manually added
   (add-hook 'ycmd-mode-hook 'flycheck-ycmd-setup)
   (add-hook 'ycmd-mode-hook (lambda () (interactive) (when (ycmd-major-mode-to-file-types major-mode) (ycmd-eldoc-setup))))
-                                        ; attempt to improve performance
+  ;; attempt to improve performance
   (setq company-ycmd-request-sync-timeout 0)
-                                        ; file types activation
-  (add-hook 'c++-mode-hook (lambda () (ycmd-mode 1)))
-  (add-hook 'csharp-mode-hook (lambda () (ycmd-mode 1)))
-  ;; TODO: enable ycmd when you actually need to
-  ;; (add-hook 'java-mode-hook (lambda () (ycmd-mode 1)))
-  ;; (add-hook 'text-mode-hook (lambda () (ycmd-mode 1)))
-  ;; TODO: bug: remove eldoc (ycmd freezes) and ycmd mode from certain other modes.
-  (add-hook 'text-mode-hook (lambda () (ycmd-eldoc-mode -1)))
-  (add-hook 'org-mode-hook (lambda () (ycmd-eldoc-mode -1)))
-  (add-hook 'racket-mode-hook (lambda () (ycmd-eldoc-mode -1)))
-  (add-hook 'haskell-mode-hook (lambda () (ycmd-eldoc-mode -1)))
-  (add-hook 'typescript-mode-hook (lambda () (ycmd-mode -1)))
-  (add-hook 'python-mode-hook (lambda () (ycmd-mode -1)))
-                                        ; c/c++
-  (evil-define-key 'normal c-mode-map (kbd "C-]") 'ycmd-goto) ; goto
-  (evil-define-key 'normal c++-mode-map (kbd "C-]") 'ycmd-goto) ; goto
-                                        ; c#
-  (evil-define-key 'normal csharp-mode-map (kbd "C-]") 'ycmd-goto) ; goto
-                                        ; java
   (add-to-list 'ycmd-file-type-map '(java-mode "java")) ; file type detection
-  (evil-define-key 'normal java-mode-map (kbd "C-]") 'ycmd-goto) ; goto
-                                        ; python
-  (evil-define-key 'normal python-mode-map (kbd "C-]") 'elpy-goto-definition) ; goto
-                                        ; typescript
-  (evil-define-key 'normal typescript-mode-map (kbd "C-]") 'tide-jump-to-definition) ; goto
-                                        ; elisp
-  (add-hook 'emacs-lisp-mode-hook (lambda () (ycmd-mode -1))) ; disable ycm
-  (add-hook 'java-mode-hook (lambda () (ycmd-mode -1))) ; TODO bug
-                                        ; css
-  (add-hook 'css-mode-hook (lambda () (ycmd-mode -1))))
+  )
 
 (use-package flycheck-ycmd :ensure t)
 
@@ -1487,37 +1422,25 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   (global-color-identifiers-mode 1)
 
   ;; extra modes support
-  (let ((extra-modes
-         '(csharp-mode
-           glsl-mode)))
-    (dolist (maj-mode extra-modes)
+  (defun setup-color-identifiers-parser (style mode)
+    (cond
+     ((eq style 'c)
       (color-identifiers:set-declaration-scan-fn
-       maj-mode 'color-identifiers:cc-mode-get-declarations)
+       mode 'color-identifiers:cc-mode-get-declarations)
       (add-to-list
        'color-identifiers:modes-alist
-       `(,maj-mode . (""
-                      "\\_<\\([a-zA-Z_$]\\(?:\\s_\\|\\sw\\)*\\)"
-                      (nil font-lock-variable-name-face))))))
-  (let ((extra-modes
-         '(typescript-mode)))
-    (dolist (maj-mode extra-modes)
+       `(,mode . (""
+                  "\\_<\\([a-zA-Z_$]\\(?:\\s_\\|\\sw\\)*\\)"
+                  (nil font-lock-variable-name-face)))))
+     ((eq style 'js)
       (add-to-list
        'color-identifiers:modes-alist
-       `(,maj-mode . ("[^.][[:space:]]*"
-                      "\\_<\\([a-zA-Z_$]\\(?:\\s_\\|\\sw\\)*\\)"
-                      (nil font-lock-variable-name-face)))))))
+       `(,mode . ("[^.][[:space:]]*"
+                  "\\_<\\([a-zA-Z_$]\\(?:\\s_\\|\\sw\\)*\\)"
+                  (nil font-lock-variable-name-face))))))))
 
 (use-package auto-highlight-symbol :ensure t
   :config
-  (push 'sql-mode ahs-modes)
-  (push 'racket-mode ahs-modes)
-  (push 'haskell-mode ahs-modes)
-  (push 'web-mode ahs-modes)
-  (push 'js2-mode ahs-modes)
-  (push 'glsl-mode ahs-modes)
-  (push 'typescript-mode ahs-modes)
-  (push 'shaderlab-mode ahs-modes)
-  (push 'protobuf-mode ahs-modes)
   (global-auto-highlight-symbol-mode 1)
   ;; (add-hook 'prog-mode-hook (auto-highlight-symbol-mode 1))
   ;; (add-hook 'html-mode-hook (auto-highlight-symbol-mode 1))
@@ -1525,7 +1448,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   (setq ahs-idle-interval 0.3)
   (setq ahs-case-fold-search nil)
 
-                                        ; patch to not clear highlight when moving
+  ;; patch to not clear highlight when moving
   (defun ahs-highlight (symbol beg end)
     "Highlight"
     (setq ahs-search-work  nil
@@ -1545,7 +1468,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
                 ahs-search-work  nil
                 ahs-need-fontify nil) t))))
 
-                                        ; patch to fix avy bug
+  ;; patch to fix avy bug
   (defun ahs-idle-function ()
     "Idle function. Called by `ahs-idle-timer'."
     (when (and auto-highlight-symbol-mode)
@@ -1555,9 +1478,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
         (when hl
           (ahs-highlight (nth 0 hl)
                          (nth 1 hl)
-                         (nth 2 hl))))))
-
-  )
+                         (nth 2 hl)))))))
 
 (use-package neotree :ensure t
   :config
@@ -1566,16 +1487,18 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   (setq neo-theme (if (display-graphic-p) 'icons 'nerd))
   ;; (setq neo-theme 'nerd)
   (setq neo-show-hidden-files t)
-  (add-hook 'neotree-mode-hook (lambda ()
-                                 (hl-line-mode 1)
-                                 (yascroll-bar-mode -1)
-                                 (make-local-variable 'face-remapping-alist)
-                                 (add-to-list 'face-remapping-alist '(default sidebar-background))
-                                 (setq-local left-fringe-width 0)
-                                 (setq-local right-fringe-width 0)
-                                 (setq-local use-line-nav t)
-                                 (setq-local highlight-indentation-offset 2)
-                                 (highlight-indentation-mode 1)))
+  (add-hook
+   'neotree-mode-hook
+   (lambda ()
+     (hl-line-mode 1)
+     (yascroll-bar-mode -1)
+     (make-local-variable 'face-remapping-alist)
+     (add-to-list 'face-remapping-alist '(default sidebar-background))
+     (setq-local left-fringe-width 0)
+     (setq-local right-fringe-width 0)
+     (setq-local use-line-nav t)
+     (setq-local highlight-indentation-offset 2)
+     (highlight-indentation-mode 1)))
   (setq neo-confirm-change-root 'off-p)
   (setq neo-banner-message "")
   (setq neo-show-updir-line nil)
@@ -1650,9 +1573,6 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 (use-package emmet-mode :ensure t
   :config
-  (add-hook 'sgml-mode-hook 'emmet-mode)
-  (add-hook 'web-mode-hook 'emmet-mode)
-  (add-hook 'css-mode-hook  'emmet-mode)
   (setq emmet-move-cursor-after-expanding t)
   (setq emmet-move-cursor-between-quotes t)
   (setq emmet-indentation 2)
@@ -1665,24 +1585,28 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   (setq imenu-list-size 30)
   (setq imenu-list-idle-update-delay 1)
   (setq imenu-list-buffer-name "*Outline*")
-  (add-hook 'imenu-list-major-mode-hook (lambda ()
-                                          (make-local-variable 'face-remapping-alist)
-                                          (add-to-list 'face-remapping-alist '(default sidebar-background))
-                                          (yascroll-bar-mode -1)
-                                          (setq-local left-fringe-width 0)
-                                          (setq-local right-fringe-width 0)
-                                          (hl-line-mode 1)
-                                          (setq tab-width 2)
-                                          (whitespace-mode 1)
-                                          (setq-local use-line-nav t)))
-  (add-hook 'after-init-hook (lambda ()
-                               (setq imenu-list-mode-line-format mode-line-format)
-                               (imenu-list-get-buffer-create)
-                               (imenu-list-start-timer)
-                               (imenu-list-update nil t)
-                               (neotree-show)
-                               (display-buffer-in-side-window (get-buffer imenu-list-buffer-name) '((side . left)))))
-                                        ; patch to change appearance
+  (add-hook
+   'imenu-list-major-mode-hook
+   (lambda ()
+     (make-local-variable 'face-remapping-alist)
+     (add-to-list 'face-remapping-alist '(default sidebar-background))
+     (yascroll-bar-mode -1)
+     (setq-local left-fringe-width 0)
+     (setq-local right-fringe-width 0)
+     (hl-line-mode 1)
+     (setq tab-width 2)
+     (whitespace-mode 1)
+     (setq-local use-line-nav t)))
+  (add-hook
+   'after-init-hook
+   (lambda ()
+     (setq imenu-list-mode-line-format mode-line-format)
+     (imenu-list-get-buffer-create)
+     (imenu-list-start-timer)
+     (imenu-list-update nil t)
+     (neotree-show)
+     (display-buffer-in-side-window (get-buffer imenu-list-buffer-name) '((side . left)))))
+  ;; patch to change appearance
   (defun imenu-list--depth-string (depth)
     "Return a prefix string representing an entry's DEPTH."
     (let ((indents (cl-loop for i from 1 to depth collect "\t")))
@@ -1708,8 +1632,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
                                         (car entry))
                      'follow-link t
                      'action #'imenu-list--action-goto-entry)
-      (insert "\n")))
-  )
+      (insert "\n"))))
 
 ;; (use-package window-purpose :ensure t :after neotree imenu-list
 ;;  :config
@@ -1725,20 +1648,49 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 ;; (require 'smart-completer)
 
+
 ;;; language specific packages
 
 (require 'shaderlab-mode)
+(push 'shaderlab-mode ahs-modes)
 
-(use-package auctex :defer t :ensure t)
+(use-package auctex :defer t :ensure t
+  :config
+  (dolist (hook '(latex-mode-hook TeX-mode-hook)))
+  (add-hook
+   hook
+   (lambda ()
+     (setq-local tab-width 2)
+     (setq-local indent-tabs-mode default-indent-tabs-mode)
+     (setq-local evil-shift-width tab-width))))
 
 (use-package kivy-mode :ensure t)
 
+(use-package protobuf-mode :ensure t
+  :config
+  (add-hook
+   'protobuf-mode-hook
+   (lambda ()
+     (setq-local tab-width 2)
+     (setq-local evil-shift-width tab-width)
+     (setq-local highlight-indentation-offset 4)))
+  (push 'protobuf-mode ahs-modes)
+  (add-hook 'protobuf-mode-hook 'highlight-indentation-mode))
+
 (use-package cc-mode :ensure t
   :config
+  (setq-default c-basic-offset 4)
   (setq c-default-style
         '((java-mode . "java")
           (awk-mode . "awk")
-          (other . "linux"))))
+          (other . "linux")))
+  (add-hook
+   'java-mode-hook
+   (lambda ()
+     (setq-local tab-width 2)
+     (setq-local evil-shift-width tab-width)
+     (setq-local highlight-indentation-offset 4)))
+  (add-hook 'c++-mode-hook (lambda () (ycmd-mode 1))))
 
 (use-package ess :ensure t
   :config
@@ -1748,21 +1700,60 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
                           (let ((b #'company-tabnine))
                             (cons b (remove b company-backends)))))))
 
-(use-package csharp-mode :ensure t)
+(use-package csharp-mode :ensure t
+  :config
+  (setup-color-identifiers-parser 'c 'csharp-mode)
+  (add-hook 'csharp-mode-hook (lambda () (ycmd-mode 1))))
 
 (use-package markdown-mode :ensure t)
 
 (use-package markdown-mode+ :ensure t)
 
-(use-package racket-mode :ensure t)
+(use-package racket-mode :ensure t
+  :config
+  (add-hook 'racket-mode-hook (lambda () (modify-syntax-entry ?- "w")))
+  (push 'racket-mode ahs-modes))
 
-(use-package haskell-mode :ensure t)
+(use-package haskell-mode :ensure t
+  :config
+  ;; flycheck has bug
+  (add-hook 'haskell-mode-hook (lambda () (flycheck-mode -1)))
+  (add-hook
+   'haskell-mode-hook
+   (lambda ()
+     (setq-local tab-width 4)
+     (setq-local evil-shift-width tab-width)
+     (setq-local haskell-indentation-starter-offset tab-width)
+     (setq-local haskell-indentation-left-offset tab-width)
+     (setq-local haskell-indentation-layout-offset tab-width)))
+  (push 'haskell-mode ahs-modes))
 
 (use-package haskell-snippets :ensure t)
 
 (use-package rust-mode :ensure t)
 
 (use-package csv-mode :ensure t)
+
+(use-package sql :ensure t
+  :config
+  (add-hook 'sql-mode-hook (lambda () (modify-syntax-entry ?_ "w")))
+  (push 'sql-mode ahs-modes))
+
+(use-package python-mode :ensure t
+  :config
+
+  (setq-default python-indent 4)
+  (add-hook
+   'python-mode-hook
+   (lambda ()
+     (setq-local tab-width 4)
+     (setq-local indent-tabs-mode default-indent-tabs-mode)
+     (setq-local python-indent-offset tab-width)
+     (setq-local highlight-indentation-offset tab-width)
+     (setq-local python-indent tab-width)
+     (setq-local evil-shift-width tab-width)
+     (setq-local yas-indent-line 'auto))
+   t))
 
 (use-package elpy :ensure t
   :init
@@ -1773,6 +1764,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   (setq elpy-rpc-timeout 2.5)
   (defun setup-elpy-mode ()
     (interactive)
+    (ycmd-mode -1)
     (setq-local company-idle-delay 0)
     (setq-local company-backends
                 (let ((b #'company-tabnine))
@@ -1783,11 +1775,20 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 (use-package tide :ensure t
   :config
+  (push 'typescript-mode ahs-modes)
+  (setup-color-identifiers-parser 'js 'typescript-mode)
   (defun setup-tide-mode ()
     (interactive)
     (tide-setup)
     (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
     (tide-hl-identifier-mode +1)
+    (ycmd-mode -1)
+    ;; indentation
+    (setq-local tab-width 2)
+    (setq-local typescript-indent-level 2)
+    (setq-local evil-shift-width tab-width)
+    (setq-local highlight-indentation-offset 4)
+    (setq-local js-indent-level 2)
     (setq-local company-backends
                 (let ((b #'company-tide))
                   (cons b (remove b company-backends))))
@@ -1803,19 +1804,60 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   :config
   ;; (add-to-list 'auto-mode-alist '("\\.vs\\'" . glsl-mode))
   ;; (add-to-list 'auto-mode-alist '("\\.fs\\'" . glsl-mode))
-  )
+  (setup-color-identifiers-parser 'c 'glsl-mode)
+  (push 'glsl-mode ahs-modes))
 
 (use-package json-mode :ensure t
   :config
-  (setq json-reformat:indent-width 2))
+  (setq json-reformat:indent-width 2)
+  (add-hook
+   'json-mode-hook
+   (lambda ()
+     (setq-local tab-width 2)
+     (setq-local evil-shift-width tab-width)
+     (setq-local highlight-indentation-offset 4)
+     (setq-local js-indent-level 2))))
 
 ;; (use-package vue-mode :ensure t
 ;;     :config
 ;;     (setq mmm-submode-decoration-level 0)
 ;; )
 
+(use-package sgml-mode :ensure t
+  :config
+  (add-hook 'sgml-mode-hook (lambda () (toggle-word-wrap 1)))
+  (add-hook 'sgml-mode-hook 'emmet-mode))
+
 (use-package web-mode :ensure t
   :config
+
+  (add-hook 'web-mode-hook 'emmet-mode)
+  (add-hook 'css-mode-hook  'emmet-mode)
+
+  (dolist (hook '(html-mode-hook web-mode-hook css-mode-hook))
+    (add-hook
+     hook
+     (lambda ()
+       (modify-syntax-entry ?- "w")
+       (modify-syntax-entry ?_ "w"))))
+
+  (add-hook
+   'web-mode-hook
+   (lambda ()
+     (setq-local tab-width 2)
+     (setq-local evil-shift-width tab-width)
+     (setq-local highlight-indentation-offset 4)))
+  (add-hook
+   'css-mode-hook
+   (lambda ()
+     (setq-local tab-width 2)
+     (setq-local evil-shift-width tab-width)
+     (setq-local highlight-indentation-offset 4)
+     (setq-local web-mode-css-indent-offset 2)
+     (setq-local css-indent-offset 2)))
+
+  (push 'web-mode ahs-modes)
+
   (setq web-mode-enable-auto-expanding t)
   (setq-default web-mode-markup-indent-offset 2)
   (add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
@@ -1828,21 +1870,19 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   (add-to-list 'auto-mode-alist '("\\.djhtml\\'" . web-mode))
   (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
   (add-to-list 'auto-mode-alist '("\\.xml?\\'" . web-mode))
-
-                                        ; use for vue files
-  (add-to-list 'auto-mode-alist '("\\.vue\\'" . web-mode))
-  )
+  ;; use for vue files
+  (add-to-list 'auto-mode-alist '("\\.vue\\'" . web-mode)))
 
 (use-package js2-mode :ensure t
   :config
   (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+  (add-hook 'js2-mode-hook (lambda () (ycmd-mode 1)))
   (setq js2-strict-missing-semi-warning nil)
-  )
+  (push 'js2-mode ahs-modes))
 
 (use-package counsel-css :ensure t
   :config
-  (add-hook 'css-mode-hook 'counsel-css-imenu-setup)
-  )
+  (add-hook 'css-mode-hook 'counsel-css-imenu-setup))
 
 ;; (use-package lsp-python :ensure t :after lsp-mode
 ;;  :config
@@ -1859,6 +1899,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; )
 
 ;; (use-package js2-refactor :ensure t)
+
 
 ;;; key bindings util / helper functions and motion
 
@@ -2219,6 +2260,7 @@ command (ran after) is mysteriously incorrect."
       (outline-backward-same-level 1)
     (outline-back-to-heading)))
 
+
 ;;; hydra
 
 (defhydra hydra-emms-control ()
@@ -2238,6 +2280,7 @@ command (ran after) is mysteriously incorrect."
   "zoom"
   ("=" text-scale-increase "in")
   ("-" text-scale-decrease "out"))
+
 
 ;;; leader key bindings
 
@@ -2605,6 +2648,7 @@ command (ran after) is mysteriously incorrect."
 
   "s" '(magit-status
         :which-key "magit status"))
+
 
 ;;; general key bindings
 
@@ -3034,6 +3078,7 @@ command (ran after) is mysteriously incorrect."
  "M-l" 'yas-insert-snippet
  "M-l" yas-maybe-expand)
 
+
 ;;; shortcut key bindings
 
 (global-shortcut-def
@@ -3154,6 +3199,7 @@ command (ran after) is mysteriously incorrect."
 
   "<tab>" 'indent-region)
 
+
 ;;; mode specific leader key bindings
 
 (global-leader-mode-specific-def
@@ -3199,7 +3245,44 @@ command (ran after) is mysteriously incorrect."
   "P" '(preview-clearout-buffer
         :which-key "clear preview buffer"))
 
+
 ;;; mode specific general key bindings
+
+(general-define-key
+ :keymaps 'typescript-mode-map
+ :states '(motion normal)
+
+ "C-]" 'tide-jump-to-definition)
+
+(general-define-key
+ :keymaps 'python-mode-map
+ :states '(motion normal)
+
+ "C-]" 'elpy-goto-definition)
+
+(general-define-key
+ :keymaps 'c-mode-map
+ :states '(motion normal)
+
+ "C-]" 'ycmd-goto)
+
+(general-define-key
+ :keymaps 'c++-mode-map
+ :states '(motion normal)
+
+ "C-]" 'ycmd-goto)
+
+(general-define-key
+ :keymaps 'csharp-mode-map
+ :states '(motion normal)
+
+ "C-]" 'ycmd-goto)
+
+(general-define-key
+ :keymaps 'java-mode-map
+ :states '(motion normal)
+
+ "C-]" 'ycmd-goto)
 
 (general-define-key
  :keymaps 'imenu-list-major-mode-map
@@ -3346,104 +3429,87 @@ command (ran after) is mysteriously incorrect."
  "o" 'neotree-enter
  "<return>" 'neotree-enter)
 
+
 ;;; mode specific shortcut key bindings
 
-;;; misc settings
 
-;; file-type based syntax entry
-(add-hook 'sql-mode-hook (lambda () (modify-syntax-entry ?_ "w")))
-(add-hook 'prog-mode-hook (lambda () (modify-syntax-entry ?_ "w")))
-(add-hook 'lisp-mode-hook (lambda () (modify-syntax-entry ?- "w")))
-(add-hook 'emacs-lisp-mode-hook (lambda () (modify-syntax-entry ?- "w")))
-(add-hook 'racket-mode-hook (lambda () (modify-syntax-entry ?- "w")))
-(add-hook 'html-mode-hook (lambda () (modify-syntax-entry ?- "w") (modify-syntax-entry ?_ "w")))
-(add-hook 'web-mode-hook (lambda () (modify-syntax-entry ?- "w") (modify-syntax-entry ?_ "w")))
-(add-hook 'nxml-mode-hook (lambda () (modify-syntax-entry ?- "w") (modify-syntax-entry ?_ "w")))
-(add-hook 'css-mode-hook (lambda () (modify-syntax-entry ?- "w") (modify-syntax-entry ?_ "w")))
+;;; general settings after package load
 
-;; indent settings
-(setq default-indent-tabs-mode nil)
-(setq-default indent-tabs-mode default-indent-tabs-mode) ; use tabs instead of space
-(setq-default tab-width 4)
-(setq-default evil-shift-width tab-width)
-(setq-default python-indent 4)
-(setq-default c-basic-offset 4)
-(setq-default backward-delete-char-untabify-method 'nil)
-(add-hook 'prog-mode-hook (lambda () (setq evil-shift-width tab-width)))
-(add-hook 'python-mode-hook (lambda ()
-                              (setq-local tab-width 4)
-                              (setq-local indent-tabs-mode default-indent-tabs-mode)
-                              (setq-local python-indent-offset tab-width)
-                              (setq-local highlight-indentation-offset tab-width)
-                              (setq-local python-indent tab-width)
-                              (setq-local evil-shift-width tab-width)
-                              (setq-local yas-indent-line 'auto)
-                              ) t)
-(add-hook 'web-mode-hook (lambda ()
-                           (setq-local tab-width 2)
-                           (setq-local evil-shift-width tab-width)
-                           (setq-local highlight-indentation-offset 4)
-                           ))
-(add-hook 'json-mode-hook (lambda ()
-                            (setq-local tab-width 2)
-                            (setq-local evil-shift-width tab-width)
-                            (setq-local highlight-indentation-offset 4)
-                            (setq-local js-indent-level 2)
-                            ))
-(add-hook 'java-mode-hook (lambda ()
-                            (setq-local tab-width 2)
-                            (setq-local evil-shift-width tab-width)
-                            (setq-local highlight-indentation-offset 4)
-                            ))
-(add-hook 'protobuf-mode-hook (lambda ()
-                                (setq-local tab-width 2)
-                                (setq-local evil-shift-width tab-width)
-                                (setq-local highlight-indentation-offset 4)
-                                ))
-(add-hook 'css-mode-hook (lambda ()
-                           (setq-local tab-width 2)
-                           (setq-local evil-shift-width tab-width)
-                           (setq-local highlight-indentation-offset 4)
-                           (setq-local web-mode-css-indent-offset 2)
-                           (setq-local css-indent-offset 2)
-                           ))
-(add-hook 'typescript-mode-hook (lambda ()
-                                  (setq-local tab-width 2)
-                                  (setq-local typescript-indent-level 2)
-                                  (setq-local evil-shift-width tab-width)
-                                  (setq-local highlight-indentation-offset 4)
-                                  (setq-local js-indent-level 2)
-                                  ))
-(add-hook 'latex-mode-hook (lambda ()
-                             (setq-local tab-width 2)
-                             (setq-local indent-tabs-mode default-indent-tabs-mode)
-                             (setq-local evil-shift-width tab-width)
-                             ))
-(add-hook 'TeX-mode-hook (lambda ()
-                           (setq-local tab-width 2)
-                           (setq-local indent-tabs-mode default-indent-tabs-mode)
-                           (setq-local evil-shift-width tab-width)
-                           ))
-(add-hook 'emacs-lisp-mode-hook (lambda ()
-                                  (setq-local indent-tabs-mode nil)
-                                  (setq-local tab-width 2)
-                                  (setq-local evil-shift-width tab-width)
-                                  ))
-(add-hook 'haskell-mode-hook (lambda ()
-                               (setq-local tab-width 4)
-                               (setq-local evil-shift-width tab-width)
-                               (setq-local haskell-indentation-starter-offset tab-width)
-                               (setq-local haskell-indentation-left-offset tab-width)
-                               (setq-local haskell-indentation-layout-offset tab-width)
-                               ))
+;; fringe bitmap
+(define-fringe-bitmap 'flycheck-fringe-bitmap-double-arrow
+  [#b00000000
+   #b00000000
+   #b00001110
+   #b00011111
+   #b00011111
+   #b00011111
+   #b00001110
+   #b00000000
+   #b00000000])
+(define-fringe-bitmap 'right-arrow
+  [#b01110000
+   #b00111000
+   #b00011100
+   #b00001110
+   #b00001110
+   #b00011100
+   #b00111000
+   #b01110000])
+(define-fringe-bitmap 'left-arrow
+  [#b00001110
+   #b00011100
+   #b00111000
+   #b01110000
+   #b01110000
+   #b00111000
+   #b00011100
+   #b00001110])
+(define-fringe-bitmap 'right-curly-arrow
+  [#b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000])
+(define-fringe-bitmap 'left-curly-arrow
+  [#b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000])
 
-(add-hook 'org-agenda-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
 
 ;;; status line config
+
 (load-relative "./tommyx-status-lines.el")
 
+
 ;;; org config
+
 (load-relative "./tommyx-org.el")
 
+
 ;;; project + workspace config
+
 (load-relative "./tommyx-project.el")
