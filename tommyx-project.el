@@ -41,10 +41,8 @@
 )
 
 ;; key bindings
-(general-define-key
-  :keymaps 'override
+(global-leader-project-def
 	:states '(motion normal)
-  :prefix "SPC p"
 
 	"C-f" '(counsel-rg
 		:which-key "search in directory")
