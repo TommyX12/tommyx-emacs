@@ -1,5 +1,5 @@
 ;; emergency key setting for debug
-(global-set-key (kbd "M-C-X") 'execute-extended-command)
+(global-set-key (kbd "C-M-x") 'execute-extended-command)
 
 ;;; add directories to load-path
 (setq tommyx-config-path (file-name-directory load-file-name))
@@ -16,8 +16,9 @@
 (add-to-list 'load-path
              (expand-file-name "packages/Highlight-Indentation-for-Emacs" tommyx-config-path))
 
-;;; themes
-                                        ; (load-theme 'spacemacs-dark t)
+;;; general settings
+
+;; theme
 (setq doom-themes-enable-bold t
       doom-themes-enable-italic t)
 (setq dark-theme 'infinity-dark)
@@ -26,7 +27,7 @@
     (load-theme light-theme t)
   (load-theme dark-theme t))
 
-;; set font
+;; font
 (if (not (boundp 'selected-font))
     (progn
       (cond
@@ -50,35 +51,384 @@
                     :height font-size-small
                     :weight 'normal
                     :width 'normal)
-(defun set-font-size (size)
-  (set-face-attribute 'default nil :height size)
-  (status-lines-compile) ; should be before companion
-  (when (fboundp 'companion-reopen)
-    (companion-reopen)))
-(defun set-to-small-font ()
-  (interactive)
-  (set-font-size font-size-small))
-(defun set-to-big-font ()
-  (interactive)
-  (set-font-size font-size-big))
-(defun toggle-readable-buffer-font ()
-  (interactive)
-  (if (bound-and-true-p buffer-face-mode)
-      (buffer-face-mode -1)
-    (cond
-     ((find-font (font-spec :name "Helvetica"))
-      (buffer-face-set '(:family "Helvetica")))
-     (t
-      (buffer-face-set '(:family "Arial"))))))
 
 ;; full screen automatically
+
 (toggle-frame-fullscreen)
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
 (menu-bar-mode -1)
 
+;; compilation
+(setq compilation-scroll-output 'first-error)
+(setq compilation-window-height 20)
+
+;; indentation guide using whitespace mode
+(setq whitespace-style '(
+                         tab-mark face tabs
+                         ))
+(setq whitespace-display-mappings '(
+                                    (tab-mark ?\t [?\| ?\t])
+                                    ))
+;; (global-whitespace-mode 1)
+
+;; tabify only leading whitespace
+(setq tabify-regexp "^\t* [ \t]+")
+
+;; mouse avoidance (move to top right corner)
+(setq make-pointer-invisible t)
+;; (setq mouse-avoidance-banish-position
+;;  '((frame-or-window . frame)
+;;  (side . right)
+;;  (side-pos . -5)
+;;  (top-or-bottom . top)
+;;  (top-or-bottom-pos . -5)))
+;; (mouse-avoidance-mode 'banish)
+;; (mouse-avoidance-mode 'none)
+
+;; flyspell
+(setq flyspell-issue-message-flag nil)
+
+;; tramp
+(setq tramp-default-method "ssh")
+
+;; blink matching parens
+(setq blink-matching-paren nil) ; we have smartparens, don't need this
+
+;; winner mode (record window config change so can undo)
+(winner-mode 1)
+
+;; mac use correct modifier keys
+(setq mac-option-modifier 'super)
+(setq mac-command-modifier 'meta)
+
+;; encourage taking a break
+(setq type-break-health-quotes
+      '("Decrease chance of death from heart disease"
+        "Increase lifespan"
+        "Decrease chance of dementia"
+        "No longer reverse effect of exercise"
+        "Decrease chance of diabetes"
+        "Decrease chance of leg deep vein thrombosis (DVT), clot that kills"
+        "Decrease chance of anxiety"
+        "Decrease back pain and permanent damage"
+        "Decrease chance of varicose veins"
+        "Decrease chance of death from all types of cancer"
+        "Decrease blood pressure and blood sugar"))
+(defun type-break-my-query-function (prompt)
+  (yes-or-no-p
+   (concat
+    prompt
+    (propertize (format "(!! %s !!) "
+                        (get-random-element
+                         type-break-health-quotes))))))
+(defun type-break-schedule-check (&rest _)
+  (when (null type-break-time-next-break)
+    (type-break-schedule)))
+(setq type-break-query-function 'type-break-my-query-function)
+(setq type-break-interval 1800)
+(setq type-break-good-rest-interval 300)
+(setq type-break-demo-boring-stats t)
+(setq type-break-keystroke-threshold '(nil . nil))
+(setq type-break-warning-repeat 0)
+(setq type-break-demo-functions '(type-break-demo-boring))
+(type-break-mode 1)
+(type-break-query-mode 1)
+(run-at-time 0 120 'type-break-schedule-check)
+
+;; eldoc
+(global-eldoc-mode 1)
+
+;; enable some modes
+;; flyspell
+(dolist (hook '(prog-mode-hook))
+  (add-hook hook (lambda () (flyspell-prog-mode))))
+(dolist (hook '(text-mode-hook))
+  (add-hook hook (lambda () (flyspell-mode 1))))
+(dolist (hook '(change-log-mode-hook log-edit-mode-hook))
+  (add-hook hook (lambda () (flyspell-mode -1))))
+
+;; attempt to improve font-lock performance
+;; (setq jit-lock-defer-time 0)
+
+;; attempt to improve subprocess performance
+(setq process-adaptive-read-buffering nil)
+
+;; attempt to improve font performance
+(setq inhibit-compacting-font-caches t)
+
+;; attempt to improve long line performance
+(setq-default bidi-display-reordering nil)
+
+;; wrap lines
+(add-hook 'prog-mode-hook (lambda () (setq truncate-lines nil)))
+(add-hook 'text-mode-hook (lambda () (setq truncate-lines nil)))
+
+;; subword motion
+;; (global-subword-mode t) ; TODO this makes evil cursor word search not work
+
+;; auto load if changed
+(global-auto-revert-mode t)
+
+;; profiler
+(setq profiler-max-stack-depth 64)
+
+;; auto start server if on GUI
+(when window-system
+  (server-start))
+
+;; server use different window
+(setq server-window 'pop-to-buffer)
+
+;; no auto saving
+(add-hook 'prog-mode-hook (lambda () (auto-save-mode -1)))
+(add-hook 'text-mode-hook (lambda () (auto-save-mode -1)))
+
+;; no backup file
+(setq make-backup-files nil)
+
+;; auto display line numbers (turned off for performance)
+;; (add-hook 'prog-mode-hook (lambda () (display-line-numbers-mode)))
+;; (add-hook 'sgml-mode-hook (lambda () (display-line-numbers-mode)))
+(setq display-line-numbers-width-start t)
+(setq display-line-numbers-grow-only nil)
+
+;; indicate end of buffer
+(add-hook 'prog-mode-hook (lambda () (setq indicate-buffer-boundaries t)))
+(add-hook 'text-mode-hook (lambda () (setq indicate-buffer-boundaries t)))
+
+;; disable blink
+(blink-cursor-mode 0)
+
+;; UTF-8 as default encoding
+(setq utf-translate-cjk-mode nil) ; disable CJK coding/encoding (Chinese/Japanese/Korean characters)
+(set-language-environment 'utf-8)
+(set-keyboard-coding-system 'utf-8-mac) ; For old Carbon emacs on OS X only
+(setq locale-coding-system 'utf-8)
+(set-default-coding-systems 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(if (eq system-type 'windows-nt)
+    (set-selection-coding-system 'utf-16-le) ; fix inability to paste non-ascii char
+  (set-selection-coding-system 'utf-8))
+(prefer-coding-system 'utf-8)
+
+;; scroll-off emulation
+;; (setq scroll-margin (/ (* (window-total-height) 2) 7))
+(setq scroll-margin 16)
+
+;; set frame title
+(setq frame-title-format (concat "TommyX's Emacs " emacs-version))
+
+;; recent files
+(setq recentf-max-menu-items 500)
+(setq recentf-max-saved-items 500)
+
+;; line highlight
+(setq hl-line-sticky-flag t)
+;; hl-line-mode for some modes
+(add-hook 'buffer-menu-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
+(add-hook 'profiler-report-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
+
+;; garbage collection (improve some performance)
+(setq gc-cons-threshold 200000000)
+(run-with-idle-timer 5 t (lambda () (garbage-collect)))
+(add-hook 'focus-out-hook (lambda () (garbage-collect)))
+
+;; save clipboard onto kill ring
+(setq save-interprogram-paste-before-kill t)
+
+;; fringe bitmap
+(define-fringe-bitmap 'flycheck-fringe-bitmap-double-arrow
+  [#b00000000
+   #b00000000
+   #b00001110
+   #b00011111
+   #b00011111
+   #b00011111
+   #b00001110
+   #b00000000
+   #b00000000])
+(define-fringe-bitmap 'right-arrow
+  [#b01110000
+   #b00111000
+   #b00011100
+   #b00001110
+   #b00001110
+   #b00011100
+   #b00111000
+   #b01110000])
+(define-fringe-bitmap 'left-arrow
+  [#b00001110
+   #b00011100
+   #b00111000
+   #b01110000
+   #b01110000
+   #b00111000
+   #b00011100
+   #b00001110])
+(define-fringe-bitmap 'right-curly-arrow
+  [#b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000])
+(define-fringe-bitmap 'left-curly-arrow
+  [#b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000
+   #b00011000])
+
+;; word wrap
+(add-hook 'prog-mode-hook (lambda () (toggle-word-wrap 1)))
+(add-hook 'text-mode-hook (lambda () (toggle-word-wrap 1)))
+(add-hook 'sgml-mode-hook (lambda () (toggle-word-wrap 1)))
+
+;; window divider
+(setq window-divider-default-places 't)
+(setq window-divider-default-right-width 7)
+(setq window-divider-default-bottom-width 7)
+(window-divider-mode 1)
+
+;; minibuffer background
+;; TODO: failed
+;; (defface minibuffer-background
+;;   '((t (:inherit default)))
+;;   "*Face used for the minibuffer."
+;;   :group 'appearence)
+;; (add-hook 'minibuffer-setup-hook
+;;           (lambda ()
+;;             (make-local-variable 'face-remapping-alist)
+;;             (add-to-list 'face-remapping-alist '(default minibuffer-background))))
+
+;; sidebar face
+(defface sidebar-background
+  '((t (:inherit default)))
+  "*Face used for the sidebar."
+  :group 'appearence)
+
+;; undo limits
+(setq undo-limit 1000000)
+(setq undo-strong-limit 1000000)
+
+;; fringe margin
+(setq-default left-fringe-width 16)
+(setq-default right-fringe-width 10)
+
+;; open buffer performance
+;; (add-hook 'find-file-hooks 'vc-find-file-hook)
+;; (setq vc-handled-backends nil)
+
+;; shell
+(cond
+ ((eq system-type 'darwin)
+  (setq explicit-shell-file-name "/usr/local/bin/zsh"))
+ ((not (eq system-type 'windows-nt))
+  (setq explicit-shell-file-name "/usr/bin/zsh")))
+
+;; no alert sounds
+(setq ring-bell-function 'ignore)
+
+;; input response (experimental)
+;; (setq input-feedback-ov nil)
+;; (defun before-insert-advice (&rest _)
+;;  "Flash input feedback."
+;;  ;; (when input-feedback-ov
+;;  ;;  (delete-overlay input-feedback-ov)
+;;  ;; )
+;;  ;; (when (eq evil-state 'insert)
+;;  ;;  (setq input-feedback-ov (make-overlay (point) (- (point) 1)))
+;;  ;;  (overlay-put input-feedback-ov 'priority 9999)
+;;  ;;  (overlay-put input-feedback-ov 'window (selected-window))
+;;  ;;  (overlay-put input-feedback-ov 'face 'evil-goggles-yank-face)
+;;  ;;  (redisplay)
+;;  ;; )
+;; )
+(setq eager-redisplay-allowed t)
+;; (defun eager-redisplay-insert-advice (&rest _)
+;;  (when (and (eq evil-state 'insert) eager-redisplay-allowed)
+;;    (redisplay t)))
+(defun eager-redisplay-post-command (&rest _)
+  (when (and (eq this-command 'self-insert-command) eager-redisplay-allowed)
+    (redisplay t)))
+(defun eager-redisplay-inhibit-advice (func &rest args)
+  (let ((eager-redisplay-allowed nil))
+    (apply func args)))
+;; (advice-add 'self-insert-command :before #'before-insert-advice)
+(defvar eager-redisplay-mode-on nil)
+(defvar eager-redisplay-inhibit-cmd
+  '(evil-repeat
+    yas-expand))
+(defun eager-redisplay-mode ()
+  "Minor mode that force redraw after command."
+  (interactive)
+  (if eager-redisplay-mode-on
+      (progn
+        (setq eager-redisplay-mode-on nil)
+        ;; (advice-remove 'self-insert-command #'eager-redisplay-insert-advice)
+        (remove-hook 'post-command-hook #'eager-redisplay-post-command)
+        (dolist (cmd eager-redisplay-inhibit-cmd)
+          (advice-remove cmd #'eager-redisplay-inhibit-advice))
+        (message "eager-redisplay mode disabled."))
+    (progn
+      (setq eager-redisplay-mode-on t)
+      ;; (advice-add 'self-insert-command :after #'eager-redisplay-insert-advice)
+      (add-hook 'post-command-hook #'eager-redisplay-post-command)
+      (dolist (cmd eager-redisplay-inhibit-cmd)
+        (advice-add cmd :around #'eager-redisplay-inhibit-advice))
+      (message "eager-redisplay mode enabled."))))
+(eager-redisplay-mode)
+
+;; highlight insert region (disabled for performance)
+(setq hl-insert-region-ov nil)
+(defun hl-insert-region-insert-entry ()
+  (setq hl-insert-region-ov (make-overlay (point) (point) nil nil t))
+  (overlay-put hl-insert-region-ov 'priority 99)
+  (overlay-put hl-insert-region-ov 'window (selected-window))
+  (overlay-put hl-insert-region-ov 'face 'vhl/default-face))
+(defun hl-insert-region-insert-exit ()
+  (when hl-insert-region-ov
+    (delete-overlay hl-insert-region-ov)))
+(defvar hl-insert-region-mode-on nil)
+(defun hl-insert-region-mode ()
+  (interactive)
+  (if hl-insert-region-mode-on
+      (progn
+        (setq hl-insert-region-mode-on nil)
+        (remove-hook 'evil-insert-state-entry-hook 'hl-insert-region-insert-entry)
+        (remove-hook 'evil-insert-state-exit-hook 'hl-insert-region-insert-exit)
+        (message "hl-insert-region mode disabled."))
+    (progn
+      (setq hl-insert-region-mode-on t)
+      (add-hook 'evil-insert-state-entry-hook 'hl-insert-region-insert-entry)
+      (add-hook 'evil-insert-state-exit-hook 'hl-insert-region-insert-exit)
+      (message "hl-insert-region mode enabled."))))
+;; (hl-insert-region-mode)
 
 ;;; initialize packages
+
 (require 'package)
 
 (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/"))
@@ -88,16 +438,14 @@
 (setq package-enable-at-startup nil)
 (package-initialize)
 
-
-;;; package to automatically track and install packages
 (package-refresh-contents)
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
 
 (eval-when-compile (require 'use-package))
 
+;;; general packages
 
-;;; install packages
 (require 'redo+)
 (require 'font-lock+)
 (require 'hl-line+)
@@ -165,6 +513,15 @@
 
   :config
   (evil-mode 1) ; use evil-mode at startup
+
+  ;; disable line highlight in insert and visual mode
+  (add-hook 'prog-mode-hook (lambda () (hl-line-mode 1)))
+  (add-hook 'text-mode-hook (lambda () (hl-line-mode 1)))
+  (add-hook 'evil-insert-state-entry-hook (lambda () (hl-line-mode -1)))
+  (add-hook 'evil-insert-state-exit-hook (lambda () (hl-line-mode 1)))
+  (add-hook 'evil-visual-state-entry-hook (lambda () (hl-line-mode -1)))
+  (add-hook 'evil-visual-state-exit-hook (lambda () (hl-line-mode 1)))
+
   (setq evil-split-window-below t)
   (setq evil-vsplit-window-right t)
   (setq evil-ex-substitute-global t)
@@ -1226,8 +1583,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   (setq neo-window-width 30)
   (setq neo-vc-integration '(face))
   (setq neo-mode-line-type 'default) ; for performance reason
-  (setq neo-auto-indent-point t)
-  )
+  (setq neo-auto-indent-point nil))
 
 (use-package magit :ensure t
   :config
@@ -1505,14 +1861,37 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; (use-package js2-refactor :ensure t)
 
 ;;; key bindings util / helper functions and motion
-;; (defun fit-window-to-region ()
-;;  (interactive)
-;;  TODO)
+
+(defun set-font-size (size)
+  (set-face-attribute 'default nil :height size)
+  (status-lines-compile) ; should be before companion
+  (when (fboundp 'companion-reopen)
+    (companion-reopen)))
+
+(defun set-to-small-font ()
+  (interactive)
+  (set-font-size font-size-small))
+
+(defun set-to-big-font ()
+  (interactive)
+  (set-font-size font-size-big))
+
+(defun toggle-readable-buffer-font ()
+  (interactive)
+  (if (bound-and-true-p buffer-face-mode)
+      (buffer-face-mode -1)
+    (cond
+     ((find-font (font-spec :name "Helvetica"))
+      (buffer-face-set '(:family "Helvetica")))
+     (t
+      (buffer-face-set '(:family "Arial"))))))
+
 (defun select-paste-region ()
   (interactive)
   (evil-goto-mark ?\[)
   (evil-visual-char)
   (evil-goto-mark ?\]))
+
 (defun delete-line-content ()
   (interactive)
   (if (save-excursion
@@ -1521,6 +1900,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
       (beginning-of-line)
     (evil-first-non-blank))
   (call-interactively 'evil-delete-line))
+
 (defun smart-open-line-above ()
   (interactive)
   ;; (move-beginning-of-line nil)
@@ -1531,6 +1911,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   ;;   (newline-and-indent))
   ;; (indent-according-to-mode)
   )
+
 (defun update-heavy-tasks () (interactive)
        "Update all the heavy tasks."
        (message "Updating heavy tasks...")
@@ -1544,14 +1925,17 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
        (yascroll:safe-show-scroll-bar)
        (message "Done.")
        (beacon-blink))
+
 (defun execute-buffer-as-sh ()
   (interactive)
   (let (compile-command)
     (compile (buffer-string))))
+
 (defun execute-region-as-sh ()
   (interactive)
   (let (compile-command)
     (compile (buffer-substring (region-beginning) (region-end)))))
+
 (defun emms-echo-no-error (&optional insertp)
   "Describe the current EMMS track in the minibuffer.
 If INSERTP is non-nil, insert the description into the current buffer instead.
@@ -1565,25 +1949,31 @@ This function uses `emms-show-format' to format the current track."
           (message "%s" string))
         t)
     (error nil)))
+
 (defun emms-next-and-echo ()
   (interactive)
   (emms-next)
   (emms-echo-no-error)
   (sit-for 2))
+
 (defun emms-previous-and-echo ()
   (interactive)
   (emms-previous)
   (emms-echo-no-error)
   (sit-for 2))
+
 (defun emms-seek-backward-more ()
   (interactive)
   (emms-seek -30))
+
 (defun emms-seek-forward-more ()
   (interactive)
   (emms-seek 30))
+
 (defun emms-restart ()
   (interactive)
   (emms-seek-to 0))
+
 (defun counsel-emms-get-playlist-items ()
   (let (items)
     (with-current-emms-playlist
@@ -1599,18 +1989,21 @@ This function uses `emms-show-format' to format the current track."
       ;; (split-string (buffer-string) "[\n\r]+" t)
       )
     items))
+
 (defun counsel-emms-play-item (item)
   (let ((pos (get-text-property 0 'property item)))
     (with-current-emms-playlist
       (save-excursion
         (goto-char pos)
         (emms-playlist-mode-play-current-track)))))
+
 (defun counsel-emms-play ()
   (interactive)
   (ivy-read "Play track: "
             (counsel-emms-get-playlist-items)
             :action #'counsel-emms-play-item
             :require-match t))
+
 (defun emms-show-progress (&rest _)
   (let* ((total-playing-time (emms-track-get
                               (emms-playlist-current-selected-track)
@@ -1637,56 +2030,77 @@ This function uses `emms-show-format' to format the current track."
    (t
     (company-auto-begin)
     (company-select-next))))
+
 (defun company-complete-number-1 ()
   (interactive) (company-complete-number 1))
+
 (defun company-complete-number-2 ()
   (interactive) (company-complete-number 2))
+
 (defun company-complete-number-3 ()
   (interactive) (company-complete-number 3))
+
 (defun company-complete-number-4 ()
   (interactive) (company-complete-number 4))
+
 (defun company-complete-number-5 ()
   (interactive) (company-complete-number 5))
+
 (defun company-complete-number-6 ()
   (interactive) (company-complete-number 6))
+
 (defun company-complete-number-7 ()
   (interactive) (company-complete-number 7))
+
 (defun company-complete-number-8 ()
   (interactive) (company-complete-number 8))
+
 (defun company-complete-number-9 ()
   (interactive) (company-complete-number 9))
+
 (defun company-complete-number-0 ()
   (interactive) (company-complete-number 0))
+
 (defun get-random-element (list)
   "Returns a random element of LIST."
   (if (and list (listp list))
       (nth (random (1- (1+ (length list)))) list)
     (error "Argument to get-random-element not a list or the list is empty")))
+
 (defun sort-lines-ignore-case ()
   (interactive)
   (let ((sort-fold-case t))
     (call-interactively #'sort-lines)))
+
 (evil-define-command evil-ex-search-next-flash () :repeat nil
   (evil-ex-search-next)
   (flash-cursor))
+
 (evil-define-command evil-ex-search-previous-flash () :repeat nil
   (evil-ex-search-previous)
   (flash-cursor))
+
 (setq-default use-line-nav nil)
 (evil-define-motion adaptive-avy () :type exclusive :repeat nil :jump t
   (if use-line-nav (evil-avy-goto-line) (evil-avy-goto-word-0 nil)))
+
 (evil-define-motion fast-move-up () :type exclusive
   (evil-previous-visual-line 5))
+
 (evil-define-motion fast-move-down () :type exclusive
   (evil-next-visual-line 5))
+
 (evil-define-motion fast-move-left () :type exclusive
   (evil-backward-char 8))
+
 (evil-define-motion fast-move-right () :type exclusive
   (evil-forward-char 8))
+
 (defun indent-buffer ()
   (interactive)
   (save-excursion
     (indent-region (point-min) (point-max) nil)))
+
 (defun selection-or-word-at-point (&optional no-symbol)
   (cond
    ;; If there is selection use it
@@ -1708,12 +2122,16 @@ This function uses `emms-show-format' to format the current track."
         (format "\\<%s\\>"
                 (or (word-at-point)
                     "")))))))
+
 (evil-define-motion swiper-movement () :type exclusive
   (swiper))
+
 (evil-define-command evil-noh-blink () :repeat nil (interactive)
   (evil-ex-nohighlight) (beacon-blink))
+
 (evil-define-command evil-comfortable-recenter () :repeat nil
   (recenter-top-bottom (/ (* (window-total-height) 2) 7)))
+
 (defun change-theme (theme)
   "Change to a new theme."
   (interactive)
@@ -1723,6 +2141,7 @@ This function uses `emms-show-format' to format the current track."
     (companion-reopen))
   (unless (eq system-type 'darwin)
     (posframe-delete-all)))
+
 (defun pop-kill-ring ()
   "Remove most recent entry from kill-ring"
   (when kill-ring
@@ -1730,6 +2149,7 @@ This function uses `emms-show-format' to format the current track."
   (when kill-ring-yank-pointer
     (setq kill-ring-yank-pointer kill-ring))
   )
+
 (defun call-with-command-hooks (command &optional enforce-keys)
   "Call command, invoking pre-command and post-command hooks of company.
 
@@ -1757,20 +2177,26 @@ command (ran after) is mysteriously incorrect."
 
 (defun insert-todo () (interactive)
        (insert "TODO"))
+
 (defun insert-backslash () (interactive)
        (insert "\\"))
+
 (defun paste-from-default-register () (interactive)
        ;; (evil-paste-from-register ?\")
        (yank))
+
 (defun self-insert-or-send-raw (string)
   (interactive)
   (if (eq major-mode 'term-mode)
       (term-send-raw-string string)
     (self-insert-command 1)))
+
 (evil-define-motion evil-sp-forward-sexp () :type exclusive
   (sp-forward-sexp))
+
 (evil-define-motion evil-sp-backward-sexp () :type exclusive
   (sp-backward-sexp))
+
 (defun peek-region-in-split ()
   "Doesn't work.  Improve."
   (interactive)
@@ -1780,20 +2206,21 @@ command (ran after) is mysteriously incorrect."
   (fit-window-to-buffer)
   (goto-char 0)
   (windmove-down))
+
 (defun outline-up-heading-custom ()
   (interactive)
   (if (outline-on-heading-p)
       (outline-up-heading 1)
     (outline-back-to-heading)))
+
 (defun outline-backward-heading-same-level-custom ()
   (interactive)
   (if (outline-on-heading-p)
       (outline-backward-same-level 1)
     (outline-back-to-heading)))
 
-;;; key bindings
+;;; hydra
 
-;; hydra
 (defhydra hydra-emms-control ()
   "EMMS control"
   ("r" emms-random "random track")
@@ -1806,44 +2233,11 @@ command (ran after) is mysteriously incorrect."
   ("h" emms-seek-backward "seek left")
   ("l" emms-seek-forward "seek right")
   ("p" emms-pause "pause/play"))
+
 (defhydra hydra-zoom ()
   "zoom"
   ("=" text-scale-increase "in")
   ("-" text-scale-decrease "out"))
-(defhydra hydra-move ()
-  "move"
-  ("a" evil-backward-char)
-  ("s" evil-backward-char)
-  ("d" evil-backward-char)
-  ("f" evil-backward-char)
-  ("h" evil-forward-char)
-  ("j" evil-forward-char)
-  ("k" evil-forward-char)
-  ("l" evil-forward-char)
-  ("q" evil-previous-visual-line)
-  ("w" evil-previous-visual-line)
-  ("e" evil-previous-visual-line)
-  ("r" evil-previous-visual-line)
-  ("t" evil-previous-visual-line)
-  ("y" evil-previous-visual-line)
-  ("u" evil-previous-visual-line)
-  ("i" evil-previous-visual-line)
-  ("o" evil-previous-visual-line)
-  ("p" evil-previous-visual-line)
-  ("[" evil-previous-visual-line)
-  ("]" evil-previous-visual-line)
-  ("z" evil-next-visual-line)
-  ("x" evil-next-visual-line)
-  ("c" evil-next-visual-line)
-  ("v" evil-next-visual-line)
-  ("b" evil-next-visual-line)
-  ("n" evil-next-visual-line)
-  ("m" evil-next-visual-line)
-  ("," evil-next-visual-line)
-  ("." evil-next-visual-line)
-  ("/" evil-next-visual-line)
-  )
-(evil-define-key 'normal 'global "t" 'hydra-move/body)
 
 ;;; leader key bindings
 
@@ -2956,20 +3350,6 @@ command (ran after) is mysteriously incorrect."
 
 ;;; misc settings
 
-;; recent files
-(setq recentf-max-menu-items 500)
-(setq recentf-max-saved-items 500)
-
-;; shell
-(cond
- ((eq system-type 'darwin)
-  (setq explicit-shell-file-name "/usr/local/bin/zsh"))
- ((not (eq system-type 'windows-nt))
-  (setq explicit-shell-file-name "/usr/bin/zsh")))
-
-;; no alert sounds
-(setq ring-bell-function 'ignore)
-
 ;; file-type based syntax entry
 (add-hook 'sql-mode-hook (lambda () (modify-syntax-entry ?_ "w")))
 (add-hook 'prog-mode-hook (lambda () (modify-syntax-entry ?_ "w")))
@@ -3057,373 +3437,13 @@ command (ran after) is mysteriously incorrect."
                                (setq-local haskell-indentation-layout-offset tab-width)
                                ))
 
-;; set frame title
-(setq frame-title-format (concat "TommyX's Emacs " emacs-version))
-
-;; attempt to improve font-lock performance
-;; (setq jit-lock-defer-time 0)
-
-;; attempt to improve subprocess performance
-(setq process-adaptive-read-buffering nil)
-
-;; attempt to improve font performance
-(setq inhibit-compacting-font-caches t)
-
-;; attempt to improve long line performance
-(setq-default bidi-display-reordering nil)
-
-;; UTF-8 as default encoding
-(setq utf-translate-cjk-mode nil) ; disable CJK coding/encoding (Chinese/Japanese/Korean characters)
-(set-language-environment 'utf-8)
-(set-keyboard-coding-system 'utf-8-mac) ; For old Carbon emacs on OS X only
-(setq locale-coding-system 'utf-8)
-(set-default-coding-systems 'utf-8)
-(set-terminal-coding-system 'utf-8)
-(if (eq system-type 'windows-nt)
-    (set-selection-coding-system 'utf-16-le) ; fix inability to paste non-ascii char
-  (set-selection-coding-system 'utf-8))
-(prefer-coding-system 'utf-8)
-
-;; scroll-off emulation
-;; (setq scroll-margin (/ (* (window-total-height) 2) 7))
-(setq scroll-margin 16)
-
-;; wrap lines
-(add-hook 'prog-mode-hook (lambda () (setq truncate-lines nil)))
-(add-hook 'text-mode-hook (lambda () (setq truncate-lines nil)))
-
-;; subword motion
-;; (global-subword-mode t) ; TODO this makes evil cursor word search not work
-
-;; auto load if changed
-(global-auto-revert-mode t)
-
-;; profiler
-(setq profiler-max-stack-depth 64)
-
-;; auto start server if on GUI
-(and window-system (server-start))
-
-;; server use different window
-(setq server-window 'pop-to-buffer)
-
-;; no auto saving
-(add-hook 'prog-mode-hook (lambda () (auto-save-mode -1)))
-(add-hook 'text-mode-hook (lambda () (auto-save-mode -1)))
-
-;; no backup file
-(setq make-backup-files nil)
-
-;; auto display line numbers (turned off for performance)
-;; (add-hook 'prog-mode-hook (lambda () (display-line-numbers-mode)))
-;; (add-hook 'sgml-mode-hook (lambda () (display-line-numbers-mode)))
-(setq display-line-numbers-width-start t)
-(setq display-line-numbers-grow-only nil)
-
-;; indicate end of buffer
-(add-hook 'prog-mode-hook (lambda () (setq indicate-buffer-boundaries t)))
-(add-hook 'text-mode-hook (lambda () (setq indicate-buffer-boundaries t)))
-
-;; disable blink
-(blink-cursor-mode 0)
-
-;; hl-line-mode for some modes
-(add-hook 'buffer-menu-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
-(add-hook 'profiler-report-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
 (add-hook 'org-agenda-mode-hook (lambda () (hl-line-mode 1) (setq-local use-line-nav t)))
-                                        ; disable in insert and visual mode
-(add-hook 'prog-mode-hook (lambda () (hl-line-mode 1)))
-(add-hook 'text-mode-hook (lambda () (hl-line-mode 1)))
-(add-hook 'evil-insert-state-entry-hook (lambda () (hl-line-mode -1)))
-(add-hook 'evil-insert-state-exit-hook (lambda () (hl-line-mode 1)))
-(add-hook 'evil-visual-state-entry-hook (lambda () (hl-line-mode -1)))
-(add-hook 'evil-visual-state-exit-hook (lambda () (hl-line-mode 1)))
 
-;; cursor line (right now disabled)
-;; (global-hl-line-mode 1)
-;; (setq global-hl-line-sticky-flag t)
-
-;; garbage collection (improve some performance)
-(setq gc-cons-threshold 200000000)
-(run-with-idle-timer 5 t (lambda () (garbage-collect)))
-(add-hook 'focus-out-hook (lambda () (garbage-collect)))
-
-;; save clipboard onto kill ring
-(setq save-interprogram-paste-before-kill t)
-
-;; fringe bitmap
-(define-fringe-bitmap 'flycheck-fringe-bitmap-double-arrow
-  [#b00000000
-   #b00000000
-   #b00001110
-   #b00011111
-   #b00011111
-   #b00011111
-   #b00001110
-   #b00000000
-   #b00000000])
-(define-fringe-bitmap 'right-arrow
-  [#b01110000
-   #b00111000
-   #b00011100
-   #b00001110
-   #b00001110
-   #b00011100
-   #b00111000
-   #b01110000])
-(define-fringe-bitmap 'left-arrow
-  [#b00001110
-   #b00011100
-   #b00111000
-   #b01110000
-   #b01110000
-   #b00111000
-   #b00011100
-   #b00001110])
-(define-fringe-bitmap 'right-curly-arrow
-  [#b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000])
-(define-fringe-bitmap 'left-curly-arrow
-  [#b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000
-   #b00011000])
-
-;; word wrap
-(add-hook 'prog-mode-hook (lambda () (toggle-word-wrap 1)))
-(add-hook 'text-mode-hook (lambda () (toggle-word-wrap 1)))
-(add-hook 'sgml-mode-hook (lambda () (toggle-word-wrap 1)))
-
-;; window divider
-(setq window-divider-default-places 't)
-(setq window-divider-default-right-width 7)
-(setq window-divider-default-bottom-width 7)
-(window-divider-mode 1)
-
-;; minibuffer background
-;; TODO: failed
-;; (defface minibuffer-background
-;;   '((t (:inherit default)))
-;;   "*Face used for the minibuffer."
-;;   :group 'appearence)
-;; (add-hook 'minibuffer-setup-hook
-;;           (lambda ()
-;;             (make-local-variable 'face-remapping-alist)
-;;             (add-to-list 'face-remapping-alist '(default minibuffer-background))))
-
-;; sidebar face
-(defface sidebar-background
-  '((t (:inherit default)))
-  "*Face used for the sidebar."
-  :group 'appearence)
-
-;; undo limits
-(setq undo-limit 1000000)
-(setq undo-strong-limit 1000000)
-
-;; fringe margin
-(setq-default left-fringe-width 16)
-(setq-default right-fringe-width 10)
-
-;; open buffer performance
-;; (add-hook 'find-file-hooks 'vc-find-file-hook)
-;; (setq vc-handled-backends nil)
-
-;; input response (experimental)
-;; (setq input-feedback-ov nil)
-;; (defun before-insert-advice (&rest _)
-;;  "Flash input feedback."
-;;  ;; (when input-feedback-ov
-;;  ;;  (delete-overlay input-feedback-ov)
-;;  ;; )
-;;  ;; (when (eq evil-state 'insert)
-;;  ;;  (setq input-feedback-ov (make-overlay (point) (- (point) 1)))
-;;  ;;  (overlay-put input-feedback-ov 'priority 9999)
-;;  ;;  (overlay-put input-feedback-ov 'window (selected-window))
-;;  ;;  (overlay-put input-feedback-ov 'face 'evil-goggles-yank-face)
-;;  ;;  (redisplay)
-;;  ;; )
-;; )
-(setq eager-redisplay-allowed t)
-;; (defun eager-redisplay-insert-advice (&rest _)
-;;  (when (and (eq evil-state 'insert) eager-redisplay-allowed)
-;;    (redisplay t)))
-(defun eager-redisplay-post-command (&rest _)
-  (when (and (eq this-command 'self-insert-command) eager-redisplay-allowed)
-    (redisplay t)))
-(defun eager-redisplay-inhibit-advice (func &rest args)
-  (let ((eager-redisplay-allowed nil))
-    (apply func args)))
-;; (advice-add 'self-insert-command :before #'before-insert-advice)
-(defvar eager-redisplay-mode-on nil)
-(defvar eager-redisplay-inhibit-cmd
-  '(evil-repeat
-    yas-expand))
-(defun eager-redisplay-mode ()
-  "Minor mode that force redraw after command."
-  (interactive)
-  (if eager-redisplay-mode-on
-      (progn
-        (setq eager-redisplay-mode-on nil)
-        ;; (advice-remove 'self-insert-command #'eager-redisplay-insert-advice)
-        (remove-hook 'post-command-hook #'eager-redisplay-post-command)
-        (dolist (cmd eager-redisplay-inhibit-cmd)
-          (advice-remove cmd #'eager-redisplay-inhibit-advice))
-        (message "eager-redisplay mode disabled."))
-    (progn
-      (setq eager-redisplay-mode-on t)
-      ;; (advice-add 'self-insert-command :after #'eager-redisplay-insert-advice)
-      (add-hook 'post-command-hook #'eager-redisplay-post-command)
-      (dolist (cmd eager-redisplay-inhibit-cmd)
-        (advice-add cmd :around #'eager-redisplay-inhibit-advice))
-      (message "eager-redisplay mode enabled."))))
-(eager-redisplay-mode)
-
-(setq hl-insert-region-ov nil)
-(defun hl-insert-region-insert-entry ()
-  (setq hl-insert-region-ov (make-overlay (point) (point) nil nil t))
-  (overlay-put hl-insert-region-ov 'priority 99)
-  (overlay-put hl-insert-region-ov 'window (selected-window))
-  (overlay-put hl-insert-region-ov 'face 'vhl/default-face))
-(defun hl-insert-region-insert-exit ()
-  (when hl-insert-region-ov
-    (delete-overlay hl-insert-region-ov)))
-(defvar hl-insert-region-mode-on nil)
-(defun hl-insert-region-mode ()
-  (interactive)
-  (if hl-insert-region-mode-on
-      (progn
-        (setq hl-insert-region-mode-on nil)
-        (remove-hook 'evil-insert-state-entry-hook 'hl-insert-region-insert-entry)
-        (remove-hook 'evil-insert-state-exit-hook 'hl-insert-region-insert-exit)
-        (message "hl-insert-region mode disabled."))
-    (progn
-      (setq hl-insert-region-mode-on t)
-      (add-hook 'evil-insert-state-entry-hook 'hl-insert-region-insert-entry)
-      (add-hook 'evil-insert-state-exit-hook 'hl-insert-region-insert-exit)
-      (message "hl-insert-region mode enabled."))))
-;; (hl-insert-region-mode)
-
-;; compilation
-(setq compilation-scroll-output 'first-error)
-(setq compilation-window-height 20)
-
-;; indentation guide using whitespace mode
-(setq whitespace-style '(
-                         tab-mark face tabs
-                         ))
-(setq whitespace-display-mappings '(
-                                    (tab-mark ?\t [?\| ?\t])
-                                    ))
-;; (global-whitespace-mode 1)
-
-;; tabify only leading whitespace
-(setq tabify-regexp "^\t* [ \t]+")
-
-;; mouse avoidance (move to top right corner)
-(setq make-pointer-invisible t)
-;; (setq mouse-avoidance-banish-position
-;;  '((frame-or-window . frame)
-;;  (side . right)
-;;  (side-pos . -5)
-;;  (top-or-bottom . top)
-;;  (top-or-bottom-pos . -5)))
-;; (mouse-avoidance-mode 'banish)
-;; (mouse-avoidance-mode 'none)
-
-;; flyspell
-(setq flyspell-issue-message-flag nil)
-
-;; tramp
-(setq tramp-default-method "ssh")
-
-;; blink matching parens
-(setq blink-matching-paren nil) ; we have smartparens, don't need this
-
-;; winner mode (record window config change so can undo)
-(winner-mode 1)
-
-;; mac use correct modifier keys
-(setq mac-option-modifier 'super)
-(setq mac-command-modifier 'meta)
-
-;; encourage taking a break
-(setq type-break-health-quotes
-      '("Decrease chance of death from heart disease"
-        "Increase lifespan"
-        "Decrease chance of dementia"
-        "No longer reverse effect of exercise"
-        "Decrease chance of diabetes"
-        "Decrease chance of leg deep vein thrombosis (DVT), clot that kills"
-        "Decrease chance of anxiety"
-        "Decrease back pain and permanent damage"
-        "Decrease chance of varicose veins"
-        "Decrease chance of death from all types of cancer"
-        "Decrease blood pressure and blood sugar"))
-(defun type-break-my-query-function (prompt)
-  (yes-or-no-p
-   (concat
-    prompt
-    (propertize (format "(!! %s !!) "
-                        (get-random-element
-                         type-break-health-quotes))))))
-(defun type-break-schedule-check (&rest _)
-  (when (null type-break-time-next-break)
-    (type-break-schedule)))
-(setq type-break-query-function 'type-break-my-query-function)
-(setq type-break-interval 1800)
-(setq type-break-good-rest-interval 300)
-(setq type-break-demo-boring-stats t)
-(setq type-break-keystroke-threshold '(nil . nil))
-(setq type-break-warning-repeat 0)
-(setq type-break-demo-functions '(type-break-demo-boring))
-(type-break-mode 1)
-(type-break-query-mode 1)
-(run-at-time 0 120 'type-break-schedule-check)
-
-;; eldoc
-(global-eldoc-mode 1)
-
-;; enable some modes
-;; flyspell
-(dolist (hook '(prog-mode-hook))
-  (add-hook hook (lambda () (flyspell-prog-mode))))
-(dolist (hook '(text-mode-hook))
-  (add-hook hook (lambda () (flyspell-mode 1))))
-(dolist (hook '(change-log-mode-hook log-edit-mode-hook))
-  (add-hook hook (lambda () (flyspell-mode -1))))
-
-;;; status line
+;;; status line config
 (load-relative "./tommyx-status-lines.el")
 
-;;; org
+;;; org config
 (load-relative "./tommyx-org.el")
 
-;;; project + workspace
+;;; project + workspace config
 (load-relative "./tommyx-project.el")

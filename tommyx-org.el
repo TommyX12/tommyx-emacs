@@ -810,6 +810,7 @@ regular expression,
  "u" (lambda () (interactive)
        (message "Temporarily disabled undo.")) ; 'org-agenda-undo
  "U" 'org-agenda-redo
+ "q" 'org-agenda-quit
  "j" 'org-agenda-next-line
  "k" 'org-agenda-previous-line
  "C-j" 'org-agenda-next-date-line
