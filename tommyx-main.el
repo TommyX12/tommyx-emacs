@@ -745,11 +745,14 @@ Useful for a search overview popup."
 (use-package highlight-indentation :ensure t
   ;; TODO: we want to load our own version
   :config
-  (let ((file-name
-         (expand-file-name
-          "packages/Highlight-Indentation-for-Emacs/highlight-indentation.elc"
-          tommyx-config-path)))
-    (load file-name))
+  (let* ((file-name
+          (expand-file-name
+           "packages/Highlight-Indentation-for-Emacs/highlight-indentation.el"
+           tommyx-config-path))
+         (compiled-file-name
+          (byte-compile-dest-file file-name)))
+    (enable-auto-compilation file-name)
+    (load compiled-file-name))
   
   (setq highlight-indentation-blank-lines t)
   (add-hook 'prog-mode-hook 'highlight-indentation-mode)
@@ -1711,7 +1714,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   (push 'web-mode ahs-modes)
 
   (eval-after-load 'flycheck
-   '(flycheck-add-mode 'html-tidy 'web-mode))
+    '(flycheck-add-mode 'html-tidy 'web-mode))
 
   (setq web-mode-enable-auto-expanding t)
   (setq-default web-mode-markup-indent-offset 2)
@@ -3150,7 +3153,7 @@ command (ran after) is mysteriously incorrect."
  :states '(insert)
 
  "M-l" '(menu-item "" yas-expand-from-trigger-key
-                   :filter yas-maybe-expand-abbrev-key-filter))
+                   :filter yas--maybe-expand-key-filter))
 
 (general-define-key
  :keymaps 'emmet-mode-keymap

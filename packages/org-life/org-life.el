@@ -390,7 +390,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
 
 (defmacro org-life-with-config-buffer (&rest body)
   `(with-current-buffer
-       (org-life-get-buffer ,org-life-config-file-path)
+       (org-life-get-buffer org-life-config-file-path)
      (org-with-wide-buffer
       ,@body)))
 
@@ -936,7 +936,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
      (org-agenda-highlight-todo text)))
   (when session-duration
     (save-excursion
-      (previous-line)
+      (forward-line -1)
       (let ((line-height (if (< session-duration 30) 1.0 (+ 0.5 (/ session-duration 60))))
             (ov (make-overlay (point-at-bol) (1+ (point-at-eol)))))
         (when overlay-face
