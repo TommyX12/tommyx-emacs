@@ -62,7 +62,8 @@
 (setq tramp-default-method "ssh")
 
 ;; blink matching parens
-(setq blink-matching-paren nil) ; we have smartparens, don't need this
+(setq blink-matching-paren t)
+(setq blink-matching-delay 0.35)
 
 ;; winner mode (record window config change so can undo)
 (winner-mode 1)
@@ -1709,6 +1710,9 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
   (push 'web-mode ahs-modes)
 
+  (eval-after-load 'flycheck
+   '(flycheck-add-mode 'html-tidy 'web-mode))
+
   (setq web-mode-enable-auto-expanding t)
   (setq-default web-mode-markup-indent-offset 2)
   (add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
@@ -2907,12 +2911,12 @@ command (ran after) is mysteriously incorrect."
            (save-excursion (insert " ")))
  "<S-space>" (lambda () (interactive)
                (save-excursion (insert " ")))
- "M-S-g" 'evil-first-non-blank
- "M-S-h" 'left-word
- "M-S-j" 'next-line
- "M-S-k" 'previous-line
- "M-S-l" 'right-word
- "M-S-;" 'end-of-line
+ ;; "M-G" 'evil-first-non-blank
+ "C-J" 'next-line
+ "C-K" 'previous-line
+ "C-H" 'left-word
+ "C-L" 'right-word
+ ;; "M-:" 'end-of-line
  ;; use M-j/k/l to do completion
  ;; "M-j" 'company-complete-common-or-cycle
  ;; "M-k" 'company-select-previous
@@ -2926,8 +2930,7 @@ command (ran after) is mysteriously incorrect."
  ;; snippets
  "M-j" 'yas-next-field
  "M-k" 'yas-prev-field
- "M-l" 'yas-insert-snippet
- "M-l" yas-maybe-expand)
+ "M-l" 'yas-insert-snippet)
 
 
 ;;; shortcut key bindings
@@ -3143,15 +3146,28 @@ command (ran after) is mysteriously incorrect."
  "<tab>" 'imenu-list-display-entry)
 
 (general-define-key
+ :keymaps 'yas-minor-mode-map
+ :states '(insert)
+
+ "M-l" '(menu-item "" yas-expand-from-trigger-key
+                   :filter yas-maybe-expand-abbrev-key-filter))
+
+(general-define-key
  :keymaps 'emmet-mode-keymap
+ :states '(insert)
 
  "M-j" 'yas-next-field
  "M-k" 'yas-prev-field
  "M-l" 'yas-insert-snippet
- "C-j" 'emmet-next-edit-point
- "C-k" 'emmet-prev-edit-point
- "C-l" 'emmet-expand-line
- "C-l" 'emmet-wrap-with-markup)
+ "M-J" 'emmet-next-edit-point
+ "M-K" 'emmet-prev-edit-point
+ "M-L" 'emmet-expand-line)
+
+(general-define-key
+ :keymaps 'emmet-mode-keymap
+ :states '(visual)
+
+ "M-L" 'emmet-wrap-with-markup)
 
 ;; (general-define-key
 ;;  :keymaps 'eshell-mode-map
