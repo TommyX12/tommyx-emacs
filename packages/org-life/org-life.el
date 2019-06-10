@@ -321,7 +321,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
       float
     (cond ((string-equal float "inf") 1.0e+INF)
           ((string-equal float "-inf") -1.0e+INF)
-          0.0e+NaN)))
+          (t 0.0e+NaN))))
 
 (defun org-life-agenda-days-to-string (integer)
   (if (numberp integer)

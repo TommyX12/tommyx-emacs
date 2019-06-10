@@ -24,7 +24,8 @@
 
 ;;; load tommyx configuration
 
-(load (expand-file-name "tommyx.el" tommyx-config-path))
+(add-to-list 'load-path tommyx-config-path)
+(require 'tommyx)
 
 ;;; after-load configurations
 

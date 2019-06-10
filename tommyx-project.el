@@ -88,3 +88,8 @@
     :which-key "shell command")
 
 )
+
+
+(provide 'tommyx-project)
+
+;;; tommyx-project.el ends here
