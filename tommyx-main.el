@@ -913,8 +913,8 @@ Useful for a search overview popup."
   (sp-local-pair 'text-mode "[" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
   (sp-local-pair 'prog-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
   (sp-local-pair 'text-mode "(" nil :post-handlers '(("||\n[i]" "RET") ("||\n[i]" "<return>") ("| " "SPC") ("| " "<space>")))
-  ;; (defun remove-parens-overlay (&rest _) (sp-remove-active-pair-overlay))
-  ;; (advice-add 'evil-normal-state :after #'remove-parens-overlay)
+  (defun remove-parens-overlay (&rest _) (sp-remove-active-pair-overlay))
+  (add-hook 'evil-insert-state-exit-hook #'remove-parens-overlay)
 
   ;; don't show in mode display
   :diminish smartparens-mode)
@@ -2022,7 +2022,7 @@ This function uses `emms-show-format' to format the current track."
                 (or (word-at-point)
                     "")))))))
 
-(evil-define-motion swiper-movement () :type exclusive
+(evil-define-motion swiper-movement () :type exclusive :repeat nil :jump t
   (swiper))
 
 (evil-define-command evil-noh-blink () :repeat nil (interactive)
@@ -2140,1037 +2140,1271 @@ command (ran after) is mysteriously incorrect."
   ("-" text-scale-decrease "out"))
 
 
-;;; leader key bindings
-
-(general-create-definer global-leader-def
-  :prefix "SPC")
-(general-create-definer global-shortcut-def
-  :prefix ",")
-
-;; (define-prefix-command 'global-leader)
-(general-create-definer global-leader-window-def
-  :prefix "SPC w")
-(general-create-definer global-leader-helm-def
-  :prefix "SPC h")
-(general-create-definer global-leader-navigation-def
-  :prefix "SPC i")
-(general-create-definer global-leader-project-def
-  :prefix "SPC p")
-(general-create-definer global-leader-org-def
-  :prefix "SPC o")
-(general-create-definer global-leader-appearance-def
-  :prefix "SPC a")
-(general-create-definer global-leader-appearance-theme-def
-  :prefix "SPC a t")
-(general-create-definer global-leader-appearance-font-def
-  :prefix "SPC a f")
-(general-create-definer global-leader-mode-specific-def
-  :prefix "SPC j")
-(general-create-definer global-leader-companion-def
-  :prefix "SPC c")
-(general-create-definer global-leader-sidebar-def
-  :prefix "SPC s")
-(general-create-definer global-leader-templates-def
-  :prefix "SPC t")
-(general-create-definer global-leader-files-def
-  :prefix "SPC e")
-(general-create-definer global-leader-battery-def
-  :prefix "SPC b")
-(general-create-definer global-leader-music-def
-  :prefix "SPC m")
-(general-create-definer global-leader-music-playlist-def
-  :prefix "SPC m l")
-(general-create-definer global-leader-version-control-def
-  :prefix "SPC v")
-
-(global-leader-def
-  :states '(motion normal visual)
-
-  "w" '(:ignore t
-                :which-key "window")
-  "h" '(:ignore t
-                :which-key "helm")
-  "i" '(:ignore t
-                :which-key "navigation")
-  "o" '(:ignore t
-                :which-key "org")
-  "j" '(:ignore t
-                :which-key "mode specific")
-  "a" '(:ignore t
-                :which-key "appearance")
-  "p" '(:ignore t
-                :which-key "project + workspace")
-  "c" '(:ignore t
-                :which-key "companion")
-  "s" '(:ignore t
-                :which-key "side bar")
-  "t" '(:ignore t
-                :which-key "templates")
-  "e" '(:ignore t
-                :which-key "files")
-  "b" '(:ignore t
-                :which-key "battery")
-  "m" '(:ignore t
-                :which-key "music")
-  "v" '(:ignore t
-                :which-key "version control")
-
-  "x" '(counsel-M-x
-        :which-key "counsel M-x")
-  "g" '(google-this-search
-        :which-key "Google")
-  ";" '(eval-expression
-        :which-key "eval lisp"))
-
-(global-leader-def
-  :states '(visual)
-
-  "f" '(swiper-movement
-        :which-key "search")
-  "F" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
-        :which-key "search selection")
-  "C-f" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
-          :which-key "search selection all buf"))
-
-(global-leader-def
-  :states '(motion normal)
-
-  "f" '(swiper
-        :which-key "search")
-  "C-f" '(swiper-all
-          :which-key "search in all buffers")
-  "F" '((lambda () (interactive) (swiper (selection-or-word-at-point)))
-        :which-key "search cursor word")
-  "C-S-f" '((lambda () (interactive) (swiper-all (selection-or-word-at-point)))
-            :which-key "search cursor word all buf")
-  "n" '(ivy-switch-buffer
-        :which-key "switch buffer")
-  "0" '((lambda () (interactive) (winum-select-window-0-or-10) (delayed-mode-line-update))
-        :which-key "move to window 0")
-  "1"  '((lambda () (interactive) (winum-select-window-1) (delayed-mode-line-update))
-         :which-key "move to window 1")
-  "2"  '((lambda () (interactive) (winum-select-window-2) (delayed-mode-line-update))
-         :which-key "move to window 2")
-  "3"  '((lambda () (interactive) (winum-select-window-3) (delayed-mode-line-update))
-         :which-key "move to window 3")
-  "4"  '((lambda () (interactive) (winum-select-window-4) (delayed-mode-line-update))
-         :which-key "move to window 4")
-  "5"  '((lambda () (interactive) (winum-select-window-5) (delayed-mode-line-update))
-         :which-key "move to window 5")
-  "6"  '((lambda () (interactive) (winum-select-window-6) (delayed-mode-line-update))
-         :which-key "move to window 6")
-  "7"  '((lambda () (interactive) (winum-select-window-7) (delayed-mode-line-update))
-         :which-key "move to window 7")
-  "8"  '((lambda () (interactive) (winum-select-window-8) (delayed-mode-line-update))
-         :which-key "move to window 8")
-  "9"  '((lambda () (interactive) (winum-select-window-9) (delayed-mode-line-update))
-         :which-key "move to window 9")
-  "TAB" '((lambda () (interactive) (switch-to-buffer (other-buffer)) (delayed-mode-line-update))
-          :which-key "switch to other buffer")
-  "q" '(kill-this-buffer
-        :which-key "kill current buffer"))
-;; create fake key to represent move to window keys
-(push '(("SPC 0") . ("SPC [0-9]" . "move to window [0-9]")) which-key-replacement-alist)
-;; hide other keys
-(push '(("SPC [1-9]") . t) which-key-replacement-alist)
-
-(global-leader-window-def
-  :states '(motion normal)
-
-  "h" '((lambda () (interactive) (evil-window-left 1) (delayed-mode-line-update))
-        :which-key "move to window left")
-  "j" '((lambda () (interactive) (evil-window-down 1) (delayed-mode-line-update))
-        :which-key "move to window down")
-  "k" '((lambda () (interactive) (evil-window-up 1) (delayed-mode-line-update))
-        :which-key "move to window up")
-  "l" '((lambda () (interactive) (evil-window-right 1) (delayed-mode-line-update))
-        :which-key "move to window right")
-  "d" '((lambda () (interactive) (evil-window-split) (delayed-mode-line-update))
-        :which-key "split window horizontally")
-  "v" '((lambda () (interactive) (evil-window-vsplit) (delayed-mode-line-update))
-        :which-key "split window vertically")
-  "m" '(ace-swap-window
-        :which-key "swap window")
-  "q" '((lambda () (interactive) (evil-quit) (delayed-mode-line-update))
-        :which-key "close window")
-  "u" '(winner-undo
-        :which-key "undo window config")
-  "U" '(winner-redo
-        :which-key "redo window config")
-  "p" '(peek-region-in-split
-        :which-key "peek region in split")
-  "t" '((lambda () (interactive) (evil-window-set-height 12))
-        :which-key "make into terminal height"))
-
-(global-leader-navigation-def
-  :states '(motion normal visual)
-
-  "s" '(counsel-semantic-or-imenu
-        :which-key "semantic item")
-  "S" '((lambda () (interactive) (call-interactively 'imenu))
-        :which-key "semantic item tree"))
-
-(global-leader-navigation-def
-  :states '(motion normal)
-
-  "i" '(ivy-resume
-        :which-key "ivy resume")
-  ;; "ip" '(counsel-projectile
-  ;;  :which-key "counsel projectile")
-  "p" '(counsel-projectile-find-file
-        :which-key "project files")
-  "<tab>" '(projectile-find-other-file
-            :which-key "other file")
-  "TAB" '(projectile-find-other-file
-          :which-key "other file")
-  "r" '(counsel-recentf
-        :which-key "recent files")
-  ;; "g" '(counsel-projectile-grep
-  ;;  :which-key "project search")
-  "f" '(counsel-find-file
-        :which-key "files"))
-
-(global-leader-helm-def
-  :states '(motion normal visual)
-  
-  "x" '(helm-M-x
-        :which-key "helm M-x")
-  "o" '(helm-occur
-        :which-key "helm occur")
-  "s" '(helm-swoop
-        :which-key "helm swoop"))
-
-(global-leader-helm-def
-  :states '(motion normal)
-
-  "h" '(helm-resume
-        :which-key "helm resume")
-  "m" '(helm-mini
-        :which-key "helm mini")
-  "p" '(helm-projectile
-        :which-key "helm projectile")
-  "P" '(helm-projectile-switch-project
-        :which-key "helm projectile project")
-  "C-p" '(helm-projectile-find-file-in-known-projects
-          :which-key "helm projectile all")
-  "<tab>" '(helm-projectile-find-other-file ; cpp vs h switching
-            :which-key "helm projectile other file")
-  "TAB" '(helm-projectile-find-other-file ; cpp vs h switching
-          :which-key "helm projectile other file")
-  "r" '(helm-recentf
-        :which-key "helm recentf")
-  "g" '(helm-projectile-grep
-        :which-key "helm projectile grep")
-  "f" '(helm-find-files
-        :which-key "helm find files")
-  "F" '(helm-for-files
-        :which-key "helm for files"))
-
-(global-leader-appearance-def
-  :states '(motion normal visual)
-
-  "t" '(:ignore t
-                :which-key "theme")
-  "f" '(:ignore t
-                :which-key "font")
-
-  "F" '((lambda () (interactive) (toggle-frame-fullscreen))
-        :which-key "toggle full-screen"))
-
-(global-leader-appearance-theme-def
-  :states '(motion normal visual)
-
-  "l" '((lambda () (interactive) (change-theme light-theme))
-        :which-key "light theme")
-  "d" '((lambda () (interactive) (change-theme dark-theme))
-        :which-key "dark theme"))
-
-(global-leader-appearance-font-def
-  :states '(motion normal visual)
-  
-  "s" '(set-to-small-font
-        :which-key "small font")
-  "b" '(set-to-big-font
-        :which-key "big font")
-  "z" '(hydra-zoom/body
-        :which-key "zoom buffer font")
-  "r" '(toggle-readable-buffer-font
-        :which-key "toggle readable buffer font"))
-
-(global-leader-companion-def
-  :states '(motion normal visual)
-
-  "d" '(companion-notif-dismiss
-        :which-key "dismiss notification")
-  "q" '(companion-show-last-qod
-        :which-key "quote of the day")
-  "y" '(companion-copy-qod
-        :which-key "copy quote of the day")
-  "Q" '(companion-fetch-qod
-        :which-key "fetch quote of the day"))
-
-(global-leader-sidebar-def
-  :states '(motion normal visual)
-
-  "f" '((lambda () (interactive)
-          (display-buffer-in-side-window (get-buffer neo-buffer-name) '((side . left))))
-        :which-key "files")
-  "o" '((lambda () (interactive)
-          (display-buffer-in-side-window (get-buffer imenu-list-buffer-name) '((side . left))))
-        :which-key "outline"))
-
-(global-leader-templates-def
-  :states '(motion normal visual)
-
-  "n" '(yas-new-snippet
-        :which-key "new")
-  "e" '(yas-visit-snippet-file
-        :which-key "edit")
-  "r" '(yas-reload-all
-        :which-key "reload")
-  "i" '(insert-file
-        :which-key "insert file content"))
-
-(global-leader-files-def
-  :states '(motion normal visual)
-
-  "q" '(save-buffers-kill-terminal
-        :which-key "quit emacs")
-  "Q" '(save-buffers-kill-emacs
-        :which-key "quit emacs process")
-  "w" '(write-file
-        :which-key "write file")
-  "r" '(rename-buffer
-        :which-key "rename buffer")
-  "a" '(evil-write-all
-        :which-key "write all files"))
-
-(global-leader-battery-def
-  :states '(motion normal visual)
-
-  "c" '((lambda () (interactive) (setq company-idle-delay 0))
-        :which-key "instant completion")
-  "C" '((lambda () (interactive) (setq company-idle-delay 0.2))
-        :which-key "delayed completion"))
-
-(global-leader-music-def
-  :states '(motion normal visual)
-
-  "l" '(:ignore t
-                :which-key "playlist")
-  "f" '(counsel-emms-play
-        :which-key "play music")
-  "n" '(hydra-emms-control/body
-        :which-key "music control")
-  "p" '(emms-pause
-        :which-key "pause music")
-  "P" '(emms-stop
-        :which-key "stop music")
-  "r" '(emms-random
-        :which-key "play random music")
-  "t" '(emms-toggle-repeat-track
-        :which-key "toggle repeat track"))
-
-(global-leader-music-playlist-def
-  :states '(motion normal visual)
-
-  "l" '(emms-add-playlist
-        :which-key "add playlist")
-  "a" '(emms-add-file
-        :which-key "add file")
-  "d" '(emms-add-directory
-        :which-key "add directory")
-  "D" '(emms-add-directory-tree
-        :which-key "add directory recursively")
-  "s" '(emms-playlist-save
-        :which-key "save playlist")
-  "g" '((lambda () (interactive)
-          (emms-playlist-mode-go)
-          (emms-playlist-mode-center-current))
-        :which-key "go to playlist")
-  "s" '((lambda () (interactive)
-          (emms-sort)
-          (message "Playlist sorted."))
-        :which-key "sort playlist")
-  "S" '((lambda () (interactive)
-          (emms-shuffle)
-          (message "Playlist shuffled."))
-        :which-key "shuffle playlist")
-  "u" '(emms-uniq
-        :which-key "remove playlist duplicates")
-  "c" '(emms-playlist-clear
-        :which-key "clear playlist"))
-
-(global-leader-version-control-def
-  :states '(motion normal visual)
-
-  "s" '(magit-status
-        :which-key "magit status"))
-
-
-;;; general key bindings
-
-(general-define-key
- :keymaps 'override
-
- ;; profiler
- "C-M-p" (lambda () (interactive) (profiler-start 'cpu+mem))
- "C-M-S-p" (lambda () (interactive)
-             (profiler-report) (profiler-stop) (profiler-reset))
-
- ;; help
- "C-M-h" help-map
- "C-M-h C-M-h" 'counsel-apropos
- "C-M-x" 'execute-extended-command)
-
-(general-define-key
-
- ;; use esc (same as "C-[") for escape
- "C-[" 'keyboard-escape-quit
- "<escape>" 'keyboard-escape-quit)
-
-(general-define-key
- :states '(motion normal visual insert)
-
- "C-z" 'nil)
-
-(general-define-key
- :states '(motion normal visual)
-
- ;; avy
- "f" 'adaptive-avy
- "F" 'evil-avy-goto-char-2
-
- ;; basic movement
- "k" 'evil-previous-visual-line
- "j" 'evil-next-visual-line
- "h" 'evil-backward-word-begin
- "l" 'evil-forward-word-end
- 
- ;; faster movement
- ;; TODO: J and K are disabled to encourage using ivy.
- ;; "K" 'fast-move-up
- ;; "J" 'fast-move-down
- "H" 'evil-backward-WORD-begin
- "L" 'evil-forward-WORD-end
- "G" 'evil-first-non-blank
- ":" 'evil-end-of-line
-
- ;; more comfortable word movement
- "w" 'evil-backward-char
- "e" 'evil-forward-char
- "W" 'fast-move-left
- "E" 'fast-move-right
- "b" 'evil-forward-word-begin
- "B" 'evil-forward-WORD-begin
-
- ;; jumping through jump list
- "m" 'evil-jump-backward
- "M" 'evil-jump-forward
-
- ;; outline minor mode
- "C-h" 'outline-up-heading-custom
- "C-l" 'outline-next-heading
- "C-k" 'outline-backward-heading-same-level-custom
- "C-j" 'outline-forward-same-level
- "C-S-h" 'outline-promote
- "C-S-l" 'outline-demote
- "C-S-k" 'outline-move-subtree-up
- "C-S-j" 'outline-move-subtree-down
-
- ;; flycheck error
- "[f" 'flycheck-previous-error
- "]f" 'flycheck-next-error
-
- ;; navigate by sexp
- "(" 'evil-sp-backward-sexp
- ")" 'evil-sp-forward-sexp
-
- ;; text scaling
- "C--" '(text-scale-decrease
-         :which-key "decrease text scale")
- "C-=" '(text-scale-increase
-         :which-key "increase text scale")
-
- ;; change number literals
- "=" 'evil-numbers/inc-at-pt
- "-" 'evil-numbers/dec-at-pt
-
- ;; macro
- "Q" '(evil-record-macro
-       :which-key "record macro")
-
- ";" 'evil-ex
-
- "n" 'evil-ex-search-next-flash
- "N" 'evil-ex-search-previous-flash)
-
-(general-define-key
- :states '(motion normal)
-
- ;; origami mode (disabled due to performance)
- ;; "C-g" 'origami-close-node-recursively
- ;; "C-j" 'origami-forward-fold
- ;; "C-k" 'origami-previous-fold
- ;; "C-;" 'origami-recursively-toggle-node
- ;; "Z" 'origami-close-all-nodes
- ;; "X" (lambda () (interactive)
- ;;       (origami-open-all-nodes (current-buffer))
- ;;       (origami-mode -1)
- ;;       (origami-mode 1))
- ;; "zx" (lambda () (interactive)
- ;;        (origami-show-only-node (current-buffer) (point))
- ;;        (origami-open-node-recursively (current-buffer) (point)))
- ;; "zu" 'origami-undo
- ;; "zU" 'origami-redo
-
- ;; pasting goes to the end of the region
- "p" (lambda () (interactive)
-       (call-interactively 'evil-paste-after)
-       (evil-goto-mark ?\]))
-
- ;; C-p paste then select region (for easy replace)
- "C-p" (lambda () (interactive)
-         (call-interactively 'evil-paste-after)
-         (select-paste-region))
-
- ;; map dw cw etc.
- "d" (general-key-dispatch 'evil-delete
-       :timeout 0.5
-       "w" (general-simulate-key ('evil-delete "aw"))
-       "W" (general-simulate-key ('evil-delete "aW"))
-       ")" (general-simulate-key ('evil-delete "i)"))
-       "]" (general-simulate-key ('evil-delete "i]"))
-       "}" (general-simulate-key ('evil-delete "i}"))
-       ">" (general-simulate-key ('evil-delete "i>"))
-       "'" (general-simulate-key ('evil-delete "i'"))
-       "\"" (general-simulate-key ('evil-delete "i\""))
-       "t" (general-simulate-key ('evil-delete "it"))
-       "n" (general-simulate-key ('evil-delete "gn")))
-
- "c" (general-key-dispatch 'evil-change
-       :timeout 0.5
-       "w" (general-simulate-key ('evil-change "iw"))
-       "W" (general-simulate-key ('evil-change "iW"))
-       ")" (general-simulate-key ('evil-change "i)"))
-       "]" (general-simulate-key ('evil-change "i]"))
-       "}" (general-simulate-key ('evil-change "i}"))
-       ">" (general-simulate-key ('evil-change "i>"))
-       "'" (general-simulate-key ('evil-change "i'"))
-       "\"" (general-simulate-key ('evil-change "i\""))
-       "t" (general-simulate-key ('evil-change "it"))
-       "n" (general-simulate-key ('evil-change "gn")))
-
- "y" (general-key-dispatch 'evil-yank
-       :timeout 0.5
-       "w" (general-simulate-key ('evil-yank "iw"))
-       "W" (general-simulate-key ('evil-yank "iW"))
-       ")" (general-simulate-key ('evil-yank "i)"))
-       "]" (general-simulate-key ('evil-yank "i]"))
-       "}" (general-simulate-key ('evil-yank "i}"))
-       ">" (general-simulate-key ('evil-yank "i>"))
-       "'" (general-simulate-key ('evil-yank "i'"))
-       "\"" (general-simulate-key ('evil-yank "i\""))
-       "t" (general-simulate-key ('evil-yank "it")))
-
- "x" (general-key-dispatch 'evil-exchange
-       :timeout 0.5
-       "w" (general-simulate-key ('evil-exchange "iw"))
-       "W" (general-simulate-key ('evil-exchange "iW"))
-       ")" (general-simulate-key ('evil-exchange "i)"))
-       "]" (general-simulate-key ('evil-exchange "i]"))
-       "}" (general-simulate-key ('evil-exchange "i}"))
-       ">" (general-simulate-key ('evil-exchange "i>"))
-       "'" (general-simulate-key ('evil-exchange "i'"))
-       "\"" (general-simulate-key ('evil-exchange "i\""))
-       "t" (general-simulate-key ('evil-exchange "it"))
-       "n" (general-simulate-key ('evil-exchange "gn")))
-
- ;; inserting newline
- "M-o" (lambda () (interactive)
-         (save-excursion (evil-insert-newline-below)))
- "C-o" (lambda () (interactive)
-         (save-excursion (evil-insert-newline-above)))
- "C-M-o" (lambda () (interactive)
-           (save-excursion (evil-insert-newline-above))
-           (save-excursion (evil-insert-newline-below)))
-
- ;; indentation
- "{" (lambda () (interactive) (evil-shift-left-line 1))
- "}" (lambda () (interactive) (evil-shift-right-line 1))
-
- ;; scrolling
- "M-j" 'evil-scroll-down
- "M-k" 'evil-scroll-up
-
- ;; use M-S-j/k to go to top bottom
- "M-J" 'evil-goto-line
- "M-K" 'evil-goto-first-line
-
- "q" '(evil-execute-macro
-       :which-key "execute macro")
-
- "u" 'undo
- "U" 'redo
-
- "s" 'evil-surround-edit
- "S" 'evil-Surround-edit
-
- ;; search cursor word
- "F" (lambda () (interactive)
-       (evil-ex-search-word-forward)
-       (evil-ex-search-previous))
- "gF" '((lambda () (interactive)
-          (evil-ex-search-unbounded-word-forward)
-          (evil-ex-search-next)))
- "M-n" 'evil-ex-search-word-forward
- "M-N" 'evil-ex-search-word-backward)
-
-(general-define-key
- :states '(visual)
-
- ;; evil exchange
- "x" (lambda () (interactive)
-       (call-interactively 'evil-exchange)
-       (evil-goto-mark ?>))
- "X" 'evil-exchange
-
- ;; copying in visual mode goes to the end of the region
- "y" (lambda () (interactive)
-       (call-interactively 'evil-yank) (evil-goto-mark ?>))
- ;; Y goes to the start of the region (default)
- "Y" 'evil-yank
-
- ;; do not use our normal custom mapping for d and c in visual
- "d" 'evil-delete
- "c" 'evil-change
-
- ;; do not re-copy when pasting in visual mode
- "p" (lambda () (interactive) (call-interactively 'evil-visual-paste) (pop-kill-ring))
-
- ;; indentation
- "{" "<gv"
- "}" ">gv"
-
- ;; visual selection should not go over the last char
- ":" (lambda () (interactive) (evil-end-of-line))
-
- ;; allow repeat in visual mode
- "." (kbd ";norm . RET")
- "q" '((lambda () (interactive) (evil-ex "'<,'>norm @"))
-       :which-key "execute macro")
-
- "s" 'evil-surround-region
-
- ;; search selection
- "F" (lambda () (interactive)
-       (call-interactively 'evil-visualstar/begin-search-forward)
-       (evil-ex-search-previous))
-
- "M-n" 'evil-visualstar/begin-search-forward
- "M-N" 'evil-visualstar/begin-search-backward)
-
-(general-define-key
- :states '(insert)
-
- "j" (progn
-       (setq
-        insert-mode-j-mapping-func
-        (general-key-dispatch
-            ;; fallback
-            (lambda () (interactive)
-              (let ((my-company--company-command-p-override t))
-                (call-with-command-hooks
-                 (lambda ()
-                   (interactive)
-                   (self-insert-or-send-raw "j")))))
-          :timeout 1.0
-
-          "j" (lambda () (interactive)
-                (call-with-command-hooks
-                 (lambda () (interactive)
-                   (self-insert-or-send-raw "j")) "jj"))
-          "t" (lambda () (interactive)
-                (call-with-command-hooks
-                 'insert-todo "jt"))
-          "f" (lambda () (interactive)
-                (call-with-command-hooks
-                 'insert-backslash "jf"))
-          ;; jk quit insert mode
-          "k" (lambda () (interactive)
-                (call-with-command-hooks
-                 'evil-normal-state "jk"))
-          ;; jh delete word
-          "h" (lambda () (interactive)
-                (call-with-command-hooks
-                 'evil-delete-backward-word "jh"))
-          ;; jg move to start of line
-          "g" (lambda () (interactive)
-                (call-with-command-hooks
-                 'evil-first-non-blank "jg"))
-          ;; jl move to end of line
-          "l" (lambda () (interactive)
-                (call-with-command-hooks
-                 'move-end-of-line "jl"))
-          ;; jp complete
-          "p" 'company-smart-complete
-          ;; "p" (lambda () (interactive)
-          ;;       (call-with-command-hooks
-          ;;        'company-smart-complete "jp"))
-          ;; j[ skip TabNine
-          "[" (lambda () (interactive)
-                (call-with-command-hooks
-                 'company-tabnine-call-other-backends "j["))
-          "0" (lambda () (interactive)
-                (call-with-command-hooks
-                 'company-complete-number-0 "j0"))
-          "1" (lambda () (interactive)
-                (call-with-command-hooks
-                 'company-complete-number-1 "j1"))
-          "2" (lambda () (interactive)
-                (call-with-command-hooks
-                 'company-complete-number-2 "j2"))
-          "3" (lambda () (interactive)
-                (call-with-command-hooks
-                 'company-complete-number-3 "j3"))
-          "4" (lambda () (interactive)
-                (call-with-command-hooks
-                 'company-complete-number-4 "j4"))
-          "5" (lambda () (interactive)
-                (call-with-command-hooks
-                 'company-complete-number-5 "j5"))
-          "6" (lambda () (interactive)
-                (call-with-command-hooks
-                 'company-complete-number-6 "j6"))
-          "7" (lambda () (interactive)
-                (call-with-command-hooks
-                 'company-complete-number-7 "j7"))
-          "8" (lambda () (interactive)
-                (call-with-command-hooks
-                 'company-complete-number-8 "j8"))
-          "9" (lambda () (interactive)
-                (call-with-command-hooks
-                 'company-complete-number-9 "j9"))
-          ;; j[ context complete (TODO)
-          ;; "[" 'evil-complete-next
-          ;; j[ insert snippet
-          ;; "[" (lambda () (interactive)
-          ;;       (call-with-command-hooks 'yas-insert-snippet))
-          ;; jv to paste from default register
-          "v" (lambda () (interactive) (call-with-command-hooks 'paste-from-default-register "jv"))))
-
-       ;; Since company-tng-frontend only complete selection when
-       ;; pressing any key that isn't a company-mode command
-       ;; (checked with `my-company--company-command-p` function),
-       ;; and we want `general-key-dispatch` to have \"j\" as a
-       ;; company-mode command (so do not complete) but not to
-       ;; have "jp" as one (so do completion).
-       ;; Note: need to make sure company-continue-commands allow insert-mode-j-mapping (such as having 'not at first)
-       ;; setting :repeat to nil because we don't want the "j" part to be repeatable, only the actual commands invoked afterwards.
-       (evil-define-command insert-mode-j-mapping () :repeat nil (interactive)
-         (call-interactively insert-mode-j-mapping-func))
-       (define-key company-active-map "j" 'insert-mode-j-mapping)
-       (put 'insert-mode-j-mapping 'company-keep t)
-       'insert-mode-j-mapping)
-
- "J" (progn
-       (setq
-        insert-mode-J-mapping-func
-        (general-key-dispatch
-            (lambda () (interactive)
-              (let ((my-company--company-command-p-override t))
-                (call-with-command-hooks
-                 (lambda ()
-                   (interactive)
-                   (self-insert-or-send-raw "J")))))
-          :timeout 1.0
-
-          "J" (lambda () (interactive)
-                (call-with-command-hooks
-                 (lambda () (interactive)
-                   (self-insert-or-send-raw "J")) "JJ"))
-          ;; JV to use counsel yank-pop
-          "V" (lambda () (interactive)
-                (call-with-command-hooks
-                 'counsel-yank-pop "JV"))))
-
-       (evil-define-command insert-mode-J-mapping () :repeat nil (interactive)
-         (call-interactively insert-mode-J-mapping-func))
-       (define-key company-active-map "J" 'insert-mode-J-mapping)
-       (put 'insert-mode-J-mapping 'company-keep t)
-       'insert-mode-J-mapping)
-
- ;; spell correction
- "C-SPC" (lambda () (interactive)
-           (save-excursion
-             (flyspell-lazy-check-pending)
-             (flyspell-auto-correct-previous-word (point))))
- "<C-space>" (lambda () (interactive)
+;;; key bindings
+
+(require 'tommyx-bind-def)
+
+(tommyx-bind-keys
+ `(:case
+   (:bindings
+
+    ;; use esc (same as "C-[") for escape
+    "C-[" (:def
+           keyboard-escape-quit
+           :key-name escape)
+    "<escape>" keyboard-escape-quit
+
+    "q" (:def
+         :ignore
+         :key-name quit)
+    "M-l" (:def
+           :ignore
+           :key-name select-action)
+    "M-j" (:def
+           :ignore
+           :key-name next-item)
+    "M-k" (:def
+           :ignore
+           :key-name previous-item)
+    "M-J" (:def
+           :ignore
+           :key-name next-multiple-item)
+    "M-K" (:def
+           :ignore
+           :key-name previous-multiple-item)
+    "C-j" (:def
+           :ignore
+           :key-name next-history-item)
+    "C-k" (:def
+           :ignore
+           :key-name previous-history-item)
+    "u" (:def
+         :ignore
+         :key-name go-back)
+    "U" (:def
+         :ignore
+         :key-name go-forward)
+    "r" (:def
+         :ignore
+         :key-name refresh)
+    "o" (:def
+         :ignore
+         :key-name open-item)
+    "<return>" (:def
+                :ignore
+                :key-name select-item))
+
+   :keymaps override
+   (:bindings
+    ;; profiler
+    "C-M-p" ,(lambda () (interactive) (profiler-start 'cpu+mem))
+    "C-M-S-p" ,(lambda () (interactive)
+                 (profiler-report) (profiler-stop) (profiler-reset))
+
+    ;; help
+    "C-M-h" ,help-map
+    "C-M-h C-M-h" counsel-apropos
+    "C-M-x" execute-extended-command)
+
+   :keymaps (motion normal visual insert)
+   (:bindings
+
+    "C-z" nil)
+
+   :states (motion normal visual)
+   (:bindings
+
+    ;; origami mode (disabled due to performance)
+    ;; "C-g" origami-close-node-recursively
+    ;; "C-j" origami-forward-fold
+    ;; "C-k" origami-previous-fold
+    ;; "C-;" origami-recursively-toggle-node
+    ;; "Z" origami-close-all-nodes
+    ;; "X" ,(lambda () (interactive)
+    ;;       (origami-open-all-nodes (current-buffer))
+    ;;       (origami-mode -1)
+    ;;       (origami-mode 1))
+    ;; "zx" ,(lambda () (interactive)
+    ;;        (origami-show-only-node (current-buffer) (point))
+    ;;        (origami-open-node-recursively (current-buffer) (point)))
+    ;; "zu" origami-undo
+    ;; "zU" origami-redo
+
+    "C-]" (:def
+           evil-jump-to-tag
+           :key-name jump-to-definition)
+
+    "p" ,(lambda () (interactive)
+           (call-interactively 'evil-paste-after)
+           (evil-goto-mark ?\]))
+
+    ;; C-p paste then select region (for easy replace)
+    "C-p" ,(lambda () (interactive)
+             (call-interactively 'evil-paste-after)
+             (select-paste-region))
+
+    ;; map dw cw etc.
+    "d" (:case
+         :states (motion normal)
+         ,(general-key-dispatch 'evil-delete
+            :timeout 0.5
+            "w" (general-simulate-key ('evil-delete "aw"))
+            "W" (general-simulate-key ('evil-delete "aW"))
+            ")" (general-simulate-key ('evil-delete "i)"))
+            "]" (general-simulate-key ('evil-delete "i]"))
+            "}" (general-simulate-key ('evil-delete "i}"))
+            ">" (general-simulate-key ('evil-delete "i>"))
+            "'" (general-simulate-key ('evil-delete "i'"))
+            "\"" (general-simulate-key ('evil-delete "i\""))
+            "t" (general-simulate-key ('evil-delete "it"))
+            "n" (general-simulate-key ('evil-delete "gn")))
+         :states (visual)
+         evil-delete)
+
+    "c" (:case
+         :states (motion normal)
+         ,(general-key-dispatch 'evil-change
+            :timeout 0.5
+            "w" (general-simulate-key ('evil-change "iw"))
+            "W" (general-simulate-key ('evil-change "iW"))
+            ")" (general-simulate-key ('evil-change "i)"))
+            "]" (general-simulate-key ('evil-change "i]"))
+            "}" (general-simulate-key ('evil-change "i}"))
+            ">" (general-simulate-key ('evil-change "i>"))
+            "'" (general-simulate-key ('evil-change "i'"))
+            "\"" (general-simulate-key ('evil-change "i\""))
+            "t" (general-simulate-key ('evil-change "it"))
+            "n" (general-simulate-key ('evil-change "gn")))
+         :states (visual)
+         evil-change)
+
+    "y" (:case
+         :states (motion normal)
+         ,(general-key-dispatch 'evil-yank
+            :timeout 0.5
+            "w" (general-simulate-key ('evil-yank "iw"))
+            "W" (general-simulate-key ('evil-yank "iW"))
+            ")" (general-simulate-key ('evil-yank "i)"))
+            "]" (general-simulate-key ('evil-yank "i]"))
+            "}" (general-simulate-key ('evil-yank "i}"))
+            ">" (general-simulate-key ('evil-yank "i>"))
+            "'" (general-simulate-key ('evil-yank "i'"))
+            "\"" (general-simulate-key ('evil-yank "i\""))
+            "t" (general-simulate-key ('evil-yank "it")))
+         :states (visual)
+         ,(lambda () (interactive)
+            (call-interactively 'evil-yank)
+            (evil-goto-mark ?>)))
+
+    "x" (:case
+         :states (motion normal)
+         ,(general-key-dispatch 'evil-exchange
+            :timeout 0.5
+            "w" (general-simulate-key ('evil-exchange "iw"))
+            "W" (general-simulate-key ('evil-exchange "iW"))
+            ")" (general-simulate-key ('evil-exchange "i)"))
+            "]" (general-simulate-key ('evil-exchange "i]"))
+            "}" (general-simulate-key ('evil-exchange "i}"))
+            ">" (general-simulate-key ('evil-exchange "i>"))
+            "'" (general-simulate-key ('evil-exchange "i'"))
+            "\"" (general-simulate-key ('evil-exchange "i\""))
+            "t" (general-simulate-key ('evil-exchange "it"))
+            "n" (general-simulate-key ('evil-exchange "gn")))
+         :states (visual)
+         ;; copying in visual mode goes to the end of the region
+         ,(lambda () (interactive)
+            (call-interactively 'evil-exchange)
+            (evil-goto-mark ?>)))
+
+    ;; inserting newline
+    "M-o" ,(lambda () (interactive)
+             (save-excursion (evil-insert-newline-below)))
+    "C-o" ,(lambda () (interactive)
+             (save-excursion (evil-insert-newline-above)))
+    "C-M-o" ,(lambda () (interactive)
+               (save-excursion (evil-insert-newline-above))
+               (save-excursion (evil-insert-newline-below)))
+
+    ;; indentation
+    "{" ,(lambda () (interactive) (evil-shift-left-line 1))
+    "}" ,(lambda () (interactive) (evil-shift-right-line 1))
+
+    ;; scrolling
+    "M-j" evil-scroll-down
+    "M-k" evil-scroll-up
+
+    ;; use M-S-j/k to go to top bottom
+    "M-J" evil-goto-line
+    "M-K" evil-goto-first-line
+
+    "q" (:def
+         evil-execute-macro
+         :which-key "Execute Macro")
+
+    "u" (:case
+         :states (normal)
+         undo)
+    "U" (:case
+         :states (normal)
+         redo)
+
+    "s" evil-surround-edit
+    "S" evil-Surround-edit
+
+    ;; search cursor word
+    "F" ,(lambda () (interactive)
+           (evil-ex-search-word-forward)
+           (evil-ex-search-previous))
+    "gF" ,(lambda () (interactive)
+            (evil-ex-search-unbounded-word-forward)
+            (evil-ex-search-next))
+    "M-n" evil-ex-search-word-forward
+    "M-N" evil-ex-search-word-backward
+
+    ;; avy
+    "f" adaptive-avy
+
+    ;; basic movement
+    "k" evil-previous-visual-line
+    "j" evil-next-visual-line
+    "h" evil-backward-word-begin
+    "l" evil-forward-word-end
+    
+    ;; faster movement
+    ;; TODO: J and K are disabled to encourage using ivy.
+    ;; "K" fast-move-up
+    ;; "J" fast-move-down
+    "H" evil-backward-WORD-begin
+    "L" evil-forward-WORD-end
+    "G" evil-first-non-blank
+    ":" evil-end-of-line
+
+    ;; more comfortable word movement
+    "w" evil-backward-char
+    "e" evil-forward-char
+    "W" fast-move-left
+    "E" fast-move-right
+    "b" evil-forward-word-begin
+    "B" evil-forward-WORD-begin
+
+    ;; jumping through jump list
+    "m" evil-jump-backward
+    "M" evil-jump-forward
+
+    ;; outline minor mode
+    "C-h" (:def
+           outline-up-heading-custom
+           :key-name goto-parent-semantic-element)
+    "C-l" (:def
+           outline-next-heading
+           :key-name goto-child-semantic-element)
+    "C-k" (:def
+           outline-backward-heading-same-level-custom
+           :key-name goto-previous-semantic-element)
+    "C-j" (:def
+           outline-forward-same-level
+           :key-name goto-next-semantic-element)
+    "C-S-h" outline-promote
+    "C-S-l" outline-demote
+    "C-S-k" outline-move-subtree-up
+    "C-S-j" outline-move-subtree-down
+
+    "Z" (:def
+         :ignore
+         :key-name fold-focus)
+    "X" (:def
+         :ignore
+         :key-name fold-expand-all)
+
+    ;; flycheck error
+    "[f" flycheck-previous-error
+    "]f" flycheck-next-error
+
+    ;; navigate by sexp
+    "(" evil-sp-backward-sexp
+    ")" evil-sp-forward-sexp
+
+    ;; text scaling
+    "C--" (:def
+           text-scale-decrease
+           :which-key "Decrease Text Scale")
+    "C-=" (:def
+           text-scale-increase
+           :which-key "Increase Text Scale")
+
+    ;; change number literals
+    "=" evil-numbers/inc-at-pt
+    "-" evil-numbers/dec-at-pt
+
+    ;; macro
+    "Q" (:def
+         evil-record-macro
+         :which-key "Record Macro")
+
+    ";" evil-ex
+
+    "n" evil-ex-search-next-flash
+    "N" evil-ex-search-previous-flash
+
+    ","
+    (:case
+     :states (motion normal visual)
+     (:bindings
+      :which-key "Shortcuts"
+      :key-name shortcuts-prefix
+
+      ;; join lines
+      "j" evil-join
+
+      ;; repeat last ex command
+      "." "@:"
+
+      "z" evil-comfortable-recenter
+
+      "Q" (:def
+           ,(lambda () (interactive) (evil-record-macro ?q))
+           :which-key "fast record macro")
+
+      "w" evil-write-all
+
+      ;; quick window navigation
+      "0" ,(lambda () (interactive)
+             (winum-select-window-0)
+             (delayed-mode-line-update))
+      "1" ,(lambda () (interactive)
+             (winum-select-window-1)
+             (delayed-mode-line-update))
+      "2" ,(lambda () (interactive)
+             (winum-select-window-2)
+             (delayed-mode-line-update))
+      "3" ,(lambda () (interactive)
+             (winum-select-window-3)
+             (delayed-mode-line-update))
+      "4" ,(lambda () (interactive)
+             (winum-select-window-4)
+             (delayed-mode-line-update))
+      "5" ,(lambda () (interactive)
+             (winum-select-window-5)
+             (delayed-mode-line-update))
+      "6" ,(lambda () (interactive)
+             (winum-select-window-6)
+             (delayed-mode-line-update))
+      "7" ,(lambda () (interactive)
+             (winum-select-window-7)
+             (delayed-mode-line-update))
+      "8" ,(lambda () (interactive)
+             (winum-select-window-8)
+             (delayed-mode-line-update))
+      "9" ,(lambda () (interactive)
+             (winum-select-window-9)
+             (delayed-mode-line-update))
+
+      ;; break line
+      "h" newline
+
+      ;; use ivy to select kill ring
+      "p" counsel-yank-pop
+
+      "SPC" (:case
+             :states (motion normal)
+             ;; disable highlight and blink
+             evil-noh-blink
+             :states (visual)
+             ;; easy quit visual mode
+             ,(lambda () (interactive)
+                (evil-exit-visual-state)
+                (beacon-blink)))
+
+      ;; neo-tree
+      "n" ,(lambda () (interactive) (neotree-show))
+      "N" ,(lambda () (interactive) (neotree-find))
+
+      ;; substitution
+      "s" (:case
+           :states (motion normal)
+           ,(lambda () (interactive) (evil-ex "s/"))
+           :states (visual)
+           ,(lambda () (interactive) (evil-ex "'<,'>s/")))
+
+      "S" ,(lambda () (interactive) (evil-ex "%s/"))
+
+      "v" evil-visual-restore
+      "V" select-paste-region
+      "d" delete-line-content
+      "f" flyspell-auto-correct-word
+      "F" ,(lambda () (interactive)
+             (flyspell-lazy-check-visible)
+             (flyspell-auto-correct-previous-word (point)))
+
+      "<tab>" (:case
+               :states (motion normal)
+               indent-buffer
+               :states (visual)
+               indent-region)
+
+      ;; manually update heavy tasks
+      "r" (:def
+           update-heavy-tasks
+           :which-key "update heavy tasks")
+
+      ;; macro
+      "q" (:case
+           :states (motion normal)
+           (:def
+            ,(lambda () (interactive)
+               (evil-execute-macro 1 (evil-get-register ?q t)))
+            :which-key "fast execute macro")
+           :states (visual)
+           (:def
+            ,(lambda () (interactive) (evil-ex "'<,'>norm @q"))
+            :which-key "fast execute macro"))
+
+      ;; nerd commenter
+      "c"
+      (:bindings
+       :which-key "Comments"
+
+       "SPC" evilnc-comment-or-uncomment-lines
+       "SPC" evilnc-comment-or-uncomment-lines
+       "y" evilnc-copy-and-comment-lines
+       "y" evilnc-copy-and-comment-lines)
+
+      ;; extended shortcut
+      ","
+      (:bindings
+       :which-key "Extended Shortcuts"
+       :key-name extended-shortcuts-prefix
+
+       ;; narrowing
+       "n" (:case
+            :states (motion normal)
+            narrow-to-defun
+            :states (visual)
+            narrow-to-region)
+
+       "N" widen
+
+       "s" sort-lines))
+
+     :states (visual)
+     (:bindings
+      :which-key "Shortcuts"
+
+      ;; capitalize region
+      "C" capitalize-region))
+
+    "SPC"
+    (:bindings
+     :which-key "Global Leader"
+
+     "f" (:def
+          swiper-movement
+          :which-key "Search")
+     "C-f" (:def
+            swiper-all
+            :which-key "Search In All Buffers")
+     "F" (:def
+          ,(lambda () (interactive)
+             (swiper (selection-or-word-at-point)))
+          :which-key "Search Selection")
+     "C-S-f" (:def
+              ,(lambda () (interactive)
+                 (swiper-all (selection-or-word-at-point)))
+              :which-key "Search Selection All Buf")
+     "n" (:def
+          ivy-switch-buffer
+          :which-key "Switch Buffer")
+     "0" (:def
+          ,(progn
+             (eval-after-load 'which-key
+               '(progn
+                  ;; create fake key to represent move to window keys
+                  ;; hide other keys
+                  (setq which-key-replacement-alist
+                        (append
+                         '((("SPC [1-9]") . t)
+                           (("SPC 0") . ("SPC [0-9]" . "move to window [0-9]")))
+                         which-key-replacement-alist))))
+             (lambda () (interactive)
+               (winum-select-window-0-or-10)
+               (delayed-mode-line-update)))
+          :which-key "Move To Window 0")
+     "1"  (:def
+           ,(lambda () (interactive)
+              (winum-select-window-1)
+              (delayed-mode-line-update))
+           :which-key "Move To Window 1")
+     "2"  (:def
+           ,(lambda () (interactive)
+              (winum-select-window-2)
+              (delayed-mode-line-update))
+           :which-key "Move To Window 2")
+     "3"  (:def
+           ,(lambda () (interactive)
+              (winum-select-window-3)
+              (delayed-mode-line-update))
+           :which-key "Move To Window 3")
+     "4"  (:def
+           ,(lambda () (interactive)
+              (winum-select-window-4)
+              (delayed-mode-line-update))
+           :which-key "Move To Window 4")
+     "5"  (:def
+           ,(lambda () (interactive)
+              (winum-select-window-5)
+              (delayed-mode-line-update))
+           :which-key "Move To Window 5")
+     "6"  (:def
+           ,(lambda () (interactive)
+              (winum-select-window-6)
+              (delayed-mode-line-update))
+           :which-key "Move To Window 6")
+     "7"  (:def
+           ,(lambda () (interactive)
+              (winum-select-window-7)
+              (delayed-mode-line-update))
+           :which-key "Move To Window 7")
+     "8"  (:def
+           ,(lambda () (interactive)
+              (winum-select-window-8)
+              (delayed-mode-line-update))
+           :which-key "Move To Window 8")
+     "9"  (:def
+           ,(lambda () (interactive)
+              (winum-select-window-9)
+              (delayed-mode-line-update))
+           :which-key "Move To Window 9")
+     "TAB" (:def
+            ,(lambda () (interactive)
+               (switch-to-buffer (other-buffer))
+               (delayed-mode-line-update))
+            :which-key "Switch To Other Buffer")
+     "q" (:def
+          kill-this-buffer
+          :which-key "Kill Current Buffer")
+     "x" (:def
+          counsel-M-x
+          :which-key "Counsel M-x")
+     "g" (:def
+          google-this-search
+          :which-key "Google")
+     ";" (:def
+          eval-expression
+          :which-key "Eval Lisp")
+
+     "w"
+     (:bindings
+      :which-key "Window"
+
+      "h" (:def
+           ,(lambda () (interactive)
+              (evil-window-left 1)
+              (delayed-mode-line-update))
+           :which-key "Move To Window Left")
+      "j" (:def
+           ,(lambda () (interactive)
+              (evil-window-down 1)
+              (delayed-mode-line-update))
+           :which-key "Move To Window Down")
+      "k" (:def
+           ,(lambda () (interactive)
+              (evil-window-up 1)
+              (delayed-mode-line-update))
+           :which-key "Move To Window Up")
+      "l" (:def
+           ,(lambda () (interactive)
+              (evil-window-right 1)
+              (delayed-mode-line-update))
+           :which-key "Move To Window Right")
+      "d" (:def
+           ,(lambda () (interactive)
+              (evil-window-split)
+              (delayed-mode-line-update))
+           :which-key "Split Window Horizontally")
+      "v" (:def
+           ,(lambda () (interactive)
+              (evil-window-vsplit)
+              (delayed-mode-line-update))
+           :which-key "Split Window Vertically")
+      "m" (:def
+           ace-swap-window
+           :which-key "Swap Window")
+      "q" (:def
+           ,(lambda () (interactive)
+              (evil-quit)
+              (delayed-mode-line-update))
+           :which-key "Close Window")
+      "u" (:def
+           winner-undo
+           :which-key "Undo Window Config")
+      "U" (:def
+           winner-redo
+           :which-key "Redo Window Config")
+      "p" (:def
+           peek-region-in-split
+           :which-key "Peek Region In Split")
+      "t" (,(lambda () (interactive)
+              (evil-window-set-height 12))
+           :which-key "Make Into Terminal Height"))
+
+     "h"
+     (:bindings
+      :which-key "Helm"
+      
+      "h" (:def
+           helm-resume
+           :which-key "Helm Resume")
+      "m" (:def
+           helm-mini
+           :which-key "Helm Mini")
+      "p" (:def
+           helm-projectile
+           :which-key "Helm Projectile")
+      "P" (:def
+           helm-projectile-switch-project
+           :which-key "Helm Projectile Project")
+      "C-p" (:def
+             helm-projectile-find-file-in-known-projects
+             :which-key "Helm Projectile All")
+      "<tab>" (:def
+               helm-projectile-find-other-file ; cpp vs h switching
+               :which-key "Helm Projectile Other File")
+      "TAB" (:def
+             helm-projectile-find-other-file ; cpp vs h switching
+             :which-key "Helm Projectile Other File")
+      "r" (:def
+           helm-recentf
+           :which-key "Helm Recentf")
+      "g" (:def
+           helm-projectile-grep
+           :which-key "Helm Projectile Grep")
+      "f" (:def
+           helm-find-files
+           :which-key "Helm Find Files")
+      "F" (:def
+           helm-for-files
+           :which-key "Helm For Files")
+      "x" (:def
+           helm-M-x
+           :which-key "Helm M-x")
+      "o" (:def
+           helm-occur
+           :which-key "Helm Occur")
+      "s" (:def
+           helm-swoop
+           :which-key "Helm Swoop"))
+
+     "i"
+     (:bindings
+      :which-key "Navigation"
+
+      "i" (:def
+           ivy-resume
+           :which-key "Ivy Resume")
+      ;; "ip" (:def
+      ;;       counsel-projectile
+      ;;  :which-key "Counsel Projectile")
+      "p" (:def
+           counsel-projectile-find-file
+           :which-key "Project Files")
+      "<tab>" (:def
+               projectile-find-other-file
+               :which-key "Other File")
+      "TAB" (:def
+             projectile-find-other-file
+             :which-key "Other File")
+      "r" (:def
+           counsel-recentf
+           :which-key "Recent Files")
+      ;; "g" (:def
+      ;;     counsel-projectile-grep
+      ;;  :which-key "Project Search")
+      "f" (:def
+           counsel-find-file
+           :which-key "Files")
+      "s" (:def
+           counsel-semantic-or-imenu
+           :key-name find-semantic-item
+           :which-key "Semantic Item")
+      "S" (:def
+           ,(lambda () (interactive) (call-interactively 'imenu))
+           :which-key "Semantic Item Tree"))
+
+     "o"
+     (:bindings
+      :which-key "Org"
+      :key-name org-prefix)
+
+     "j"
+     (:bindings
+      :which-key "Mode Specific"
+      :key-name mode-specific-prefix)
+
+     "a"
+     (:bindings
+      :which-key "Appearance"
+      
+      "F" (:def
+           ,(lambda () (interactive) (toggle-frame-fullscreen))
+           :which-key "Toggle Full-screen")
+
+      "t"
+      (:bindings
+       :which-key "Theme"
+
+       "l" (:def
+            ,(lambda () (interactive) (change-theme light-theme))
+            :which-key "Light Theme")
+       "d" (:def
+            ,(lambda () (interactive) (change-theme dark-theme))
+            :which-key "Dark Theme"))
+
+      "f"
+      (:bindings
+       :which-key "Font"
+
+       "s" (:def
+            set-to-small-font
+            :which-key "Small Font")
+       "b" (:def
+            set-to-big-font
+            :which-key "Big Font")
+       "z" (:def
+            hydra-zoom/body
+            :which-key "Zoom Buffer Font")
+       "r" (:def
+            toggle-readable-buffer-font
+            :which-key "Toggle Readable Buffer Font")))
+
+     "p"
+     (:bindings
+      :which-key "Project + Workspace"
+      :key-name project-prefix)
+
+     "c"
+     (:bindings
+      :which-key "Companion"
+      
+      "d" (:def
+           companion-notif-dismiss
+           :which-key "Dismiss Notification")
+      "q" (:def
+           companion-show-last-qod
+           :which-key "Quote Of The Day")
+      "y" (:def
+           companion-copy-qod
+           :which-key "Copy Quote Of The Day")
+      "Q" (:def
+           companion-fetch-qod
+           :which-key "Fetch Quote Of The Day"))
+
+     "s"
+     (:bindings
+      :which-key "Side Bar"
+
+      "f" (:def
+           ,(lambda () (interactive)
+              (display-buffer-in-side-window
+               (get-buffer neo-buffer-name)
+               '((side . left))))
+           :which-key "Files")
+      "o" (:def
+           ,(lambda () (interactive)
+              (display-buffer-in-side-window
+               (get-buffer imenu-list-buffer-name)
+               '((side . left))))
+           :which-key "Outline"))
+
+     "t"
+     (:bindings
+      :which-key "Templates"
+
+      "n" (:def
+           yas-new-snippet
+           :which-key "New")
+      "e" (:def
+           yas-visit-snippet-file
+           :which-key "Edit")
+      "r" (:def
+           yas-reload-all
+           :which-key "Reload")
+      "i" (:def
+           insert-file
+           :which-key "Insert File Content"))
+
+     "e"
+     (:bindings
+      :which-key "Files"
+
+      "q" (:def
+           save-buffers-kill-terminal
+           :which-key "Quit Emacs")
+      "Q" (:def
+           save-buffers-kill-emacs
+           :which-key "Quit Emacs Process")
+      "w" (:def
+           write-file
+           :which-key "Write File")
+      "r" (:def
+           rename-buffer
+           :which-key "Rename Buffer")
+      "a" (:def
+           evil-write-all
+           :which-key "Write All Files"))
+
+     "b"
+     (:bindings
+      :which-key "Battery"
+
+      "c" (:def
+           ,(lambda () (interactive) (setq company-idle-delay 0))
+           :which-key "Instant Completion")
+      "C" (:def
+           ,(lambda () (interactive) (setq company-idle-delay 0.2))
+           :which-key "Delayed Completion"))
+
+     "m"
+     (:bindings
+      :which-key "Music"
+
+      "l"
+      (:bindings
+       :which-key "Playlist"
+       "l" (:def
+            emms-add-playlist
+            :which-key "Add Playlist")
+       "a" (:def
+            emms-add-file
+            :which-key "Add File")
+       "d" (:def
+            emms-add-directory
+            :which-key "Add Directory")
+       "D" (:def
+            emms-add-directory-tree
+            :which-key "Add Directory Recursively")
+       "s" (:def
+            emms-playlist-save
+            :which-key "Save Playlist")
+       "g" (:def
+            ,(lambda () (interactive)
+               (emms-playlist-mode-go)
+               (emms-playlist-mode-center-current))
+            :which-key "Go To Playlist")
+       "s" (:def
+            ,(lambda () (interactive)
+               (emms-sort)
+               (message "Playlist sorted."))
+            :which-key "Sort Playlist")
+       "S" (:def
+            ,(lambda () (interactive)
+               (emms-shuffle)
+               (message "Playlist shuffled."))
+            :which-key "Shuffle Playlist")
+       "u" (:def
+            emms-uniq
+            :which-key "Remove Playlist Duplicates")
+       "c" (:def
+            emms-playlist-clear
+            :which-key "Clear Playlist"))
+
+      "f" (:def
+           counsel-emms-play
+           :which-key "Play Music")
+      "n" (:def
+           hydra-emms-control/body
+           :which-key "Music Control")
+      "p" (:def
+           emms-pause
+           :which-key "Pause Music")
+      "P" (:def
+           emms-stop
+           :which-key "Stop Music")
+      "r" (:def
+           emms-random
+           :which-key "Play Random Music")
+      "t" (:def
+           emms-toggle-repeat-track
+           :which-key "Toggle Repeat Track"))
+
+     "v"
+     (:bindings
+      :which-key "Version Control"
+
+      "s" (:def
+           magit-status
+           :which-key "Magit Status"))))
+
+   :states (visual)
+   (:bindings
+
+    ;; Y goes to the start of the region (default)
+    "Y" evil-yank
+
+    "X" evil-exchange
+
+    ;; do not re-copy when pasting in visual mode
+    "p" ,(lambda () (interactive)
+           (call-interactively 'evil-visual-paste)
+           (pop-kill-ring))
+
+    ;; indentation
+    "{" "<gv"
+    "}" ">gv"
+
+    ;; visual selection should not go over the last char
+    ":" ,(lambda () (interactive) (evil-end-of-line))
+
+    ;; allow repeat in visual mode
+    "." ,(kbd ";norm . RET")
+    "q" (:def
+         ,(lambda () (interactive) (evil-ex "'<,'>norm @"))
+         :which-key "Execute Macro")
+
+    "s" evil-surround-region
+
+    ;; search selection
+    "F" ,(lambda () (interactive)
+           (call-interactively 'evil-visualstar/begin-search-forward)
+           (evil-ex-search-previous))
+
+    "M-n" evil-visualstar/begin-search-forward
+    "M-N" evil-visualstar/begin-search-backward)
+
+   :states (insert)
+   (:bindings
+
+    "j" ,(progn
+           (setq
+            insert-mode-j-mapping-func
+            (general-key-dispatch
+                ;; fallback
+                (lambda () (interactive)
+                  (let ((my-company--company-command-p-override t))
+                    (call-with-command-hooks
+                     (lambda ()
+                       (interactive)
+                       (self-insert-or-send-raw "j")))))
+              :timeout 1.0
+
+              "j" (lambda () (interactive)
+                    (call-with-command-hooks
+                     (lambda () (interactive)
+                       (self-insert-or-send-raw "j")) "jj"))
+              "t" (lambda () (interactive)
+                    (call-with-command-hooks
+                     'insert-todo "jt"))
+              "f" (lambda () (interactive)
+                    (call-with-command-hooks
+                     'insert-backslash "jf"))
+              ;; jk quit insert mode
+              "k" (lambda () (interactive)
+                    (call-with-command-hooks
+                     'evil-normal-state "jk"))
+              ;; jh delete word
+              "h" (lambda () (interactive)
+                    (call-with-command-hooks
+                     'evil-delete-backward-word "jh"))
+              ;; jg move to start of line
+              "g" (lambda () (interactive)
+                    (call-with-command-hooks
+                     'evil-first-non-blank "jg"))
+              ;; jl move to end of line
+              "l" (lambda () (interactive)
+                    (call-with-command-hooks
+                     'move-end-of-line "jl"))
+              ;; jp complete
+              "p" 'company-smart-complete
+              ;; "p" (lambda () (interactive)
+              ;;       (call-with-command-hooks
+              ;;        'company-smart-complete "jp"))
+              ;; j[ skip TabNine
+              "[" (lambda () (interactive)
+                    (call-with-command-hooks
+                     'company-tabnine-call-other-backends "j["))
+              "0" (lambda () (interactive)
+                    (call-with-command-hooks
+                     'company-complete-number-0 "j0"))
+              "1" (lambda () (interactive)
+                    (call-with-command-hooks
+                     'company-complete-number-1 "j1"))
+              "2" (lambda () (interactive)
+                    (call-with-command-hooks
+                     'company-complete-number-2 "j2"))
+              "3" (lambda () (interactive)
+                    (call-with-command-hooks
+                     'company-complete-number-3 "j3"))
+              "4" (lambda () (interactive)
+                    (call-with-command-hooks
+                     'company-complete-number-4 "j4"))
+              "5" (lambda () (interactive)
+                    (call-with-command-hooks
+                     'company-complete-number-5 "j5"))
+              "6" (lambda () (interactive)
+                    (call-with-command-hooks
+                     'company-complete-number-6 "j6"))
+              "7" (lambda () (interactive)
+                    (call-with-command-hooks
+                     'company-complete-number-7 "j7"))
+              "8" (lambda () (interactive)
+                    (call-with-command-hooks
+                     'company-complete-number-8 "j8"))
+              "9" (lambda () (interactive)
+                    (call-with-command-hooks
+                     'company-complete-number-9 "j9"))
+              ;; j[ context complete (TODO)
+              ;; "[" 'evil-complete-next
+              ;; j[ insert snippet
+              ;; "[" (lambda () (interactive)
+              ;;       (call-with-command-hooks 'yas-insert-snippet))
+              ;; jv to paste from default register
+              "v" (lambda () (interactive)
+                    (call-with-command-hooks
+                     'paste-from-default-register "jv"))))
+
+           ;; Since company-tng-frontend only complete selection when
+           ;; pressing any key that isn't a company-mode command
+           ;; (checked with `my-company--company-command-p` function),
+           ;; and we want `general-key-dispatch` to have \"j\" as a
+           ;; company-mode command (so do not complete) but not to
+           ;; have "jp" as one (so do completion).
+           ;; Note: need to make sure company-continue-commands allow insert-mode-j-mapping (such as having 'not at first)
+           ;; setting :repeat to nil because we don't want the "j" part to be repeatable, only the actual commands invoked afterwards.
+           (evil-define-command insert-mode-j-mapping () :repeat nil
+             (interactive)
+             (call-interactively insert-mode-j-mapping-func))
+           (define-key company-active-map "j" 'insert-mode-j-mapping)
+           (put 'insert-mode-j-mapping 'company-keep t)
+           'insert-mode-j-mapping)
+
+    "J" ,(progn
+           (setq
+            insert-mode-J-mapping-func
+            (general-key-dispatch
+                (lambda () (interactive)
+                  (let ((my-company--company-command-p-override t))
+                    (call-with-command-hooks
+                     (lambda ()
+                       (interactive)
+                       (self-insert-or-send-raw "J")))))
+              :timeout 1.0
+
+              "J" (lambda () (interactive)
+                    (call-with-command-hooks
+                     (lambda () (interactive)
+                       (self-insert-or-send-raw "J")) "JJ"))
+              ;; JV to use counsel yank-pop
+              "V" (lambda () (interactive)
+                    (call-with-command-hooks
+                     'counsel-yank-pop "JV"))))
+
+           (evil-define-command insert-mode-J-mapping () :repeat nil
+             (interactive)
+             (call-interactively insert-mode-J-mapping-func))
+           (define-key company-active-map "J" 'insert-mode-J-mapping)
+           (put 'insert-mode-J-mapping 'company-keep t)
+           'insert-mode-J-mapping)
+
+    ;; spell correction
+    "C-SPC" ,(lambda () (interactive)
                (save-excursion
                  (flyspell-lazy-check-pending)
                  (flyspell-auto-correct-previous-word (point))))
- ;; insert space and move left
- "S-SPC" (lambda () (interactive)
-           (save-excursion (insert " ")))
- "<S-space>" (lambda () (interactive)
+    "<C-space>" ,(lambda () (interactive)
+                   (save-excursion
+                     (flyspell-lazy-check-pending)
+                     (flyspell-auto-correct-previous-word (point))))
+
+    ;; insert space and move left
+    "S-SPC" ,(lambda () (interactive)
                (save-excursion (insert " ")))
- ;; "M-G" 'evil-first-non-blank
- "C-J" 'next-line
- "C-K" 'previous-line
- "C-H" 'left-word
- "C-L" 'right-word
- ;; "M-:" 'end-of-line
- ;; use M-j/k/l to do completion
- ;; "M-j" 'company-complete-common-or-cycle
- ;; "M-k" 'company-select-previous
- ;; "M-l" 'company-complete-selection
-
- "<M-return>" 'outline-insert-heading
-
- "<S-return>" 'smart-open-line-above
- "<tab>" 'tab-to-tab-stop
-
- ;; snippets
- "M-j" 'yas-next-field
- "M-k" 'yas-prev-field
- "M-l" 'yas-insert-snippet)
-
-
-;;; shortcut key bindings
-
-(global-shortcut-def
-  :states '(motion normal visual)
-
-  ;; join lines
-  "j" 'evil-join
-
-  ;; repeat last ex command
-  "." "@:"
-
-  "z" 'evil-comfortable-recenter
-
-  "Q" '((lambda () (interactive) (evil-record-macro ?q))
-        :which-key "fast record macro")
-
-  "w" 'evil-write-all)
-
-(global-shortcut-def
-  :states '(motion normal)
-
-  ;; quick window navigation
-  "0" (lambda () (interactive)
-        (winum-select-window-0)
-        (delayed-mode-line-update))
-  "1" (lambda () (interactive)
-        (winum-select-window-1)
-        (delayed-mode-line-update))
-  "2" (lambda () (interactive)
-        (winum-select-window-2)
-        (delayed-mode-line-update))
-  "3" (lambda () (interactive)
-        (winum-select-window-3)
-        (delayed-mode-line-update))
-  "4" (lambda () (interactive)
-        (winum-select-window-4)
-        (delayed-mode-line-update))
-  "5" (lambda () (interactive)
-        (winum-select-window-5)
-        (delayed-mode-line-update))
-  "6" (lambda () (interactive)
-        (winum-select-window-6)
-        (delayed-mode-line-update))
-  "7" (lambda () (interactive)
-        (winum-select-window-7)
-        (delayed-mode-line-update))
-  "8" (lambda () (interactive)
-        (winum-select-window-8)
-        (delayed-mode-line-update))
-  "9" (lambda () (interactive)
-        (winum-select-window-9)
-        (delayed-mode-line-update))
-
-  ;; nerd commenter
-  "c SPC" 'evilnc-comment-or-uncomment-lines
-  "c SPC" 'evilnc-comment-or-uncomment-lines
-  "c y" 'evilnc-copy-and-comment-lines
-  "c y" 'evilnc-copy-and-comment-lines
-
-  ;; break line
-  "h" 'newline
-
-  ;; use ivy to select kill ring
-  "p" 'counsel-yank-pop
-
-  ;; disable highlight and blink
-  "SPC" 'evil-noh-blink
-
-  ;; neo-tree
-  "n" (lambda () (interactive) (neotree-show))
-  "N" (lambda () (interactive) (neotree-find))
-
-  ;; narrowing
-  ", n" 'narrow-to-defun
-  ", N" 'widen
-
-  ;; substitution
-  "s" (lambda () (interactive) (evil-ex "s/"))
-  "S" (lambda () (interactive) (evil-ex "%s/"))
-
-  "v" 'evil-visual-restore
-  "V" 'select-paste-region
-  "d" 'delete-line-content
-  "f" 'flyspell-auto-correct-word
-  "F" (lambda () (interactive)
-        (flyspell-lazy-check-visible)
-        (flyspell-auto-correct-previous-word (point)))
-  "<tab>" 'indent-buffer
-
-  ;; manually update heavy tasks
-  "r" '(update-heavy-tasks
-        :which-key "update heavy tasks")
-
-  ;; macro
-  "q" '((lambda () (interactive)
-          (evil-execute-macro 1 (evil-get-register ?q t)))
-        :which-key "fast execute macro"))
-
-(global-shortcut-def
-  :states '(visual)
-
-  ;; easy quit visual mode
-  "SPC" (lambda () (interactive)
-          (evil-exit-visual-state)
-          (beacon-blink))
-
-  ;; narrowing
-  ", n" 'narrow-to-region
-
-  ;; substitution
-  "s" (lambda () (interactive) (evil-ex "'<,'>s/"))
-
-  ", s" 'sort-lines
-
-  ;; macro
-  "q" '((lambda () (interactive) (evil-ex "'<,'>norm @q"))
-        :which-key "fast execute macro")
-
-  "<tab>" 'indent-region)
-
-
-;;; mode specific leader key bindings
-
-(global-leader-mode-specific-def
-  :keymaps 'emacs-lisp-mode-map
-  :states '(motion normal)
-
-  "e" '(eval-defun
-        :which-key "eval defun")
-  "E" '(eval-buffer
-        :which-key "eval buffer"))
-
-(global-leader-mode-specific-def
-  :keymaps 'emacs-lisp-mode-map
-  :states '(visual)
-
-  "e" '((lambda () (interactive)
-          (message "Evaluating region.")
-          (call-interactively 'eval-region))
-        :which-key "eval region"))
-
-(global-leader-mode-specific-def
-  :keymaps 'sh-mode-map
-  :states '(motion normal)
-
-  "E" '(execute-buffer-as-sh
-        :which-key "execute buffer"))
-
-(global-leader-mode-specific-def
-  :keymaps 'sh-mode-map
-  :states '(visual)
-
-  "e" '(execute-region-as-sh
-        :which-key "execute region"))
-
-
-(global-leader-mode-specific-def
-  :keymaps '(latex-mode-map)
-  :states '(motion normal)
-
-  "p" '(preview-buffer
-        :which-key "preview buffer")
-
-  "P" '(preview-clearout-buffer
-        :which-key "clear preview buffer"))
-
-
-;;; mode specific general key bindings
-
-(general-define-key
- :keymaps 'typescript-mode-map
- :states '(motion normal)
-
- "C-]" 'tide-jump-to-definition)
-
-(general-define-key
- :keymaps 'python-mode-map
- :states '(motion normal)
-
- "C-]" 'elpy-goto-definition)
-
-(general-define-key
- :keymaps 'c-mode-map
- :states '(motion normal)
-
- "C-]" 'ycmd-goto)
-
-(general-define-key
- :keymaps 'c++-mode-map
- :states '(motion normal)
-
- "C-]" 'ycmd-goto)
-
-(general-define-key
- :keymaps 'csharp-mode-map
- :states '(motion normal)
-
- "C-]" 'ycmd-goto)
-
-(general-define-key
- :keymaps 'java-mode-map
- :states '(motion normal)
-
- "C-]" 'ycmd-goto)
-
-(general-define-key
- :keymaps 'imenu-list-major-mode-map
-
- "o" 'imenu-list-goto-entry
- "TAB" 'imenu-list-display-entry
- "<tab>" 'imenu-list-display-entry)
-
-(general-define-key
- :keymaps 'yas-minor-mode-map
- :states '(insert)
-
- "M-l" '(menu-item "" yas-expand-from-trigger-key
-                   :filter yas--maybe-expand-key-filter))
-
-(general-define-key
- :keymaps 'emmet-mode-keymap
- :states '(insert)
-
- "M-j" 'yas-next-field
- "M-k" 'yas-prev-field
- "M-l" 'yas-insert-snippet
- "M-J" 'emmet-next-edit-point
- "M-K" 'emmet-prev-edit-point
- "M-L" 'emmet-expand-line)
-
-(general-define-key
- :keymaps 'emmet-mode-keymap
- :states '(visual)
-
- "M-L" 'emmet-wrap-with-markup)
+    "<S-space>" ,(lambda () (interactive)
+                   (save-excursion (insert " ")))
+
+    ;; "M-G" evil-first-non-blank
+    "C-J" next-line
+    "C-K" previous-line
+    "C-H" left-word
+    "C-L" right-word
+    ;; "M-:" end-of-line
+    ;; use M-j/k/l to do completion
+    ;; "M-j" company-complete-common-or-cycle
+    ;; "M-k" company-select-previous
+    ;; "M-l" company-complete-selection
+
+    "<M-return>" outline-insert-heading
+
+    "<S-return>" smart-open-line-above
+    "<tab>" tab-to-tab-stop
+
+    ;; snippets
+    "M-j" (:def
+           yas-next-field
+           :key-name snippet-next-field)
+    "M-k" (:def
+           yas-prev-field
+           :key-name snippet-previous-field)
+    "M-l" (:def
+           yas-insert-snippet
+           :key-name snippet-expand)
+
+    "M-J" (:def
+           :ignore
+           :key-name template-next-field)
+    "M-K" (:def
+           :ignore
+           :key-name template-previous-field)
+    "M-L" (:def
+           :ignore
+           :key-name template-expand))))
+
+(tommyx-bind-keys
+ `(:case
+   :keymaps emacs-lisp-mode-map
+   :states (motion normal visual)
+   (:bindings
+
+    mode-specific-prefix
+    (:bindings
+
+     "e" (:case
+          :states (motion normal)
+          (:def
+           eval-defun
+           :which-key "Eval Defun")
+          :states (visual)
+          (:def
+           ,(lambda () (interactive)
+              (message "Evaluating region.")
+              (call-interactively 'eval-region))
+           :which-key "Eval Region"))
+
+     "E" (:def
+          eval-buffer
+          :which-key "Eval Buffer")))))
+
+(tommyx-bind-keys
+ `(:case
+   :keymaps sh-mode-map
+   :states (motion normal visual)
+   (:bindings
+
+    mode-specific-prefix
+    (:bindings
+
+     "e" (:case
+          :states (visual)
+          (:def
+           execute-region-as-sh
+           :which-key "Execute Region"))
+
+     "E" (:def
+          execute-buffer-as-sh
+          :which-key "Execute Buffer")))))
+
+(tommyx-bind-keys
+ `(:case
+   :keymaps latex-mode-map
+   :states (motion normal visual)
+   (:bindings
+
+    mode-specific-prefix
+    (:bindings
+
+     "p" (:def
+          preview-buffer
+          :which-key "Preview Buffer")
+
+     "P" (:def
+          preview-clearout-buffer
+          :which-key "Clear Preview Buffer")))))
+
+(tommyx-bind-keys
+ `(:case
+   :keymaps typescript-mode-map
+   :states (motion normal)
+   (:bindings
+    
+    jump-to-definition tide-jump-to-definition)))
+
+(tommyx-bind-keys
+ `(:case
+   :keymaps python-mode-map
+   :states (motion normal)
+   (:bindings
+    
+    jump-to-definition elpy-goto-definition)))
+
+(tommyx-bind-keys
+ `(:case
+   :keymaps c-mode-map
+   :states (motion normal)
+   (:bindings
+    
+    jump-to-definition elpy-goto-definition)))
+
+(tommyx-bind-keys
+ `(:case
+   :keymaps c++-mode-map
+   :states (motion normal)
+   (:bindings
+    
+    jump-to-definition ycmd-goto)))
+
+(tommyx-bind-keys
+ `(:case
+   :keymaps csharp-mode-map
+   :states (motion normal)
+   (:bindings
+    
+    jump-to-definition ycmd-goto)))
+
+(tommyx-bind-keys
+ `(:case
+   :keymaps java-mode-map
+   :states (motion normal)
+   (:bindings
+    
+    jump-to-definition ycmd-goto)))
+
+(tommyx-bind-keys
+ `(:case
+   :keymaps imenu-list-major-mode-map
+
+   (:bindings
+
+    "o" imenu-list-goto-entry
+    "TAB" imenu-list-display-entry
+    "<tab>" imenu-list-display-entry)))
+
+(tommyx-bind-keys
+ `(:case
+   :keymaps yas-minor-mode-map
+   :states (insert)
+   (:bindings
+    
+    snippet-expand (menu-item "" yas-expand-from-trigger-key
+                     :filter yas--maybe-expand-key-filter))))
+
+(tommyx-bind-keys
+ `(:case
+   :keymaps emmet-mode-keymap
+   :states (insert)
+   (:bindings
+    
+    snippet-next-field      yas-next-field
+    snippet-previous-field  yas-prev-field
+    snippet-expand          yas-insert-snippet
+    template-next-field     emmet-next-edit-point
+    template-previous-field emmet-prev-edit-point
+    template-expand         emmet-expand-line)))
+
+(tommyx-bind-keys
+ `(:case
+   :keymaps emmet-mode-keymap
+   :states (visual)
+   (:bindings
+    
+    template-expand emmet-wrap-with-markup)))
 
 ;; (general-define-key
 ;;  :keymaps 'eshell-mode-map
@@ -3186,121 +3420,148 @@ command (ran after) is mysteriously incorrect."
 ;;  "M-j" 'eshell-previous-matching-input-from-input
 ;;  "M-k" 'eshell-next-matching-input-from-input)
 
-(general-define-key
- :keymaps 'helm-map
+(tommyx-bind-keys
+ `(:case
+   :keymaps helm-map
 
- "M-j" 'helm-next-line
- "M-k" 'helm-previous-line)
+   (:bindings
 
-(general-define-key
- :keymaps 'helm-find-files-map
+    next-item helm-next-line
+    previous-item helm-previous-line)))
 
- "C-h" 'helm-find-files-up-one-level)
+(tommyx-bind-keys
+ `(:case
+   :keymaps helm-find-files-map
 
-(general-define-key
- :keymaps '(swiper-map ivy-minibuffer-map counsel-imenu-map)
+   (:bindings
 
- "M-j" 'ivy-next-line
- "M-k" 'ivy-previous-line
- "M-J" 'ivy-scroll-up-command
- "M-K" 'ivy-scroll-down-command
- ;; ivy-next-history-element allows inserting cursor symbol.
- "C-j" 'ivy-next-history-element
- "C-k" 'ivy-previous-history-element
- "M-RET" 'ivy-dispatching-done
- "<M-return>" 'ivy-dispatching-done
- "M-S-RET" 'ivy-dispatching-call ; do not exit after. useful for copy.
- "<M-S-return>" 'ivy-dispatching-call
- "S-RET" 'ivy-immediate-done ; use exact input, not candidate
- "<S-return>" 'ivy-immediate-done
- "M-l" 'ivy-done
- "C-M-l" 'ivy-immediate-done
- "M-L" 'ivy-dispatching-done
- "M-n" 'ivy-call
- "M-N" 'ivy-dispatching-call
- "M-h" 'ivy-backward-kill-word
- "M-o" 'ivy-occur ; save to temp buffer for manipulation
- "<tab>" 'ivy-posframe-avy
- "TAB" 'ivy-posframe-avy
+    "C-h" helm-find-files-up-one-level)))
 
- "j" (general-key-dispatch 'self-insert-command
-       :timeout 0.25
-       "j" 'self-insert-command
-       ;; "l" 'ivy-done
-       "k" 'minibuffer-keyboard-quit
-       "h" 'ivy-backward-kill-word
-       "p" 'ivy-partial))
+(tommyx-bind-keys
+ `(:case
+   :keymaps (swiper-map ivy-minibuffer-map counsel-imenu-map)
 
-(general-define-key
- :keymaps '(swiper-map)
+   (:bindings
 
- "M-s" 'swiper-query-replace
- "<tab>" 'ivy-posframe-swiper-avy)
+    next-item ivy-next-line
+    previous-item ivy-previous-line
+    next-multiple-item ivy-scroll-up-command
+    previous-multiple-item ivy-scroll-down-command
+    ;; ivy-next-history-element allows inserting cursor symbol.
+    next-history-item ivy-next-history-element
+    previous-history-item ivy-previous-history-element
+    "M-RET" ivy-dispatching-done
+    "<M-return>" ivy-dispatching-done
+    "M-S-RET" ivy-dispatching-call ; do not exit after. useful for copy.
+    "<M-S-return>" ivy-dispatching-call
+    "S-RET" ivy-immediate-done ; use exact input, not candidate
+    "<S-return>" ivy-immediate-done
+    select-action ivy-done
+    "C-M-l" ivy-immediate-done
+    "M-L" ivy-dispatching-done
+    "M-n" ivy-call
+    "M-N" ivy-dispatching-call
+    "M-h" ivy-backward-kill-word
+    "M-o" ivy-occur ; save to temp buffer for manipulation
+    "<tab>" ivy-posframe-avy
+    "TAB" ivy-posframe-avy
 
-(general-define-key
- :keymaps '(swiper-all-map)
+    "j" ,(general-key-dispatch 'self-insert-command
+           :timeout 0.25
+           "j" 'self-insert-command
+           ;; "l" 'ivy-done
+           "k" 'minibuffer-keyboard-quit
+           "h" 'ivy-backward-kill-word
+           "p" 'ivy-partial))))
 
- "M-s" 'swiper-all-query-replace)
+(tommyx-bind-keys
+ `(:case
+   :keymaps (swiper-map)
 
-(general-define-key 
- :keymaps '(counsel-find-file-map)
+   (:bindings
 
- ;; Note: use / to enter directory, not ENTER.
- ;; If we want to use ENTER, uncomment below.
- ;; "RET" 'ivy-alt-done
- ;; "<return>" 'ivy-alt-done
- ;; "M-l" 'ivy-alt-done
- "S-RET" 'ivy-immediate-done ; use exact input, not candidate
- "<S-return>" 'ivy-immediate-done)
+    "M-s" swiper-query-replace
+    "<tab>" ivy-posframe-swiper-avy)))
 
-(general-define-key
- :keymaps '(minibuffer-local-shell-command-map)
+(tommyx-bind-keys
+ `(:case
+   :keymaps (swiper-all-map)
 
- "M-k" 'previous-line-or-history-element
- "M-j" 'next-line-or-history-element
- "M-l" 'exit-minibuffer)
+   (:bindings
 
-(general-define-key
- :keymaps '(minibuffer-local-map evil-ex-completion-map)
+    "M-s" swiper-all-query-replace)))
 
- "M-k" 'previous-complete-history-element
- "M-j" 'next-complete-history-element
- "M-l" 'exit-minibuffer)
+(tommyx-bind-keys
+ `(:case
+   :keymaps (counsel-find-file-map)
 
-(general-define-key
- :keymaps 'help-mode-map
+   (:bindings
 
- "u" 'help-go-back
- "u" 'help-go-back
- "U" 'help-go-forward
- "U" 'help-go-forward)
+    ;; Note: use / to enter directory, not ENTER.
+    ;; If we want to use ENTER, uncomment below.
+    ;; "RET" ivy-alt-done
+    ;; "<return>" ivy-alt-done
+    ;; "M-l" ivy-alt-done
+    "S-RET" ivy-immediate-done ; use exact input, not candidate
+    "<S-return>" ivy-immediate-done)))
 
-(general-define-key
- :keymaps 'web-mode-map
+(tommyx-bind-keys
+ `(:case
+   :keymaps (minibuffer-local-shell-command-map)
 
- "C-h" nil
- "C-l" nil)
+   (:bindings
 
-(general-define-key
- :keymaps 'neotree-mode-map
- :states '(motion normal)
+    previous-history-item previous-line-or-history-element
+    next-history-item next-line-or-history-element
+    select-action exit-minibuffer)))
 
- ;; "h" (neotree-make-executor :dir-fn 'neo-open-dir)
- ;; "l" (neotree-make-executor :dir-fn 'neo-open-dir)
- "R" 'neotree-refresh
- "r" 'neotree-refresh
- "u" 'neotree-select-up-node
- "U" 'neotree-select-down-node
- "i" 'neotree-change-root
- "a" 'neotree-create-node ; add
- "m" 'neotree-rename-node ; move
- "d" 'neotree-delete-node ; delete
- "c" 'neotree-copy-node ; copy
- "o" 'neotree-enter
- "<return>" 'neotree-enter)
+(tommyx-bind-keys
+ `(:case
+   :keymaps (minibuffer-local-map evil-ex-completion-map)
 
+   (:bindings
 
-;;; mode specific shortcut key bindings
+    previous-history-item previous-complete-history-element
+    next-history-item next-complete-history-element
+    select-action exit-minibuffer)))
+
+(tommyx-bind-keys
+ `(:case
+   :keymaps help-mode-map
+
+   (:bindings
+
+    go-back help-go-back
+    go-forward help-go-forward)))
+
+(tommyx-bind-keys
+ `(:case
+   :keymaps web-mode-map
+
+   (:bindings
+
+    "C-h" nil
+    "C-l" nil)))
+
+(tommyx-bind-keys
+ `(:case
+   :keymaps neotree-mode-map
+   :states (motion normal)
+   (:bindings
+    
+    ;; "h" (neotree-make-executor :dir-fn neo-open-dir)
+    ;; "l" (neotree-make-executor :dir-fn neo-open-dir)
+    "R" neotree-refresh
+    "r" neotree-refresh
+    "u" neotree-select-up-node
+    "U" neotree-select-down-node
+    "i" neotree-change-root
+    "a" neotree-create-node ; add
+    "m" neotree-rename-node ; move
+    "d" neotree-delete-node ; delete
+    "c" neotree-copy-node ; copy
+    "o" neotree-enter
+    "<return>" neotree-enter)))
 
 
 ;;; general settings after package load

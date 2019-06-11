@@ -1,5 +1,6 @@
 ;; requires
 (require 'projectile)
+(require 'tommyx-bind-def)
 
 ;; general config
 (setq compile-command "")
@@ -7,7 +8,7 @@
 ;; configs
 (setq projectile-enable-caching t)
 (projectile-mode)
-; neotree integration
+;; neotree integration
 (setq projectile-switch-project-action 'neotree-projectile-action)
 (setq projectile-globally-ignored-directories (append '("node_modules" "dist" "bin" "build") projectile-globally-ignored-directories))
 
@@ -27,7 +28,7 @@
    ((eq major-mode 'c++-mode)
     (concat (if (eq system-type 'windows-nt)
 								"cl /EHsc /W4 /out:a.exe \""
-								"g++ -Wall -std=c++11 -o a.exe \"")
+							"g++ -Wall -std=c++11 -o a.exe \"")
 						(project/project-relative-name)
 						"\""))
    ((eq major-mode 'python-mode)
@@ -36,58 +37,74 @@
 						"\""))
    ))
 (projectile-register-project-type 'cp '("cp.txt")
-	:compile #'project-cp-run
-	:run #'project-cp-run
-)
+	                                :compile #'project-cp-run
+	                                :run #'project-cp-run)
 
 ;; key bindings
-(global-leader-project-def
-	:states '(motion normal)
+(tommyx-bind-keys
+ `(:case
+   :states (motion normal visual)
+   
+	 (:bindings
 
-	"C-f" '(counsel-rg
-		:which-key "search in directory")
-	(kbd "C-S-F") '((lambda () (interactive) (counsel-rg (selection-or-word-at-point)))
-		:which-key "search cursor in directory")
-	"f" '(counsel-projectile-rg
-		:which-key "search in project")
-	"F" '((lambda () (interactive)
-          (let ((counsel-projectile-rg-initial-input
-                 (selection-or-word-at-point t)))
-            (counsel-projectile-rg)))
-		:which-key "search cursor in project")
-  
-	"p" '(counsel-projectile-switch-project
-		:which-key "switch project")
-	"w" '(persp-switch
-		:which-key "switch workspace")
-	"n" '(persp-rename
-		:which-key "rename workspace")
-	"d" '(persp-kill
-		:which-key "delete workspace")
-	"R" '(projectile-invalidate-cache
-		:which-key "re-index project files")
+    project-prefix
+    (:bindings
 
-	"r" '(projectile-run-project
-		:which-key "run project")
-	"c" '(compile
-		:which-key "compile")
-	"C" '(projectile-compile-project
-		:which-key "compile project")
-  "C-c" '(kill-compilation
-    :which-key "kill compilation")
-
-  "t" '(ansi-term
-    :which-key "open terminal")
-  "T" '(projectile-run-term
-    :which-key "open project terminal")
-
-  "e" '(projectile-run-eshell
-    :which-key "open project eshell")
-
-  "s" '(shell-command
-    :which-key "shell command")
-
-)
+     "C-f" (:def
+            counsel-rg
+		        :which-key "Search In Directory")
+	   "C-S-F" (:def
+              ,(lambda () (interactive)
+                 (counsel-rg (selection-or-word-at-point)))
+		          :which-key "Search Cursor In Directory")
+	   "f" (:def
+          counsel-projectile-rg
+		      :which-key "Search In Project")
+	   "F" (:def
+          ,(lambda () (interactive)
+             (let ((counsel-projectile-rg-initial-input
+                    (selection-or-word-at-point t)))
+               (counsel-projectile-rg)))
+		      :which-key "Search Cursor In Project")
+	   "p" (:def
+          counsel-projectile-switch-project
+		      :which-key "Switch Project")
+	   "w" (:def
+          persp-switch
+		      :which-key "Switch Workspace")
+	   "n" (:def
+          persp-rename
+		      :which-key "Rename Workspace")
+	   "d" (:def
+          persp-kill
+		      :which-key "Delete Workspace")
+	   "R" (:def
+          projectile-invalidate-cache
+		      :which-key "Re-index Project Files")
+	   "r" (:def
+          projectile-run-project
+		      :which-key "Run Project")
+	   "c" (:def
+          compile
+		      :which-key "Compile")
+	   "C" (:def
+          projectile-compile-project
+		      :which-key "Compile Project")
+     "C-c" (:def
+            kill-compilation
+            :which-key "Kill Compilation")
+     "t" (:def
+          ansi-term
+          :which-key "Open Terminal")
+     "T" (:def
+          projectile-run-term
+          :which-key "Open Project Terminal")
+     "e" (:def
+          projectile-run-eshell
+          :which-key "Open Project Eshell")
+     "s" (:def
+          shell-command
+          :which-key "Shell Command")))))
 
 
 (provide 'tommyx-project)
