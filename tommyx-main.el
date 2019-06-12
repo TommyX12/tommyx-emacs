@@ -262,6 +262,8 @@
 
 ;;; general packages
 
+(require 'tommyx-bind-def)
+
 (require 'redo+)
 (require 'font-lock+)
 (require 'hl-line+)
@@ -1594,21 +1596,49 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   (add-hook 'sql-mode-hook (lambda () (modify-syntax-entry ?_ "w")))
   (push 'sql-mode ahs-modes))
 
-(use-package python-mode :ensure t
-  :config
+;; python
+(setq-default python-indent 4)
+(add-hook
+ 'python-mode-hook
+ (lambda ()
+   (setq-local tab-width 4)
+   (setq-local indent-tabs-mode default-indent-tabs-mode)
+   (setq-local python-indent-offset tab-width)
+   (setq-local highlight-indentation-offset tab-width)
+   (setq-local python-indent tab-width)
+   (setq-local evil-shift-width tab-width)
+   (setq-local yas-indent-line 'auto))
+ t)
 
-  (setq-default python-indent 4)
-  (add-hook
-   'python-mode-hook
-   (lambda ()
-     (setq-local tab-width 4)
-     (setq-local indent-tabs-mode default-indent-tabs-mode)
-     (setq-local python-indent-offset tab-width)
-     (setq-local highlight-indentation-offset tab-width)
-     (setq-local python-indent tab-width)
-     (setq-local evil-shift-width tab-width)
-     (setq-local yas-indent-line 'auto))
-   t))
+(tommyx-bind-keys
+ `(:case
+   (:bindings
+
+    project-prefix
+    (:bindings
+
+     "C-p" run-python))
+
+   :keymaps python-mode-map
+   :states (motion normal)
+   (:bindings
+    
+    jump-to-definition elpy-goto-definition
+    eval-element-or-region
+    (:case
+     :states (motion normal)
+     (:def
+      python-shell-send-defun
+      :which-key "Eval Defun In Python")
+     :states (visual)
+     (:def
+      python-shell-send-region
+      :which-key "Eval Region In Python"))
+
+    eval-buffer
+    (:def
+     python-shell-send-buffer
+     :which-key "Eval Buffer In Python"))))
 
 (use-package elpy :ensure t
   :init
@@ -2141,8 +2171,6 @@ command (ran after) is mysteriously incorrect."
 
 
 ;;; key bindings
-
-(require 'tommyx-bind-def)
 
 (tommyx-bind-keys
  `(:case
@@ -2828,7 +2856,23 @@ command (ran after) is mysteriously incorrect."
            :which-key "Semantic Item")
       "S" (:def
            ,(lambda () (interactive) (call-interactively 'imenu))
-           :which-key "Semantic Item Tree"))
+           :which-key "Semantic Item Tree")
+     "C-d" (:def
+            counsel-rg
+		        :which-key "Search In Directory")
+	   "C-S-d" (:def
+              ,(lambda () (interactive)
+                 (counsel-rg (selection-or-word-at-point)))
+		          :which-key "Search Cursor In Directory")
+	   "d" (:def
+          counsel-projectile-rg
+		      :which-key "Search In Project")
+	   "D" (:def
+          ,(lambda () (interactive)
+             (let ((counsel-projectile-rg-initial-input
+                    (selection-or-word-at-point t)))
+               (counsel-projectile-rg)))
+		      :which-key "Search Cursor In Project"))
 
      "o"
      (:bindings
@@ -2838,7 +2882,15 @@ command (ran after) is mysteriously incorrect."
      "j"
      (:bindings
       :which-key "Mode Specific"
-      :key-name mode-specific-prefix)
+      :key-name mode-specific-prefix
+
+      "e" (:def
+           :ignore
+           :key-name eval-element-or-region)
+
+      "E" (:def
+           :ignore
+           :key-name eval-buffer))
 
      "a"
      (:bindings
@@ -3328,14 +3380,6 @@ command (ran after) is mysteriously incorrect."
 
 (tommyx-bind-keys
  `(:case
-   :keymaps python-mode-map
-   :states (motion normal)
-   (:bindings
-    
-    jump-to-definition elpy-goto-definition)))
-
-(tommyx-bind-keys
- `(:case
    :keymaps c-mode-map
    :states (motion normal)
    (:bindings
@@ -3383,7 +3427,7 @@ command (ran after) is mysteriously incorrect."
    (:bindings
     
     snippet-expand (menu-item "" yas-expand-from-trigger-key
-                     :filter yas--maybe-expand-key-filter))))
+                              :filter yas--maybe-expand-key-filter))))
 
 (tommyx-bind-keys
  `(:case

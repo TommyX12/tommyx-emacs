@@ -50,22 +50,6 @@
     project-prefix
     (:bindings
 
-     "C-f" (:def
-            counsel-rg
-		        :which-key "Search In Directory")
-	   "C-S-F" (:def
-              ,(lambda () (interactive)
-                 (counsel-rg (selection-or-word-at-point)))
-		          :which-key "Search Cursor In Directory")
-	   "f" (:def
-          counsel-projectile-rg
-		      :which-key "Search In Project")
-	   "F" (:def
-          ,(lambda () (interactive)
-             (let ((counsel-projectile-rg-initial-input
-                    (selection-or-word-at-point t)))
-               (counsel-projectile-rg)))
-		      :which-key "Search Cursor In Project")
 	   "p" (:def
           counsel-projectile-switch-project
 		      :which-key "Switch Project")
