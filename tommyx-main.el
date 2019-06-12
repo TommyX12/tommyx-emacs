@@ -476,7 +476,71 @@
   (setq helm-move-to-line-cycle-in-source nil)
   (setq helm-ff-file-name-history-use-recentf t)
   (setq helm-follow-mode-persistent t)
-  (setq helm-source-names-using-follow '("Occur")))
+  (setq helm-source-names-using-follow '("Occur"))
+
+  ;; bindings
+  (tommyx-bind-keys
+   `(:case
+     :keymaps helm-map
+     (:bindings
+
+      next-item helm-next-line
+      previous-item helm-previous-line)))
+
+  (tommyx-bind-keys
+   `(:case
+     :keymaps helm-find-files-map
+     (:bindings
+
+      "C-h" helm-find-files-up-one-level)))
+
+  (tommyx-bind-keys
+   `(:bindings
+
+     helm-prefix
+     (:bindings
+      "h" (:def
+           helm-resume
+           :which-key "Helm Resume")
+      "m" (:def
+           helm-mini
+           :which-key "Helm Mini")
+      "p" (:def
+           helm-projectile
+           :which-key "Helm Projectile")
+      "P" (:def
+           helm-projectile-switch-project
+           :which-key "Helm Projectile Project")
+      "C-p" (:def
+             helm-projectile-find-file-in-known-projects
+             :which-key "Helm Projectile All")
+      "<tab>" (:def
+               helm-projectile-find-other-file ; cpp vs h switching
+               :which-key "Helm Projectile Other File")
+      "TAB" (:def
+             helm-projectile-find-other-file ; cpp vs h switching
+             :which-key "Helm Projectile Other File")
+      "r" (:def
+           helm-recentf
+           :which-key "Helm Recentf")
+      "g" (:def
+           helm-projectile-grep
+           :which-key "Helm Projectile Grep")
+      "f" (:def
+           helm-find-files
+           :which-key "Helm Find Files")
+      "F" (:def
+           helm-for-files
+           :which-key "Helm For Files")
+      "x" (:def
+           helm-M-x
+           :which-key "Helm M-x")
+      "o" (:def
+           helm-occur
+           :which-key "Helm Occur")
+      "s" (:def
+           helm-swoop
+           :which-key "Helm Swoop")))))
 
 (use-package helm-flx :ensure t
   :config
@@ -544,7 +608,46 @@
      ""))
   (setq ivy-format-function 'ivy-format-function-custom)
   ;; (setq ivy-format-function 'ivy-format-function-default)
-  (setq ivy-count-format "%d/%d | "))
+  (setq ivy-count-format "%d/%d | ")
+
+  ;; bindings
+
+  (tommyx-bind-keys
+   `(:case
+     :keymaps (swiper-map ivy-minibuffer-map counsel-imenu-map)
+     (:bindings
+
+      next-item ivy-next-line
+      previous-item ivy-previous-line
+      next-multiple-item ivy-scroll-up-command
+      previous-multiple-item ivy-scroll-down-command
+      ;; ivy-next-history-element allows inserting cursor symbol.
+      next-history-item ivy-next-history-element
+      previous-history-item ivy-previous-history-element
+      "M-RET" ivy-dispatching-done
+      "<M-return>" ivy-dispatching-done
+      "M-S-RET" ivy-dispatching-call ; do not exit after. useful for copy.
+      "<M-S-return>" ivy-dispatching-call
+      "S-RET" ivy-immediate-done ; use exact input, not candidate
+      "<S-return>" ivy-immediate-done
+      select-action ivy-done
+      "C-M-l" ivy-immediate-done
+      "M-L" ivy-dispatching-done
+      "M-n" ivy-call
+      "M-N" ivy-dispatching-call
+      "M-h" ivy-backward-kill-word
+      "M-o" ivy-occur ; save to temp buffer for manipulation
+      "<tab>" ivy-posframe-avy
+      "TAB" ivy-posframe-avy
+
+      "j" ,(general-key-dispatch 'self-insert-command
+             :timeout tommyx-key-chord-timeout
+             "j" 'self-insert-command
+             ;; "l" 'ivy-done
+             "k" 'minibuffer-keyboard-quit
+             "v" 'yank
+             "h" 'ivy-backward-kill-word
+             "p" 'ivy-partial)))))
 
 (use-package ivy-posframe :ensure t :after ivy
   :config
@@ -682,13 +785,47 @@ Useful for a search overview popup."
 ;;  (popwin-mode 1)
 ;;  (add-hook 'popwin:after-popup-hook (lambda () (delayed-mode-line-update))))
 
-(use-package counsel :ensure t)
+(use-package counsel :ensure t
+  :config
+
+  ;; bindings
+  
+  (tommyx-bind-keys
+   `(:case
+     :keymaps (counsel-find-file-map)
+     (:bindings
+
+      ;; Note: use / to enter directory, not ENTER.
+      ;; If we want to use ENTER, uncomment below.
+      ;; "RET" ivy-alt-done
+      ;; "<return>" ivy-alt-done
+      ;; "M-l" ivy-alt-done
+      "S-RET" ivy-immediate-done ; use exact input, not candidate
+      "<S-return>" ivy-immediate-done))))
 
 (use-package counsel-projectile :ensure t :after projectile)
 
 (use-package google-this :ensure t)
 
-(use-package swiper :ensure t)
+(use-package swiper :ensure t
+  :config
+
+  ;; bindings
+
+  (tommyx-bind-keys
+   `(:case
+     :keymaps (swiper-map)
+     (:bindings
+
+      "M-s" swiper-query-replace
+      "<tab>" ivy-posframe-swiper-avy)))
+
+  (tommyx-bind-keys
+   `(:case
+     :keymaps (swiper-all-map)
+     (:bindings
+
+      "M-s" swiper-all-query-replace))))
 
 (use-package which-key :ensure t
   :config
@@ -1089,17 +1226,22 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
                (expand-file-name "snippets" tommyx-config-path))
   (setq company-continue-commands (-snoc company-continue-commands 'yas-insert-snippet)) ; make company break completion
 
-  :bind
-  (:map yas-minor-mode-map
-        ("TAB" . nil)
-        ("<tab>" . nil)
-        ("S-TAB" . nil)
-        ("<S-tab>" . nil))
-  (:map yas-keymap
-        ("TAB" . nil)
-        ("<tab>" . nil)
-        ("S-TAB" . nil)
-        ("<S-tab>" . nil)))
+  ;; bindings
+
+  (tommyx-bind-keys
+   `(:case
+     :keymaps (yas-keymap yas-minor-mode-map)
+     (:bindings
+
+      "<tab>" nil
+      "<S-tab>" nil)
+
+     :keymaps yas-minor-mode-map
+     :states (insert)
+     (:bindings
+      
+      snippet-expand (menu-item "" yas-expand-from-trigger-key
+                                :filter yas--maybe-expand-key-filter)))))
 
 (use-package ycmd :ensure t
   :config
@@ -1366,7 +1508,29 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   (setq neo-window-width 30)
   (setq neo-vc-integration '(face))
   (setq neo-mode-line-type 'default) ; for performance reason
-  (setq neo-auto-indent-point nil))
+  (setq neo-auto-indent-point nil)
+
+  ;; bindings
+
+  (tommyx-bind-keys
+   `(:case
+     :keymaps neotree-mode-map
+     :states (motion normal)
+     (:bindings
+      
+      ;; "h" (neotree-make-executor :dir-fn neo-open-dir)
+      ;; "l" (neotree-make-executor :dir-fn neo-open-dir)
+      "R" neotree-refresh
+      "r" neotree-refresh
+      "u" neotree-select-up-node
+      "U" neotree-select-down-node
+      "i" neotree-change-root
+      "a" neotree-create-node ; add
+      "m" neotree-rename-node ; move
+      "d" neotree-delete-node ; delete
+      "c" neotree-copy-node ; copy
+      "o" neotree-enter
+      "<return>" neotree-enter))))
 
 (use-package magit :ensure t
   :config
@@ -1436,8 +1600,32 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   (setq emmet-move-cursor-after-expanding t)
   (setq emmet-move-cursor-between-quotes t)
   (setq emmet-indentation 2)
-  :bind (:map emmet-mode-keymap
-              ("C-j" . nil)))
+
+  ;; bindings
+  
+  (tommyx-bind-keys
+   `(:case
+     :keymaps emmet-mode-keymap
+     (:bindings
+
+      "C-j" nil)
+
+     :keymaps emmet-mode-keymap
+     :states (insert)
+     (:bindings
+      
+      snippet-next-field      yas-next-field
+      snippet-previous-field  yas-prev-field
+      snippet-expand          yas-insert-snippet
+      template-next-field     emmet-next-edit-point
+      template-previous-field emmet-prev-edit-point
+      template-expand         emmet-expand-line)
+
+     :keymaps emmet-mode-keymap
+     :states (visual)
+     (:bindings
+      
+      template-expand emmet-wrap-with-markup))))
 
 (use-package imenu-list :ensure t :after neotree
   :config
@@ -1492,7 +1680,19 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
                                         (car entry))
                      'follow-link t
                      'action #'imenu-list--action-goto-entry)
-      (insert "\n"))))
+      (insert "\n")))
+
+  ;; bindings
+
+  (tommyx-bind-keys
+   `(:case
+     :keymaps imenu-list-major-mode-map
+
+     (:bindings
+
+      "o" imenu-list-goto-entry
+      "TAB" imenu-list-display-entry
+      "<tab>" imenu-list-display-entry))))
 
 ;; (use-package window-purpose :ensure t :after neotree imenu-list
 ;;  :config
@@ -1522,7 +1722,25 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
    (lambda ()
      (setq-local tab-width 2)
      (setq-local indent-tabs-mode default-indent-tabs-mode)
-     (setq-local evil-shift-width tab-width))))
+     (setq-local evil-shift-width tab-width)))
+
+  ;; bindings
+  (tommyx-bind-keys
+   `(:case
+     :keymaps latex-mode-map
+     :states (motion normal visual)
+     (:bindings
+
+      mode-specific-prefix
+      (:bindings
+
+       "p" (:def
+            preview-buffer
+            :which-key "Preview Buffer")
+
+       "P" (:def
+            preview-clearout-buffer
+            :which-key "Clear Preview Buffer"))))))
 
 (use-package kivy-mode :ensure t)
 
@@ -1550,7 +1768,29 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
      (setq-local tab-width 2)
      (setq-local evil-shift-width tab-width)
      (setq-local highlight-indentation-offset 4)))
-  (add-hook 'c++-mode-hook (lambda () (ycmd-mode 1))))
+  (add-hook 'c++-mode-hook (lambda () (ycmd-mode 1)))
+
+  ;; bindings
+
+  (tommyx-bind-keys
+   `(:case
+     :keymaps java-mode-map
+     :states (motion normal)
+     (:bindings
+      
+      jump-to-definition ycmd-goto)
+
+     :keymaps c-mode-map
+     :states (motion normal)
+     (:bindings
+      
+      jump-to-definition ycmd-goto)
+
+     :keymaps c++-mode-map
+     :states (motion normal)
+     (:bindings
+      
+      jump-to-definition ycmd-goto))))
 
 (use-package ess :ensure t
   :config
@@ -1563,7 +1803,17 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (use-package csharp-mode :ensure t
   :config
   (setup-color-identifiers-parser 'c 'csharp-mode)
-  (add-hook 'csharp-mode-hook (lambda () (ycmd-mode 1))))
+  (add-hook 'csharp-mode-hook (lambda () (ycmd-mode 1)))
+
+  ;; bindings
+
+  (tommyx-bind-keys
+   `(:case
+     :keymaps csharp-mode-map
+     :states (motion normal)
+     (:bindings
+      
+      jump-to-definition ycmd-goto))))
 
 (use-package markdown-mode :ensure t)
 
@@ -1686,7 +1936,17 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   ;; formats the buffer before saving
   ;; TODO: we don't want this for now
   ;; (add-hook 'before-save-hook 'tide-format-before-save)
-  (add-hook 'typescript-mode-hook #'setup-tide-mode))
+  (add-hook 'typescript-mode-hook #'setup-tide-mode)
+
+  ;; bindings
+
+  (tommyx-bind-keys
+   `(:case
+     :keymaps typescript-mode-map
+     :states (motion normal)
+     (:bindings
+      
+      jump-to-definition tide-jump-to-definition))))
 
 (use-package glsl-mode :ensure t
   :config
@@ -1742,7 +2002,17 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
      (setq-local evil-shift-width tab-width)
      (setq-local highlight-indentation-offset 4)
      (setq-local web-mode-css-indent-offset 2)
-     (setq-local css-indent-offset 2)))
+     (setq-local css-indent-offset 2))
+
+   ;; bindings
+   
+   (tommyx-bind-keys
+    `(:case
+      :keymaps web-mode-map
+      (:bindings
+
+       "C-h" nil
+       "C-l" nil))))
 
   (push 'web-mode ahs-modes)
 
@@ -2781,49 +3051,7 @@ command (ran after) is mysteriously incorrect."
      "h"
      (:bindings
       :which-key "Helm"
-      
-      "h" (:def
-           helm-resume
-           :which-key "Helm Resume")
-      "m" (:def
-           helm-mini
-           :which-key "Helm Mini")
-      "p" (:def
-           helm-projectile
-           :which-key "Helm Projectile")
-      "P" (:def
-           helm-projectile-switch-project
-           :which-key "Helm Projectile Project")
-      "C-p" (:def
-             helm-projectile-find-file-in-known-projects
-             :which-key "Helm Projectile All")
-      "<tab>" (:def
-               helm-projectile-find-other-file ; cpp vs h switching
-               :which-key "Helm Projectile Other File")
-      "TAB" (:def
-             helm-projectile-find-other-file ; cpp vs h switching
-             :which-key "Helm Projectile Other File")
-      "r" (:def
-           helm-recentf
-           :which-key "Helm Recentf")
-      "g" (:def
-           helm-projectile-grep
-           :which-key "Helm Projectile Grep")
-      "f" (:def
-           helm-find-files
-           :which-key "Helm Find Files")
-      "F" (:def
-           helm-for-files
-           :which-key "Helm For Files")
-      "x" (:def
-           helm-M-x
-           :which-key "Helm M-x")
-      "o" (:def
-           helm-occur
-           :which-key "Helm Occur")
-      "s" (:def
-           helm-swoop
-           :which-key "Helm Swoop"))
+      :key-name helm-prefix)
 
      "i"
      (:bindings
@@ -2863,22 +3091,22 @@ command (ran after) is mysteriously incorrect."
       "S" (:def
            ,(lambda () (interactive) (call-interactively 'imenu))
            :which-key "Semantic Item Tree")
-     "C-d" (:def
-            counsel-rg
-		        :which-key "Search In Directory")
-	   "C-S-d" (:def
-              ,(lambda () (interactive)
-                 (counsel-rg (selection-or-word-at-point)))
-		          :which-key "Search Cursor In Directory")
-	   "d" (:def
-          counsel-projectile-rg
-		      :which-key "Search In Project")
-	   "D" (:def
-          ,(lambda () (interactive)
-             (let ((counsel-projectile-rg-initial-input
-                    (selection-or-word-at-point t)))
-               (counsel-projectile-rg)))
-		      :which-key "Search Cursor In Project"))
+      "C-d" (:def
+             counsel-rg
+             :which-key "Search In Directory")
+      "C-S-d" (:def
+               ,(lambda () (interactive)
+                  (counsel-rg (selection-or-word-at-point)))
+               :which-key "Search Cursor In Directory")
+      "d" (:def
+           counsel-projectile-rg
+           :which-key "Search In Project")
+      "D" (:def
+           ,(lambda () (interactive)
+              (let ((counsel-projectile-rg-initial-input
+                     (selection-or-word-at-point t)))
+                (counsel-projectile-rg)))
+           :which-key "Search Cursor In Project"))
 
      "o"
      (:bindings
@@ -3359,103 +3587,6 @@ command (ran after) is mysteriously incorrect."
           execute-buffer-as-sh
           :which-key "Execute Buffer")))))
 
-(tommyx-bind-keys
- `(:case
-   :keymaps latex-mode-map
-   :states (motion normal visual)
-   (:bindings
-
-    mode-specific-prefix
-    (:bindings
-
-     "p" (:def
-          preview-buffer
-          :which-key "Preview Buffer")
-
-     "P" (:def
-          preview-clearout-buffer
-          :which-key "Clear Preview Buffer")))))
-
-(tommyx-bind-keys
- `(:case
-   :keymaps typescript-mode-map
-   :states (motion normal)
-   (:bindings
-    
-    jump-to-definition tide-jump-to-definition)))
-
-(tommyx-bind-keys
- `(:case
-   :keymaps c-mode-map
-   :states (motion normal)
-   (:bindings
-    
-    jump-to-definition elpy-goto-definition)))
-
-(tommyx-bind-keys
- `(:case
-   :keymaps c++-mode-map
-   :states (motion normal)
-   (:bindings
-    
-    jump-to-definition ycmd-goto)))
-
-(tommyx-bind-keys
- `(:case
-   :keymaps csharp-mode-map
-   :states (motion normal)
-   (:bindings
-    
-    jump-to-definition ycmd-goto)))
-
-(tommyx-bind-keys
- `(:case
-   :keymaps java-mode-map
-   :states (motion normal)
-   (:bindings
-    
-    jump-to-definition ycmd-goto)))
-
-(tommyx-bind-keys
- `(:case
-   :keymaps imenu-list-major-mode-map
-
-   (:bindings
-
-    "o" imenu-list-goto-entry
-    "TAB" imenu-list-display-entry
-    "<tab>" imenu-list-display-entry)))
-
-(tommyx-bind-keys
- `(:case
-   :keymaps yas-minor-mode-map
-   :states (insert)
-   (:bindings
-    
-    snippet-expand (menu-item "" yas-expand-from-trigger-key
-                              :filter yas--maybe-expand-key-filter))))
-
-(tommyx-bind-keys
- `(:case
-   :keymaps emmet-mode-keymap
-   :states (insert)
-   (:bindings
-    
-    snippet-next-field      yas-next-field
-    snippet-previous-field  yas-prev-field
-    snippet-expand          yas-insert-snippet
-    template-next-field     emmet-next-edit-point
-    template-previous-field emmet-prev-edit-point
-    template-expand         emmet-expand-line)))
-
-(tommyx-bind-keys
- `(:case
-   :keymaps emmet-mode-keymap
-   :states (visual)
-   (:bindings
-    
-    template-expand emmet-wrap-with-markup)))
-
 ;; (general-define-key
 ;;  :keymaps 'eshell-mode-map
 ;;  :states '(motion normal)
@@ -3488,86 +3619,6 @@ command (ran after) is mysteriously incorrect."
 
 (tommyx-bind-keys
  `(:case
-   :keymaps helm-map
-   (:bindings
-
-    next-item helm-next-line
-    previous-item helm-previous-line)))
-
-(tommyx-bind-keys
- `(:case
-   :keymaps helm-find-files-map
-   (:bindings
-
-    "C-h" helm-find-files-up-one-level)))
-
-(tommyx-bind-keys
- `(:case
-   :keymaps (swiper-map ivy-minibuffer-map counsel-imenu-map)
-   (:bindings
-
-    next-item ivy-next-line
-    previous-item ivy-previous-line
-    next-multiple-item ivy-scroll-up-command
-    previous-multiple-item ivy-scroll-down-command
-    ;; ivy-next-history-element allows inserting cursor symbol.
-    next-history-item ivy-next-history-element
-    previous-history-item ivy-previous-history-element
-    "M-RET" ivy-dispatching-done
-    "<M-return>" ivy-dispatching-done
-    "M-S-RET" ivy-dispatching-call ; do not exit after. useful for copy.
-    "<M-S-return>" ivy-dispatching-call
-    "S-RET" ivy-immediate-done ; use exact input, not candidate
-    "<S-return>" ivy-immediate-done
-    select-action ivy-done
-    "C-M-l" ivy-immediate-done
-    "M-L" ivy-dispatching-done
-    "M-n" ivy-call
-    "M-N" ivy-dispatching-call
-    "M-h" ivy-backward-kill-word
-    "M-o" ivy-occur ; save to temp buffer for manipulation
-    "<tab>" ivy-posframe-avy
-    "TAB" ivy-posframe-avy
-
-    "j" ,(general-key-dispatch 'self-insert-command
-           :timeout tommyx-key-chord-timeout
-           "j" 'self-insert-command
-           ;; "l" 'ivy-done
-           "k" 'minibuffer-keyboard-quit
-           "v" 'yank
-           "h" 'ivy-backward-kill-word
-           "p" 'ivy-partial))))
-
-(tommyx-bind-keys
- `(:case
-   :keymaps (swiper-map)
-   (:bindings
-
-    "M-s" swiper-query-replace
-    "<tab>" ivy-posframe-swiper-avy)))
-
-(tommyx-bind-keys
- `(:case
-   :keymaps (swiper-all-map)
-   (:bindings
-
-    "M-s" swiper-all-query-replace)))
-
-(tommyx-bind-keys
- `(:case
-   :keymaps (counsel-find-file-map)
-   (:bindings
-
-    ;; Note: use / to enter directory, not ENTER.
-    ;; If we want to use ENTER, uncomment below.
-    ;; "RET" ivy-alt-done
-    ;; "<return>" ivy-alt-done
-    ;; "M-l" ivy-alt-done
-    "S-RET" ivy-immediate-done ; use exact input, not candidate
-    "<S-return>" ivy-immediate-done)))
-
-(tommyx-bind-keys
- `(:case
    :keymaps (minibuffer-local-shell-command-map)
    (:bindings
 
@@ -3591,34 +3642,6 @@ command (ran after) is mysteriously incorrect."
 
     go-back help-go-back
     go-forward help-go-forward)))
-
-(tommyx-bind-keys
- `(:case
-   :keymaps web-mode-map
-   (:bindings
-
-    "C-h" nil
-    "C-l" nil)))
-
-(tommyx-bind-keys
- `(:case
-   :keymaps neotree-mode-map
-   :states (motion normal)
-   (:bindings
-    
-    ;; "h" (neotree-make-executor :dir-fn neo-open-dir)
-    ;; "l" (neotree-make-executor :dir-fn neo-open-dir)
-    "R" neotree-refresh
-    "r" neotree-refresh
-    "u" neotree-select-up-node
-    "U" neotree-select-down-node
-    "i" neotree-change-root
-    "a" neotree-create-node ; add
-    "m" neotree-rename-node ; move
-    "d" neotree-delete-node ; delete
-    "c" neotree-copy-node ; copy
-    "o" neotree-enter
-    "<return>" neotree-enter)))
 
 
 ;;; general settings after package load
