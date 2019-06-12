@@ -186,6 +186,9 @@
 ;; (setq scroll-margin (/ (* (window-total-height) 2) 7))
 (setq scroll-margin 16)
 
+;; key-chord timeout
+(setq tommyx-key-chord-timeout 1.0)
+
 ;; set frame title
 (setq frame-title-format (concat "TommyX's Emacs " emacs-version))
 
@@ -2247,7 +2250,7 @@ command (ran after) is mysteriously incorrect."
     "d" (:case
          :states (motion normal)
          ,(general-key-dispatch 'evil-delete
-            :timeout 0.5
+            :timeout tommyx-key-chord-timeout
             "w" (general-simulate-key ('evil-delete "aw"))
             "W" (general-simulate-key ('evil-delete "aW"))
             ")" (general-simulate-key ('evil-delete "i)"))
@@ -2264,7 +2267,7 @@ command (ran after) is mysteriously incorrect."
     "c" (:case
          :states (motion normal)
          ,(general-key-dispatch 'evil-change
-            :timeout 0.5
+            :timeout tommyx-key-chord-timeout
             "w" (general-simulate-key ('evil-change "iw"))
             "W" (general-simulate-key ('evil-change "iW"))
             ")" (general-simulate-key ('evil-change "i)"))
@@ -2281,7 +2284,7 @@ command (ran after) is mysteriously incorrect."
     "y" (:case
          :states (motion normal)
          ,(general-key-dispatch 'evil-yank
-            :timeout 0.5
+            :timeout tommyx-key-chord-timeout
             "w" (general-simulate-key ('evil-yank "iw"))
             "W" (general-simulate-key ('evil-yank "iW"))
             ")" (general-simulate-key ('evil-yank "i)"))
@@ -2299,7 +2302,7 @@ command (ran after) is mysteriously incorrect."
     "x" (:case
          :states (motion normal)
          ,(general-key-dispatch 'evil-exchange
-            :timeout 0.5
+            :timeout tommyx-key-chord-timeout
             "w" (general-simulate-key ('evil-exchange "iw"))
             "W" (general-simulate-key ('evil-exchange "iW"))
             ")" (general-simulate-key ('evil-exchange "i)"))
@@ -2816,6 +2819,9 @@ command (ran after) is mysteriously incorrect."
       "r" (:def
            counsel-recentf
            :which-key "Recent Files")
+      "C-r" (:def
+             recentf-cleanup
+             :which-key "Recent Files Clearn-up")
       ;; "g" (:def
       ;;     counsel-projectile-grep
       ;;  :which-key "Project Search")
@@ -3084,7 +3090,7 @@ command (ran after) is mysteriously incorrect."
                      (lambda ()
                        (interactive)
                        (self-insert-or-send-raw "j")))))
-              :timeout 1.0
+              :timeout tommyx-key-chord-timeout
 
               "j" (lambda () (interactive)
                     (call-with-command-hooks
@@ -3186,7 +3192,7 @@ command (ran after) is mysteriously incorrect."
                      (lambda ()
                        (interactive)
                        (self-insert-or-send-raw "J")))))
-              :timeout 1.0
+              :timeout tommyx-key-chord-timeout
 
               "J" (lambda () (interactive)
                     (call-with-command-hooks
@@ -3383,7 +3389,7 @@ command (ran after) is mysteriously incorrect."
    (:bindings
     
     snippet-expand (menu-item "" yas-expand-from-trigger-key
-                     :filter yas--maybe-expand-key-filter))))
+                              :filter yas--maybe-expand-key-filter))))
 
 (tommyx-bind-keys
  `(:case
@@ -3422,8 +3428,23 @@ command (ran after) is mysteriously incorrect."
 
 (tommyx-bind-keys
  `(:case
-   :keymaps helm-map
+   :keymaps term-raw-map
+   :states (insert)
+   (:bindings
 
+    "j" ,(general-key-dispatch
+             (lambda () (interactive)
+               (self-insert-or-send-raw "j"))
+           :timeout tommyx-key-chord-timeout
+
+           "j" (lambda () (interactive)
+                 (self-insert-or-send-raw "j"))
+           "k" 'evil-normal-state
+           "v" 'term-paste))))
+
+(tommyx-bind-keys
+ `(:case
+   :keymaps helm-map
    (:bindings
 
     next-item helm-next-line
@@ -3432,7 +3453,6 @@ command (ran after) is mysteriously incorrect."
 (tommyx-bind-keys
  `(:case
    :keymaps helm-find-files-map
-
    (:bindings
 
     "C-h" helm-find-files-up-one-level)))
@@ -3440,7 +3460,6 @@ command (ran after) is mysteriously incorrect."
 (tommyx-bind-keys
  `(:case
    :keymaps (swiper-map ivy-minibuffer-map counsel-imenu-map)
-
    (:bindings
 
     next-item ivy-next-line
@@ -3467,17 +3486,17 @@ command (ran after) is mysteriously incorrect."
     "TAB" ivy-posframe-avy
 
     "j" ,(general-key-dispatch 'self-insert-command
-           :timeout 0.25
+           :timeout tommyx-key-chord-timeout
            "j" 'self-insert-command
            ;; "l" 'ivy-done
            "k" 'minibuffer-keyboard-quit
+           "v" 'yank
            "h" 'ivy-backward-kill-word
            "p" 'ivy-partial))))
 
 (tommyx-bind-keys
  `(:case
    :keymaps (swiper-map)
-
    (:bindings
 
     "M-s" swiper-query-replace
@@ -3486,7 +3505,6 @@ command (ran after) is mysteriously incorrect."
 (tommyx-bind-keys
  `(:case
    :keymaps (swiper-all-map)
-
    (:bindings
 
     "M-s" swiper-all-query-replace)))
@@ -3494,7 +3512,6 @@ command (ran after) is mysteriously incorrect."
 (tommyx-bind-keys
  `(:case
    :keymaps (counsel-find-file-map)
-
    (:bindings
 
     ;; Note: use / to enter directory, not ENTER.
@@ -3508,7 +3525,6 @@ command (ran after) is mysteriously incorrect."
 (tommyx-bind-keys
  `(:case
    :keymaps (minibuffer-local-shell-command-map)
-
    (:bindings
 
     previous-history-item previous-line-or-history-element
@@ -3518,7 +3534,6 @@ command (ran after) is mysteriously incorrect."
 (tommyx-bind-keys
  `(:case
    :keymaps (minibuffer-local-map evil-ex-completion-map)
-
    (:bindings
 
     previous-history-item previous-complete-history-element
@@ -3528,7 +3543,6 @@ command (ran after) is mysteriously incorrect."
 (tommyx-bind-keys
  `(:case
    :keymaps help-mode-map
-
    (:bindings
 
     go-back help-go-back
@@ -3537,7 +3551,6 @@ command (ran after) is mysteriously incorrect."
 (tommyx-bind-keys
  `(:case
    :keymaps web-mode-map
-
    (:bindings
 
     "C-h" nil
