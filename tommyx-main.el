@@ -1619,13 +1619,10 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
       snippet-expand          yas-insert-snippet
       template-next-field     emmet-next-edit-point
       template-previous-field emmet-prev-edit-point
-      template-expand         emmet-expand-line)
-
-     :keymaps emmet-mode-keymap
-     :states (visual)
-     (:bindings
-      
-      template-expand emmet-wrap-with-markup))))
+      template-expand         (:case
+                               emmet-expand-line
+                               :states (visual)
+                               emmet-wrap-with-markup)))))
 
 (use-package imenu-list :ensure t :after neotree
   :config
