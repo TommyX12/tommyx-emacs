@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: forof
+# key: foro
+# --
+for (${1:$$(yas-choose-value '("let" "const"))} ${2:item} of ${3:obj}) {
+    $0
+}
