@@ -350,7 +350,7 @@
   (setq evil-move-cursor-back nil)
   (setq evil-move-beyond-eol t)
   (setq-default evil-symbol-word-search t)
-                                        ; auto center after search
+  ;; auto center after search
   (defun my-center-line (&rest _) (evil-scroll-line-to-center nil))
   (defun flash-cursor (&rest _)
     (hl-line-highlight)
@@ -625,12 +625,8 @@
       ;; ivy-next-history-element allows inserting cursor symbol.
       next-history-item ivy-next-history-element
       previous-history-item ivy-previous-history-element
-      "M-RET" ivy-dispatching-done
-      "<M-return>" ivy-dispatching-done
-      "M-S-RET" ivy-dispatching-call ; do not exit after. useful for copy.
-      "<M-S-return>" ivy-dispatching-call
-      "S-RET" ivy-immediate-done ; use exact input, not candidate
-      "<S-return>" ivy-immediate-done
+      "<S-return>" ivy-dispatching-done
+      "<C-return>" ivy-immediate-done ; use exact input, not candidate
       select-action ivy-done
       "C-M-l" ivy-immediate-done
       "M-L" ivy-dispatching-done
@@ -639,7 +635,6 @@
       "M-h" ivy-backward-kill-word
       "M-o" ivy-occur ; save to temp buffer for manipulation
       "<tab>" ivy-posframe-avy
-      "TAB" ivy-posframe-avy
 
       "j" ,(general-key-dispatch 'self-insert-command
              :timeout tommyx-key-chord-timeout
@@ -648,7 +643,18 @@
              "k" 'minibuffer-keyboard-quit
              "v" 'yank
              "h" 'ivy-backward-kill-word
-             "p" 'ivy-partial)))))
+             "p" 'ivy-partial))
+
+     :keymaps ivy-occur-grep-mode-map
+     (:bindings
+
+      global-leader (:case
+                     :states nil
+                     nil)
+
+      "<tab>" ivy-occur-press
+      open-item ivy-occur-press-and-switch
+      "<S-return>" ivy-occur-dispatch))))
 
 (use-package ivy-posframe :ensure t :after ivy
   :config
@@ -1620,13 +1626,10 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
       snippet-expand          yas-insert-snippet
       template-next-field     emmet-next-edit-point
       template-previous-field emmet-prev-edit-point
-      template-expand         emmet-expand-line)
-
-     :keymaps emmet-mode-keymap
-     :states (visual)
-     (:bindings
-      
-      template-expand emmet-wrap-with-markup))))
+      template-expand         (:case
+                               emmet-expand-line
+                               :states (visual)
+                               emmet-wrap-with-markup)))))
 
 (use-package imenu-list :ensure t :after neotree
   :config
@@ -2284,6 +2287,22 @@ This function uses `emms-show-format' to format the current track."
   (evil-ex-search-previous)
   (flash-cursor))
 
+(evil-define-command evil-ex-search-word-forward-flash () :repeat nil
+  (evil-ex-search-word-forward 1)
+  (flash-cursor))
+
+(evil-define-command evil-ex-search-word-backward-flash () :repeat nil
+  (evil-ex-search-word-backward 1)
+  (flash-cursor))
+
+(evil-define-command evil-visualstar/begin-search-forward-flash () :repeat nil
+  (call-interactively 'evil-visualstar/begin-search-forward)
+  (flash-cursor))
+
+(evil-define-command evil-visualstar/begin-search-backward-flash () :repeat nil
+  (call-interactively 'evil-visualstar/begin-search-backward)
+  (flash-cursor))
+
 (setq-default use-line-nav nil)
 (evil-define-motion adaptive-avy () :type exclusive :repeat nil :jump t
   (if use-line-nav (evil-avy-goto-line) (evil-avy-goto-word-0 nil)))
@@ -2661,8 +2680,8 @@ command (ran after) is mysteriously incorrect."
     "gF" ,(lambda () (interactive)
             (evil-ex-search-unbounded-word-forward)
             (evil-ex-search-next))
-    "M-n" evil-ex-search-word-forward
-    "M-N" evil-ex-search-word-backward
+    "M-n" evil-ex-search-word-forward-flash
+    "M-N" evil-ex-search-word-backward-flash
 
     ;; avy
     "f" adaptive-avy
@@ -2899,6 +2918,7 @@ command (ran after) is mysteriously incorrect."
     "SPC"
     (:bindings
      :which-key "Global Leader"
+     :key-name global-leader
 
      "f" (:def
           swiper-movement
@@ -3058,6 +3078,7 @@ command (ran after) is mysteriously incorrect."
      "i"
      (:bindings
       :which-key "Navigation"
+      :key-name navigation-prefix
 
       "i" (:def
            ivy-resume
@@ -3230,15 +3251,18 @@ command (ran after) is mysteriously incorrect."
       "Q" (:def
            save-buffers-kill-emacs
            :which-key "Quit Emacs Process")
-      "w" (:def
+      "s" (:def
+           save-buffer
+           :which-key "Save")
+      "S" (:def
            write-file
-           :which-key "Write File")
+           :which-key "Save As")
       "r" (:def
            rename-buffer
            :which-key "Rename Buffer")
-      "a" (:def
+      "w" (:def
            evil-write-all
-           :which-key "Write All Files"))
+           :which-key "Save All Buffers"))
 
      "b"
      (:bindings
@@ -3355,8 +3379,8 @@ command (ran after) is mysteriously incorrect."
            (call-interactively 'evil-visualstar/begin-search-forward)
            (evil-ex-search-previous))
 
-    "M-n" evil-visualstar/begin-search-forward
-    "M-N" evil-visualstar/begin-search-backward)
+    "M-n" evil-visualstar/begin-search-forward-flash
+    "M-N" evil-visualstar/begin-search-backward-flash)
 
    :states (insert)
    (:bindings
