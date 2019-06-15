@@ -1499,6 +1499,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
     (ivy-read
      "Select view: "
      candidates
+     :history 'ivy-org-life-agenda-show-view-history
      :action
      (lambda (str)
        (org-life-agenda-show-view (get-text-property 0 'property str))))))

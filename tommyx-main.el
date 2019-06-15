@@ -299,7 +299,7 @@
   (setq alert-default-style 'companion)
   )
 
-(use-package emms :ensure t
+(use-package emms :ensure t :after evil
   :config
   (require 'emms-setup)
   (require 'emms-player-simple)
@@ -312,7 +312,8 @@
               (hl-line-mode 1)
               (setq-local use-line-nav t)))
   (when (and (bound-and-true-p emms-default-music-dir))
-    (emms-add-directory-tree emms-default-music-dir)))
+    (emms-add-directory-tree emms-default-music-dir))
+  (setq evil-emacs-state-modes (delete 'emms-playlist-mode evil-emacs-state-modes)))
 
 ;; (use-package undo-tree :ensure t
 ;;   :config
@@ -2203,6 +2204,7 @@ This function uses `emms-show-format' to format the current track."
   (interactive)
   (ivy-read "Play track: "
             (counsel-emms-get-playlist-items)
+            :history 'counsel-emms-play-history
             :action #'counsel-emms-play-item
             :require-match t))
 

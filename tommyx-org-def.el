@@ -116,6 +116,8 @@ regular expression,
 (defun org-auto-capture-delete-marked-subtree ()
   "Delete all lines marked to be deleted from current line to the end of current subtree."
   (interactive)
+  (unless (eq major-mode 'org-mode)
+    (error "Buffer not in org mode"))
   (save-excursion
     (let ((last-point -1))
       (while (progn
@@ -129,6 +131,8 @@ regular expression,
 (defun org-auto-capture-process-subtree ()
   "Perform auto capture from current line to the end of current subtree."
   (interactive)
+  (unless (eq major-mode 'org-mode)
+    (error "Buffer not in org mode"))
   (let ((target-map
          (org-auto-capture-get-target-map org-auto-capture-targets))
         (loop-running t))
