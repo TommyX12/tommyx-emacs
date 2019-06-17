@@ -280,6 +280,8 @@
 
 (use-package s :ensure t)
 
+(use-package f :ensure t)
+
 (use-package cl-lib :ensure t)
 
 (use-package htmlize :ensure t)
@@ -403,7 +405,7 @@
   ;; do not allow certain keys to be used by evil-collection
   ;; TODO: We disabled J and K to encourage ivy use
   (setq evil-collection-key-blacklist
-        '("SPC"))
+        '("SPC" "K"))
 
   :config
   (delete 'neotree evil-collection-mode-list)
@@ -1846,7 +1848,36 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 (use-package rust-mode :ensure t)
 
-(use-package csv-mode :ensure t)
+(use-package csv-mode :ensure t
+  :config
+  (setq csv-align-style 'auto)
+  (setq csv-invisibility-default nil)
+  (add-hook 'csv-mode-hook
+            (lambda ()
+              (toggle-truncate-lines 1)
+              (call-interactively 'csv-align-fields)))
+
+  ;; bindings
+  (tommyx-bind-keys
+   `(:case
+     :keymaps csv-mode-map
+     :states (motion normal)
+     (:bindings
+
+      goto-greater-element-left csv-backward-field
+      goto-greater-element-right csv-forward-field
+
+      mode-specific-prefix
+      (:bindings
+
+       "a" (csv-align-fields
+            :which-key "Align Fields"))
+
+      shortcuts-prefix
+      (:bindings
+
+       "a" (csv-align-fields
+            :which-key "Align Fields"))))))
 
 (use-package sql :ensure t
   :config
@@ -2552,9 +2583,9 @@ command (ran after) is mysteriously incorrect."
     ;; "zu" origami-undo
     ;; "zU" origami-redo
 
-    "C-]" (:def
-           evil-jump-to-tag
-           :key-name jump-to-definition)
+    ;; "C-]" (:def
+    ;;        evil-jump-to-tag
+    ;;        :key-name jump-to-definition)
 
     "p" ,(lambda () (interactive)
            (call-interactively 'evil-paste-after)
@@ -2687,17 +2718,32 @@ command (ran after) is mysteriously incorrect."
     "f" adaptive-avy
 
     ;; basic movement
-    "k" evil-previous-visual-line
-    "j" evil-next-visual-line
-    "h" evil-backward-word-begin
-    "l" evil-forward-word-end
+    "k" (:def
+         evil-previous-visual-line
+         :key-name goto-element-up)
+    "j" (:def
+         evil-next-visual-line
+         :key-name goto-element-down)
+    "h" (:def
+         evil-backward-word-begin
+         :key-name goto-element-left)
+    "l" (:def
+         evil-forward-word-end
+         :key-name goto-element-right)
     
     ;; faster movement
-    ;; TODO: J and K are disabled to encourage using ivy.
-    ;; "K" fast-move-up
-    ;; "J" fast-move-down
-    "H" evil-backward-WORD-begin
-    "L" evil-forward-WORD-end
+    "K" (:def
+         evil-backward-paragraph
+         :key-name goto-greater-element-up)
+    "J" (:def
+         evil-forward-paragraph
+         :key-name goto-greater-element-down)
+    "H" (:def
+         evil-backward-WORD-begin
+         :key-name goto-greater-element-left)
+    "L" (:def
+         evil-forward-WORD-end
+         :key-name goto-greater-element-right)
     "G" evil-first-non-blank
     ":" evil-end-of-line
 
@@ -2713,7 +2759,6 @@ command (ran after) is mysteriously incorrect."
     "m" evil-jump-backward
     "M" evil-jump-forward
 
-    ;; outline minor mode
     "C-h" (:def
            outline-up-heading-custom
            :key-name goto-parent-semantic-element)
@@ -2837,9 +2882,11 @@ command (ran after) is mysteriously incorrect."
                 (evil-exit-visual-state)
                 (beacon-blink)))
 
-      ;; neo-tree
-      "n" ,(lambda () (interactive) (neotree-show))
-      "N" ,(lambda () (interactive) (neotree-find))
+      ;; jump to tag
+      "n" (:def
+           evil-jump-to-tag
+           :key-name jump-to-definition)
+      ;; "N" ,(lambda () (interactive) (neotree-find))
 
       ;; substitution
       "s" (:case
@@ -3070,10 +3117,15 @@ command (ran after) is mysteriously incorrect."
               (evil-window-set-height 12))
            :which-key "Make Into Terminal Height"))
 
-     "h"
+     "H"
      (:bindings
       :which-key "Helm"
       :key-name helm-prefix)
+
+     "h"
+     (:def
+      ,help-map
+      :which-key "Help")
 
      "i"
      (:bindings
@@ -3211,12 +3263,18 @@ command (ran after) is mysteriously incorrect."
      (:bindings
       :which-key "Side Bar"
 
+      ;; "f" (:def
+      ;;      ,(lambda () (interactive)
+      ;;         (display-buffer-in-side-window
+      ;;          (get-buffer neo-buffer-name)
+      ;;          '((side . left))))
+      ;;      :which-key "Files")
       "f" (:def
-           ,(lambda () (interactive)
-              (display-buffer-in-side-window
-               (get-buffer neo-buffer-name)
-               '((side . left))))
+           neotree-show
            :which-key "Files")
+      "F" (:def
+           neotree-find
+           :which-key "Locate Current File")
       "o" (:def
            ,(lambda () (interactive)
               (display-buffer-in-side-window
@@ -3571,7 +3629,7 @@ command (ran after) is mysteriously incorrect."
 
 (tommyx-bind-keys
  `(:case
-   :keymaps emacs-lisp-mode-map
+   :keymaps (lisp-interaction-mode-map emacs-lisp-mode-map)
    :states (motion normal visual)
    (:bindings
 
