@@ -151,8 +151,8 @@
   "The major mode for companion."
   (setq indent-tabs-mode nil
         buffer-read-only t
-        truncate-lines t
-	))
+        truncate-lines t)
+  (setq-local show-trailing-whitespace nil))
 
 ;;
 ;; Global methods

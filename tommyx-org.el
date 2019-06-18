@@ -20,7 +20,7 @@
                            (setq-local indent-tabs-mode nil) ; use space instead of tabs
                            (setq-local tab-width 2)
                            (setq-local evil-shift-width tab-width)
-                           ))
+                           (setq-local show-trailing-whitespace t)))
 
 ;; use clean (indented) view
 (setq org-startup-indented t)
