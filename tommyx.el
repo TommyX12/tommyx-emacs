@@ -19,6 +19,8 @@
              (expand-file-name "packages/Highlight-Indentation-for-Emacs" tommyx-config-path))
 (add-to-list 'load-path
 	           (expand-file-name "packages/org-life" (file-name-directory load-file-name)))
+(add-to-list 'load-path
+	           (expand-file-name "packages/org-catalyst" (file-name-directory load-file-name)))
 
 
 ;;; startup appearence
