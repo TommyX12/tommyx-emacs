@@ -116,6 +116,7 @@
 
 (enable-auto-compilation 'tommyx-org-def)
 (enable-auto-compilation 'org-life)
+(enable-auto-compilation 'org-catalyst)
 (require 'tommyx-org)
 
 
