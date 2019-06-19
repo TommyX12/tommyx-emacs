@@ -24,12 +24,12 @@
                             (setq-local show-trailing-whitespace t)))
 
 ;; indentation guide using whitespace mode
-;; (setq whitespace-style '(
-;;                          tab-mark face tabs
-;;                          ))
-;; (setq whitespace-display-mappings '(
-;;                                     (tab-mark ?\t [?\| ?\t])
-;;                                     ))
+(setq whitespace-style '(
+                         tab-mark face tabs
+                         ))
+(setq whitespace-display-mappings '(
+                                    (tab-mark ?\t [?\| ?\t])
+                                    ))
 ;; (global-whitespace-mode 1)
 
 ;; tabify only leading whitespace
