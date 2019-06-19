@@ -37,6 +37,7 @@
 (require 'ht)
 (require 'json)
 (require 'org)
+(require 'org-id)
 (require 's)
 
 ;;; Customizations
@@ -68,15 +69,58 @@
   :group 'org-catalyst
   :type 'integer)
 
-;;; Structs
+;;; Deep Copy Library
+
+(defun org-catalyst--deep-copy (object)
+  "Make a deep copy of OBJECT.
+This is similar to `copy-tree', but handles hash tables as well."
+
+  (cond
+   ((consp object)
+    (let (result)
+      (while (consp object)
+        (let ((newcar (car object)))
+          (if (or (consp (car object))
+                  (vectorp (car object)))
+              (setq newcar (org-catalyst--deep-copy (car object))))
+          (push newcar result))
+        (setq object (cdr object)))
+      (nconc (nreverse result) object)))
+
+   ((hash-table-p object)
+    ;; Reference:
+    ;; http://www.splode.com/~friedman/software/emacs-lisp/src/deep-copy.el
+    (let ((new-table
+           (make-hash-table
+            :test             (hash-table-test             object)
+            :size             (hash-table-size             object)
+            :rehash-size      (hash-table-rehash-size      object)
+            :rehash-threshold (hash-table-rehash-threshold object)
+            :weakness         (hash-table-weakness         object))))
+      (maphash (lambda (key value)
+                 (puthash (org-catalyst--deep-copy key)
+                          (org-catalyst--deep-copy value)
+                          new-table))
+               object)
+      new-table))
+
+   ((vectorp object)
+    (let ((i (length (setq object (copy-sequence object)))))
+      (while (>= (setq i (1- i)) 0)
+        (aset object i (org-catalyst--deep-copy (aref object i))))
+      object))
+
+   (t
+    object)))
+
+;;; LRU Library
 
 ;; NOTE:
 ;; Reference:
 ;; https://stackoverflow.com/questions/6652956/how-can-i-implement-an-expiring-lru-cache-in-elisp
+
 (defstruct org-catalyst--lru-cache size newest oldest table)
 (defstruct org-catalyst--lru-item key value next prev)
-
-;;; LRU Library
 
 (defun org-catalyst--lru-remove-item (item lru)
   "Remove ITEM from LRU doubly linked list."
@@ -156,6 +200,7 @@ The accessed entry is updated to be the earliest entry of the cache."
 (defconst org-catalyst--days-per-month 31)
 (defconst org-catalyst--snapshot-suffix "-snapshot.json")
 (defconst org-catalyst--history-suffix "-history.json")
+(defconst org-catalyst--state-delta-prefix "STATE_")
 
 ;;; Variables
 
@@ -197,16 +242,18 @@ and fallback to current month-day."
       (setq
        org-catalyst--earliest-month-day
        (cons
-        (or
-         (apply #'min
-                (mapcar
-                 (lambda (item)
-                   (car
-                    (org-catalyst--key-to-month-day
-                     (substring (f-filename item) 0 7))))
-                 (f-glob (concat "*" org-catalyst--history-suffix)
-                         org-catalyst-save-path)))
-         (car (org-catalyst--time-to-month-day)))
+        (let ((snapshot-month-days
+               (mapcar
+                (lambda (item)
+                  (car
+                   (org-catalyst--key-to-month-day
+                    (substring (f-filename item) 0 7))))
+                (f-glob (concat "*" org-catalyst--history-suffix)
+                        org-catalyst-save-path))))
+          (or
+           (and snapshot-month-days
+                (apply #'min snapshot-month-days))
+           (car (org-catalyst--time-to-month-day))))
         0))))
 
 (defun org-catalyst--maybe-set-earliest-month-day (month-day)
@@ -214,11 +261,14 @@ and fallback to current month-day."
   (setq org-catalyst--earliest-month-day
         (cons
          (min (car (org-catalyst--get-earliest-month-day))
-              (car MONTH-DAY))
+              (car month-day))
          0)))
 
 (defun org-catalyst--save-object (object file)
   "Save OBJECT to FILE."
+  (unless (file-exists-p org-catalyst-save-path)
+    (make-directory org-catalyst-save-path t))
+
   (unless (file-writable-p file)
     (error "File %s is not writable" file))
 
@@ -256,10 +306,15 @@ and fallback to current month-day."
          (month (1+ (- month-index (* year 12)))))
     (format "%04d-%02d" year month)))
 
+(defun org-catalyst--month-day-to-day-key (month-day)
+  "Convert a MONTH-DAY to key."
+  (let* ((day (1+ (cdr month-day))))
+    (format "%02d" day)))
+
 (defun org-catalyst--key-to-month-day (key)
   "Convert a KEY to month-day."
-  (let ((year (substring key 0 4))
-        (month (substring key 5 7)))
+  (let ((year (string-to-number (substring key 0 4)))
+        (month (string-to-number (substring key 5 7))))
     (cons (+ (* year 12) (1- month)) 0)))
 
 (defun org-catalyst--key-to-snapshot-path (key)
@@ -272,15 +327,63 @@ and fallback to current month-day."
   (f-join org-catalyst-save-path
           (concat key org-catalyst--history-suffix)))
 
-(defun org-catalyst--update-function (snapshot actions)
-  "TODO")
+(defun org-catalyst--map-items (func)
+  "TODO"
+  (org-map-entries func "+item" 'agenda))
+
+(defun org-catalyst--get-all-item-configs ()
+  "TODO"
+  (let ((all-item-configs (ht-create)))
+    (org-catalyst--map-items
+     (lambda ()
+       (let ((item-configs (ht-create))
+             (state-deltas (ht-create)))
+         (dolist (prop (org-entry-properties))
+           (let ((prop-name (car prop))
+                 (prop-value (cdr prop)))
+             (when (s-starts-with-p org-catalyst--state-delta-prefix
+                                    prop-name)
+               ;; TODO: state names are stored in upper case
+               (ht-set state-deltas
+                       (substring prop-name
+                                  (length org-catalyst--state-delta-prefix))
+                       (string-to-number prop-value)))))
+         (ht-set item-configs "state-deltas" state-deltas)
+         (ht-set all-item-configs (org-id-get-create)
+                 item-configs))))
+    all-item-configs))
+
+(defun org-catalyst--update-function (snapshot actions all-item-configs)
+  "TODO
+NOTE: This function can mutate SNAPSHOT."
+  (let ((global-states (ht-get snapshot "global-states"))
+        (item-states (ht-get snapshot "item-states")))
+    (dolist (item-id (ht-keys actions))
+      ;; TODO: consider the amount of action done
+      (let* ((value (ht-get actions item-id))
+             (item-configs (ht-get all-item-configs item-id))
+             (state-deltas (and item-configs
+                                (ht-get item-configs "state-deltas"))))
+        (when state-deltas
+          (dolist (state-name (ht-keys state-deltas))
+            (let ((delta (ht-get state-deltas state-name)))
+              (ht-set global-states
+                      state-name
+                      ;; TODO: customizable state update function
+                      (+ (ht-get global-states state-name 0)
+                         ;; TODO: customizable default
+                         (* value delta))))))))
+    snapshot))
 
 (defun org-catalyst--new-snapshot ()
   "Construct a new empty snapshot."
-  (ht-create))
+  (let ((snapshot (ht-create)))
+    (ht-set snapshot "global-states" (ht-create))
+    (ht-set snapshot "item-states" (ht-create))
+    snapshot))
 
-(defun org-catalyst--new-action ()
-  "Construct a new empty action."
+(defun org-catalyst--new-actions ()
+  "Construct a new empty actions."
   (ht-create))
 
 (defun org-catalyst--new-history ()
@@ -322,54 +425,65 @@ and fallback to current month-day."
   (let ((key (org-catalyst--month-day-to-key month-day)))
     (if (org-catalyst--lru-contains org-catalyst--buffered-histories key)
         (org-catalyst--lru-get org-catalyst--buffered-histories key)
-      (let ((history (org-catalyst--load-object
-                      (org-catalyst--key-to-history-path key))))
+      (let ((history (or
+                      (org-catalyst--load-object
+                       (org-catalyst--key-to-history-path key))
+                      (org-catalyst--new-history))))
         (org-catalyst--lru-set
          org-catalyst--buffered-histories key
-         (or history
-             (org-catalyst--new-history)))
+         history)
         history))))
 
 (defun org-catalyst--get-actions-at (month-day)
   "Return the actions at MONTH-DAY."
-  (let ((key (org-catalyst--month-day-to-key month-day))
+  (let ((day-key (org-catalyst--month-day-to-day-key month-day))
         (history (org-catalyst--get-history-containing month-day)))
-    (if (ht-contains-p history key)
-        (ht-get history key)
-      (org-catalyst--new-action))))
+    (if (ht-contains-p history day-key)
+        (ht-get history day-key)
+      (let ((actions (org-catalyst--new-actions)))
+        (ht-set history day-key actions)
+        actions))))
 
 (defun org-catalyst--compute-snapshot-at (month-day)
-  "Return the snapshot value at the start of MONTH-DAY."
-  (let ((month-index (car month-day))
-        (day-index (cdr month-day)))
-    (if (= day-index 0) ; start of the month
-        (if (>= month-index (org-catalyst--get-earliest-month-day))
-            (let ((key (org-catalyst--month-day-to-key month-day)))
-              (if (org-catalyst--lru-contains org-catalyst--buffered-snapshots
-                                              key)
-                  (org-catalyst--lru-get org-catalyst--buffered-snapshots
-                                         key)
-                (let ((snapshot (org-catalyst--load-object
-                                 (org-catalyst--key-to-snapshot-path key))))
-                  (if snapshot
-                      (org-catalyst--update-cached-snapshot
-                       month-day snapshot t)
-                    (setq snapshot (org-catalyst--compute-snapshot-at
-                                    (cons (1- month-index)
-                                          org-catalyst--days-per-month)))
-                    (org-catalyst--update-cached-snapshot month-day snapshot))
-                  snapshot)))
-          (org-catalyst--new-snapshot))
-      ;; other days of the month
-      (let ((cur-day-index 0)
-            (cur-snapshot (org-catalyst--compute-snapshot-at
-                           (cons month-index 0))))
-        (while (< cur-day-index day-index)
-          (setq cur-snapshot
-                (org-catalyst--update-function
-                 cur-snapshot
-                 (org-catalyst--get-actions-at (cons month-index cur-day-index)))))
-        cur-snapshot))))
+  "Return the snapshot value at the start of MONTH-DAY.
+It is ensured that the snapshot returned is a deep copy."
+  (org-catalyst--deep-copy
+   (let ((month-index (car month-day))
+         (day-index (cdr month-day)))
+     (if (= day-index 0) ; start of the month
+         (if (>= month-index (car (org-catalyst--get-earliest-month-day)))
+             (let ((key (org-catalyst--month-day-to-key month-day)))
+               (if (org-catalyst--lru-contains
+                    org-catalyst--buffered-snapshots
+                    key)
+                   (org-catalyst--lru-get org-catalyst--buffered-snapshots
+                                          key)
+                 (let ((snapshot (org-catalyst--load-object
+                                  (org-catalyst--key-to-snapshot-path key))))
+                   (if snapshot
+                       (org-catalyst--update-cached-snapshot
+                        month-day snapshot t)
+                     (setq snapshot (org-catalyst--compute-snapshot-at
+                                     (cons (1- month-index)
+                                           org-catalyst--days-per-month)))
+                     (org-catalyst--update-cached-snapshot month-day
+                                                           snapshot))
+                   snapshot)))
+           (org-catalyst--new-snapshot))
+       ;; other days of the month
+       (let ((all-item-configs (org-catalyst--get-all-item-configs))
+             (cur-day-index 0)
+             (cur-snapshot (org-catalyst--compute-snapshot-at
+                            (cons month-index 0))))
+         (while (< cur-day-index day-index)
+           (setq cur-snapshot
+                 (org-catalyst--update-function
+                  cur-snapshot
+                  (org-catalyst--get-actions-at
+                   (cons month-index cur-day-index))
+                  all-item-configs))
+           (setq cur-day-index (1+ cur-day-index)))
+         cur-snapshot)))))
 
 (defun org-catalyst--compute-snapshot-after (month-day)
   "Return the snapshot value at the end of MONTH-DAY."
@@ -386,8 +500,8 @@ If NO-MARK-MODIFIED is nil, KEY will be marked as modified,
     (unless no-mark-modified
       (ht-set org-catalyst--modified-snapshot-keys key t))))
 
-(defun org-catalyst--update-cached-snapshots (from-month-day)
-  "Update all cached snapshots as if edits were made during FROM-MONTH-DAY."
+(defun org-catalyst--update-cached-snapshots (month-day)
+  "Update all cached snapshots as if edits were made during MONTH-DAY."
   (let ((cur-month-index (1+ (car month-day)))
         (now-month-index (car (org-catalyst--time-to-month-day))))
     (while (<= cur-month-index now-month-index)
@@ -395,13 +509,35 @@ If NO-MARK-MODIFIED is nil, KEY will be marked as modified,
        (cons cur-month-index 0)
        (org-catalyst--compute-snapshot-at
         (cons (1- cur-month-index)
-              org-catalyst--days-per-month))))))
+              org-catalyst--days-per-month)))
+      (setq cur-month-index (1+ cur-month-index)))))
 
 ;;; Commands
 
 (defun org-catalyst-complete-item (&optional arg)
   "TODO"
-  (interactive "P"))
+  ;; TODO: reward buffer
+  ;; TODO: do some caching. this is slow
+  (interactive "P")
+  (let ((item-id
+         (get-text-property
+          0
+          'property
+          (completing-read
+           "Complete item: "
+           (org-catalyst--map-items
+            (lambda ()
+              (propertize (org-no-properties
+                           (org-get-heading t t t t))
+                          'property
+                          (org-id-get-create))))
+           nil ; predicate
+           t ; require-match
+           nil ; initial-input
+           'org-catalyst--complete-item-history))))
+    (org-catalyst--update-actions
+     (org-catalyst--time-to-month-day)
+     (ht-set actions item-id 1))))
 
 (defun org-catalyst-recompute-history ()
   "Recompute all snapshots from the entire history."

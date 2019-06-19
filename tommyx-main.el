@@ -3729,8 +3729,12 @@ command (ran after) is mysteriously incorrect."
    :keymaps help-mode-map
    (:bindings
 
-    go-back help-go-back
-    go-forward help-go-forward)))
+    go-back (:case
+             :states (motion normal)
+             help-go-back)
+    go-forward (:case
+                :states (motion normal)
+                help-go-forward))))
 
 
 ;;; general settings after package load
