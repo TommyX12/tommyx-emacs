@@ -1424,11 +1424,24 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (use-package color-identifiers-mode :ensure t
   :config
   ;; color-identifiers-mode
+  (defface color-identifiers-avoid-face-1
+    '((t :foreground "#d53b9c34cd15"))
+    "")
+  (defface color-identifiers-avoid-face-2
+    '((t :foreground "#d53a9c359c35"))
+    "")
+  (defface color-identifiers-avoid-face-3
+    '((t :foreground "#ac809c34d53a"))
+    "")
   (setq color-identifiers-avoid-faces
-        '(font-lock-warning-face error))
+        '(color-identifiers-avoid-face-1
+          color-identifiers-avoid-face-2
+          color-identifiers-avoid-face-3
+          font-lock-warning-face
+          error))
   (setq color-identifiers-coloring-method 'sequential)
-  (setq color-identifiers:max-color-saturation 0.3)
-  (setq color-identifiers:min-color-saturation 0.3)
+  (setq color-identifiers:max-color-saturation 0.45)
+  (setq color-identifiers:min-color-saturation 0.2)
   (setq color-identifiers:timer (run-with-idle-timer 5 t 'color-identifiers:refresh))
   (add-hook 'prog-mode-hook (lambda () (color-identifiers-mode 1)))
   (global-color-identifiers-mode 1)

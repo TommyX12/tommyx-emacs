@@ -14,6 +14,7 @@
 (require 'tommyx-org-def)
 (require 'tommyx-bind-def)
 (require 'org-life)
+(require 'org-catalyst)
 
 ;; startup settings
 (add-hook 'org-mode-hook (lambda () (interactive)
@@ -716,7 +717,14 @@
    '("x" "org-life agenda"
      ((org-life-agenda ""
                        ())))
-   org-agenda-custom-commands))
+   org-agenda-custom-commands)
+
+  ;; my org-catalyst
+  (setq org-catalyst-save-path (f-join org-directory "org-catalyst"))
+  (org-catalyst-install-default-systems)
+  ;; TODO: enable this
+  (org-catalyst-auto-save-mode 1)
+  )
 
 
 (provide 'tommyx-org)

@@ -145,47 +145,47 @@
 ;;; Faces
 
 (defface org-life-agenda-secondary-face
-  '((t (:inherit font-lock-comment-face)))
+  '((t :inherit font-lock-comment-face))
   "Face for secondary text (such as certain statistics) for org-life-agenda."
   :group 'org-life)
 
 (defface org-life-agenda-session-face-1
-  '((t (:inherit default)))
+  '((t :inherit default))
   "First face for daily sessions for org-life-agenda."
   :group 'org-life)
 
 (defface org-life-agenda-session-face-2
-  '((t (:inherit highlight)))
+  '((t :inherit highlight))
   "Second face for daily sessions for org-life-agenda."
   :group 'org-life)
 
 (defface org-life-agenda-empty-progress-face
-  '((t ()))
+  '((t ))
   "Face to highlight empty progress for org-life-agenda."
   :group 'org-life)
 
 (defface org-life-agenda-stress-best-face
-  '((t (:inherit org-warning)))
+  '((t :inherit org-warning))
   "Face to highlight best stress for org-life-agenda."
   :group 'org-life)
 
 (defface org-life-agenda-stress-normal-face
-  '((t (:inherit font-lock-function-name-face)))
+  '((t :inherit font-lock-function-name-face))
   "Face to highlight normal stress for org-life-agenda."
   :group 'org-life)
 
 (defface org-life-agenda-stress-warning-face
-  '((t (:inherit success)))
+  '((t :inherit success))
   "Face to highlight warning stress for org-life-agenda."
   :group 'org-life)
 
 (defface org-life-agenda-usable-time-face
-  '((t (:inherit org-time-grid)))
+  '((t :inherit org-time-grid))
   "Face to highlight usable time for org-life-agenda."
   :group 'org-life)
 
 (defface org-life-agenda-actual-usable-time-face
-  '((t (:inherit org-agenda-done)))
+  '((t :inherit org-agenda-done))
   "Face to highlight actual usable time for org-life-agenda."
   :group 'org-life)
 
