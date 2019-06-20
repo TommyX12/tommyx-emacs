@@ -2577,7 +2577,7 @@ command (ran after) is mysteriously incorrect."
     "C-M-h C-M-h" counsel-apropos
     "C-M-x" execute-extended-command)
 
-   :keymaps (motion normal visual insert)
+   :states (motion normal visual insert)
    (:bindings
 
     "C-z" nil)
@@ -3644,6 +3644,14 @@ command (ran after) is mysteriously incorrect."
     "M-L" (:def
            :ignore
            :key-name template-expand))))
+
+(tommyx-bind-keys
+ `(:case
+   :keymaps (special-mode-map)
+   :states (motion normal visual)
+   (:bindings
+
+    "h" nil)))
 
 (tommyx-bind-keys
  `(:case

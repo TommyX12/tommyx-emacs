@@ -13,8 +13,6 @@
 (require 'smartparens)
 (require 'tommyx-org-def)
 (require 'tommyx-bind-def)
-(require 'org-life)
-(require 'org-catalyst)
 
 ;; startup settings
 (add-hook 'org-mode-hook (lambda () (interactive)
@@ -701,16 +699,20 @@
 
 (when org-directory
   ;; refresh all org files
+
   (update-all-org-directory-files)
 
   ;; org directory external config
+
   (let ((external-config-path
          (expand-file-name "org-config.el" org-directory)))
     (when (file-exists-p external-config-path)
       (load external-config-path)))
   ;; other agenda views
 
-  ;; my org-life
+  ;;; my org-life
+
+  (require 'org-life)
   (setq org-life-config-file-path
         (expand-file-name "org-life-config.org" org-directory))
   (push
@@ -719,12 +721,17 @@
                        ())))
    org-agenda-custom-commands)
 
-  ;; my org-catalyst
+  ;;; my org-catalyst
+
+  (require 'org-catalyst)
   (setq org-catalyst-save-path (f-join org-directory "org-catalyst"))
   (org-catalyst-install-default-systems)
+  (org-catalyst-setup-default-sections)
+  (org-catalyst-setup-evil-status-bindings)
   ;; TODO: enable this
   (org-catalyst-auto-save-mode 1)
-  )
+  
+)
 
 
 (provide 'tommyx-org)
