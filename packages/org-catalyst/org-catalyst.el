@@ -55,6 +55,18 @@
   :group 'org-catalyst
   :type 'string)
 
+(defcustom org-catalyst-display-buffer-function
+  'org-catalyst--display-buffer-fullframe
+  "The function used display a Catalyst buffer."
+  :group 'org-catalyst
+  :type '(radio (function-item org-catalyst--display-buffer-fullframe)
+                (function :tag "Function")))
+
+(defcustom org-catalyst-buffer-name "*Catalyst*"
+  "Name of Catalyst status buffer."
+  :group 'org-catalyst
+  :type 'string)
+
 (defcustom org-catalyst-auto-save-idle-delay 5
   "The idle delay to automatically save org-catalyst game when `org-catalyst-auto-save-mode' is on."
   :group 'org-catalyst
@@ -183,6 +195,9 @@ The accessed entry is updated to be the earliest entry of the cache."
   "Earliest month-day of modification.")
 (defvar org-catalyst--computing-snapshot nil
   "Flag to avoid infinite recurison.")
+(defvar-local org-catalyst--prev-window-conf nil
+  "Saved window configuration for restore.")
+(put 'org-catalyst--prev-window-conf 'permanent-local t)
 
 ;;; Macros
 
@@ -324,7 +339,7 @@ and fallback to current month-day."
       (json-read-from-string (f-read-text file 'utf-8)))))
 
 (defun org-catalyst-has-unsaved-changes ()
-  "Return if catalyst has unsaved modifications."
+  "Return if Catalyst has unsaved modifications."
   (or (not (ht-empty? org-catalyst--modified-snapshot-keys))
       (not (ht-empty? org-catalyst--modified-history-keys))))
 
@@ -824,6 +839,47 @@ If NO-MARK-MODIFIED is nil, KEY will be marked as modified,
        earliest-modified-month-day)
       (setq org-catalyst--earliest-modified-month-day nil))))
 
+(defun org-catalyst--save-window-configuration ()
+  "Save the current window configuration.
+Note that the configuration is saved locally to the current buffer."
+  (unless (get-buffer-window (current-buffer) (selected-frame))
+    (setq-local org-catalyst--prev-window-conf
+                (current-window-configuration))))
+
+(defun org-catalyst--restore-window-configuration ()
+  "Restore previous window configuration."
+  (let ((winconf org-catalyst--prev-window-conf)
+        (buffer (current-buffer))
+        (frame (selected-frame)))
+    ;; TODO: this allows killing buffer by setting second arg to t
+    (quit-window nil (selected-window))
+    (when (and winconf (equal frame (window-configuration-frame winconf)))
+      (set-window-configuration winconf)
+      (when (buffer-live-p buffer)
+        (with-current-buffer buffer
+          (setq-local org-catalyst--prev-window-conf nil))))))
+
+(defun org-catalyst--display-action-fullframe (buffer alist)
+  "Action for `display-buffer' that displays in fullframe."
+  (when-let ((window (or (display-buffer-reuse-window buffer alist)
+                         (display-buffer-same-window buffer alist)
+                         (display-buffer-pop-up-window buffer alist)
+                         (display-buffer-use-some-window buffer alist))))
+    (delete-other-windows window)
+    window))
+
+(defun org-catalyst--display-buffer-fullframe (buffer)
+  "Display BUFFER in fullframe."
+  (display-buffer buffer '(org-catalyst--display-action-fullframe)))
+
+(defun org-catalyst--render-status ()
+  ;; TODO
+  "Render status window."
+  (let ((inhibit-read-only t))
+    (erase-buffer)
+    (insert "test test\n"
+            (format-time-string "%Y-%m-%d %H:%M:%S"))))
+
 ;;; Commands
 
 (defun org-catalyst-complete-item (&optional arg)
@@ -894,10 +950,49 @@ If NO-MARK-MODIFIED is nil, KEY will be marked as modified,
     (when game-saved
       (message "org-catalyst game saved."))))
 
+(defun org-catalyst-status-refresh ()
+  "Refresh Catalyst window."
+  (interactive)
+  ;; TODO: is this the best idea
+  (let ((buffer (get-buffer-create org-catalyst-buffer-name)))
+    (if (eq buffer (current-buffer))
+        (org-catalyst--render-status)
+      (error "Not in Catalyst buffer"))))
+
+(defun org-catalyst-status-quit ()
+  "Quit Catalyst window."
+  (interactive)
+  (let ((buffer (get-buffer-create org-catalyst-buffer-name)))
+    (if (eq buffer (current-buffer))
+        (org-catalyst--restore-window-configuration)
+      (error "Not in Catalyst buffer"))))
+
+(defun org-catalyst-status ()
+  "Open Catalyst status window."
+  (interactive)
+  ;; TODO make quit window and start window customizable
+  (let ((buffer (get-buffer-create org-catalyst-buffer-name)))
+    (unless buffer
+      (error "Open Catalyst buffer failed"))
+
+    (unless (eq buffer (current-buffer))
+      (with-current-buffer buffer
+        (org-catalyst--save-window-configuration))
+
+      (let ((window (funcall org-catalyst-display-buffer-function buffer)))
+        (let* ((old-frame (selected-frame))
+               (new-frame (window-frame window)))
+          (select-window window)
+          (unless (eq old-frame new-frame)
+            (select-frame-set-input-focus new-frame))
+
+          (org-catalyst-mode)
+          (org-catalyst-status-refresh))))))
+
 ;;; Minor modes
 
 (define-minor-mode org-catalyst-auto-save-mode
-  "Automatically save org-catalyst game."
+  "Automatically save Catalyst game."
   :init-value nil
   :global t
   :group 'org-catalyst
@@ -913,6 +1008,22 @@ If NO-MARK-MODIFIED is nil, KEY will be marked as modified,
                                #'org-catalyst-save-game))
     (add-hook 'kill-emacs-query-functions
               #'org-catalyst--emacs-quit-query-function)))
+
+;;; Major modes
+
+;; TODO: decide between `make-sparse-keymap' and `make-keymap'
+;; TODO: evil integration. maybe motion only (will need to make sure q is not used in motion).
+;; or manually set every evil key.
+(defvar org-catalyst-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "q") 'org-catalyst-status-quit)
+    (define-key map (kbd "r") 'org-catalyst-status-refresh)
+    map))
+
+(define-derived-mode org-catalyst-mode
+  special-mode "Org Catalyst"
+  "Major mode for Catalyst."
+  (toggle-truncate-lines 1))
 
 ;;; Footer
 
