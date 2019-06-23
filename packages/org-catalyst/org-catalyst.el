@@ -132,7 +132,13 @@ The accessed entry is updated to be the earliest entry of the cache."
 (defconst org-catalyst--param-prefix "param_")
 (defconst org-catalyst--key-bindings
   (list (list (kbd "q") 'org-catalyst-status-quit)
-        (list (kbd "r") 'org-catalyst-status-refresh)))
+        (list (kbd "r") 'org-catalyst-status-refresh)
+        (list (kbd "a") 'org-catalyst-complete-item-toggle)
+        (list (kbd "p") 'org-catalyst-pardon-item-toggle)
+        (list (kbd "H") 'org-catalyst-status-earlier)
+        (list (kbd "L") 'org-catalyst-status-later)
+        (list (kbd "t") 'org-catalyst-status-goto-date)
+        (list (kbd "T") 'org-catalyst-status-goto-today)))
 
 ;;; Variables
 
@@ -157,8 +163,14 @@ The accessed entry is updated to be the earliest entry of the cache."
   "Earliest month-day of modification.")
 (defvar org-catalyst--computing-snapshot nil
   "Flag to avoid infinite recurison.")
+(defvar org-catalyst--cached-config nil
+  "Cached config in status buffer.")
+(defvar org-catalyst--config-cache-valid nil
+  "Whether cache is valid in status buffer.")
 (defvar-local org-catalyst--prev-window-conf nil
   "Saved window configuration for restore.")
+(defvar-local org-catalyst--status-month-day nil
+  "The current month-day displayed in status window.")
 (put 'org-catalyst--prev-window-conf 'permanent-local t)
 
 ;;; Customizations
@@ -182,6 +194,18 @@ The accessed entry is updated to be the earliest entry of the cache."
   :type '(radio (function-item org-catalyst--display-buffer-fullframe)
                 (function :tag "Function")))
 
+(defcustom org-catalyst-level-function
+  'org-catalyst--default-level-function
+  "The function used to compute amount per level."
+  :group 'org-catalyst
+  :type '(radio (function-item org-catalyst--default-level-function)
+                (function :tag "Function")))
+
+(defcustom org-catalyst-max-level 99
+  "The maximum level."
+  :group 'org-catalyst
+  :type 'integer)
+
 (defcustom org-catalyst-buffer-name "*Catalyst*"
   "Name of Catalyst status buffer."
   :group 'org-catalyst
@@ -191,6 +215,13 @@ The accessed entry is updated to be the earliest entry of the cache."
   "The idle delay to automatically save org-catalyst game when `org-catalyst-auto-save-mode' is on."
   :group 'org-catalyst
   :type 'float)
+
+(defcustom org-catalyst-status-today-format "%Y-%m-%d %A"
+  "The time format for the today's date in status window.
+
+See `format-time-string'."
+  :group 'org-catalyst
+  :type 'string)
 
 (defcustom org-catalyst-snapshot-cache-size 64
   "The number of snapshots to cache in memory."
@@ -202,6 +233,13 @@ The accessed entry is updated to be the earliest entry of the cache."
   :group 'org-catalyst
   :type 'integer)
 
+(defcustom org-catalyst-day-start-hour 6
+  "Starting hour of a day.
+
+This is used to determine the default day to show in the status window."
+  :group 'org-catalyst
+  :type 'float)
+
 ;; TODO: make this more customizable
 (defcustom org-catalyst-status-sections nil
   "The sections to render for status window."
@@ -209,21 +247,29 @@ The accessed entry is updated to be the earliest entry of the cache."
   :type `(repeat
           (symbol :tag "Section name")))
 
-;;; Macros
+;;; Faces
 
-(defmacro org-catalyst--update-actions (month-day &rest body)
-  "Evaluate BODY, which should update the actions at MONTH-DAY.
-The actions object at MONTH-DAY will be bound to `actions'.
-This marks the history containing MONTH-DAY as modified, and will perform
-update on all cache after MONTH-DAY."
-  `(let ((actions (org-catalyst--get-actions-at ,month-day)))
-     ,@body
-     (org-catalyst--maybe-set-earliest-month-day ,month-day)
-     (org-catalyst--maybe-set-earliest-modified-month-day ,month-day)
-     (ht-set org-catalyst--modified-history-keys
-             (org-catalyst--month-day-to-key ,month-day) t)))
+(defface org-catalyst-section-heading-face
+  '((t :inherit org-agenda-structure))
+  "Face for Catalyst section heading."
+  :group 'org-catalyst)
 
-;;; Functions
+(defface org-catalyst-state-delta-face
+  '((t :inherit font-lock-constant-face))
+  "Face for Catalyst state delta."
+  :group 'org-catalyst)
+
+(defface org-catalyst-section-heading-warning-face
+  '((t :inherit font-lock-warning-face))
+  "Face for Catalyst warning section heading."
+  :group 'org-catalyst)
+
+(defface org-catalyst-today-face
+  '((t :inherit org-agenda-date-today))
+  "Face for Catalyst section heading."
+  :group 'org-catalyst)
+
+;;; Functions and Macros
 
 (defun org-catalyst-setup-status-bindings (&optional evil map)
   "Bind default key bindings for the status window.
@@ -256,48 +302,94 @@ If CONTINUOUS is non-nil, the system runs consecutively through every day."
      (t
       (error "Invalid system type %s" (prin1-to-string type))))))
 
+(defun org-catalyst-safe-get (table key default)
+  "Get the value for KEY in TABLE.
+
+Fallback to DEFAULT if TABLE is nil, or if KEY does not exist."
+  (or (and table
+           (ht-get table key default))
+      default))
+
+(defun org-catalyst-safe-update (table key default mapper)
+  "Update TABLE's entry with KEY using MAPPER.
+
+MAPPER will take one argument, which is the value before update.
+It should return the value after update.
+
+If KEY doesn't exist in TABLE or value is nil, DEFAULT will be passed to MAPPER."
+  (ht-set table key
+          (funcall mapper (or (ht-get table key)
+                              default))))
+
 (defun org-catalyst-install-default-systems ()
   "Install a set of default systems."
 
   (org-catalyst-install-system
-   "accumulate" 'state nil
+   "total" 'state nil
    (lambda (state-attr action delta month-day params)
-     (ht-set state-attr "total"
-             (+ (ht-get state-attr "total" 0)
-                (* action delta (ht-get params "mul" 1))))
+     (org-catalyst-safe-update
+      state-attr "total" 0
+      (lambda (prev)
+        (+ prev
+           (* (org-catalyst-safe-get action "done" 0)
+              delta
+              (org-catalyst-safe-get params "mul" 1)))))
      state-attr))
 
   (org-catalyst-install-system
    "count" 'item nil
    (lambda (item-attr action month-day params)
-     (ht-set item-attr
-             "count"
-             (+ (ht-get item-attr "count" 0)
-                action))
+     (org-catalyst-safe-update
+      item-attr "count" 0
+      (lambda (prev)
+        (+ prev
+           (org-catalyst-safe-get action "done" 0))))
      item-attr))
 
   (org-catalyst-install-system
    "chain" 'item t
    ;; NOTE: inverse chain might be different since we assume "done"
    (lambda (item-attr action month-day params)
-     (let* ((action (if (> action 0) 1 0))
-            (last-chain-day-index
-             (ht-get item-attr "last-chain-day-index" 1))
+     (let* ((inverse (org-catalyst-safe-get params "negative" nil))
+            (done (if (> (org-catalyst-safe-get action "done" 0) 0)
+                      1
+                    0))
+            (done (if inverse
+                      (- 1 done)
+                    done))
+            (pardon (if (> (org-catalyst-safe-get action "pardon" 0) 0)
+                        1
+                      0))
             (day-index
-             (time-to-days
-              (org-catalyst--month-day-to-time month-day)))
+             (org-catalyst--month-day-to-days month-day))
+            (last-chain-day-index
+             (+ pardon
+                (org-catalyst-safe-get item-attr "last-chain-day-index"
+                                       (if inverse
+                                           (1- day-index)
+                                         1))))
             (days-since-last
              (- day-index
                 last-chain-day-index))
             (chain-interval
-             (ht-get params "chain_interval" 1))
-            (last-chain
-             (if (> days-since-last chain-interval)
-                 0
-               (ht-get item-attr "chain" 0))))
-       (ht-set item-attr "chain" (+ last-chain action))
+             (org-catalyst-safe-get params "chain_interval" 1)))
+       (org-catalyst-safe-update
+        item-attr "chain" (if inverse
+                              "inf"
+                            0)
+        (lambda (prev)
+          (let* ((prev (if (equal prev "inf")
+                           1.0e+INF
+                         prev))
+                 (result (+ (if (> days-since-last chain-interval)
+                                0
+                              prev)
+                            done)))
+            (if (= result 1.0e+INF)
+                "inf"
+              (round result)))))
        (ht-set item-attr "last-chain-day-index"
-               (if (> action 0)
+               (if (> done 0)
                    day-index
                  last-chain-day-index)))
      item-attr)))
@@ -351,7 +443,8 @@ and fallback to current month-day."
     (error "File %s is not writable" file))
 
   (let ((json-object-type 'hash-table)
-        (json-encoding-pretty-print t))
+        (json-encoding-pretty-print t)
+        (json-encoding-object-sort-predicate #'string<))
     (f-write-text (json-encode object) 'utf-8 file)))
 
 (defun org-catalyst--load-object (file)
@@ -369,9 +462,9 @@ and fallback to current month-day."
   (or (not (ht-empty? org-catalyst--modified-snapshot-keys))
       (not (ht-empty? org-catalyst--modified-history-keys))))
 
-(defun org-catalyst--time-to-month-day (&optional time)
+(defun org-catalyst--time-to-month-day (&optional time zone)
   "Convert Emacs internal time representation TIME to month-day index representation."
-  (let* ((decoded-time (decode-time time))
+  (let* ((decoded-time (decode-time time zone))
          (year (nth 5 decoded-time))
          (month (nth 4 decoded-time))
          (day-index (1- (nth 3 decoded-time)))
@@ -386,17 +479,32 @@ and fallback to current month-day."
          (day (1+ (cdr month-day))))
     (encode-time 0 0 0 day month year zone)))
 
+(defun org-catalyst--month-day-to-days (month-day)
+  "Convert MONTH-DAY to number of days since epoch."
+  (round
+   (/ (time-to-seconds
+       (org-catalyst--month-day-to-time month-day t))
+      86400.0)))
+
+(defun org-catalyst--days-to-month-day (days)
+  "Convert number of DAYS since epoch to month-day."
+  (org-catalyst--time-to-month-day
+   (seconds-to-time (* days 86400)) t))
+
 (defun org-catalyst--month-day-days-delta (month-day-1 month-day-2)
   "Find the number of days elapsed between MONTH-DAY-1 and MONTH-DAY-2.
 The return value is positive if MONTH-DAY-1 is before MONTH-DAY-2, and vice versa."
-  (- (time-to-days (org-catalyst--month-day-to-time month-day-2))
-     (time-to-days (org-catalyst--month-day-to-time month-day-1))))
+  (- (org-catalyst--month-day-to-days month-day-2)
+     (org-catalyst--month-day-to-days month-day-1)))
 
-(defun org-catalyst--read-month-day ()
+(defun org-catalyst--read-month-day (&optional default-month-day)
   "Use org to read a month-day."
   (interactive)
   (org-catalyst--time-to-month-day
-   (org-time-string-to-time (org-read-date))))
+   (org-time-string-to-time
+    (org-read-date nil nil nil "Go To"
+                   (and default-month-day
+                        (org-catalyst--month-day-to-time default-month-day))))))
 
 (defun org-catalyst--month-day-to-key (month-day)
   "Convert a MONTH-DAY to key."
@@ -579,12 +687,12 @@ The return value is positive if MONTH-DAY-1 is before MONTH-DAY-2, and vice vers
 NOTE: This function can mutate SNAPSHOT."
   (let ((state-attributes (ht-get snapshot "state-attributes"))
         (item-attributes (ht-get snapshot "item-attributes"))
-        (empty-params (ht-create))
+        (empty-table (ht-create))
         (state-updates (ht-create)))
     ;; TODO: consider the amount of action done
     ;; reactive update
     (dolist (item-id (ht-keys actions))
-      (let* ((action (ht-get actions item-id 0))
+      (let* ((action (ht-get actions item-id empty-table))
              (item-config (ht-get all-item-config item-id))
              (state-deltas
               (and item-config
@@ -592,14 +700,14 @@ NOTE: This function can mutate SNAPSHOT."
              (item-params
               (or (and item-config
                        (ht-get item-config "params"))
-                  empty-params)))
+                  empty-table)))
         (when state-deltas
           (dolist (state-name (ht-keys state-deltas))
             (let* ((state-config (ht-get all-state-config state-name))
                    (state-params (or (and
                                       state-config
                                       (ht-get state-config "params"))
-                                     empty-params))
+                                     empty-table))
                    (delta (ht-get state-deltas state-name)))
               (ht-set state-updates state-name
                       (cons (cons action delta)
@@ -630,12 +738,12 @@ NOTE: This function can mutate SNAPSHOT."
     ;; continuous update
 
     (dolist (item-id (ht-keys continuous-item-update-funcs))
-      (let* ((action (ht-get actions item-id 0))
+      (let* ((action (ht-get actions item-id empty-table))
              (item-config (ht-get all-item-config item-id))
              (item-params
               (or (and item-config
                        (ht-get item-config "params"))
-                  empty-params)))
+                  empty-table)))
         (dolist (item-update-func (ht-get continuous-item-update-funcs
                                           item-id))
           (ht-set item-attributes
@@ -653,7 +761,7 @@ NOTE: This function can mutate SNAPSHOT."
              (state-params
               (or (and state-config
                        (ht-get state-config "params"))
-                  empty-params)))
+                  empty-table)))
         (dolist (state-update-func (ht-get continuous-state-update-funcs
                                            state-name))
           (ht-set state-attributes
@@ -789,7 +897,7 @@ If CONFIG is non-nil, it is used instead of computing another."
    (let ((month-index (car month-day))
          (day-index (cdr month-day))
          (config (or config
-                     (org-catalyst--get-config))))
+                     (org-catalyst--get-config-with-cache))))
      (if (= day-index 0) ; start of the month
          (if (>= month-index (car (org-catalyst--get-earliest-month-day)))
              (let ((key (org-catalyst--month-day-to-key month-day)))
@@ -833,7 +941,7 @@ If CONFIG is non-nil, it is used instead of computing another."
                     cur-snapshot
                     (org-catalyst--get-actions-at
                      cur-month-day)
-                    cur-month-day
+                    (cons month-index (1+ cur-day-index))
                     all-item-config
                     all-state-config
                     state-update-funcs
@@ -848,7 +956,7 @@ If CONFIG is non-nil, it is used instead of computing another."
 
 If CONFIG is non-nil, it is used instead of computing another."
   (let ((config (or config
-                    (org-catalyst--get-config))))
+                    (org-catalyst--get-config-with-cache))))
     (org-catalyst--compute-snapshot-at
      (org-catalyst--next-month-day month-day)
      config)))
@@ -868,7 +976,7 @@ If NO-MARK-MODIFIED is nil, KEY will be marked as modified,
 
 If CONFIG is non-nil, it is used instead of computing another."
   (let ((config (or config
-                    (org-catalyst--get-config)))
+                    (org-catalyst--get-config-with-cache)))
         (cur-month-index (1+ (car month-day)))
         (now-month-index (car (org-catalyst--time-to-month-day))))
     (while (<= cur-month-index now-month-index)
@@ -892,7 +1000,7 @@ If CONFIG is non-nil, it is used instead of computing another."
            org-catalyst--earliest-modified-month-day)
           (org-catalyst--computing-snapshot t)
           (config (or config
-                      (org-catalyst--get-config))))
+                      (org-catalyst--get-config-with-cache))))
       (org-catalyst--update-cached-snapshots
        earliest-modified-month-day
        config)
@@ -931,9 +1039,35 @@ Note that the configuration is saved locally to the current buffer."
   "Display BUFFER in fullframe."
   (display-buffer buffer '(org-catalyst--display-action-fullframe)))
 
+(defmacro org-catalyst--define-renderer (name inputs &rest body)
+  "Define a Catalyst renderer with NAME.
+
+Define a function with BODY that accepts INPUTS as keyword argument.
+The first element of BODY can be the docstring."
+  (declare (indent 2) (doc-string 3))
+  `(cl-defun ,name (&key ,@inputs &allow-other-keys)
+     ,@body))
+
+(defmacro org-catalyst--inline-renderer (inputs &rest body)
+  "Define an inline Catalyst renderer.
+
+Return a function with BODY that accepts INPUTS as keyword argument."
+  (declare (indent 2))
+  `(cl-function
+    (lambda (&key ,@inputs &allow-other-keys)
+      ,@body)))
+
+(defmacro org-catalyst--partial-renderer (renderer &rest inputs)
+  "Define a partial function of RENDERER.
+
+Return RENDERER with INPUTS already fed as argument."
+  `(lambda (&rest rest)
+     (apply (quote ,name) ,@inputs rest)))
+
 (defun org-catalyst--get-ui-data (config)
   "Extract data from CONFIG for use in status window."
-  (let ((attribute-to-items (ht-create)))
+  (let ((attribute-to-items (ht-create))
+        (attribute-to-states (ht-create)))
 
     (ht-map
      (lambda (item-id item-config)
@@ -947,7 +1081,51 @@ Note that the configuration is saved locally to the current buffer."
 
      (plist-get config :all-item-config))
 
-    (list :attribute-to-items attribute-to-items)))
+    (ht-map
+     (lambda (state-name state-config)
+       (let ((attributes (ht-get state-config "attributes")))
+         (dolist (attribute attributes)
+           (ht-set attribute-to-states
+                   attribute
+                   (cons state-name
+                         (ht-get attribute-to-states
+                                 attribute))))))
+
+     (plist-get config :all-state-config))
+
+    (ht<-alist (list
+                (cons "attribute-to-items" attribute-to-items)
+                (cons "attribute-to-states" attribute-to-states)))))
+
+(defun org-catalyst--get-delta-description (all-state-config item-config)
+  "Return readable description of item's delta."
+  (let ((state-deltas (org-catalyst-safe-get item-config "state-deltas" nil)))
+    (if (and state-deltas
+             (not (ht-empty? state-deltas)))
+        (propertize
+         (concat "["
+                 (s-join
+                  ", "
+                  (ht-map
+                   (lambda (state-name delta)
+                     (let ((size (length state-name))
+                           (abbrev-size 3))
+                       (concat (if (< delta 0)
+                                   ""
+                                 "+")
+                               (number-to-string delta)
+                               " "
+                               (capitalize
+                                (substring state-name 0
+                                           (min abbrev-size
+                                                size)))
+                               (if (> size abbrev-size)
+                                   "."
+                                 ""))))
+                   state-deltas))
+                 "]")
+         'face 'org-catalyst-state-delta-face)
+      "")))
 
 (defun org-catalyst--get-item-attribute (snapshot item-id prop &optional default)
   "Return the attribute with name PROP for item with ITEM-ID in SNAPSHOT.
@@ -959,47 +1137,220 @@ Use DEFAULT when the value is not found."
              (ht-get item-attr prop))
         default)))
 
-(cl-defun org-catalyst-section-separator (&key
-                                          &allow-other-keys)
+(defun org-catalyst--get-state-attribute (snapshot state-name prop &optional default)
+  "Return the attribute with name PROP for state with STATE-NAME in SNAPSHOT.
+
+Use DEFAULT when the value is not found."
+  (let* ((state-attributes (ht-get snapshot "state-attributes"))
+         (state-attr (ht-get state-attributes state-name)))
+    (or (and state-attr
+             (ht-get state-attr prop))
+        default)))
+
+(org-catalyst--define-renderer org-catalyst--render-section-heading
+    (name face)
+  (insert
+   (propertize name
+               'face (or face
+                         'org-catalyst-section-heading-face))
+   "\n"))
+
+(org-catalyst--define-renderer org-catalyst--render-sorted
+    (renderer-alist (reverse nil) (comp #'<))
+  "Render cdr of each element in RENDERER-ALIST, with car as the order.
+
+REVERSE the order if REVERSE is non-nil."
+  (let ((sorted-renderers
+         (sort
+          (copy-sequence renderer-alist)
+          (if reverse
+              (lambda (a b)
+                (funcall comp (car b) (car a)))
+            (lambda (a b)
+              (funcall comp (car a) (car b)))))))
+    (dolist (renderer sorted-renderers)
+      (funcall (cdr renderer)))))
+
+(org-catalyst--define-renderer org-catalyst-section-separator
+    ()
   (insert "\n"))
 
-(cl-defun org-catalyst-section-overview (&key
-                                         &allow-other-keys)
-  (insert "Placeholder overview.\n"))
+(org-catalyst--define-renderer org-catalyst-section-overview
+    (month-day)
+  (insert (propertize
+           (format-time-string org-catalyst-status-today-format
+                               (org-catalyst--month-day-to-time
+                                month-day))
+           'face 'org-catalyst-today-face)
+          "\n"))
 
-(cl-defun org-catalyst-section-highest-chain (&key
-                                              config
-                                              ui-data
-                                              snapshot
-                                              &allow-other-keys)
-  (let* ((attribute-to-items (plist-get ui-data :attribute-to-items))
+(org-catalyst--define-renderer org-catalyst--render-leveled-value
+    (value)
+  (let* ((level-and-threshold (org-catalyst--get-level-and-threshold
+                               value))
+         (level (car level-and-threshold))
+         (threshold (cdr level-and-threshold)))
+    (insert (format "Lv.%d %-8s"
+                    level
+                    (format "%.0f/%.0f"
+                            value threshold)))))
+
+
+(org-catalyst--define-renderer org-catalyst-section-accumulated-stats
+    (config
+     snapshot
+     ui-data)
+  (let* ((all-state-config (plist-get config :all-state-config))
+         (state-attributes (ht-get snapshot "state-attributes"))
+         (attribute-to-states (org-catalyst-safe-get
+                               ui-data "attribute-to-states"
+                               (ht-create))))
+    ;; TODO: also refactor to get a list of state/item with attributes
+    ;; handle sorting as well
+
+    (org-catalyst--render-section-heading :name "Stats")
+
+    (org-catalyst--render-sorted
+     :reverse t
+     :renderer-alist
+     (mapcar
+      (lambda (state-name)
+        (let* ((total (org-catalyst--get-state-attribute
+                       snapshot state-name "total" 0))
+               ;; TODO: can refactor to use a macro for chained access, returning default
+               (state-config (ht-get all-state-config state-name))
+               (display-name (ht-get state-config "display-name")))
+
+          (cons
+           total
+           (org-catalyst--inline-renderer ()
+               (org-catalyst--render-leveled-value :value total)
+             (insert (format " %s\n" display-name))))))
+      (org-catalyst-safe-get
+       attribute-to-states "total"
+       nil)))))
+
+(cl-defun org-catalyst-section-journal
+    (&key
+     config
+     month-day
+     &allow-other-keys)
+  (org-catalyst--render-section-heading :name "Journal")
+
+  (let* ((actions (org-catalyst--get-actions-at month-day))
+         (all-item-config (plist-get config :all-item-config))
+         (all-state-config (plist-get config :all-state-config)))
+    (ht-map
+     (lambda (item-id action)
+       (let* ((item-config
+               (org-catalyst-safe-get all-item-config item-id nil))
+              (display-name
+               (org-catalyst-safe-get item-config "display-name" nil))
+              (delta-desc (org-catalyst--get-delta-description
+                           all-state-config item-config))
+              (timed (org-catalyst-safe-get
+                      (org-catalyst-safe-get
+                       item-config "params" nil)
+                      "timed" nil))
+              (done (org-catalyst-safe-get
+                     action "done" 0))
+              (pardon (org-catalyst-safe-get
+                       action "pardon" 0)))
+         (when (or (> done 0)
+                   (> pardon 0))
+           (insert (format "%-8s %s\t%s\n"
+                           (cond
+                            (timed
+                             (number-to-string done))
+                            ((> done 0)
+                             "DONE")
+                            (t
+                             "PARDON"))
+                           display-name
+                           delta-desc)))))
+     actions)))
+
+(cl-defun org-catalyst-section-chains
+    (&key
+     config
+     ui-data
+     month-day
+     snapshot
+     &allow-other-keys)
+
+  ;; TODO can add to ui-data for caching
+  (let* ((attribute-to-items (org-catalyst-safe-get ui-data
+                                                    "attribute-to-items"
+                                                    (ht-create)))
          (item-ids (ht-get attribute-to-items "chain"))
          (all-item-config (plist-get config :all-item-config))
-         (item-attributes (ht-get snapshot "item-attributes")))
-    (dolist (item-id item-ids)
-      (let ((item-config (ht-get all-item-config item-id)))
-        (when item-config
-          (insert (format "%-8s | %s\n"
-                          (org-catalyst--get-item-attribute
-                           snapshot item-id "chain" 0)
-                          (ht-get item-config "display-name"))))))))
+         (all-state-config (plist-get config :all-state-config))
+         (item-attributes (ht-get snapshot "item-attributes"))
+         (row-data
+          (mapcar
+           (lambda (item-id)
+             (let* ((item-config (ht-get all-item-config item-id))
+                    (display-name (ht-get item-config "display-name"))
+                    (delta-desc (org-catalyst--get-delta-description
+                                 all-state-config item-config))
+                    (chain (org-catalyst--get-item-attribute
+                            snapshot item-id "chain" 0))
+                    (last-chain-day-index
+                     (org-catalyst--get-item-attribute
+                      snapshot item-id "last-chain-day-index" 1))
+                    (day-index
+                     (1+ (org-catalyst--month-day-to-days month-day)))
+                    (days-since-last
+                     (- day-index
+                        last-chain-day-index))
+                    ;; TODO: customizable default chain interval. in update function too.
+                    (chain-interval
+                     (org-catalyst-safe-get (org-catalyst-safe-get
+                                             item-config "params" nil)
+                                            "chain_interval" 1))
+                    (breaking
+                     (= days-since-last chain-interval)))
+               (list :item-id item-id
+                     :chain chain
+                     :breaking breaking
+                     :display-name display-name
+                     :delta-desc delta-desc)))
+           item-ids)))
 
-(cl-defun org-catalyst-section-highest-count (&key
-                                              config
-                                              ui-data
-                                              snapshot
-                                              &allow-other-keys)
-  (let* ((attribute-to-items (plist-get ui-data :attribute-to-items))
-         (item-ids (ht-get attribute-to-items "count"))
-         (all-item-config (plist-get config :all-item-config))
-         (item-attributes (ht-get snapshot "item-attributes")))
-    (dolist (item-id item-ids)
-      (let ((item-config (ht-get all-item-config item-id)))
-        (when item-config
-          (insert (format "%-8s | %s\n"
-                          (org-catalyst--get-item-attribute
-                           snapshot item-id "count" 0)
-                          (ht-get item-config "display-name"))))))))
+    (let ((rows (sort
+                 (seq-filter (lambda (row)
+                               (plist-get row :breaking))
+                             row-data)
+                 (lambda (a b)
+                   (> (plist-get a :chain)
+                      (plist-get b :chain))))))
+      (when rows
+        (org-catalyst--render-section-heading
+         :name "Breaking Chains"
+         :face 'org-catalyst-section-heading-warning-face)
+
+        (dolist (row rows)
+          ;; TODO: render row.
+          (org-catalyst--render-leveled-value
+           :value (plist-get row :chain))
+          (insert (format " %s\t%s\n"
+                          (plist-get row :display-name)
+                          (plist-get row :delta-desc))))
+
+        (org-catalyst-section-separator)))
+
+    (let ((rows (sort
+                 row-data
+                 (lambda (a b)
+                   (> (plist-get a :chain)
+                      (plist-get b :chain))))))
+      (org-catalyst--render-section-heading :name "Top Chains")
+      (dolist (row rows)
+        (org-catalyst--render-leveled-value
+         :value (plist-get row :chain))
+        (insert (format " %s\t%s\n"
+                        (plist-get row :display-name)
+                        (plist-get row :delta-desc)))))))
 
 (defun org-catalyst-setup-default-sections ()
   "Set `org-catalyst-status-sections' to be a good default."
@@ -1007,18 +1358,20 @@ Use DEFAULT when the value is not found."
   (setq org-catalyst-status-sections
         '(overview
           separator
-          highest-chain
+          accumulated-stats
           separator
-          highest-count)))
+          journal
+          separator
+          chains)))
 
 (defun org-catalyst--render-status ()
   ;; TODO
   "Render status window."
-  (let* ((config (org-catalyst--get-config))
+  (let* ((config (org-catalyst--get-config-with-cache))
          (ui-data (org-catalyst--get-ui-data config))
+         (month-day org-catalyst--status-month-day)
          (snapshot (org-catalyst--compute-snapshot-after
-                    ;; TODO: compute at any day
-                    (org-catalyst--time-to-month-day)
+                    month-day
                     config)))
     (dolist (section org-catalyst-status-sections)
       (funcall
@@ -1027,36 +1380,149 @@ Use DEFAULT when the value is not found."
                        (symbol-name section)))
        :config config
        :ui-data ui-data
+       :month-day month-day
        :snapshot snapshot))))
+
+(defun org-catalyst--in-status-buffer ()
+  "Return t if currently in Catalyst status buffer."
+  (eq (get-buffer org-catalyst-buffer-name)
+      (current-buffer)))
+
+;; TODO: can make a macro to allow chaining function call syntax
+
+(defmacro org-catalyst--update-actions (month-day &rest body)
+  "Evaluate BODY, which should update the actions at MONTH-DAY.
+The actions object at MONTH-DAY will be bound to `actions'.
+This marks the history containing MONTH-DAY as modified, and will perform
+update on all cache after MONTH-DAY."
+  `(let ((actions (org-catalyst--get-actions-at ,month-day)))
+     ,@body
+     (org-catalyst--maybe-set-earliest-month-day ,month-day)
+     (org-catalyst--maybe-set-earliest-modified-month-day ,month-day)
+     (ht-set org-catalyst--modified-history-keys
+             (org-catalyst--month-day-to-key ,month-day) t)))
+
+(defun org-catalyst--invalidate-config-cache ()
+  "Invalid cache for config in status buffer."
+  (setq org-catalyst--config-cache-valid nil))
+
+(defun org-catalyst--get-config-with-cache ()
+  "Return a list of all items, for use with completion.
+
+When currently in status buffer, this list is cached until refresh."
+  (if (and (org-catalyst--in-status-buffer)
+           org-catalyst--config-cache-valid)
+      org-catalyst--cached-config
+    (setq
+     org-catalyst--config-cache-valid t
+     org-catalyst--cached-config
+     (org-catalyst--get-config))))
+
+(defun org-catalyst--select-item (prompt)
+  "Select an action using minibuffer using PROMPT."
+  (get-text-property
+   0
+   'property
+   (completing-read
+    prompt
+    (ht-map (lambda (item-id item-config)
+              (propertize
+               (org-catalyst-safe-get item-config "display-name"
+                                      "(no name)")
+               'property
+               item-id))
+            (plist-get (org-catalyst--get-config-with-cache)
+                       :all-item-config))
+    nil ; predicate
+    t ; require-match
+    nil ; initial-input
+    'org-catalyst--select-item-history)))
+
+(defmacro org-catalyst--interactively-update-item (prompt arg &rest body)
+  "Update item interactively.
+
+Interactively select an action with PROMPT and run BODY that update the item
+action at a certain date.
+
+The existing value of the item action will be bound to `action'.
+
+The ID of selected item will be bound to `item-id', all actions at the
+selected date will be bound to `actions', and parameters of the item will be
+bound to `params'.
+
+BODY should modify `action' (which is a hash table).
+
+If currently not in status window or if ARG is non-nil, the date will be
+interactively selected.
+Otherwise, the date will be the current day in the status window."
+  `(let* ((in-status-buffer (org-catalyst--in-status-buffer))
+          (month-day (if (or ,arg
+                             (not in-status-buffer))
+                         (org-catalyst--read-month-day
+                          org-catalyst--status-month-day)
+                       org-catalyst--status-month-day))
+          (item-id
+           (org-catalyst--select-item ,prompt))
+          (params (org-catalyst-safe-get
+                   (org-catalyst-safe-get
+                    (plist-get
+                     (org-catalyst--get-config-with-cache)
+                     :all-item-config)
+                    item-id nil)
+                   "params" (ht-create))))
+     (org-catalyst--update-actions
+      month-day
+      (org-catalyst-safe-update
+       actions item-id (ht-create)
+       (lambda (action)
+         ,@body
+         action)))
+     (when in-status-buffer
+       (org-catalyst-status-refresh))))
+
+(defun org-catalyst--default-level-function (level)
+  "Default level function.  Return required amount at LEVEL."
+  (* level 5))
+
+(defun org-catalyst--get-level-and-threshold (value)
+  "Return level at VALUE, using `org-catalyst-level-function'."
+  (let ((level 1)
+        (threshold 0))
+    (while (and (>= value
+                   (setq threshold
+                         (+ threshold
+                            (funcall org-catalyst-level-function
+                                  level))))
+                (< level org-catalyst-max-level))
+      (setq level (1+ level)))
+    (cons level threshold)))
 
 ;;; Commands
 
-(defun org-catalyst-complete-item (&optional arg)
+(defun org-catalyst-complete-item-toggle (&optional arg)
   "TODO"
-  ;; TODO: reward buffer
-  ;; TODO: do some caching. this is slow
   (interactive "P")
-  (let ((item-id
-         (get-text-property
-          0
-          'property
-          (completing-read
-           "Complete item: "
-           (org-catalyst--map-entries
-            "item"
-            (lambda ()
-              (propertize (org-no-properties
-                           (org-get-heading t t t t))
-                          'property
-                          (org-id-get-create))))
-           nil ; predicate
-           t ; require-match
-           nil ; initial-input
-           'org-catalyst--complete-item-history))))
-    (let ((month-day (org-catalyst--read-month-day)))
-      (org-catalyst--update-actions
-       month-day
-       (ht-set actions item-id 1)))))
+  (org-catalyst--interactively-update-item
+   "Complete item: " arg
+   (if (org-catalyst-safe-get params "timed" nil)
+       ;; timed
+       (let ((amount (read-number "Enter amount: ")))
+         (if (<= amount 0)
+             (ht-remove action "done")
+           (ht-set action "done" amount)))
+     ;; not timed
+     (if (> (org-catalyst-safe-get action "done" 0) 0)
+         (ht-remove action "done")
+       (ht-set action "done" 1)))))
+
+(defun org-catalyst-pardon-item-toggle (&optional arg)
+  "TODO"
+  (interactive "P")
+  (org-catalyst--interactively-update-item
+   "Pardon item: " arg
+   (if (> (org-catalyst-safe-get action "pardon" 0) 0)
+       (ht-remove action "pardon")
+     (ht-set action "pardon" 1))))
 
 (defun org-catalyst-recompute-history ()
   "Recompute all snapshots from the entire history."
@@ -1100,25 +1566,76 @@ Use DEFAULT when the value is not found."
     (when game-saved
       (message "org-catalyst game saved."))))
 
-(defun org-catalyst-status-refresh ()
-  "Refresh Catalyst window."
+(defun org-catalyst-status-refresh (&optional invalidate-cache)
+  "Refresh Catalyst window.
+
+When called interactively, or when INVALIDATE-CACHE is non-nil, config cache
+will be invalidated."
   (interactive)
   ;; TODO: is this the best idea
-  (let ((buffer (get-buffer-create org-catalyst-buffer-name)))
-    (if (eq buffer (current-buffer))
-        (save-excursion
-          (let ((inhibit-read-only t))
-            (erase-buffer)
-            (org-catalyst--render-status)))
-      (error "Not in Catalyst buffer"))))
+  (if (org-catalyst--in-status-buffer)
+      (let ((line (org-current-line))
+            (inhibit-read-only t))
+        (when (or invalidate-cache
+                  (called-interactively-p 'any))
+          (org-catalyst--invalidate-config-cache))
+        (erase-buffer)
+        (org-catalyst--render-status)
+        (org-goto-line line))
+    (error "Not in Catalyst buffer")))
 
 (defun org-catalyst-status-quit ()
   "Quit Catalyst window."
   (interactive)
-  (let ((buffer (get-buffer-create org-catalyst-buffer-name)))
-    (if (eq buffer (current-buffer))
-        (org-catalyst--restore-window-configuration)
-      (error "Not in Catalyst buffer"))))
+  (if (org-catalyst--in-status-buffer)
+      (org-catalyst--restore-window-configuration)
+    (error "Not in Catalyst buffer")))
+
+(defun org-catalyst-status-goto-date ()
+  "Jump to a date in the Catalyst window."
+  (interactive)
+  (if (org-catalyst--in-status-buffer)
+      ;; TODO maybe stop snapshots from generating after a certain time, and not allow user to go there
+      (let ((month-day (org-catalyst--read-month-day
+                        org-catalyst--status-month-day)))
+        (setq-local org-catalyst--status-month-day
+                    month-day)
+        (org-catalyst-status-refresh))
+    (error "Not in Catalyst buffer")))
+
+(defun org-catalyst-status-goto-today ()
+  "Jump to today in the Catalyst window.
+
+Note that this invalidates config cache."
+  (interactive)
+  (if (org-catalyst--in-status-buffer)
+      (progn
+        (setq-local org-catalyst--status-month-day
+                    (org-catalyst--time-to-month-day
+                     (time-add (current-time)
+                               (* -3600
+                                  org-catalyst-day-start-hour))))
+        (org-catalyst-status-refresh t))
+    (error "Not in Catalyst buffer")))
+
+(defun org-catalyst-status-later (&optional count)
+  "Jump to COUNT days later in the Catalyst window."
+  (interactive "p")
+  (if (org-catalyst--in-status-buffer)
+      (let ((count (or count 1)))
+        (setq-local
+         org-catalyst--status-month-day
+         (org-catalyst--days-to-month-day
+          (+ count
+             (org-catalyst--month-day-to-days
+              org-catalyst--status-month-day))))
+        (org-catalyst-status-refresh))
+    (error "Not in Catalyst buffer")))
+
+(defun org-catalyst-status-earlier (&optional count)
+  "Jump to COUNT days earlier in the Catalyst window."
+  (interactive "p")
+  (org-catalyst-status-later (- (or count 1))))
 
 (defun org-catalyst-status ()
   "Open Catalyst status window."
@@ -1141,7 +1658,8 @@ Use DEFAULT when the value is not found."
 
           (org-catalyst-mode)
           (goto-char (point-min))
-          (org-catalyst-status-refresh))))))
+          ;; TODO: if we change this, make sure to invalidate cache.
+          (org-catalyst-status-goto-today))))))
 
 ;;; Minor modes
 

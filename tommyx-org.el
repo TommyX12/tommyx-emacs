@@ -728,10 +728,15 @@
   (org-catalyst-install-default-systems)
   (org-catalyst-setup-default-sections)
   (org-catalyst-setup-evil-status-bindings)
-  ;; TODO: enable this
   (org-catalyst-auto-save-mode 1)
-  
-)
+  (tommyx-bind-keys
+   `(:case
+     (:bindings
+
+      global-leader
+      (:bindings
+
+       "l" org-catalyst-status)))))
 
 
 (provide 'tommyx-org)
