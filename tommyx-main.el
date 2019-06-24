@@ -17,6 +17,23 @@
 ;; compilation
 (setq compilation-scroll-output 'first-error)
 (setq compilation-window-height 20)
+(defun bury-compile-buffer-if-successful (buffer string)
+ "Bury a compilation buffer if succeeded without warnings."
+ (when (and
+         (buffer-live-p buffer)
+         (string-match "compilation" (buffer-name buffer))
+         (string-match "finished" string)
+         (not
+          (with-current-buffer buffer
+            (goto-char (point-min))
+            (search-forward "warning" nil t))))
+    (run-with-timer 1 nil
+                    (lambda (buf window)
+                      (with-selected-window window
+                        (quit-window)))
+                    buffer
+                    (get-buffer-window buffer))))
+(add-hook 'compilation-finish-functions 'bury-compile-buffer-if-successful)
 
 ;; show trailing whitespace by default
 (setq-default show-trailing-whitespace nil)
@@ -2068,6 +2085,8 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
        "C-l" nil))))
 
   (push 'web-mode ahs-modes)
+  (push 'css-mode ahs-modes)
+  (push 'scss-mode ahs-modes)
 
   (eval-after-load 'flycheck
     '(flycheck-add-mode 'html-tidy 'web-mode))
