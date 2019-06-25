@@ -680,7 +680,7 @@
              "h" 'ivy-backward-kill-word
              "p" 'ivy-partial))
 
-     :keymaps ivy-occur-grep-mode-map
+     :keymaps (ivy-occur-grep-mode-map ivy-occur-mode-map)
      (:bindings
 
       global-leader (:case
@@ -688,7 +688,9 @@
                      nil)
 
       "<tab>" ivy-occur-press
-      open-item ivy-occur-press-and-switch
+      open-item (:case
+                 :states (motion normal)
+                 ivy-occur-press-and-switch)
       "<S-return>" ivy-occur-dispatch))))
 
 (use-package ivy-posframe :ensure t :after ivy
@@ -775,6 +777,7 @@ Useful for a search overview popup."
         '((swiper . ivy-posframe-display-swiper)
           (swiper-multi . nil)
           (swiper-all . nil)
+          (ivy-cs . nil)
           (counsel-ag . nil)
           (counsel-rg . nil)
           (counsel-grep . nil)
