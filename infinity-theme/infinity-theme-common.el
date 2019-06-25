@@ -885,7 +885,7 @@
   `(org-priority-2 ((,class (:foreground ,yellow :inherit bold))))
   `(org-priority-3 ((,class (:foreground ,green :inherit bold))))
   `(org-quote ((,class (:inherit org-block :slant italic))))
-  `(org-scheduled ((,class (:foreground ,const))))
+  `(org-scheduled ((,class (:foreground ,var))))
   `(org-scheduled-today ((,class (:foreground ,func))))
   `(org-scheduled-previously ((,class (:foreground ,base :slant italic))))
   `(org-sexp-date ((,class (:foreground ,base))))

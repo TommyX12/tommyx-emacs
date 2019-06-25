@@ -105,6 +105,11 @@
 ;;; main config
 
 (enable-auto-compilation 'tommyx-main-def)
+(enable-auto-compilation 'redo+)
+(enable-auto-compilation 'font-lock+)
+(enable-auto-compilation 'hl-line+)
+(enable-auto-compilation 'info+)
+(enable-auto-compilation 'companion)
 (require 'tommyx-main)
 
 
