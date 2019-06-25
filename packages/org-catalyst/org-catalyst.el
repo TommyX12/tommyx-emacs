@@ -156,6 +156,8 @@ The accessed entry is updated to be the earliest entry of the cache."
   "Keys of modified histories.")
 (defvar org-catalyst--auto-save-timer nil
   "Timer for `org-catalyst-auto-save-mode'.")
+(defvar org-catalyst--inhibit-save nil
+  "Whether to prevent auto saving temporarily.")
 (defvar org-catalyst--earliest-month-day nil
   ;; NOTE: make this better.
   "Earliest month-day of all snapshots.")
@@ -264,9 +266,29 @@ This is used to determine the default day to show in the status window."
   "Face for Catalyst warning section heading."
   :group 'org-catalyst)
 
+(defface org-catalyst-date-face
+  '((t :inherit org-agenda-date))
+  "Face for Catalyst heading date."
+  :group 'org-catalyst)
+
 (defface org-catalyst-today-face
   '((t :inherit org-agenda-date-today))
-  "Face for Catalyst section heading."
+  "Face for Catalyst today's date."
+  :group 'org-catalyst)
+
+(defface org-catalyst-done-face
+  '((t :inherit org-agenda-done))
+  "Face for Catalyst text related to \"done\"."
+  :group 'org-catalyst)
+
+(defface org-catalyst-negative-done-face
+  '((t :inherit font-lock-warning-face))
+  "Face for Catalyst text related to \"done\" but negatively."
+  :group 'org-catalyst)
+
+(defface org-catalyst-pardon-face
+  '((t :inherit org-scheduled))
+  "Face for Catalyst text related to \"pardon\"."
   :group 'org-catalyst)
 
 ;;; Functions and Macros
@@ -807,7 +829,8 @@ NOTE: This function can mutate SNAPSHOT."
   "Ask the user for game save before quitting Emacs."
   (if (and
        (org-catalyst-has-unsaved-changes)
-       (y-or-n-p "You have unsaved changes in org-catalyst.  Save game? "))
+       (let ((org-catalyst--inhibit-save t))
+         (y-or-n-p "You have unsaved changes in org-catalyst.  Save game? ")))
       (progn
         (org-catalyst-save-game)
         t)
@@ -1052,7 +1075,7 @@ The first element of BODY can be the docstring."
   "Define an inline Catalyst renderer.
 
 Return a function with BODY that accepts INPUTS as keyword argument."
-  (declare (indent 2))
+  (declare (indent 1))
   `(cl-function
     (lambda (&key ,@inputs &allow-other-keys)
       ,@body)))
@@ -1063,6 +1086,21 @@ Return a function with BODY that accepts INPUTS as keyword argument."
 Return RENDERER with INPUTS already fed as argument."
   `(lambda (&rest rest)
      (apply (quote ,name) ,@inputs rest)))
+
+(defun org-catalyst--number-to-string (number)
+  "Convert NUMBER to a display string.
+
+If the value of NUMBER is an integer, no decimal point will be displayed."
+  (let ((rounded (round number)))
+    (if (= rounded number)
+        (number-to-string rounded)
+      (let ((number (round number 0.01)))
+        (cond ((= (% number 100) 0)
+               (number-to-string (round (* number 0.01))))
+              ((= (% number 10) 0)
+               (format "%.1f" (* number 0.01)))
+              (t
+               (format "%.2f" (* number 0.01))))))))
 
 (defun org-catalyst--get-ui-data (config)
   "Extract data from CONFIG for use in status window."
@@ -1097,36 +1135,6 @@ Return RENDERER with INPUTS already fed as argument."
                 (cons "attribute-to-items" attribute-to-items)
                 (cons "attribute-to-states" attribute-to-states)))))
 
-(defun org-catalyst--get-delta-description (all-state-config item-config)
-  "Return readable description of item's delta."
-  (let ((state-deltas (org-catalyst-safe-get item-config "state-deltas" nil)))
-    (if (and state-deltas
-             (not (ht-empty? state-deltas)))
-        (propertize
-         (concat "["
-                 (s-join
-                  ", "
-                  (ht-map
-                   (lambda (state-name delta)
-                     (let ((size (length state-name))
-                           (abbrev-size 3))
-                       (concat (if (< delta 0)
-                                   ""
-                                 "+")
-                               (number-to-string delta)
-                               " "
-                               (capitalize
-                                (substring state-name 0
-                                           (min abbrev-size
-                                                size)))
-                               (if (> size abbrev-size)
-                                   "."
-                                 ""))))
-                   state-deltas))
-                 "]")
-         'face 'org-catalyst-state-delta-face)
-      "")))
-
 (defun org-catalyst--get-item-attribute (snapshot item-id prop &optional default)
   "Return the attribute with name PROP for item with ITEM-ID in SNAPSHOT.
 
@@ -1136,6 +1144,12 @@ Use DEFAULT when the value is not found."
     (or (and item-attr
              (ht-get item-attr prop))
         default)))
+
+(defun org-catalyst--inf-to-number (number)
+  "Convert NUMBER to 1.0e+INF if NUMBER is \"inf\", otherwise return NUMBER."
+  (if (equal number "inf")
+      1.0e+INF
+    number))
 
 (defun org-catalyst--get-state-attribute (snapshot state-name prop &optional default)
   "Return the attribute with name PROP for state with STATE-NAME in SNAPSHOT.
@@ -1176,13 +1190,19 @@ REVERSE the order if REVERSE is non-nil."
   (insert "\n"))
 
 (org-catalyst--define-renderer org-catalyst-section-overview
-    (month-day)
-  (insert (propertize
-           (format-time-string org-catalyst-status-today-format
-                               (org-catalyst--month-day-to-time
-                                month-day))
-           'face 'org-catalyst-today-face)
-          "\n"))
+    (month-day
+     today-month-day)
+  (let ((is-today (equal month-day today-month-day)))
+    (insert (propertize
+             (concat
+              (format-time-string org-catalyst-status-today-format
+                                  (org-catalyst--month-day-to-time
+                                   month-day))
+              (if is-today
+                  " [TODAY]"
+                ""))
+             'face 'org-catalyst-today-face)
+            "\n")))
 
 (org-catalyst--define-renderer org-catalyst--render-leveled-value
     (value)
@@ -1190,11 +1210,94 @@ REVERSE the order if REVERSE is non-nil."
                                value))
          (level (car level-and-threshold))
          (threshold (cdr level-and-threshold)))
-    (insert (format "Lv.%d %-8s"
-                    level
-                    (format "%.0f/%.0f"
-                            value threshold)))))
+    (insert (format "Lv.%s %-8s"
+                    (if level
+                        (org-catalyst--number-to-string level)
+                      "∞")
+                    (if level
+                        (concat
+                         (org-catalyst--number-to-string value)
+                         "/"
+                         (org-catalyst--number-to-string threshold))
+                      "")))))
 
+(org-catalyst--define-renderer org-catalyst--render-delta-desc
+    (item-config)
+  (let ((state-deltas (org-catalyst-safe-get item-config "state-deltas" nil)))
+    (when (and state-deltas
+               (not (ht-empty? state-deltas)))
+      (insert
+       (propertize
+        (concat "["
+                (s-join
+                 ", "
+                 (ht-map
+                  (lambda (state-name delta)
+                    (let ((size (length state-name))
+                          (abbrev-size 3))
+                      (concat (if (< delta 0)
+                                  ""
+                                "+")
+                              (org-catalyst--number-to-string delta)
+                              " "
+                              (capitalize
+                               (substring state-name 0
+                                          (min abbrev-size
+                                               size)))
+                              (if (> size abbrev-size)
+                                  "."
+                                ""))))
+                  state-deltas))
+                "]")
+        'face 'org-catalyst-state-delta-face)))))
+
+(org-catalyst--define-renderer org-catalyst--render-item
+    (action
+     item-config)
+  (let* ((params (org-catalyst-safe-get
+                  item-config "params" nil))
+         (display-name (org-catalyst-safe-get
+                        item-config "display-name" "(no name)"))
+         (timed (org-catalyst-safe-get
+                 params "timed" nil))
+         (negative (org-catalyst-safe-get
+                    params "negative" nil))
+         (done (org-catalyst-safe-get
+                action "done" 0))
+         (pardon (org-catalyst-safe-get
+                  action "pardon" 0))
+         (done-face (if negative
+                        'org-catalyst-negative-done-face
+                      'org-catalyst-done-face)))
+    (insert (cond ((and timed (> done 0))
+                   (concat
+                    (propertize
+                     (concat
+                      "[" (org-catalyst--number-to-string done)
+                      "]")
+                     'face done-face)
+                    " "))
+                  ((> done 0)
+                   (concat
+                    (propertize "[✓]" 'face
+                                done-face)
+                    " "))
+                  ((> pardon 0)
+                   (concat
+                    (propertize "[P]" 'face
+                                'org-catalyst-pardon-face)
+                    " "))
+                  ((and negative (<= done 0))
+                   (concat
+                    (propertize "[×]" 'face
+                                'org-catalyst-done-face)
+                    " "))
+                  (t
+                   ""))
+            display-name
+            "\t")
+    (org-catalyst--render-delta-desc :item-config item-config)
+    (insert "\n")))
 
 (org-catalyst--define-renderer org-catalyst-section-accumulated-stats
     (config
@@ -1222,53 +1325,58 @@ REVERSE the order if REVERSE is non-nil."
                (display-name (ht-get state-config "display-name")))
 
           (cons
-           total
+           (org-catalyst--inf-to-number total)
            (org-catalyst--inline-renderer ()
-               (org-catalyst--render-leveled-value :value total)
+             (org-catalyst--render-leveled-value :value total)
              (insert (format " %s\n" display-name))))))
       (org-catalyst-safe-get
        attribute-to-states "total"
        nil)))))
 
-(cl-defun org-catalyst-section-journal
-    (&key
-     config
-     month-day
-     &allow-other-keys)
+(org-catalyst--define-renderer org-catalyst-section-journal
+    (config
+     snapshot
+     month-day)
   (org-catalyst--render-section-heading :name "Journal")
 
   (let* ((actions (org-catalyst--get-actions-at month-day))
          (all-item-config (plist-get config :all-item-config))
          (all-state-config (plist-get config :all-state-config)))
-    (ht-map
-     (lambda (item-id action)
-       (let* ((item-config
-               (org-catalyst-safe-get all-item-config item-id nil))
-              (display-name
-               (org-catalyst-safe-get item-config "display-name" nil))
-              (delta-desc (org-catalyst--get-delta-description
-                           all-state-config item-config))
-              (timed (org-catalyst-safe-get
-                      (org-catalyst-safe-get
-                       item-config "params" nil)
-                      "timed" nil))
-              (done (org-catalyst-safe-get
-                     action "done" 0))
-              (pardon (org-catalyst-safe-get
-                       action "pardon" 0)))
-         (when (or (> done 0)
-                   (> pardon 0))
-           (insert (format "%-8s %s\t%s\n"
-                           (cond
-                            (timed
-                             (number-to-string done))
-                            ((> done 0)
-                             "DONE")
-                            (t
-                             "PARDON"))
-                           display-name
-                           delta-desc)))))
-     actions)))
+    (org-catalyst--render-sorted
+     :reverse t
+     :renderer-alist
+     (let ((renderers nil))
+       (ht-map
+        (lambda (item-id action)
+          (let* ((item-config
+                  (org-catalyst-safe-get all-item-config item-id nil))
+                 (chain (org-catalyst--get-item-attribute
+                         snapshot item-id "chain" 0))
+                 (display-name
+                  (org-catalyst-safe-get item-config "display-name" nil))
+                 (timed (org-catalyst-safe-get
+                         (org-catalyst-safe-get
+                          item-config "params" nil)
+                         "timed" nil))
+                 (done (org-catalyst-safe-get
+                        action "done" 0))
+                 (pardon (org-catalyst-safe-get
+                          action "pardon" 0)))
+            (when (or (> done 0)
+                      (> pardon 0))
+              (push
+               (cons
+                done
+                (org-catalyst--inline-renderer ()
+                  (org-catalyst--render-leveled-value
+                   :value chain)
+                  (insert " ")
+                  (org-catalyst--render-item
+                   :action action
+                   :item-config item-config)))
+               renderers))))
+        actions)
+       renderers))))
 
 (cl-defun org-catalyst-section-chains
     (&key
@@ -1283,6 +1391,7 @@ REVERSE the order if REVERSE is non-nil."
                                                     "attribute-to-items"
                                                     (ht-create)))
          (item-ids (ht-get attribute-to-items "chain"))
+         (actions (org-catalyst--get-actions-at month-day))
          (all-item-config (plist-get config :all-item-config))
          (all-state-config (plist-get config :all-state-config))
          (item-attributes (ht-get snapshot "item-attributes"))
@@ -1290,9 +1399,6 @@ REVERSE the order if REVERSE is non-nil."
           (mapcar
            (lambda (item-id)
              (let* ((item-config (ht-get all-item-config item-id))
-                    (display-name (ht-get item-config "display-name"))
-                    (delta-desc (org-catalyst--get-delta-description
-                                 all-state-config item-config))
                     (chain (org-catalyst--get-item-attribute
                             snapshot item-id "chain" 0))
                     (last-chain-day-index
@@ -1304,17 +1410,20 @@ REVERSE the order if REVERSE is non-nil."
                      (- day-index
                         last-chain-day-index))
                     ;; TODO: customizable default chain interval. in update function too.
+                    (params (org-catalyst-safe-get
+                             item-config "params" nil))
+                    (action (org-catalyst-safe-get
+                             actions item-id nil))
                     (chain-interval
-                     (org-catalyst-safe-get (org-catalyst-safe-get
-                                             item-config "params" nil)
+                     (org-catalyst-safe-get params
                                             "chain_interval" 1))
                     (breaking
                      (= days-since-last chain-interval)))
                (list :item-id item-id
-                     :chain chain
+                     :chain (org-catalyst--inf-to-number chain)
                      :breaking breaking
-                     :display-name display-name
-                     :delta-desc delta-desc)))
+                     :item-config item-config
+                     :action action)))
            item-ids)))
 
     (let ((rows (sort
@@ -1333,9 +1442,10 @@ REVERSE the order if REVERSE is non-nil."
           ;; TODO: render row.
           (org-catalyst--render-leveled-value
            :value (plist-get row :chain))
-          (insert (format " %s\t%s\n"
-                          (plist-get row :display-name)
-                          (plist-get row :delta-desc))))
+          (insert " ")
+          (org-catalyst--render-item
+           :action (plist-get row :action)
+           :item-config (plist-get row :item-config)))
 
         (org-catalyst-section-separator)))
 
@@ -1348,9 +1458,10 @@ REVERSE the order if REVERSE is non-nil."
       (dolist (row rows)
         (org-catalyst--render-leveled-value
          :value (plist-get row :chain))
-        (insert (format " %s\t%s\n"
-                        (plist-get row :display-name)
-                        (plist-get row :delta-desc)))))))
+        (insert " ")
+        (org-catalyst--render-item
+         :action (plist-get row :action)
+         :item-config (plist-get row :item-config))))))
 
 (defun org-catalyst-setup-default-sections ()
   "Set `org-catalyst-status-sections' to be a good default."
@@ -1381,6 +1492,7 @@ REVERSE the order if REVERSE is non-nil."
        :config config
        :ui-data ui-data
        :month-day month-day
+       :today-month-day (org-catalyst--status-today-month-day)
        :snapshot snapshot))))
 
 (defun org-catalyst--in-status-buffer ()
@@ -1482,20 +1594,32 @@ Otherwise, the date will be the current day in the status window."
 
 (defun org-catalyst--default-level-function (level)
   "Default level function.  Return required amount at LEVEL."
-  (* level 5))
+  (+ 2 (* level 1)))
 
 (defun org-catalyst--get-level-and-threshold (value)
   "Return level at VALUE, using `org-catalyst-level-function'."
-  (let ((level 1)
-        (threshold 0))
-    (while (and (>= value
-                   (setq threshold
-                         (+ threshold
-                            (funcall org-catalyst-level-function
-                                  level))))
-                (< level org-catalyst-max-level))
-      (setq level (1+ level)))
-    (cons level threshold)))
+  (if (or (equal value "inf")
+          (equal value 1.0e+INF))
+      nil
+    (let ((level 1)
+          (threshold 0))
+      (while (and (>= value
+                      (setq threshold
+                            (+ threshold
+                               (funcall org-catalyst-level-function
+                                        level))))
+                  (< level org-catalyst-max-level))
+        (setq level (1+ level)))
+      (cons level threshold))))
+
+(defun org-catalyst--status-today-month-day ()
+  "Return the month-day for \"today\" for use in status buffer.
+
+This takes `org-catalyst-day-start-hour' into account."
+  (org-catalyst--time-to-month-day
+   (time-add (current-time)
+             (* -3600
+                org-catalyst-day-start-hour))))
 
 ;;; Commands
 
@@ -1529,7 +1653,8 @@ Otherwise, the date will be the current day in the status window."
   (interactive)
   ;; NOTE: probably update some view?
   (org-catalyst--update-cached-snapshots
-   (org-catalyst--get-earliest-month-day)))
+   (org-catalyst--get-earliest-month-day))
+  (message "Recomputed Catalyst history."))
 
 (defun org-catalyst-update-inline-info ()
   "TODO"
@@ -1538,7 +1663,8 @@ Otherwise, the date will be the current day in the status window."
 (defun org-catalyst-save-game ()
   "Save the current game state."
   (interactive)
-  (let ((game-saved nil))
+  (unless org-catalyst--inhibit-save
+    (let ((game-saved nil))
 
     (unless (ht-empty? org-catalyst--modified-history-keys)
       (dolist (key (ht-keys org-catalyst--modified-history-keys))
@@ -1564,7 +1690,7 @@ Otherwise, the date will be the current day in the status window."
       (setq game-saved t))
 
     (when game-saved
-      (message "org-catalyst game saved."))))
+      (message "org-catalyst game saved.")))))
 
 (defun org-catalyst-status-refresh (&optional invalidate-cache)
   "Refresh Catalyst window.
@@ -1611,11 +1737,8 @@ Note that this invalidates config cache."
   (if (org-catalyst--in-status-buffer)
       (progn
         (setq-local org-catalyst--status-month-day
-                    (org-catalyst--time-to-month-day
-                     (time-add (current-time)
-                               (* -3600
-                                  org-catalyst-day-start-hour))))
-        (org-catalyst-status-refresh t))
+                    (org-catalyst--status-today-month-day))
+        (org-catalyst-status-refresh))
     (error "Not in Catalyst buffer")))
 
 (defun org-catalyst-status-later (&optional count)
@@ -1658,7 +1781,7 @@ Note that this invalidates config cache."
 
           (org-catalyst-mode)
           (goto-char (point-min))
-          ;; TODO: if we change this, make sure to invalidate cache.
+          (org-catalyst--invalidate-config-cache)
           (org-catalyst-status-goto-today))))))
 
 ;;; Minor modes
@@ -1694,7 +1817,13 @@ Note that this invalidates config cache."
 (define-derived-mode org-catalyst-mode
   special-mode "Org Catalyst"
   "Major mode for Catalyst."
-  (toggle-truncate-lines 1))
+  (toggle-truncate-lines 1)
+  (setq-local tab-width 4))
+
+;;; Hooks
+
+(add-hook 'before-save-hook
+          #'org-catalyst--invalidate-config-cache)
 
 ;;; Footer
 
