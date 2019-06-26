@@ -3232,6 +3232,9 @@ command (ran after) is mysteriously incorrect."
       "f" (:def
            counsel-find-file
            :which-key "Files")
+      "F" (:def
+           find-file-at-point
+           :which-key "File at Point")
       "s" (:def
            counsel-semantic-or-imenu
            :key-name find-semantic-item
@@ -3796,8 +3799,14 @@ command (ran after) is mysteriously incorrect."
    :keymaps (minibuffer-local-map evil-ex-completion-map)
    (:bindings
 
-    previous-history-item previous-complete-history-element
-    next-history-item next-complete-history-element
+    previous-history-item ,(lambda () (interactive)
+                             (call-interactively
+                              'previous-complete-history-element)
+                             (end-of-line))
+    next-history-item ,(lambda () (interactive)
+                         (call-interactively
+                          'next-complete-history-element)
+                         (end-of-line))
     select-action exit-minibuffer)))
 
 (tommyx-bind-keys
@@ -3811,6 +3820,14 @@ command (ran after) is mysteriously incorrect."
     go-forward (:case
                 :states (motion normal)
                 help-go-forward))))
+
+(tommyx-bind-keys
+ `(:case
+   :keymaps compilation-mode-map
+   (:bindings
+
+    "h" nil
+    "SPC" nil)))
 
 
 ;;; general settings after package load
