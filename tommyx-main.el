@@ -40,6 +40,8 @@
 (add-hook 'prog-mode-hook (lambda ()
                             (setq-local show-trailing-whitespace t)))
 
+;; disable trailing whitespace on evil insert mode
+
 ;; indentation guide using whitespace mode
 (setq whitespace-style '(
                          tab-mark face tabs
@@ -367,6 +369,15 @@
   (add-hook 'evil-insert-state-exit-hook (lambda () (hl-line-mode 1)))
   (add-hook 'evil-visual-state-entry-hook (lambda () (hl-line-mode -1)))
   (add-hook 'evil-visual-state-exit-hook (lambda () (hl-line-mode 1)))
+  (defvar-local show-trailing-whitespace-temp nil)
+  (add-hook 'evil-insert-state-entry-hook
+            (lambda ()
+              (setq-local show-trailing-whitespace-temp
+                          show-trailing-whitespace)
+              (setq-local show-trailing-whitespace nil)))
+  (add-hook 'evil-insert-state-exit-hook
+            (lambda () (setq-local show-trailing-whitespace
+                                   show-trailing-whitespace-temp)))
 
   (setq evil-split-window-below t)
   (setq evil-vsplit-window-right t)

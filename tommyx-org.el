@@ -736,7 +736,12 @@
       global-leader
       (:bindings
 
-       "l" org-catalyst-status)))))
+       "l"
+       (:bindings
+        :which-key "Catalyst"
+
+        "s" org-catalyst-status
+        "r" org-catalyst-recompute-history))))))
 
 
 (provide 'tommyx-org)
