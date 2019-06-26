@@ -2086,7 +2086,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
      (setq-local evil-shift-width tab-width)
      (setq-local highlight-indentation-offset 4)
      (setq-local web-mode-css-indent-offset 2)
-     (setq-local css-indent-offset 2))
+     (setq-local css-indent-offset 2)))
 
    ;; bindings
    
