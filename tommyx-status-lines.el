@@ -101,8 +101,10 @@ in pdf-view mode (enabled by the `pdf-tools' package)."
 
 ;; header line definition
 (setq status-lines-header-segments-left `(
-  (window-number :face highlight-face :priority 99)
-  ((buffer-modified status-lines-mode-icon-colored buffer-id remote-host) :face 'mode-line)
+  (window-number :face highlight-face :priority 1)
+  ((buffer-modified status-lines-mode-icon-colored buffer-id remote-host)
+   :face 'mode-line
+   :priority 1)
   (purpose :priority 94)
 ))
 (setq status-lines-header-segments-right `(
