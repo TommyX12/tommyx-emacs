@@ -18,8 +18,8 @@
 (setq compilation-scroll-output 'first-error)
 (setq compilation-window-height 20)
 (defun bury-compile-buffer-if-successful (buffer string)
- "Bury a compilation buffer if succeeded without warnings."
- (when (and
+  "Bury a compilation buffer if succeeded without warnings."
+  (when (and
          (buffer-live-p buffer)
          (string-match "compilation" (buffer-name buffer))
          (string-match "finished" string)
@@ -2096,7 +2096,18 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
       (:bindings
 
        "C-h" nil
-       "C-l" nil))))
+       "C-l" nil)
+
+      :keymaps web-mode-map
+      :states (motion normal visual)
+      (:bindings
+
+       jump-to-matching web-mode-navigate
+
+       mode-specific-prefix
+       (:bindings
+
+        "r" web-mode-element-rename))))
 
   (push 'web-mode ahs-modes)
   (push 'css-mode ahs-modes)
@@ -2638,6 +2649,10 @@ command (ran after) is mysteriously incorrect."
     ;;        evil-jump-to-tag
     ;;        :key-name jump-to-definition)
 
+    "t" (:def
+         evil-jump-item
+         :key-name jump-to-matching)
+
     "p" ,(lambda () (interactive)
            (call-interactively 'evil-paste-after)
            (evil-goto-mark ?\]))
@@ -2962,10 +2977,12 @@ command (ran after) is mysteriously incorrect."
                :states (visual)
                indent-region)
 
-      ;; manually update heavy tasks
       "r" (:def
-           update-heavy-tasks
-           :which-key "update heavy tasks")
+           ,(lambda () (interactive)
+              (evil-ex-search-word-forward)
+              (evil-ex-search-previous)
+              (evil-ex "%s//"))
+           :which-key "Replace Element")
 
       ;; macro
       "q" (:case
@@ -2994,6 +3011,11 @@ command (ran after) is mysteriously incorrect."
       (:bindings
        :which-key "Extended Shortcuts"
        :key-name extended-shortcuts-prefix
+
+       ;; manually update heavy tasks
+       "r" (:def
+            update-heavy-tasks
+            :which-key "update heavy tasks")
 
        ;; narrowing
        "n" (:case
