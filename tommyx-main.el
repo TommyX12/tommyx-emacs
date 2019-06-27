@@ -2203,13 +2203,12 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (defun smart-open-line-above ()
   (interactive)
   ;; (move-beginning-of-line nil)
-  (save-excursion
-    (newline))
-                                        ; TODO: if we want to indent, uncomment this
   ;; (save-excursion
-  ;;   (newline-and-indent))
-  ;; (indent-according-to-mode)
-  )
+  ;;   (newline))
+  ;; TODO: if we do not want to indent, comment this
+  (save-excursion
+    (newline-and-indent))
+  (indent-according-to-mode))
 
 (defun update-heavy-tasks () (interactive)
        "Update all the heavy tasks."
