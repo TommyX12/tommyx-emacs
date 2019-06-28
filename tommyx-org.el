@@ -278,7 +278,17 @@
           :which-key "Insert Org Link")
      "L" (:def
           org-store-link
-          :which-key "Store Org Link")))
+          :which-key "Store Org Link")
+     "A"
+     (:bindings
+      :which-key "Auto Capture"
+
+      "p" (:def
+           org-auto-capture-process-subtree
+           :which-key "Process Subtree")
+      "d" (:def
+           org-auto-capture-delete-marked-subtree
+           :which-key "Delete Marked In Subtree"))))
 
    :keymaps org-mode-map
    :states (motion normal visual)
