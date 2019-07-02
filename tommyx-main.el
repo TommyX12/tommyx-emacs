@@ -1171,7 +1171,6 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
           company-echo-metadata-frontend))
   (setq company-idle-delay 0)
   (setq company-tooltip-align-annotations t)
-  ;; (setq company-idle-delay 0.2)
   (setq company-selection-wrap-around t)
   (setq company-show-numbers t)
   (setq company-quickhelp-delay nil) ; we will manually trigger the help
@@ -1247,6 +1246,9 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   :config
   (setq-default company-backends
                 (cons #'company-tabnine company-backends))
+
+  ;; (setq company-idle-delay 0.05)
+  ;; (setq company-tabnine-no-continue t)
 
   ;; workaround for company-flx-mode and other transformers
   (setq company-tabnine--disable-next-transform nil)

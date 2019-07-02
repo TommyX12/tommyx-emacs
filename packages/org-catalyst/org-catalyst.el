@@ -331,6 +331,11 @@ This is used to determine the default day to show in the status window."
   "Face for Catalyst highest chain."
   :group 'org-catalyst)
 
+(defface org-catalyst-item-group-face
+  '((t :inherit font-lock-function-name-face))
+  "Face for Catalyst item group."
+  :group 'org-catalyst)
+
 (defface org-catalyst-currently-highest-chain-face
   '((t :inherit font-lock-preprocessor-face))
   "Face for Catalyst highest chain that is equal to current."
@@ -724,140 +729,219 @@ The return value is positive if MONTH-DAY-1 is before MONTH-DAY-2, and vice vers
   (f-join org-catalyst-save-path
           (concat key org-catalyst--history-suffix)))
 
-(defun org-catalyst--map-entries (filter func)
-  "TODO make the filter better"
-  (org-map-entries func filter 'agenda))
+(defun org-catalyst--map-entries (func)
+  "Execute FUNC on all headlines."
+  (org-map-entries func nil 'agenda))
+
+(defun org-catalyst--contains-tag (tag tags &optional local)
+  "Check if TAGS contain TAG.
+
+Return found tag if TAGS contains TAG.
+
+If LOCAL is non-nil, return tag only if TAG is a local tag."
+  (let ((result nil))
+    (while tags
+      (let ((existing-tag (car tags)))
+        (if (or (not (equal tag existing-tag))
+                (and local
+                     (get-text-property
+                      0 'inherited existing-tag)))
+            (setq tags (cdr tags))
+          (setq tags nil
+                result existing-tag))))
+    result))
 
 (defun org-catalyst--get-config ()
   "TODO"
   ;; TODO: allow only getting parts of the things to optimize
-  (let ((all-item-config (ht-create))
-        (all-state-config (ht-create))
-        (state-update-funcs (ht-create))
-        (item-update-funcs (ht-create))
-        (continuous-state-update-funcs (ht-create))
-        (continuous-item-update-funcs (ht-create)))
-    (org-catalyst--map-entries
-     "item|state"
-     (lambda ()
-       (let ((tags org-scanner-tags))
-         (cond
+  (let* ((all-item-config (ht-create))
+         (all-state-config (ht-create))
+         (state-update-funcs (ht-create))
+         (item-update-funcs (ht-create))
+         (continuous-state-update-funcs (ht-create))
+         (continuous-item-update-funcs (ht-create))
+         ;; This is the list of item IDs ordered such that for each item,
+         ;; its parents will always be later in the list.
+         (topological-order nil)
+         (children (ht-create))
 
-          ((member "item" tags)
-           (let ((display-name (org-no-properties
-                                (org-get-heading t t t t)))
-                 (item-id (org-id-get-create))
-                 (item-config (ht-create))
-                 (state-deltas (ht-create))
-                 (attributes nil)
-                 (params (ht-create)))
-             (dolist (prop (let ((org-trust-scanner-tags t))
-                             (org-entry-properties (point)
-                                                   'standard)))
-               (let ((prop-name (downcase (car prop)))
-                     (prop-value (cdr prop)))
-                 (cond
-                  ((string= prop-name "attributes")
-                   (dolist (attribute
-                            (split-string prop-value
-                                          "[ \f\t\n\r\v]+"
-                                          t))
-                     (let* ((attribute (downcase
-                                        (string-trim attribute)))
-                            (system (ht-get org-catalyst--item-systems
-                                            attribute)))
-                       (setq attributes (cons attribute attributes))
-                       (when system
-                         (let ((continuous (ht-get system "continuous"))
-                               (update-func (ht-get system "update-func")))
-                           (let ((funcs-map (if continuous
-                                                continuous-item-update-funcs
-                                              item-update-funcs)))
-                             (ht-set
-                              funcs-map
-                              item-id
-                              (cons update-func
-                                    (ht-get funcs-map item-id)))))))))
+         (prev-buffer nil)
+         (params-stack nil)
+         (state-deltas-stack nil)
+         (children-stack nil)
+         (children-parent-id-stack nil))
 
-                  ((s-starts-with-p org-catalyst--state-delta-prefix
-                                    prop-name)
-                   ;; TODO: state names are stored in lower case
-                   (ht-set state-deltas
-                           (substring prop-name
-                                      (length org-catalyst--state-delta-prefix))
-                           (string-to-number prop-value)))
+    (cl-flet
+        ((collect-children-stack
+          (&optional level)
+          (let ((level (or level -1)))
+            (while (and children-stack
+                        (<= level (caar children-stack)))
+              (let* ((children-stack-entry (pop children-stack))
+                     (cur-level (car children-stack-entry))
+                     (cur-children (cdr children-stack-entry))
+                     (parent-id (pop children-parent-id-stack)))
+                (ht-set children parent-id cur-children))))))
 
-                  ((s-starts-with-p org-catalyst--param-prefix
-                                    prop-name)
-                   (ht-set params
-                           (substring
-                            prop-name
-                            (length org-catalyst--param-prefix))
-                           (car (read-from-string prop-value)))))))
+      (org-catalyst--map-entries
+       (lambda ()
+         (let ((tags org-scanner-tags)
+               (tag nil))
+           (unless (eq prev-buffer (current-buffer))
+             (setq params-stack nil
+                   state-deltas-stack nil)
+             (setq prev-buffer (current-buffer))
+             (collect-children-stack))
 
-             (ht-set item-config "item-id" item-id)
-             (ht-set item-config "display-name" display-name)
-             (ht-set item-config "state-deltas" state-deltas)
-             (ht-set item-config "attributes" attributes)
-             (ht-set item-config "params" params)
-             (ht-set all-item-config item-id
-                     item-config)))
+           (cond
+            ((setq tag (or (org-catalyst--contains-tag "item" tags t)
+                           (org-catalyst--contains-tag "itemgroup" tags t)))
+             (let ((level (org-current-level))
+                   (display-name (org-no-properties
+                                  (org-get-heading t t t t)))
+                   (item-id (org-id-get-create))
+                   (item-config (ht-create))
+                   (state-deltas (ht-create))
+                   (attributes nil)
+                   (params (ht-create))
+                   (is-group (equal tag "itemgroup")))
 
-          ((member "state" tags)
-           (let* ((display-name (org-no-properties
-                                 (org-get-heading t t t t)))
-                  (state-name (downcase display-name))
-                  (state-config (ht-create))
-                  (attributes nil)
-                  (params (ht-create)))
-             (dolist (prop (let ((org-trust-scanner-tags t))
-                             (org-entry-properties (point)
-                                                   'standard)))
-               (let ((prop-name (downcase (car prop)))
-                     (prop-value (cdr prop)))
-                 (cond
+               (while (and params-stack
+                           (<= level (caar params-stack)))
+                 (pop params-stack)
+                 (pop state-deltas-stack))
 
-                  ((string= prop-name "attributes")
-                   (dolist (attribute
-                            (split-string prop-value
-                                          "[ \f\t\n\r\v]+"
-                                          t))
-                     (let* ((attribute (downcase
-                                        (string-trim attribute)))
-                            (system (ht-get org-catalyst--state-systems
-                                            attribute)))
-                       (setq attributes (cons attribute attributes))
-                       (when system
-                         (let ((continuous (ht-get system "continuous"))
-                               (update-func (ht-get system "update-func")))
-                           (let ((funcs-map (if continuous
-                                                continuous-state-update-funcs
-                                              state-update-funcs)))
-                             (ht-set
-                              funcs-map
-                              state-name
-                              (cons update-func
-                                    (ht-get funcs-map state-name)))))))))
+               (collect-children-stack level)
 
-                  ((s-starts-with-p org-catalyst--param-prefix
-                                    prop-name)
-                   (ht-set params
-                           (substring
-                            prop-name
-                            (length org-catalyst--param-prefix))
-                           (car (read-from-string prop-value)))))))
+               (dolist (prop (let ((org-trust-scanner-tags t))
+                               (org-entry-properties (point)
+                                                     'standard)))
+                 (let ((prop-name (downcase (car prop)))
+                       (prop-value (cdr prop)))
+                   (cond
+                    ((string= prop-name "attributes")
+                     (dolist (attribute
+                              (split-string prop-value
+                                            "[ \f\t\n\r\v]+"
+                                            t))
+                       (let* ((attribute (downcase
+                                          (string-trim attribute)))
+                              (system (ht-get org-catalyst--item-systems
+                                              attribute)))
+                         (setq attributes (cons attribute attributes))
+                         (when system
+                           (let ((continuous (ht-get system "continuous"))
+                                 (update-func (ht-get system "update-func")))
+                             (let ((funcs-map (if continuous
+                                                  continuous-item-update-funcs
+                                                item-update-funcs)))
+                               (ht-set
+                                funcs-map
+                                item-id
+                                (cons update-func
+                                      (ht-get funcs-map item-id)))))))))
 
-             (ht-set state-config "display-name" display-name)
-             (ht-set state-config "attributes" attributes)
-             (ht-set state-config "params" params)
-             (ht-set all-state-config state-name state-config)))))))
+                    ((s-starts-with-p org-catalyst--state-delta-prefix
+                                      prop-name)
+                     ;; TODO: state names are stored in lower case
+                     (ht-set state-deltas
+                             (substring prop-name
+                                        (length org-catalyst--state-delta-prefix))
+                             (string-to-number prop-value)))
+
+                    ((s-starts-with-p org-catalyst--param-prefix
+                                      prop-name)
+                     (ht-set params
+                             (substring
+                              prop-name
+                              (length org-catalyst--param-prefix))
+                             (car (read-from-string prop-value)))))))
+
+               (ht-set item-config "item-id" item-id)
+               (ht-set item-config "is-group" is-group)
+               (ht-set item-config "display-name" display-name)
+               (ht-set item-config "state-deltas"
+                       (if state-deltas-stack
+                           (ht-merge (cdar state-deltas-stack) state-deltas)
+                         state-deltas))
+               (ht-set item-config "attributes" attributes)
+               (ht-set item-config "params"
+                       (if params-stack
+                           (ht-merge (cdar params-stack) params)
+                         params))
+               (ht-set all-item-config item-id
+                       item-config)
+
+               (when children-stack
+                 (push item-id (cdar children-stack)))
+
+               (when is-group
+                 (push (cons level params) params-stack)
+                 (push (cons level state-deltas) state-deltas-stack)
+                 (push (cons level nil) children-stack)
+                 (push item-id children-parent-id-stack))
+
+               (push item-id topological-order)))
+
+            ((setq tag (org-catalyst--contains-tag "state" tags t))
+             (let* ((display-name (org-no-properties
+                                   (org-get-heading t t t t)))
+                    (state-name (downcase display-name))
+                    (state-config (ht-create))
+                    (attributes nil)
+                    (params (ht-create)))
+               (dolist (prop (let ((org-trust-scanner-tags t))
+                               (org-entry-properties (point)
+                                                     'standard)))
+                 (let ((prop-name (downcase (car prop)))
+                       (prop-value (cdr prop)))
+                   (cond
+
+                    ((string= prop-name "attributes")
+                     (dolist (attribute
+                              (split-string prop-value
+                                            "[ \f\t\n\r\v]+"
+                                            t))
+                       (let* ((attribute (downcase
+                                          (string-trim attribute)))
+                              (system (ht-get org-catalyst--state-systems
+                                              attribute)))
+                         (setq attributes (cons attribute attributes))
+                         (when system
+                           (let ((continuous (ht-get system "continuous"))
+                                 (update-func (ht-get system "update-func")))
+                             (let ((funcs-map (if continuous
+                                                  continuous-state-update-funcs
+                                                state-update-funcs)))
+                               (ht-set
+                                funcs-map
+                                state-name
+                                (cons update-func
+                                      (ht-get funcs-map state-name)))))))))
+
+                    ((s-starts-with-p org-catalyst--param-prefix
+                                      prop-name)
+                     (ht-set params
+                             (substring
+                              prop-name
+                              (length org-catalyst--param-prefix))
+                             (car (read-from-string prop-value)))))))
+
+               (ht-set state-config "display-name" display-name)
+               (ht-set state-config "attributes" attributes)
+               (ht-set state-config "params" params)
+               (ht-set all-state-config state-name state-config)))))))
+
+      (collect-children-stack))
 
     (list :all-item-config all-item-config
           :all-state-config all-state-config
           :state-update-funcs state-update-funcs
           :item-update-funcs item-update-funcs
           :continuous-state-update-funcs continuous-state-update-funcs
-          :continuous-item-update-funcs continuous-item-update-funcs)))
+          :continuous-item-update-funcs continuous-item-update-funcs
+          :topological-order topological-order
+          :children children)))
 
 (defun org-catalyst--update-function (snapshot
                                       actions
@@ -886,7 +970,9 @@ NOTE: This function can mutate SNAPSHOT."
               (or (and item-config
                        (ht-get item-config "params"))
                   empty-table)))
-        (when state-deltas
+        (when (and state-deltas
+                   (not (org-catalyst-safe-get
+                         item-config "is-group" nil)))
           (dolist (state-name (ht-keys state-deltas))
             (let* ((state-config (ht-get all-state-config state-name))
                    (state-params (or (and
@@ -1031,6 +1117,43 @@ NOTE: This function can mutate SNAPSHOT."
         (ht-set history day-key actions)
         actions))))
 
+(defun org-catalyst--get-computed-actions-at (month-day children all-item-config topological-order)
+  "Return the actions at MONTH-DAY.
+
+This includes actions that are computed; more specifically, it includes actions
+of item groups that are computed from its children.
+
+CHILDREN is a hash table mapping from item-id to a list of child IDs.
+
+ALL-ITEM-CONFIG is used to check if a particular item is an item group.
+
+TOPOLOGICAL-ORDER must be a list of item-id ordered such that each item's
+parents always come after the item itself."
+  (let ((actions (org-catalyst--deep-copy
+                  (org-catalyst--get-actions-at month-day))))
+    (dolist (item-id topological-order)
+      (when (org-catalyst-safe-get
+             (org-catalyst-safe-get
+              all-item-config item-id nil)
+             "is-group" nil)
+        (org-catalyst-safe-update
+         actions item-id (ht-create)
+         (lambda (prev)
+           (org-catalyst-safe-update
+            prev "done" 0
+            (lambda (prev)
+              (apply #'+ prev
+                     (mapcar
+                      (lambda (child-id)
+                        (org-catalyst-safe-get
+                         (org-catalyst-safe-get
+                          actions child-id (ht-create))
+                         "done" 0))
+                      (org-catalyst-safe-get
+                       children item-id nil)))))
+           prev))))
+    actions))
+
 (defun org-catalyst--deep-copy (object)
   "Make a deep copy of OBJECT.
 This is similar to `copy-tree', but handles hash tables as well."
@@ -1116,6 +1239,9 @@ If CONFIG is non-nil, it is used instead of computing another."
                (plist-get config :continuous-state-update-funcs))
               (continuous-item-update-funcs
                (plist-get config :continuous-item-update-funcs))
+              (children (plist-get config :children))
+              (topological-order
+               (plist-get config :topological-order))
               (cur-day-index 0)
               (cur-snapshot (org-catalyst--compute-snapshot-at
                              (cons month-index 0)
@@ -1125,8 +1251,11 @@ If CONFIG is non-nil, it is used instead of computing another."
              (setq cur-snapshot
                    (org-catalyst--update-function
                     cur-snapshot
-                    (org-catalyst--get-actions-at
-                     cur-month-day)
+                    (org-catalyst--get-computed-actions-at
+                     cur-month-day
+                     children
+                     all-item-config
+                     topological-order)
                     (cons month-index (1+ cur-day-index))
                     all-item-config
                     all-state-config
@@ -1158,11 +1287,17 @@ start of MONTH-DAY, and cdr is the snapshot at the end of MONTH-DAY."
                 (plist-get config :continuous-state-update-funcs))
                (continuous-item-update-funcs
                 (plist-get config :continuous-item-update-funcs))
+               (children (plist-get config :children))
+               (topological-order
+                (plist-get config :topological-order))
                (cur-snapshot
                 (org-catalyst--update-function
                  (org-catalyst--deep-copy prev-snapshot)
-                 (org-catalyst--get-actions-at
-                  month-day)
+                 (org-catalyst--get-computed-actions-at
+                  month-day
+                  children
+                  all-item-config
+                  topological-order)
                  (org-catalyst--next-month-day month-day)
                  all-item-config
                  all-state-config
@@ -1283,19 +1418,29 @@ Note: DO NOT quote RENDERER."
      (apply (quote ,renderer) ,@inputs rest)))
 
 (defun org-catalyst--number-to-string (number)
-  "Convert NUMBER to a display string.
+  "Convert NUMBER to a display string (at most 1 decimal point).
 
 If the value of NUMBER is an integer, no decimal point will be displayed."
   (let ((rounded (round number)))
     (if (= rounded number)
         (number-to-string rounded)
-      (let ((number (round number 0.01)))
-        (cond ((= (% number 100) 0)
-               (number-to-string (round (* number 0.01))))
-              ((= (% number 10) 0)
-               (format "%.1f" (* number 0.01)))
+      (let ((number (round number 0.1)))
+        (cond ((= (% number 10) 0)
+               (number-to-string (round (* number 0.1))))
               (t
-               (format "%.2f" (* number 0.01))))))))
+               (format "%.1f" (* number 0.1)))))))
+  ;; ;; Two decimal point implementation
+  ;; (let ((rounded (round number)))
+  ;;   (if (= rounded number)
+  ;;       (number-to-string rounded)
+  ;;     (let ((number (round number 0.01)))
+  ;;       (cond ((= (% number 100) 0)
+  ;;              (number-to-string (round (* number 0.01))))
+  ;;             ((= (% number 10) 0)
+  ;;              (format "%.1f" (* number 0.01)))
+  ;;             (t
+  ;;              (format "%.2f" (* number 0.01)))))))
+  )
 
 (defun org-catalyst--get-ui-data (config)
   "Extract data from CONFIG for use in status window."
@@ -1530,35 +1675,44 @@ REVERSE the order if REVERSE is non-nil."
           ""))))))
 
 (org-catalyst--define-renderer org-catalyst--render-delta-desc
-    (item-config)
-  (let ((state-deltas (org-catalyst-safe-get item-config "state-deltas" nil)))
+    (item-config
+     action)
+  (let ((state-deltas (org-catalyst-safe-get item-config "state-deltas" nil))
+        (pardon (> (org-catalyst-safe-get
+                    action "pardon" 0)
+                   0)))
     (when (and state-deltas
                (not (ht-empty? state-deltas)))
-      (insert
-       (concat
-        (s-join
-         " "
-         (seq-filter
-          #'identity
-          (ht-map
-           (lambda (state-name delta)
-             (let ((size (length state-name))
-                   (abbrev-size 3))
-               (when (not (= delta 0))
-                 (concat
-                  (org-catalyst--number-to-delta-string delta)
-                  " "
-                  (org-catalyst--with-face
-                   (concat
-                    (capitalize
-                     (substring state-name 0
-                                (min abbrev-size
-                                     size)))
-                    (if (> size abbrev-size)
-                        "."
-                      ""))
-                   'org-catalyst-stats-face)))))
-           state-deltas))))))))
+      (let ((text
+             (concat
+              (s-join
+               " "
+               (seq-filter
+                #'identity
+                (ht-map
+                 (lambda (state-name delta)
+                   (let ((size (length state-name))
+                         (abbrev-size 3))
+                     (when (not (= delta 0))
+                       (concat
+                        (org-catalyst--number-to-delta-string delta)
+                        " "
+                        (org-catalyst--with-face
+                         (concat
+                          (capitalize
+                           (substring state-name 0
+                                      (min abbrev-size
+                                           size)))
+                          (if (> size abbrev-size)
+                              "."
+                            ""))
+                         'org-catalyst-stats-face)))))
+                 state-deltas))))))
+        (insert (if pardon
+                    (org-catalyst--with-face
+                     (substring-no-properties text)
+                     'org-life-agenda-secondary-face)
+                  text))))))
 
 (org-catalyst--define-renderer org-catalyst--render-action-chip
     (action
@@ -1618,8 +1772,7 @@ REVERSE the order if REVERSE is non-nil."
 (org-catalyst--define-renderer org-catalyst--render-chain-break-chip
     (month-day
      item-config
-     snapshot
-     action)
+     snapshot)
   (when item-config
     (let* ((item-id (org-catalyst-safe-get
                      item-config "item-id" nil))
@@ -1695,27 +1848,38 @@ REVERSE the order if REVERSE is non-nil."
      item-config
      month-day
      snapshot)
-  (org-catalyst--render-row
-   :prefix-width prefix-width
-   :prefix-renderer prefix-renderer
-   :second-prefix-width second-prefix-width
-   :second-prefix-renderer second-prefix-renderer
-   :text-width text-width
-   :text-renderer
-   (org-catalyst--inline-renderer ()
-     (org-catalyst--render-chain-break-chip
-      :action action
-      :item-config item-config
-      :month-day month-day
-      :snapshot snapshot)
-     (org-catalyst--render-action-chip
-      :action action
-      :item-config item-config)
-     (insert (org-catalyst-safe-get
-              item-config "display-name" "(no name)")))
-   :suffix-renderer
-   (org-catalyst--inline-renderer ()
-     (org-catalyst--render-delta-desc :item-config item-config))))
+  (let ((is-group (org-catalyst-safe-get
+                   item-config "is-group" nil)))
+    (org-catalyst--render-row
+     :prefix-width prefix-width
+     :prefix-renderer prefix-renderer
+     :second-prefix-width second-prefix-width
+     :second-prefix-renderer second-prefix-renderer
+     :text-width text-width
+     :text-renderer
+     (org-catalyst--inline-renderer ()
+       (org-catalyst--render-chain-break-chip
+        :item-config item-config
+        :month-day month-day
+        :snapshot snapshot)
+       (org-catalyst--render-action-chip
+        :action action
+        :item-config item-config)
+       (let ((display-name
+              (org-catalyst-safe-get
+               item-config "display-name" "(no name)")))
+         (insert (org-catalyst--with-face
+                  display-name
+                  (if is-group
+                      'org-catalyst-item-group-face
+                    nil)))))
+     :suffix-renderer
+     (if is-group
+         #'org-catalyst--dummy-renderer
+       (org-catalyst--inline-renderer ()
+         (org-catalyst--render-delta-desc
+          :item-config item-config
+          :action action))))))
 
 (org-catalyst--define-renderer org-catalyst--render-progress-bar
     ((value)
@@ -1881,11 +2045,11 @@ REVERSE the order if REVERSE is non-nil."
 (org-catalyst--define-renderer org-catalyst-section-journal
     (config
      snapshot
-     month-day)
+     month-day
+     computed-action)
   (org-catalyst--render-section-heading :name "Journal")
 
-  (let* ((actions (org-catalyst--get-actions-at month-day))
-         (all-item-config (plist-get config :all-item-config))
+  (let* ((all-item-config (plist-get config :all-item-config))
          (all-state-config (plist-get config :all-state-config)))
     (org-catalyst--render-sorted
      :reverse t
@@ -1932,114 +2096,140 @@ REVERSE the order if REVERSE is non-nil."
                    :action action
                    :item-config item-config)))
                renderers))))
-        actions)
+        computed-action)
        renderers))))
 
 (org-catalyst--define-renderer org-catalyst-section-items
     (config
      month-day
-     snapshot)
+     snapshot
+     computed-action)
 
   ;; TODO can add to ui-data for caching
-  (let* ((actions (org-catalyst--get-actions-at month-day))
-         (all-item-config (plist-get config :all-item-config))
+  (let* ((all-item-config (plist-get config :all-item-config))
          (item-ids (ht-keys all-item-config))
          (all-state-config (plist-get config :all-state-config))
          (item-attributes (ht-get snapshot "item-attributes"))
          (row-data
-          (mapcar
-           (lambda (item-id)
-             (let* ((item-config (ht-get all-item-config item-id))
-                    (chain (org-catalyst--get-item-attribute
-                            snapshot item-id "chain" nil))
-                    (highest-chain
-                     (org-catalyst--get-item-attribute
-                      snapshot item-id "highest-chain" nil))
-                    (count (org-catalyst--get-item-attribute
-                            snapshot item-id "count" nil))
-                    (last-chain-day-index
-                     (org-catalyst--get-item-attribute
-                      snapshot item-id "last-chain-day-index" 1))
-                    (day-index
-                     (1+ (org-catalyst--month-day-to-days month-day)))
-                    (days-since-last
-                     (- day-index
-                        last-chain-day-index))
-                    ;; TODO: customizable default chain interval. in update function too.
-                    (params (org-catalyst-safe-get
-                             item-config "params" nil))
-                    (action (org-catalyst-safe-get
-                             actions item-id nil))
-                    (chain-interval
-                     (org-catalyst-safe-get params
-                                            "chain_interval" 1))
-                    (breaking
-                     (= days-since-last chain-interval)))
-               (list :item-id item-id
-                     :order (or (org-catalyst--inf-to-number count) 0)
-                     :chain (when chain
-                              (org-catalyst--inf-to-number chain))
-                     :highest-chain
-                     (when highest-chain
-                       (org-catalyst--inf-to-number highest-chain))
-                     :count (when count
-                              (org-catalyst--inf-to-number count))
-                     :breaking breaking
-                     :item-config item-config
-                     :action action)))
-           item-ids)))
+          (seq-filter
+           #'identity
+           (mapcar
+            (lambda (item-id)
+              (let*
+                  ((item-config (ht-get all-item-config item-id))
+                   (chain (org-catalyst--get-item-attribute
+                           snapshot item-id "chain" nil))
+                   (chain (when chain
+                            (org-catalyst--inf-to-number chain)))
+                   (highest-chain
+                    (org-catalyst--get-item-attribute
+                     snapshot item-id "highest-chain" nil))
+                   (highest-chain
+                    (when highest-chain
+                      (org-catalyst--inf-to-number highest-chain)))
+                   (count (org-catalyst--get-item-attribute
+                           snapshot item-id "count" nil))
+                   (count (when count
+                            (org-catalyst--inf-to-number count)))
+                   (last-chain-day-index
+                    (org-catalyst--get-item-attribute
+                     snapshot item-id "last-chain-day-index" 1))
+                   (day-index
+                    (1+ (org-catalyst--month-day-to-days month-day)))
+                   (days-since-last
+                    (- day-index
+                       last-chain-day-index))
+                   ;; TODO: customizable default chain interval. in update function too.
+                   (params (org-catalyst-safe-get
+                            item-config "params" nil))
+                   (action (org-catalyst-safe-get
+                            computed-action item-id nil))
+                   (done (> (org-catalyst-safe-get
+                             action "done" 0)
+                            0))
+                   (pardon (> (org-catalyst-safe-get
+                               action "pardon" 0)
+                              0))
+                   (chain-interval
+                    (org-catalyst-safe-get params
+                                           "chain_interval" 1))
+                   (breaking
+                    (= days-since-last chain-interval)))
+                (unless (or done pardon)
+                  (list
+                   :renderer
+                   (org-catalyst--partial-renderer
+                    org-catalyst--render-item
+                    :month-day month-day
+                    :snapshot snapshot
+                    :prefix-renderer
+                    (org-catalyst--partial-renderer
+                     org-catalyst--render-leveled-value
+                     :value count)
+                    :second-prefix-renderer
+                    (org-catalyst--partial-renderer
+                     org-catalyst--render-chain
+                     :chain chain
+                     :highest-chain highest-chain)
+                    :action action
+                    :item-config item-config)
+                   :order (or count 0)
+                   :breaking breaking
+                   :params params))))
+            item-ids))))
 
-    (let ((rows (sort
-                 (seq-filter (lambda (row)
-                               (plist-get row :breaking))
-                             row-data)
-                 (lambda (a b)
-                   (> (plist-get a :order)
-                      (plist-get b :order))))))
-      (when rows
+    (let* ((breaking-rows
+            (mapcar
+             (lambda (row)
+               (cons (plist-get row :order)
+                     (plist-get row :renderer)))
+             (seq-filter (lambda (row)
+                           (plist-get row :breaking))
+                         row-data)))
+           (task-rows nil)
+           (negative-rows nil)
+           (fun-rows nil))
+
+      (dolist (row-entry row-data)
+        (let ((row (cons (plist-get row-entry :order)
+                         (plist-get row-entry :renderer)))
+              (params (plist-get row-entry :params)))
+          (cond
+           ((org-catalyst-safe-get
+             params "negative" nil)
+            (push row negative-rows))
+           ((org-catalyst-safe-get
+             params "fun" nil)
+            (push row fun-rows))
+           (t
+            (push row task-rows)))))
+
+      (when breaking-rows
         (org-catalyst--render-section-heading
          :name "Breaking Chains"
          :face 'org-catalyst-section-heading-warning-face)
 
-        (dolist (row rows)
-          (org-catalyst--render-item
-           :month-day month-day
-           :snapshot snapshot
-           :prefix-renderer
-           (org-catalyst--partial-renderer
-            org-catalyst--render-leveled-value
-            :value (plist-get row :count))
-           :second-prefix-renderer
-           (org-catalyst--partial-renderer
-            org-catalyst--render-chain
-            :chain (plist-get row :chain)
-            :highest-chain (plist-get row :highest-chain))
-           :action (plist-get row :action)
-           :item-config (plist-get row :item-config)))
+        (org-catalyst--render-sorted
+         :reverse t
+         :renderer-alist breaking-rows)
+        (org-catalyst-section-separator))
 
-        (org-catalyst-section-separator)))
+      (org-catalyst--render-section-heading :name "Task Items")
+      (org-catalyst--render-sorted
+       :reverse t
+       :renderer-alist task-rows)
+      (org-catalyst-section-separator)
 
-    (let ((rows (sort
-                 row-data
-                 (lambda (a b)
-                   (> (plist-get a :order)
-                      (plist-get b :order))))))
-      (org-catalyst--render-section-heading :name "Items")
-      (dolist (row rows)
-        (org-catalyst--render-item
-         :month-day month-day
-         :snapshot snapshot
-         :prefix-renderer
-         (org-catalyst--partial-renderer
-          org-catalyst--render-leveled-value
-          :value (plist-get row :count))
-         :second-prefix-renderer
-         (org-catalyst--partial-renderer
-          org-catalyst--render-chain
-          :chain (plist-get row :chain)
-          :highest-chain (plist-get row :highest-chain))
-         :action (plist-get row :action)
-         :item-config (plist-get row :item-config))))))
+      (org-catalyst--render-section-heading :name "Negative Items")
+      (org-catalyst--render-sorted
+       :reverse t
+       :renderer-alist negative-rows)
+      (org-catalyst-section-separator)
+
+      (org-catalyst--render-section-heading :name "Fun Items")
+      (org-catalyst--render-sorted
+       :reverse t
+       :renderer-alist fun-rows))))
 
 (defun org-catalyst-setup-default-sections ()
   "Set `org-catalyst-status-sections' to be a good default."
@@ -2059,6 +2249,12 @@ REVERSE the order if REVERSE is non-nil."
   (let* ((config (org-catalyst--get-config-with-cache))
          (ui-data (org-catalyst--get-ui-data config))
          (month-day org-catalyst--status-month-day)
+         (computed-action
+          (org-catalyst--get-computed-actions-at
+           month-day
+           (plist-get config :children)
+           (plist-get config :all-item-config)
+           (plist-get config :topological-order)))
          (snapshots (org-catalyst--compute-snapshot-after
                      month-day
                      config
@@ -2073,6 +2269,7 @@ REVERSE the order if REVERSE is non-nil."
        :config config
        :ui-data ui-data
        :month-day month-day
+       :computed-action computed-action
        :today-month-day (org-catalyst--status-today-month-day)
        :snapshot snapshot
        :prev-snapshot prev-snapshot))))
@@ -2119,14 +2316,18 @@ When currently in status buffer, this list is cached until refresh."
    'property
    (completing-read
     prompt
-    (ht-map (lambda (item-id item-config)
-              (propertize
-               (org-catalyst-safe-get item-config "display-name"
-                                      "(no name)")
-               'property
-               item-id))
-            (plist-get (org-catalyst--get-config-with-cache)
-                       :all-item-config))
+    (seq-filter
+     #'identity
+     (ht-map (lambda (item-id item-config)
+               (unless (org-catalyst-safe-get
+                        item-config "is-group" nil)
+                 (propertize
+                  (org-catalyst-safe-get item-config "display-name"
+                                         "(no name)")
+                  'property
+                  item-id)))
+             (plist-get (org-catalyst--get-config-with-cache)
+                        :all-item-config)))
     nil ; predicate
     t ; require-match
     nil ; initial-input
@@ -2251,6 +2452,7 @@ This takes `org-catalyst-day-start-hour' into account."
   "Recompute all snapshots from the entire history."
   (interactive)
   ;; NOTE: probably update some view?
+  (org-catalyst--invalidate-config-cache)
   (org-catalyst--update-cached-snapshots
    (org-catalyst--get-earliest-month-day))
   (message "Recomputed Catalyst history.")
