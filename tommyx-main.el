@@ -2105,6 +2105,8 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
       (:bindings
 
        jump-to-matching web-mode-navigate
+       goto-greater-element-up web-mode-element-previous
+       goto-greater-element-down web-mode-element-next
 
        mode-specific-prefix
        (:bindings
