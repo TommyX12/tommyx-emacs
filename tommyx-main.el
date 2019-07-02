@@ -2090,28 +2090,28 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
      (setq-local web-mode-css-indent-offset 2)
      (setq-local css-indent-offset 2)))
 
-   ;; bindings
-   
-   (tommyx-bind-keys
-    `(:case
-      :keymaps web-mode-map
+  ;; bindings
+  
+  (tommyx-bind-keys
+   `(:case
+     :keymaps web-mode-map
+     (:bindings
+
+      "C-h" nil
+      "C-l" nil)
+
+     :keymaps web-mode-map
+     :states (motion normal visual)
+     (:bindings
+
+      jump-to-matching web-mode-navigate
+      goto-greater-element-up web-mode-element-previous
+      goto-greater-element-down web-mode-element-next
+
+      mode-specific-prefix
       (:bindings
 
-       "C-h" nil
-       "C-l" nil)
-
-      :keymaps web-mode-map
-      :states (motion normal visual)
-      (:bindings
-
-       jump-to-matching web-mode-navigate
-       goto-greater-element-up web-mode-element-previous
-       goto-greater-element-down web-mode-element-next
-
-       mode-specific-prefix
-       (:bindings
-
-        "r" web-mode-element-rename))))
+       "r" web-mode-element-rename))))
 
   (push 'web-mode ahs-modes)
   (push 'css-mode ahs-modes)
@@ -2980,12 +2980,21 @@ command (ran after) is mysteriously incorrect."
                :states (visual)
                indent-region)
 
-      "r" (:def
-           ,(lambda () (interactive)
-              (evil-ex-search-word-forward)
-              (evil-ex-search-previous)
-              (evil-ex "%s//"))
-           :which-key "Replace Element")
+      "r" (:case
+           :states (motion normal)
+           (:def
+            ,(lambda () (interactive)
+               (evil-ex-search-word-forward)
+               (evil-ex-search-previous)
+               (evil-ex "%s//"))
+            :which-key "Replace Element")
+           :states (visual)
+           (:def
+            ,(lambda () (interactive)
+               (call-interactively 'evil-visualstar/begin-search-forward)
+               (evil-ex-search-previous)
+               (evil-ex "%s//"))
+            :which-key "Replace Element"))
 
       ;; macro
       "q" (:case
