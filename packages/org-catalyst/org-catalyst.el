@@ -155,89 +155,6 @@ The accessed entry is updated to be the earliest entry of the cache."
   "Return t if LRU contain KEY."
   (ht-contains-p (org-catalyst--lru-cache-table lru) key))
 
-;;; Constants
-
-;; TODO make this customizable
-(defconst org-catalyst--snapshot-suffix "-snapshot.json")
-(defconst org-catalyst--history-suffix "-history.json")
-(defconst org-catalyst--state-delta-prefix "delta_")
-(defconst org-catalyst--param-prefix "param_")
-(defconst org-catalyst--key-bindings
-  (list (list (kbd "q") 'org-catalyst-status-quit)
-        (list (kbd "r") 'org-catalyst-status-refresh)
-        (list (kbd "a") 'org-catalyst-complete-item-toggle)
-        (list (kbd "p") 'org-catalyst-pardon-item-toggle)
-        (list (kbd "H") 'org-catalyst-status-earlier)
-        (list (kbd "L") 'org-catalyst-status-later)
-        (list (kbd "t") 'org-catalyst-status-goto-date)
-        (list (kbd "T") 'org-catalyst-status-goto-today)
-        (list (kbd "[") 'org-catalyst-previous-page)
-        (list (kbd "]") 'org-catalyst-next-page)))
-(defconst org-catalyst--pages
-  `((:name
-     "Mission"
-     :icon ,org-catalyst-task-item-icon
-     :face org-catalyst-task-item-face
-     :predicate
-     ,(lambda (param)
-        (not (or (org-catalyst-safe-get
-                  param "negative" nil)
-                 (org-catalyst-safe-get
-                  param "fun" nil)))))
-    (:name
-     "Fun"
-     :icon ,org-catalyst-fun-item-icon
-     :face org-catalyst-fun-item-face
-     :predicate
-     ,(lambda (param)
-        (org-catalyst-safe-get
-         param "fun" nil)))
-    (:name
-     "Negative"
-     :icon ,org-catalyst-negative-item-icon
-     :face org-catalyst-negative-item-face
-     :predicate
-     ,(lambda (param)
-        (org-catalyst-safe-get
-         param "negative" nil)))))
-
-;;; Variables
-
-(defvar org-catalyst--state-systems (ht-create)
-  "List of all installed state systems.")
-(defvar org-catalyst--item-systems (ht-create)
-  "List of all installed item systems.")
-(defvar org-catalyst--buffered-snapshots (org-catalyst--lru-create)
-  "In-memory buffer for all snapshot objects.")
-(defvar org-catalyst--buffered-histories (org-catalyst--lru-create)
-  "In-memory buffer for all history objects.")
-(defvar org-catalyst--modified-snapshot-keys (ht-create)
-  "Keys of modified snapshots.")
-(defvar org-catalyst--modified-history-keys (ht-create)
-  "Keys of modified histories.")
-(defvar org-catalyst--auto-save-timer nil
-  "Timer for `org-catalyst-auto-save-mode'.")
-(defvar org-catalyst--inhibit-save nil
-  "Whether to prevent auto saving temporarily.")
-(defvar org-catalyst--earliest-month-day nil
-  ;; NOTE: make this better.
-  "Earliest month-day of all snapshots.")
-(defvar org-catalyst--earliest-modified-month-day nil
-  "Earliest month-day of modification.")
-(defvar org-catalyst--computing-snapshot nil
-  "Flag to avoid infinite recurison.")
-(defvar org-catalyst--cached-config nil
-  "Cached config in status buffer.")
-(defvar org-catalyst--config-cache-valid nil
-  "Whether cache is valid in status buffer.")
-(defvar-local org-catalyst--prev-window-conf nil
-  "Saved window configuration for restore.")
-(put 'org-catalyst--prev-window-conf 'permanent-local t)
-(defvar-local org-catalyst--status-month-day nil
-  "The current month-day displayed in status window.")
-(defvar org-catalyst--ui-state (ht-create)
-  "The current UI state for status buffer.")
-
 ;;; Customizations
 
 (defgroup org-catalyst nil
@@ -386,6 +303,89 @@ This is used to determine the default day to show in the status window."
   :group 'org-catalyst
   :type `(repeat
           (symbol :tag "Face name")))
+
+;;; Constants
+
+;; TODO make this customizable
+(defconst org-catalyst--snapshot-suffix "-snapshot.json")
+(defconst org-catalyst--history-suffix "-history.json")
+(defconst org-catalyst--state-delta-prefix "delta_")
+(defconst org-catalyst--param-prefix "param_")
+(defconst org-catalyst--key-bindings
+  (list (list (kbd "q") 'org-catalyst-status-quit)
+        (list (kbd "r") 'org-catalyst-status-refresh)
+        (list (kbd "a") 'org-catalyst-complete-item-toggle)
+        (list (kbd "p") 'org-catalyst-pardon-item-toggle)
+        (list (kbd "H") 'org-catalyst-status-earlier)
+        (list (kbd "L") 'org-catalyst-status-later)
+        (list (kbd "t") 'org-catalyst-status-goto-date)
+        (list (kbd "T") 'org-catalyst-status-goto-today)
+        (list (kbd "[") 'org-catalyst-previous-page)
+        (list (kbd "]") 'org-catalyst-next-page)))
+(defconst org-catalyst--pages
+  `((:name
+     "Mission"
+     :icon ,org-catalyst-task-item-icon
+     :face org-catalyst-task-item-face
+     :predicate
+     ,(lambda (param)
+        (not (or (org-catalyst-safe-get
+                  param "negative" nil)
+                 (org-catalyst-safe-get
+                  param "fun" nil)))))
+    (:name
+     "Fun"
+     :icon ,org-catalyst-fun-item-icon
+     :face org-catalyst-fun-item-face
+     :predicate
+     ,(lambda (param)
+        (org-catalyst-safe-get
+         param "fun" nil)))
+    (:name
+     "Negative"
+     :icon ,org-catalyst-negative-item-icon
+     :face org-catalyst-negative-item-face
+     :predicate
+     ,(lambda (param)
+        (org-catalyst-safe-get
+         param "negative" nil)))))
+
+;;; Variables
+
+(defvar org-catalyst--state-systems (ht-create)
+  "List of all installed state systems.")
+(defvar org-catalyst--item-systems (ht-create)
+  "List of all installed item systems.")
+(defvar org-catalyst--buffered-snapshots (org-catalyst--lru-create)
+  "In-memory buffer for all snapshot objects.")
+(defvar org-catalyst--buffered-histories (org-catalyst--lru-create)
+  "In-memory buffer for all history objects.")
+(defvar org-catalyst--modified-snapshot-keys (ht-create)
+  "Keys of modified snapshots.")
+(defvar org-catalyst--modified-history-keys (ht-create)
+  "Keys of modified histories.")
+(defvar org-catalyst--auto-save-timer nil
+  "Timer for `org-catalyst-auto-save-mode'.")
+(defvar org-catalyst--inhibit-save nil
+  "Whether to prevent auto saving temporarily.")
+(defvar org-catalyst--earliest-month-day nil
+  ;; NOTE: make this better.
+  "Earliest month-day of all snapshots.")
+(defvar org-catalyst--earliest-modified-month-day nil
+  "Earliest month-day of modification.")
+(defvar org-catalyst--computing-snapshot nil
+  "Flag to avoid infinite recurison.")
+(defvar org-catalyst--cached-config nil
+  "Cached config in status buffer.")
+(defvar org-catalyst--config-cache-valid nil
+  "Whether cache is valid in status buffer.")
+(defvar-local org-catalyst--prev-window-conf nil
+  "Saved window configuration for restore.")
+(put 'org-catalyst--prev-window-conf 'permanent-local t)
+(defvar-local org-catalyst--status-month-day nil
+  "The current month-day displayed in status window.")
+(defvar org-catalyst--ui-state (ht-create)
+  "The current UI state for status buffer.")
 
 ;;; Faces
 
