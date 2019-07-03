@@ -74,7 +74,7 @@
         :background default
         :scale ,(if (eq system-type 'darwin)
                     1.6
-                  1.0)
+                  1.5)
         :html-foreground "Black"
         :html-background "Transparent"
         :html-scale 1.0
