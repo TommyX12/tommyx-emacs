@@ -398,8 +398,12 @@
            org-sort
            :which-key "Org Sort")
       ":" (:def
-           org-sort-list
-           :which-key "Org Sort List"))
+           ,(lambda () (interactive)
+              (org-sort-list nil
+                             ?f
+                             #'org-sort-checklist-getkey-func
+                             #'org-sort-checklist-compare-func))
+           :which-key "Org Sort Checklist"))
 
      :states (motion normal)
      (:bindings

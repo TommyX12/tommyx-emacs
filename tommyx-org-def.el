@@ -44,6 +44,24 @@ regular expression,
 
 ;; key binding helpers
 
+(defun org-sort-checklist-compare-func (a b)
+  (let ((a (if (string= a "-")
+               " "
+             a))
+        (b (if (string= b "-")
+               " "
+             b)))
+    (string-lessp a b)))
+
+(defun org-sort-checklist-getkey-func ()
+  (or (let* ((str (match-string 1))
+             (len (length str)))
+        (and (stringp str)
+             (substring str
+                        (- len 2)
+                        (- len 1))))
+			""))
+
 (defun org-up-heading-custom ()
   (interactive)
   (if (org-at-heading-p)
