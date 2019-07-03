@@ -170,7 +170,7 @@ The accessed entry is updated to be the earliest entry of the cache."
         (list (kbd "H") 'org-catalyst-status-earlier)
         (list (kbd "L") 'org-catalyst-status-later)
         (list (kbd "t") 'org-catalyst-status-goto-date)
-        (list (kbd "T") 'org-catalyst-status-goto-today)
+        (list (kbd ".") 'org-catalyst-status-goto-today)
         (list (kbd "[") 'org-catalyst-previous-page)
         (list (kbd "]") 'org-catalyst-next-page)))
 (defconst org-catalyst--pages
@@ -435,7 +435,7 @@ This is used to determine the default day to show in the status window."
   :group 'org-catalyst)
 
 (defface org-catalyst-subline-spacing-face
-  '((t :height 0.5))
+  '((t :height 0.3))
   "Face for Catalyst sub-line spacing."
   :group 'org-catalyst)
 
@@ -1472,7 +1472,8 @@ If CONFIG is non-nil, it is used instead of computing another."
 (defun org-catalyst--save-window-configuration ()
   "Save the current window configuration.
 Note that the configuration is saved locally to the current buffer."
-  (unless (get-buffer-window (current-buffer) (selected-frame))
+  (unless (or (get-buffer-window (current-buffer) (selected-frame))
+              org-catalyst--prev-window-conf)
     (setq-local org-catalyst--prev-window-conf
                 (current-window-configuration))))
 
@@ -1946,8 +1947,10 @@ REVERSE the order if REVERSE is non-nil."
      (second-prefix-renderer nil)
      (text-width nil)
      text-renderer
-     (suffix-renderer nil))
-  (let* ((prefix-width (or prefix-width org-catalyst-status-prefix-width))
+     (suffix-renderer nil)
+     (property-alist nil))
+  (let* ((point-before (point))
+         (prefix-width (or prefix-width org-catalyst-status-prefix-width))
          (second-prefix-width (or second-prefix-width
                                   org-catalyst-status-second-prefix-width))
          (text-width (or text-width org-catalyst-status-text-width))
@@ -1973,7 +1976,13 @@ REVERSE the order if REVERSE is non-nil."
     (insert " ")
     (when suffix-renderer
       (funcall suffix-renderer))
-    (insert "\n")))
+    (insert "\n")
+    (let ((point-after (point)))
+      (dolist (prop property-alist)
+        (let ((prop-name (car property-alist))
+              (prop-value (cdr property-alist)))
+          (put-text-property point-before point-after
+                             prop-name prop-value))))))
 
 (org-catalyst--define-renderer org-catalyst--dummy-renderer ())
 
