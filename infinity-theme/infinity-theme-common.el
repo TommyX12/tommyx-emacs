@@ -231,7 +231,7 @@
   `(font-lock-comment-face ((,class (:foreground ,base-dim :slant normal))))
   `(font-lock-constant-face ((,class (:foreground ,const))))
   `(font-lock-doc-face ((,class (:foreground ,comment :background ,comment-bg))))
-  `(font-lock-function-name-face ((,class (:foreground ,var))))
+  `(font-lock-function-name-face ((,class (:foreground ,func))))
   `(font-lock-keyword-face ((,class (:inherit bold :foreground ,keyword :slant normal))))
   `(font-lock-negation-char-face ((,class (:foreground ,const))))
   `(font-lock-preprocessor-face ((,class (:foreground ,preproc))))
@@ -634,6 +634,9 @@
   `(hi-green  ((,class (:foreground ,green :background ,green-bg))))
   `(hi-yellow ((,class (:foreground ,yellow :background ,yellow-bg))))
 
+;;;;; highlight-function-calls
+  `(highlight-function-calls-face ((,class (:foreground ,keyword :weight normal))))
+
 ;;;;; highlight-indentation
   `(highlight-indentation-face ((,class (:background ,bg12))))
   `(highlight-indentation-face-1 ((,class (:background ,bg12))))
@@ -908,6 +911,11 @@
   `(org-life-agenda-stress-warning-face ((,class (:inherit bold :foreground ,comp))))
   `(org-life-agenda-usable-time-face ((,class (:inherit bold :foreground ,primary-2))))
   `(org-life-agenda-actual-usable-time-face ((,class (:inherit bold :foreground ,comp))))
+
+;;;;; org-catalyst
+  `(org-catalyst-fun-item-face ((,class (:foreground ,suc))))
+  `(org-catalyst-negative-item-face ((,class (:foreground ,err))))
+  `(org-catalyst-task-item-face ((,class (:foreground ,blue))))
 
 ;;;;; perspective
   `(persp-selected-face ((,class (:inherit bold :foreground ,func))))

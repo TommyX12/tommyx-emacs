@@ -298,6 +298,8 @@
 
 (use-package package-lint :ensure t)
 
+(use-package highlight-function-calls :ensure t)
+
 (use-package dash :ensure t)
 
 (use-package ht :ensure t)
@@ -1475,7 +1477,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   (setq color-identifiers-coloring-method 'sequential)
   (setq color-identifiers:max-color-saturation 0.45)
   (setq color-identifiers:min-color-saturation 0.2)
-  (setq color-identifiers:timer (run-with-idle-timer 5 t 'color-identifiers:refresh))
+  (setq color-identifiers:timer (run-with-idle-timer 3 t 'color-identifiers:refresh))
   (add-hook 'prog-mode-hook (lambda () (color-identifiers-mode 1)))
   (global-color-identifiers-mode 1)
 
@@ -1710,7 +1712,8 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
      (imenu-list-start-timer)
      (imenu-list-update nil t)
      (neotree-show)
-     (display-buffer-in-side-window (get-buffer imenu-list-buffer-name) '((side . left)))))
+     ;; (display-buffer-in-side-window (get-buffer imenu-list-buffer-name) '((side . left)))
+     ))
   ;; patch to change appearance
   (defun imenu-list--depth-string (depth)
     "Return a prefix string representing an entry's DEPTH."
@@ -3802,8 +3805,12 @@ command (ran after) is mysteriously incorrect."
    :keymaps (minibuffer-local-shell-command-map)
    (:bindings
 
-    previous-history-item previous-line-or-history-element
-    next-history-item next-line-or-history-element
+    previous-history-item ,(lambda () (interactive)
+                             (previous-line-or-history-element)
+                             (end-of-line))
+    next-history-item ,(lambda () (interactive)
+                         (next-line-or-history-element)
+                         (end-of-line))
     select-action exit-minibuffer)))
 
 (tommyx-bind-keys
