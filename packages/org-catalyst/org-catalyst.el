@@ -41,6 +41,38 @@
 (require 'org-id)
 (require 's)
 
+;;; Queue Library
+
+;; NOTE:
+;; Reference:
+;; http://irreal.org/blog/?p=40
+
+(defstruct org-catalyst--queue front back)
+
+(defun org-catalyst--queue-create ()
+  "Create a FIFO queue."
+  (make-org-catalyst--queue
+   :front nil
+   :back nil))
+
+(defun org-catalyst--queue-push (queue item)
+  "Push ITEM into QUEUE."
+  (push item (org-catalyst--queue-front queue)))
+
+(defun org-catalyst--queue-empty (queue)
+  "Return t if QUEUE is empty."
+  (not (or (org-catalyst--queue-back queue)
+           (org-catalyst--queue-front queue))))
+
+(defun org-catalyst--queue-pop (queue)
+  "Pop and return item from QUEUE."
+  (unless (org-catalyst--queue-back queue)
+    (setf (org-catalyst--queue-back queue)
+          (nreverse
+           (org-catalyst--queue-front queue)))
+    (setf (org-catalyst--queue-front queue) nil))
+  (pop (org-catalyst--queue-back queue)))
+
 ;;; LRU Library
 
 ;; NOTE:
@@ -138,7 +170,36 @@ The accessed entry is updated to be the earliest entry of the cache."
         (list (kbd "H") 'org-catalyst-status-earlier)
         (list (kbd "L") 'org-catalyst-status-later)
         (list (kbd "t") 'org-catalyst-status-goto-date)
-        (list (kbd "T") 'org-catalyst-status-goto-today)))
+        (list (kbd "T") 'org-catalyst-status-goto-today)
+        (list (kbd "[") 'org-catalyst-previous-page)
+        (list (kbd "]") 'org-catalyst-next-page)))
+(defconst org-catalyst--pages
+  `((:name
+     "Mission"
+     :icon ,org-catalyst-task-item-icon
+     :face org-catalyst-task-item-face
+     :predicate
+     ,(lambda (param)
+        (not (or (org-catalyst-safe-get
+                  param "negative" nil)
+                 (org-catalyst-safe-get
+                  param "fun" nil)))))
+    (:name
+     "Fun"
+     :icon ,org-catalyst-fun-item-icon
+     :face org-catalyst-fun-item-face
+     :predicate
+     ,(lambda (param)
+        (org-catalyst-safe-get
+         param "fun" nil)))
+    (:name
+     "Negative"
+     :icon ,org-catalyst-negative-item-icon
+     :face org-catalyst-negative-item-face
+     :predicate
+     ,(lambda (param)
+        (org-catalyst-safe-get
+         param "negative" nil)))))
 
 ;;; Variables
 
@@ -171,9 +232,11 @@ The accessed entry is updated to be the earliest entry of the cache."
   "Whether cache is valid in status buffer.")
 (defvar-local org-catalyst--prev-window-conf nil
   "Saved window configuration for restore.")
+(put 'org-catalyst--prev-window-conf 'permanent-local t)
 (defvar-local org-catalyst--status-month-day nil
   "The current month-day displayed in status window.")
-(put 'org-catalyst--prev-window-conf 'permanent-local t)
+(defvar org-catalyst--ui-state (ht-create)
+  "The current UI state for status buffer.")
 
 ;;; Customizations
 
@@ -220,6 +283,21 @@ The accessed entry is updated to be the earliest entry of the cache."
 
 (defcustom org-catalyst-chain-icon "☯"
   "The string for the concept of chaining."
+  :group 'org-catalyst
+  :type 'string)
+
+(defcustom org-catalyst-fun-item-icon "✚"
+  "The string for fun item."
+  :group 'org-catalyst
+  :type 'string)
+
+(defcustom org-catalyst-negative-item-icon "✸"
+  "The string for negative item."
+  :group 'org-catalyst
+  :type 'string)
+
+(defcustom org-catalyst-task-item-icon "●"
+  "The string for task item."
   :group 'org-catalyst
   :type 'string)
 
@@ -316,6 +394,31 @@ This is used to determine the default day to show in the status window."
   "Face for Catalyst section heading."
   :group 'org-catalyst)
 
+(defface org-catalyst-section-subheading-face
+  '((t :inherit org-tag :weight bold :height 1.1))
+  "Face for Catalyst section subheading."
+  :group 'org-catalyst)
+
+(defface org-catalyst-section-subheading-inactive-face
+  '((t :inherit org-catalyst-secondary-face :weight bold))
+  "Face for Catalyst section inactive subheading."
+  :group 'org-catalyst)
+
+(defface org-catalyst-fun-item-face
+  '((t :inherit success))
+  "Face for Catalyst fun item."
+  :group 'org-catalyst)
+
+(defface org-catalyst-negative-item-face
+  '((t :inherit error))
+  "Face for Catalyst negative item."
+  :group 'org-catalyst)
+
+(defface org-catalyst-task-item-face
+  '((t :inherit font-lock-keyword-face))
+  "Face for Catalyst task item."
+  :group 'org-catalyst)
+
 (defface org-catalyst-state-delta-face
   '((t :inherit success))
   "Face for Catalyst state delta."
@@ -329,6 +432,11 @@ This is used to determine the default day to show in the status window."
 (defface org-catalyst-highest-chain-face
   '((t :inherit org-catalyst-secondary-face))
   "Face for Catalyst highest chain."
+  :group 'org-catalyst)
+
+(defface org-catalyst-subline-spacing-face
+  '((t :height 0.5))
+  "Face for Catalyst sub-line spacing."
   :group 'org-catalyst)
 
 (defface org-catalyst-item-group-face
@@ -768,8 +876,11 @@ If LOCAL is non-nil, return tag only if TAG is a local tag."
          (prev-buffer nil)
          (params-stack nil)
          (state-deltas-stack nil)
+         ;; NOTE: children are collected, but might not be needed.
          (children-stack nil)
-         (children-parent-id-stack nil))
+         (children-parent-id-stack nil)
+
+         (org-use-tag-inheritance nil))
 
     (cl-flet
         ((collect-children-stack
@@ -873,7 +984,9 @@ If LOCAL is non-nil, return tag only if TAG is a local tag."
                        item-config)
 
                (when children-stack
-                 (push item-id (cdar children-stack)))
+                 (push item-id (cdar children-stack))
+                 (ht-set item-config "parent"
+                         (car children-parent-id-stack)))
 
                (when is-group
                  (push (cons level params) params-stack)
@@ -1117,41 +1230,44 @@ NOTE: This function can mutate SNAPSHOT."
         (ht-set history day-key actions)
         actions))))
 
-(defun org-catalyst--get-computed-actions-at (month-day children all-item-config topological-order)
+(defun org-catalyst--get-computed-actions-at (month-day all-item-config)
   "Return the actions at MONTH-DAY.
 
 This includes actions that are computed; more specifically, it includes actions
 of item groups that are computed from its children.
 
-CHILDREN is a hash table mapping from item-id to a list of child IDs.
-
-ALL-ITEM-CONFIG is used to check if a particular item is an item group.
+ALL-ITEM-CONFIG is the item configurations.
 
 TOPOLOGICAL-ORDER must be a list of item-id ordered such that each item's
 parents always come after the item itself."
   (let ((actions (org-catalyst--deep-copy
-                  (org-catalyst--get-actions-at month-day))))
-    (dolist (item-id topological-order)
-      (when (org-catalyst-safe-get
-             (org-catalyst-safe-get
-              all-item-config item-id nil)
-             "is-group" nil)
-        (org-catalyst-safe-update
-         actions item-id (ht-create)
-         (lambda (prev)
-           (org-catalyst-safe-update
-            prev "done" 0
-            (lambda (prev)
-              (apply #'+ prev
-                     (mapcar
-                      (lambda (child-id)
-                        (org-catalyst-safe-get
-                         (org-catalyst-safe-get
-                          actions child-id (ht-create))
-                         "done" 0))
+                  (org-catalyst--get-actions-at month-day)))
+        (queue (org-catalyst--queue-create)))
+    (dolist (item-id (ht-keys actions))
+      (unless (org-catalyst-safe-get
+               (org-catalyst-safe-get
+                all-item-config item-id nil)
+               "is-group" nil)
+        (org-catalyst--queue-push queue item-id)))
+    (while (not (org-catalyst--queue-empty queue))
+      (let* ((item-id (org-catalyst--queue-pop queue))
+             (parent (org-catalyst-safe-get
                       (org-catalyst-safe-get
-                       children item-id nil)))))
-           prev))))
+                       all-item-config item-id nil)
+                      "parent" nil)))
+        (when parent
+          (org-catalyst-safe-update
+           actions parent (ht-create)
+           (lambda (prev)
+             (org-catalyst-safe-update
+              prev "done" 0
+              (lambda (prev)
+                (+ prev
+                   (org-catalyst-safe-get
+                    (org-catalyst-safe-get
+                     actions item-id nil)
+                    "done" 0))))
+             prev)))))
     actions))
 
 (defun org-catalyst--deep-copy (object)
@@ -1253,9 +1369,7 @@ If CONFIG is non-nil, it is used instead of computing another."
                     cur-snapshot
                     (org-catalyst--get-computed-actions-at
                      cur-month-day
-                     children
-                     all-item-config
-                     topological-order)
+                     all-item-config)
                     (cons month-index (1+ cur-day-index))
                     all-item-config
                     all-state-config
@@ -1295,9 +1409,7 @@ start of MONTH-DAY, and cdr is the snapshot at the end of MONTH-DAY."
                  (org-catalyst--deep-copy prev-snapshot)
                  (org-catalyst--get-computed-actions-at
                   month-day
-                  children
-                  all-item-config
-                  topological-order)
+                  all-item-config)
                  (org-catalyst--next-month-day month-day)
                  all-item-config
                  all-state-config
@@ -1540,13 +1652,40 @@ PREV-SNAPSHOT, and cdr is the value in SNAPSHOT."
                (ht-get state-attr prop))
           default))))
 
+(org-catalyst--define-renderer org-catalyst--render-subline-spacing
+    ()
+  (insert (org-catalyst--with-face "\n" 'org-catalyst-subline-spacing-face)))
+
 (org-catalyst--define-renderer org-catalyst--render-section-heading
-    (name face)
+    (name face (no-newline nil))
   (insert
    (org-catalyst--with-face
     name
-    (or face 'org-catalyst-section-heading-face))
-   "\n"))
+    (or face 'org-catalyst-section-heading-face)))
+  (unless no-newline
+    (insert "\n")
+    (org-catalyst--render-subline-spacing)))
+
+(org-catalyst--define-renderer org-catalyst--render-page-tabs
+    (page-index)
+  (dotimes (i (length org-catalyst--pages))
+    (let ((page (nth i org-catalyst--pages)))
+      (insert
+       (org-catalyst--with-face
+        (plist-get page :icon)
+        (plist-get page :face))
+       " "
+       (org-catalyst--with-face
+        (plist-get page :name)
+        (if (= i page-index)
+            'org-catalyst-section-subheading-face
+          'org-catalyst-section-subheading-inactive-face)))
+      (when (< i (1- (length org-catalyst--pages)))
+        (insert
+         (org-catalyst--with-face
+          " | "
+          'org-catalyst-secondary-face)))))
+  (insert "\n"))
 
 (org-catalyst--define-renderer org-catalyst--render-container
     ((clamp nil) (pad t) width (renderer nil) (args nil))
@@ -1711,7 +1850,7 @@ REVERSE the order if REVERSE is non-nil."
         (insert (if pardon
                     (org-catalyst--with-face
                      (substring-no-properties text)
-                     'org-life-agenda-secondary-face)
+                     'org-catalyst-secondary-face)
                   text))))))
 
 (org-catalyst--define-renderer org-catalyst--render-action-chip
@@ -1849,7 +1988,9 @@ REVERSE the order if REVERSE is non-nil."
      month-day
      snapshot)
   (let ((is-group (org-catalyst-safe-get
-                   item-config "is-group" nil)))
+                   item-config "is-group" nil))
+        (params (org-catalyst-safe-get
+                 item-config "params" nil)))
     (org-catalyst--render-row
      :prefix-width prefix-width
      :prefix-renderer prefix-renderer
@@ -1858,6 +1999,23 @@ REVERSE the order if REVERSE is non-nil."
      :text-width text-width
      :text-renderer
      (org-catalyst--inline-renderer ()
+       (insert
+        (cond
+         ((org-catalyst-safe-get
+           params "negative" nil)
+          (org-catalyst--with-face
+           org-catalyst-negative-item-icon
+           'org-catalyst-negative-item-face))
+         ((org-catalyst-safe-get
+           params "fun" nil)
+          (org-catalyst--with-face
+           org-catalyst-fun-item-icon
+           'org-catalyst-fun-item-face))
+         (t
+          (org-catalyst--with-face
+           org-catalyst-task-item-icon
+           'org-catalyst-task-item-face)))
+        " ")
        (org-catalyst--render-chain-break-chip
         :item-config item-config
         :month-day month-day
@@ -1867,12 +2025,12 @@ REVERSE the order if REVERSE is non-nil."
         :item-config item-config)
        (let ((display-name
               (org-catalyst-safe-get
-               item-config "display-name" "(no name)")))
-         (insert (org-catalyst--with-face
-                  display-name
-                  (if is-group
-                      'org-catalyst-item-group-face
-                    nil)))))
+               item-config "display-name" "(unknown)")))
+         (insert
+          (org-catalyst--with-face
+           display-name
+           (when is-group
+             'org-catalyst-item-group-face)))))
      :suffix-renderer
      (if is-group
          #'org-catalyst--dummy-renderer
@@ -2035,7 +2193,7 @@ REVERSE the order if REVERSE is non-nil."
                       "[Level Up]"
                       'org-catalyst-special-face))))))
 
-      (insert "\n")
+      (org-catalyst--render-subline-spacing)
 
       (org-catalyst--render-sorted
        :reverse t
@@ -2186,23 +2344,19 @@ REVERSE the order if REVERSE is non-nil."
              (seq-filter (lambda (row)
                            (plist-get row :breaking))
                          row-data)))
-           (task-rows nil)
-           (negative-rows nil)
-           (fun-rows nil))
+           (rows nil)
+           (page-index (org-catalyst--get-ui-state "page" 0))
+           (page (nth page-index
+                      org-catalyst--pages))
+           (page-name (plist-get page :name))
+           (page-predicate (plist-get page :predicate)))
 
       (dolist (row-entry row-data)
         (let ((row (cons (plist-get row-entry :order)
                          (plist-get row-entry :renderer)))
               (params (plist-get row-entry :params)))
-          (cond
-           ((org-catalyst-safe-get
-             params "negative" nil)
-            (push row negative-rows))
-           ((org-catalyst-safe-get
-             params "fun" nil)
-            (push row fun-rows))
-           (t
-            (push row task-rows)))))
+          (when (funcall page-predicate params)
+            (push row rows))))
 
       (when breaking-rows
         (org-catalyst--render-section-heading
@@ -2214,22 +2368,14 @@ REVERSE the order if REVERSE is non-nil."
          :renderer-alist breaking-rows)
         (org-catalyst-section-separator))
 
-      (org-catalyst--render-section-heading :name "Task Items")
+      (org-catalyst--render-section-heading :name "Inventory"
+                                            :no-newline t)
+      (insert "    ")
+      (org-catalyst--render-page-tabs :page-index page-index)
+      (org-catalyst--render-subline-spacing)
       (org-catalyst--render-sorted
        :reverse t
-       :renderer-alist task-rows)
-      (org-catalyst-section-separator)
-
-      (org-catalyst--render-section-heading :name "Negative Items")
-      (org-catalyst--render-sorted
-       :reverse t
-       :renderer-alist negative-rows)
-      (org-catalyst-section-separator)
-
-      (org-catalyst--render-section-heading :name "Fun Items")
-      (org-catalyst--render-sorted
-       :reverse t
-       :renderer-alist fun-rows))))
+       :renderer-alist rows))))
 
 (defun org-catalyst-setup-default-sections ()
   "Set `org-catalyst-status-sections' to be a good default."
@@ -2252,9 +2398,7 @@ REVERSE the order if REVERSE is non-nil."
          (computed-action
           (org-catalyst--get-computed-actions-at
            month-day
-           (plist-get config :children)
-           (plist-get config :all-item-config)
-           (plist-get config :topological-order)))
+           (plist-get config :all-item-config)))
          (snapshots (org-catalyst--compute-snapshot-after
                      month-day
                      config
@@ -2323,7 +2467,7 @@ When currently in status buffer, this list is cached until refresh."
                         item-config "is-group" nil)
                  (propertize
                   (org-catalyst-safe-get item-config "display-name"
-                                         "(no name)")
+                                         "(unknown)")
                   'property
                   item-id)))
              (plist-get (org-catalyst--get-config-with-cache)
@@ -2420,6 +2564,26 @@ This takes `org-catalyst-day-start-hour' into account."
    (time-add (current-time)
              (* -3600
                 org-catalyst-day-start-hour))))
+
+(defun org-catalyst--clear-ui-state ()
+  "Set `org-catalyst--ui-state' to the empty hash table."
+  (setq org-catalyst--ui-state (ht-create)))
+
+(defun org-catalyst--get-ui-state (key default)
+  "Retrieve KEY in `org-catalyst--ui-state'.
+
+If KEY doesn't exist, DEFAULT will be used."
+  (org-catalyst-safe-get
+   org-catalyst--ui-state key default))
+
+(defun org-catalyst--update-ui-state (key default updater)
+  "Update KEY in `org-catalyst--ui-state' using UPDATER.
+
+UPDATER will be called with the current value of KEY.
+
+If KEY doesn't exist, DEFAULT will be used."
+  (org-catalyst-safe-update
+   org-catalyst--ui-state key default updater))
 
 ;;; Commands
 
@@ -2563,6 +2727,26 @@ Note that this invalidates config cache."
   (interactive "p")
   (org-catalyst-status-later (- (or count 1))))
 
+(defun org-catalyst-previous-page ()
+  "Switch to the previous inventory page."
+  (interactive)
+  (org-catalyst--update-ui-state
+   "page" 0
+   (lambda (prev)
+     (% (+ (1- prev)
+           (length org-catalyst--pages))
+        (length org-catalyst--pages))))
+  (org-catalyst-status-refresh))
+
+(defun org-catalyst-next-page ()
+  "Switch to the next inventory page."
+  (interactive)
+  (org-catalyst--update-ui-state
+   "page" 0
+   (lambda (prev)
+     (% (1+ prev) (length org-catalyst--pages))))
+  (org-catalyst-status-refresh))
+
 (defun org-catalyst-status ()
   "Open Catalyst status window."
   (interactive)
@@ -2582,6 +2766,7 @@ Note that this invalidates config cache."
           (unless (eq old-frame new-frame)
             (select-frame-set-input-focus new-frame))
 
+          (org-catalyst--clear-ui-state)
           (org-catalyst-mode)
           (goto-char (point-min))
           (org-catalyst--invalidate-config-cache)
