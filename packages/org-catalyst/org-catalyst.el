@@ -325,7 +325,7 @@ This is used to determine the default day to show in the status window."
 (defconst org-catalyst--pages
   `((:name
      "Mission"
-     :icon ,org-catalyst-task-item-icon
+     :icon org-catalyst-task-item-icon
      :face org-catalyst-task-item-face
      :predicate
      ,(lambda (param)
@@ -335,7 +335,7 @@ This is used to determine the default day to show in the status window."
                   param "fun" nil)))))
     (:name
      "Fun"
-     :icon ,org-catalyst-fun-item-icon
+     :icon org-catalyst-fun-item-icon
      :face org-catalyst-fun-item-face
      :predicate
      ,(lambda (param)
@@ -343,7 +343,7 @@ This is used to determine the default day to show in the status window."
          param "fun" nil)))
     (:name
      "Negative"
-     :icon ,org-catalyst-negative-item-icon
+     :icon org-catalyst-negative-item-icon
      :face org-catalyst-negative-item-face
      :predicate
      ,(lambda (param)
@@ -1673,7 +1673,7 @@ PREV-SNAPSHOT, and cdr is the value in SNAPSHOT."
     (let ((page (nth i org-catalyst--pages)))
       (insert
        (org-catalyst--with-face
-        (plist-get page :icon)
+        (eval (plist-get page :icon))
         (plist-get page :face))
        " "
        (org-catalyst--with-face
