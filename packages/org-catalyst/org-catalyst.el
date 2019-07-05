@@ -311,6 +311,8 @@ This is used to determine the default day to show in the status window."
 (defconst org-catalyst--history-suffix "-history.json")
 (defconst org-catalyst--state-delta-prefix "delta_")
 (defconst org-catalyst--param-prefix "param_")
+(defconst org-catalyst--child-state-delta-prefix "child_delta_")
+(defconst org-catalyst--child-param-prefix "child_param_")
 (defconst org-catalyst--key-bindings
   (list (list (kbd "q") 'org-catalyst-status-quit)
         (list (kbd "r") 'org-catalyst-status-refresh)
@@ -321,7 +323,8 @@ This is used to determine the default day to show in the status window."
         (list (kbd "t") 'org-catalyst-status-goto-date)
         (list (kbd ".") 'org-catalyst-status-goto-today)
         (list (kbd "[") 'org-catalyst-previous-page)
-        (list (kbd "]") 'org-catalyst-next-page)))
+        (list (kbd "]") 'org-catalyst-next-page)
+        (list (kbd "<tab>") 'org-catalyst-goto)))
 (defconst org-catalyst--pages
   `((:name
      "Mission"
@@ -912,9 +915,11 @@ If LOCAL is non-nil, return tag only if TAG is a local tag."
                                   (org-get-heading t t t t)))
                    (item-id (org-id-get-create))
                    (item-config (ht-create))
-                   (state-deltas (ht-create))
                    (attributes nil)
+                   (state-deltas (ht-create))
                    (params (ht-create))
+                   (child-state-deltas (ht-create))
+                   (child-params (ht-create))
                    (is-group (equal tag "itemgroup")))
 
                (while (and params-stack
@@ -956,8 +961,10 @@ If LOCAL is non-nil, return tag only if TAG is a local tag."
                                       prop-name)
                      ;; TODO: state names are stored in lower case
                      (ht-set state-deltas
-                             (substring prop-name
-                                        (length org-catalyst--state-delta-prefix))
+                             (substring
+                              prop-name
+                              (length
+                               org-catalyst--state-delta-prefix))
                              (string-to-number prop-value)))
 
                     ((s-starts-with-p org-catalyst--param-prefix
@@ -966,6 +973,24 @@ If LOCAL is non-nil, return tag only if TAG is a local tag."
                              (substring
                               prop-name
                               (length org-catalyst--param-prefix))
+                             (car (read-from-string prop-value))))
+
+                    ((s-starts-with-p org-catalyst--child-state-delta-prefix
+                                      prop-name)
+                     ;; TODO: state names are stored in lower case
+                     (ht-set child-state-deltas
+                             (substring
+                              prop-name
+                              (length
+                               org-catalyst--child-state-delta-prefix))
+                             (string-to-number prop-value)))
+
+                    ((s-starts-with-p org-catalyst--child-param-prefix
+                                      prop-name)
+                     (ht-set child-params
+                             (substring
+                              prop-name
+                              (length org-catalyst--child-param-prefix))
                              (car (read-from-string prop-value)))))))
 
                (ht-set item-config "item-id" item-id)
@@ -988,11 +1013,10 @@ If LOCAL is non-nil, return tag only if TAG is a local tag."
                  (ht-set item-config "parent"
                          (car children-parent-id-stack)))
 
-               (when is-group
-                 (push (cons level params) params-stack)
-                 (push (cons level state-deltas) state-deltas-stack)
-                 (push (cons level nil) children-stack)
-                 (push item-id children-parent-id-stack))
+               (push (cons level child-params) params-stack)
+               (push (cons level child-state-deltas) state-deltas-stack)
+               (push (cons level nil) children-stack)
+               (push item-id children-parent-id-stack)
 
                (push item-id topological-order)))
 
@@ -1001,6 +1025,7 @@ If LOCAL is non-nil, return tag only if TAG is a local tag."
                                    (org-get-heading t t t t)))
                     (state-name (downcase display-name))
                     (state-config (ht-create))
+                    (state-id (org-id-get-create))
                     (attributes nil)
                     (params (ht-create)))
                (dolist (prop (let ((org-trust-scanner-tags t))
@@ -1040,6 +1065,7 @@ If LOCAL is non-nil, return tag only if TAG is a local tag."
                               (length org-catalyst--param-prefix))
                              (car (read-from-string prop-value)))))))
 
+               (ht-set state-config "state-id" state-id)
                (ht-set state-config "display-name" display-name)
                (ht-set state-config "attributes" attributes)
                (ht-set state-config "params" params)
@@ -1083,9 +1109,7 @@ NOTE: This function can mutate SNAPSHOT."
               (or (and item-config
                        (ht-get item-config "params"))
                   empty-table)))
-        (when (and state-deltas
-                   (not (org-catalyst-safe-get
-                         item-config "is-group" nil)))
+        (when state-deltas
           (dolist (state-name (ht-keys state-deltas))
             (let* ((state-config (ht-get all-state-config state-name))
                    (state-params (or (and
@@ -1251,10 +1275,20 @@ parents always come after the item itself."
         (org-catalyst--queue-push queue item-id)))
     (while (not (org-catalyst--queue-empty queue))
       (let* ((item-id (org-catalyst--queue-pop queue))
+             (item-config (org-catalyst-safe-get
+                           all-item-config item-id nil))
+             (done (org-catalyst-safe-get
+                    (org-catalyst-safe-get
+                     actions item-id nil)
+                    "done" 0))
              (parent (org-catalyst-safe-get
+                      item-config "parent" nil))
+             (timed (org-catalyst-safe-get
+                     (org-catalyst-safe-get
                       (org-catalyst-safe-get
-                       all-item-config item-id nil)
-                      "parent" nil)))
+                       all-item-config parent nil)
+                      "params" nil)
+                     "timed" nil)))
         (when parent
           (org-catalyst-safe-update
            actions parent (ht-create)
@@ -1262,11 +1296,9 @@ parents always come after the item itself."
              (org-catalyst-safe-update
               prev "done" 0
               (lambda (prev)
-                (+ prev
-                   (org-catalyst-safe-get
-                    (org-catalyst-safe-get
-                     actions item-id nil)
-                    "done" 0))))
+                (if timed
+                    (+ prev done)
+                  (if (> done 0) 1 prev))))
              prev)))))
     actions))
 
@@ -1979,8 +2011,8 @@ REVERSE the order if REVERSE is non-nil."
     (insert "\n")
     (let ((point-after (point)))
       (dolist (prop property-alist)
-        (let ((prop-name (car property-alist))
-              (prop-value (cdr property-alist)))
+        (let ((prop-name (car prop))
+              (prop-value (cdr prop)))
           (put-text-property point-before point-after
                              prop-name prop-value))))))
 
@@ -1999,8 +2031,11 @@ REVERSE the order if REVERSE is non-nil."
   (let ((is-group (org-catalyst-safe-get
                    item-config "is-group" nil))
         (params (org-catalyst-safe-get
-                 item-config "params" nil)))
+                 item-config "params" nil))
+        (item-id (org-catalyst-safe-get
+                  item-config "item-id" nil)))
     (org-catalyst--render-row
+     :property-alist `((id . ,item-id))
      :prefix-width prefix-width
      :prefix-renderer prefix-renderer
      :second-prefix-width second-prefix-width
@@ -2041,12 +2076,10 @@ REVERSE the order if REVERSE is non-nil."
            (when is-group
              'org-catalyst-item-group-face)))))
      :suffix-renderer
-     (if is-group
-         #'org-catalyst--dummy-renderer
-       (org-catalyst--inline-renderer ()
-         (org-catalyst--render-delta-desc
-          :item-config item-config
-          :action action))))))
+     (org-catalyst--inline-renderer ()
+       (org-catalyst--render-delta-desc
+        :item-config item-config
+        :action action)))))
 
 (org-catalyst--define-renderer org-catalyst--render-progress-bar
     ((value)
@@ -2126,6 +2159,7 @@ REVERSE the order if REVERSE is non-nil."
                      ;; TODO: can refactor to use a macro for chained access, returning default
                      (state-config (ht-get all-state-config state-name))
                      (display-name (ht-get state-config "display-name"))
+                     (state-id (org-catalyst-safe-get state-config "state-id" nil))
                      (level-and-threshold
                       (org-catalyst--get-level-and-threshold
                        total nil t))
@@ -2143,6 +2177,7 @@ REVERSE the order if REVERSE is non-nil."
                  (org-catalyst--inf-to-number total)
                  (org-catalyst--inline-renderer ()
                    (org-catalyst--render-row
+                    :property-alist `((id . ,state-id))
                     :prefix-renderer
                     (org-catalyst--partial-renderer
                      org-catalyst--render-leveled-value :value total)
@@ -2595,6 +2630,20 @@ If KEY doesn't exist, DEFAULT will be used."
    org-catalyst--ui-state key default updater))
 
 ;;; Commands
+
+(defun org-catalyst-goto ()
+  "TODO"
+  (interactive)
+  (let ((id (get-text-property (point) 'id)))
+    (if id
+        (let ((m (org-id-find id 'marker)))
+          (unless m
+            (error "Cannot find entry with ID \"%s\"" id))
+          (switch-to-buffer-other-window (marker-buffer m))
+          (goto-char (marker-position m))
+          (move-marker m nil)
+          (org-show-context))
+      (error "No entry found"))))
 
 (defun org-catalyst-complete-item-toggle (&optional arg)
   "TODO"
