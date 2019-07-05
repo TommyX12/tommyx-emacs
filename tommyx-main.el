@@ -298,7 +298,11 @@
 
 (use-package package-lint :ensure t)
 
-(use-package highlight-function-calls :ensure t)
+(use-package highlight-function-calls :ensure t
+  :config
+  (add-hook 'emacs-lisp-mode-hook
+            (lambda ()
+              (highlight-function-calls-mode))))
 
 (use-package dash :ensure t)
 
