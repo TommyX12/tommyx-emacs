@@ -316,8 +316,10 @@ This is used to determine the default day to show in the status window."
 (defconst org-catalyst--key-bindings
   (list (list (kbd "q") 'org-catalyst-status-quit)
         (list (kbd "r") 'org-catalyst-status-refresh)
-        (list (kbd "a") 'org-catalyst-complete-item-toggle)
-        (list (kbd "p") 'org-catalyst-pardon-item-toggle)
+        (list (kbd "a") 'org-catalyst-complete-item)
+        (list (kbd "s") 'org-catalyst-set-or-toggle-item)
+        (list (kbd "d") 'org-catalyst-uncomplete-item)
+        (list (kbd "p") 'org-catalyst-pardon-item)
         (list (kbd "H") 'org-catalyst-status-earlier)
         (list (kbd "L") 'org-catalyst-status-later)
         (list (kbd "t") 'org-catalyst-status-goto-date)
@@ -389,6 +391,8 @@ This is used to determine the default day to show in the status window."
   "The current month-day displayed in status window.")
 (defvar org-catalyst--ui-state (ht-create)
   "The current UI state for status buffer.")
+(defvar org-catalyst--selected-item-id nil
+  "If non-nil, this value will be used as item-id in `org-catalyst--interactively-update-item'.")
 
 ;;; Faces
 
@@ -798,8 +802,9 @@ The return value is positive if MONTH-DAY-1 is before MONTH-DAY-2, and vice vers
      (org-catalyst--month-day-to-days month-day-1)))
 
 (defun org-catalyst--read-month-day (&optional default-month-day)
-  "Use org to read a month-day."
-  (interactive)
+  "Use org to read a month-day.
+
+DEFAULT-MONTH-DAY is used if user do not select a date."
   (org-catalyst--time-to-month-day
    (org-time-string-to-time
     (org-read-date nil nil nil "Go To"
@@ -842,7 +847,7 @@ The return value is positive if MONTH-DAY-1 is before MONTH-DAY-2, and vice vers
 
 (defun org-catalyst--map-entries (func)
   "Execute FUNC on all headlines."
-  (org-map-entries func nil 'agenda))
+  (org-map-entries func nil 'agenda-with-archives))
 
 (defun org-catalyst--contains-tag (tag tags &optional local)
   "Check if TAGS contain TAG.
@@ -1986,10 +1991,19 @@ REVERSE the order if REVERSE is non-nil."
          (second-prefix-width (or second-prefix-width
                                   org-catalyst-status-second-prefix-width))
          (text-width (or text-width org-catalyst-status-text-width))
-         (extra-width (max 0 (- (org-catalyst--render-container
-                                 :width prefix-width
-                                 :renderer prefix-renderer)
-                                prefix-width))))
+         (extra-width 0))
+    (org-catalyst--render-container
+     :width text-width
+     :clamp t
+     :renderer
+     text-renderer)
+    (insert " ")
+    (setq
+     extra-width
+     (max 0 (- (org-catalyst--render-container
+                :width prefix-width
+                :renderer prefix-renderer)
+               prefix-width)))
     (insert " ")
     (when second-prefix-renderer
       (let ((second-prefix-width (- second-prefix-width extra-width)))
@@ -2000,12 +2014,6 @@ REVERSE the order if REVERSE is non-nil."
                     :renderer second-prefix-renderer)
                    second-prefix-width))))
       (insert " "))
-    (org-catalyst--render-container
-     :width (- text-width extra-width)
-     :clamp t
-     :renderer
-     text-renderer)
-    (insert " ")
     (when suffix-renderer
       (funcall suffix-renderer))
     (insert "\n")
@@ -2035,7 +2043,9 @@ REVERSE the order if REVERSE is non-nil."
         (item-id (org-catalyst-safe-get
                   item-config "item-id" nil)))
     (org-catalyst--render-row
-     :property-alist `((id . ,item-id))
+     :property-alist `((id . ,item-id)
+                       (is-item . t)
+                       (is-group . ,is-group))
      :prefix-width prefix-width
      :prefix-renderer prefix-renderer
      :second-prefix-width second-prefix-width
@@ -2357,27 +2367,27 @@ REVERSE the order if REVERSE is non-nil."
                                            "chain_interval" 1))
                    (breaking
                     (= days-since-last chain-interval)))
-                (unless (or done pardon)
-                  (list
-                   :renderer
-                   (org-catalyst--partial-renderer
-                    org-catalyst--render-item
-                    :month-day month-day
-                    :snapshot snapshot
-                    :prefix-renderer
-                    (org-catalyst--partial-renderer
-                     org-catalyst--render-leveled-value
-                     :value count)
-                    :second-prefix-renderer
-                    (org-catalyst--partial-renderer
-                     org-catalyst--render-chain
-                     :chain chain
-                     :highest-chain highest-chain)
-                    :action action
-                    :item-config item-config)
-                   :order (or count 0)
-                   :breaking breaking
-                   :params params))))
+                (list
+                 :in-journal (or done pardon)
+                 :renderer
+                 (org-catalyst--partial-renderer
+                  org-catalyst--render-item
+                  :month-day month-day
+                  :snapshot snapshot
+                  :prefix-renderer
+                  (org-catalyst--partial-renderer
+                   org-catalyst--render-leveled-value
+                   :value count)
+                  :second-prefix-renderer
+                  (org-catalyst--partial-renderer
+                   org-catalyst--render-chain
+                   :chain chain
+                   :highest-chain highest-chain)
+                  :action action
+                  :item-config item-config)
+                 :order (or count 0)
+                 :breaking breaking
+                 :params params)))
             item-ids))))
 
     (let* ((breaking-rows
@@ -2398,8 +2408,10 @@ REVERSE the order if REVERSE is non-nil."
       (dolist (row-entry row-data)
         (let ((row (cons (plist-get row-entry :order)
                          (plist-get row-entry :renderer)))
-              (params (plist-get row-entry :params)))
-          (when (funcall page-predicate params)
+              (params (plist-get row-entry :params))
+              (in-journal (plist-get row-entry :in-journal)))
+          (when (and (not in-journal)
+                     (funcall page-predicate params))
             (push row rows))))
 
       (when breaking-rows
@@ -2537,7 +2549,10 @@ BODY should modify `action' (which is a hash table).
 
 If currently not in status window or if ARG is non-nil, the date will be
 interactively selected.
-Otherwise, the date will be the current day in the status window."
+Otherwise, the date will be the current day in the status window.
+
+If `org-catalyst--selected-item-id' is non-nil, that value will be used as item
+ID; otherwise, an item will be interactively selected."
   `(let* ((in-status-buffer (org-catalyst--in-status-buffer))
           (month-day (if (or ,arg
                              (not in-status-buffer))
@@ -2545,7 +2560,11 @@ Otherwise, the date will be the current day in the status window."
                           org-catalyst--status-month-day)
                        org-catalyst--status-month-day))
           (item-id
-           (org-catalyst--select-item ,prompt))
+           (or org-catalyst--selected-item-id
+               (and in-status-buffer
+                    (org-catalyst--item-at-point t)
+                    (org-catalyst--get-id-at-point))
+               (org-catalyst--select-item ,prompt)))
           (params (org-catalyst-safe-get
                    (org-catalyst-safe-get
                     (plist-get
@@ -2629,24 +2648,102 @@ If KEY doesn't exist, DEFAULT will be used."
   (org-catalyst-safe-update
    org-catalyst--ui-state key default updater))
 
+(defun org-catalyst--item-at-point (&optional ignore-group)
+  "Return t if point is currently on an item.
+
+If IGNORE-GROUP is non-nil, item groups do not count."
+  (and (not (and ignore-group
+                 (get-text-property (point) 'is-group)))
+       (get-text-property (point) 'is-item)))
+
+(defun org-catalyst--get-id-at-point ()
+  "Return the item-id or state-id at point."
+  (get-text-property (point) 'id))
+
 ;;; Commands
 
 (defun org-catalyst-goto ()
   "TODO"
   (interactive)
-  (let ((id (get-text-property (point) 'id)))
-    (if id
-        (let ((m (org-id-find id 'marker)))
-          (unless m
-            (error "Cannot find entry with ID \"%s\"" id))
-          (switch-to-buffer-other-window (marker-buffer m))
-          (goto-char (marker-position m))
-          (move-marker m nil)
-          (org-show-context))
-      (error "No entry found"))))
+  (if (org-catalyst--in-status-buffer)
+      (let ((id (get-text-property (point) 'id)))
+        (if id
+            (let ((m (org-id-find id 'marker)))
+              (unless m
+                (error "Cannot find entry with ID \"%s\"" id))
+              (switch-to-buffer-other-window (marker-buffer m))
+              (goto-char (marker-position m))
+              (move-marker m nil)
+              (org-show-context))
+          (error "No entry found")))
+    (error "Not in Catalyst buffer")))
 
-(defun org-catalyst-complete-item-toggle (&optional arg)
-  "TODO"
+(defun org-catalyst-complete-item (&optional arg)
+  "Complete an item.
+
+When called outside of Catalyst buffer or if ARG is non-nil, a date will be
+interactively selected.
+
+If called in Catalyst buffer and point is on an item, that item will be altered.
+Otherwise, an item will be interactively selected.
+
+If the item is timed, an amount will be interactively entered, and the amount
+done for that item will be increased by said amount.  Otherwise, the
+completion status will be set."
+  (interactive "P")
+  (org-catalyst--interactively-update-item
+   "Complete item: " arg
+   (if (org-catalyst-safe-get params "timed" nil)
+       ;; timed
+       (let ((amount (read-number "Enter amount: ")))
+         (if (<= amount 0)
+             (ht-remove action "done")
+           (org-catalyst-safe-update
+            action "done" 0
+            (lambda (prev)
+              (+ prev amount)))))
+     ;; not timed
+     (ht-set action "done" 1))))
+
+(defun org-catalyst-uncomplete-item (&optional arg)
+  "Uncomplete an item.
+
+When called outside of Catalyst buffer or if ARG is non-nil, a date will be
+interactively selected.
+
+If called in Catalyst buffer and point is on an item, that item will be altered.
+Otherwise, an item will be interactively selected.
+
+If the item is timed, an amount will be interactively entered, and the amount
+done for that item will be decreased by said amount.  Otherwise, the
+completion status will be unset."
+  (interactive "P")
+  (org-catalyst--interactively-update-item
+   "Complete item: " arg
+   (if (org-catalyst-safe-get params "timed" nil)
+       ;; timed
+       (let ((amount (read-number "Enter amount: ")))
+         (if (<= amount 0)
+             (ht-remove action "done")
+           (org-catalyst-safe-update
+            action "done" 0
+            (lambda (prev)
+              (max 0 (- prev amount))))))
+     ;; not timed
+     (ht-set action "done" 0))))
+
+(defun org-catalyst-set-or-toggle-item (&optional arg)
+  "Set or toggle completion status of an item.
+
+When called outside of Catalyst buffer or if ARG is non-nil, a date will be
+interactively selected.
+
+If called in Catalyst buffer and point is on an item, that item will be altered.
+Otherwise, an item will be interactively selected.
+
+If the item is timed, an amount will be interactively entered, and the item will
+be set to having that amount done.  Otherwise, the completion status will be
+toggled."
   (interactive "P")
   (org-catalyst--interactively-update-item
    "Complete item: " arg
@@ -2661,8 +2758,14 @@ If KEY doesn't exist, DEFAULT will be used."
          (ht-remove action "done")
        (ht-set action "done" 1)))))
 
-(defun org-catalyst-pardon-item-toggle (&optional arg)
-  "TODO"
+(defun org-catalyst-pardon-item (&optional arg)
+  "Toggle the pardon status of an item.
+
+When called outside of Catalyst buffer or if ARG is non-nil, a date will be
+interactively selected.
+
+If called in Catalyst buffer and point is on an item, that item will be altered.
+Otherwise, an item will be interactively selected."
   (interactive "P")
   (org-catalyst--interactively-update-item
    "Pardon item: " arg

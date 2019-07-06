@@ -740,8 +740,8 @@
   (require 'org-catalyst)
   (add-hook 'org-catalyst-mode-hook
             (lambda ()
-              (setq-local use-line-nav t)
-              (hl-line-mode 1)))
+              ;; (hl-line-mode 1)
+              (setq-local use-line-nav t)))
   (setq org-catalyst-save-path (f-join org-directory "org-catalyst"))
   (org-catalyst-install-default-systems)
   (org-catalyst-setup-default-sections)
