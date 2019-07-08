@@ -3850,7 +3850,13 @@ command (ran after) is mysteriously incorrect."
    (:bindings
 
     "h" nil
-    "SPC" nil)))
+    "SPC" nil)
+   :keymaps compilation-mode-map
+   :states (motion normal visual)
+   (:bindings
+
+    goto-greater-element-up compilation-previous-error
+    goto-greater-element-down compilation-next-error)))
 
 
 ;;; general settings after package load

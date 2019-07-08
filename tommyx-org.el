@@ -743,7 +743,6 @@
               ;; (hl-line-mode 1)
               (setq-local use-line-nav t)))
   (setq org-catalyst-save-path (f-join org-directory "org-catalyst"))
-  (org-catalyst-install-default-systems)
   (org-catalyst-setup-evil-status-bindings)
   (org-catalyst-auto-save-mode 1)
   (tommyx-bind-keys
