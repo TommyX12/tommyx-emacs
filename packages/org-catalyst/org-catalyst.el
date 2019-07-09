@@ -305,7 +305,7 @@ This is used to determine the default day to show in the status window."
   `((:id
      overview
      :command
-     org-catalyst-overview
+     org-catalyst-status-overview
      :name
      "Overview"
      :renderers
@@ -317,7 +317,7 @@ This is used to determine the default day to show in the status window."
     (:id
      inventory
      :command
-     org-catalyst-inventory
+     org-catalyst-status-inventory
      :name
      "Inventory"
      :renderers
@@ -333,7 +333,7 @@ This is used to determine the default day to show in the status window."
     (:id
      quest-map
      :command
-     org-catalyst-quest-map
+     org-catalyst-status-quest-map
      :name
      "Quest Map"
      :renderers
@@ -344,17 +344,35 @@ This is used to determine the default day to show in the status window."
       . (:name
          "Count"
          :order-func
-         ,(lambda (item-id all-item-config item-attributes actions)
-            (org-catalyst-safe-get-chain
-             item-attributes 0 item-id "count"))))
+         ,(lambda (item-id node-order all-item-config item-attributes actions)
+            (ht-set node-order item-id
+                    (org-catalyst-safe-get-chain
+                     item-attributes 0 item-id "count")))))
      ("chain"
       . (:name
          "Chain"
          :order-func
-         ,(lambda (item-id all-item-config item-attributes actions)
-            (org-catalyst-safe-get-chain
-             item-attributes 0 item-id "chain")))))))
-(defconst org-catalyst--inventory-default-order "count")
+         ,(lambda (item-id node-order all-item-config item-attributes actions)
+            (ht-set node-order item-id
+                    (org-catalyst-safe-get-chain
+                     item-attributes 0 item-id "chain")))))
+     ("recent"
+      . (:name
+         "Recent"
+         :order-func
+         ,(lambda (item-id node-order all-item-config item-attributes actions)
+            (let ((value (org-catalyst-safe-get-chain
+                          item-attributes 0 item-id "last-used"))
+                  (parent (org-catalyst-safe-get-chain
+                           item-attributes nil item-id "parent")))
+              (ht-set node-order item-id value)
+              (when parent
+                (org-catalyst-safe-update
+                 node-order parent 0
+                 (lambda (prev)
+                   (max prev value)))))))))))
+(defconst org-catalyst--inventory-default-order "recent")
+(defconst org-catalyst--inventory-default-order-reverse t)
 (defconst org-catalyst--quest-map-days 30)
 (defconst org-catalyst--tree-indent-line "│ ")
 (defconst org-catalyst--tree-indent-empty "  ")
@@ -371,13 +389,21 @@ This is used to determine the default day to show in the status window."
 (defconst org-catalyst--param-prefix "param_")
 (defconst org-catalyst--child-state-delta-prefix "child_delta_")
 (defconst org-catalyst--child-param-prefix "child_param_")
+(defconst org-catalyst-inventory-order-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "SPC") 'org-catalyst-inventory-order-reverse)
+    (define-key map (kbd "r") 'org-catalyst-inventory-order-recent)
+    (define-key map (kbd "s") 'org-catalyst-inventory-order-count)
+    (define-key map (kbd "c") 'org-catalyst-inventory-order-chain)
+    map))
 (defconst org-catalyst--key-bindings
   (list (list (kbd "q") 'org-catalyst-status-quit)
         (list (kbd "r") 'org-catalyst-status-refresh)
-        (list (kbd "o") 'org-catalyst-overview)
-        (list (kbd "i") 'org-catalyst-inventory)
+        (list (kbd "c") 'org-catalyst-status-overview)
+        (list (kbd "i") 'org-catalyst-status-inventory)
         ;; (list (kbd "I") 'org-catalyst-inventory-tree)
-        (list (kbd "m") 'org-catalyst-quest-map)
+        (list (kbd "m") 'org-catalyst-status-quest-map)
+        (list (kbd "o") org-catalyst-inventory-order-map)
         (list (kbd "a") 'org-catalyst-complete-item)
         (list (kbd "s") 'org-catalyst-set-or-toggle-item)
         (list (kbd "d") 'org-catalyst-uncomplete-item)
@@ -778,7 +804,7 @@ If KEY doesn't exist in TABLE or value is nil, DEFAULT will be passed to MAPPER.
              (org-catalyst--month-day-to-days month-day))
             (last-chain-day-index
              (+ pardon
-                (org-catalyst-safe-get item-attr "last-chain-day-index"
+                (org-catalyst-safe-get item-attr "last-chain"
                                        (if inverse
                                            (1- day-index)
                                          1))))
@@ -811,7 +837,7 @@ If KEY doesn't exist in TABLE or value is nil, DEFAULT will be passed to MAPPER.
                     (equal chain "inf"))
                 prev
               (max prev chain)))))
-       (ht-set item-attr "last-chain-day-index"
+       (ht-set item-attr "last-chain"
                (if (> done 0)
                    day-index
                  last-chain-day-index)))
@@ -1336,16 +1362,25 @@ NOTE: This function can mutate SNAPSHOT."
                          delta
                          month-day
                          state-params))))))
-        (dolist (item-update-func (ht-get item-update-funcs item-id))
-          (ht-set item-attributes
-                  item-id
-                  (funcall
-                   item-update-func
-                   (or (ht-get item-attributes item-id)
-                       (ht-create))
-                   action
-                   month-day
-                   item-params)))))
+        (let ((item-attr (or (ht-get item-attributes item-id)
+                             (ht-create))))
+          (dolist (item-update-func (ht-get item-update-funcs item-id))
+            (ht-set item-attributes
+                    item-id
+                    (funcall
+                     item-update-func
+                     item-attr
+                     action
+                     month-day
+                     item-params)))
+          ;; TODO: temporary hack to get recent-order working
+          (org-catalyst-safe-update
+           item-attr "last-used" 0
+           (lambda (prev)
+             (if (or (> (org-catalyst-safe-get action "done" 0) 0)
+                     (> (org-catalyst-safe-get action "pardon" 0) 0))
+                 (org-catalyst--month-day-to-days month-day)
+               prev))))))
 
     ;; continuous update
 
@@ -1816,7 +1851,7 @@ If the value of NUMBER is an integer, no decimal point will be displayed."
         (attribute-to-states (ht-create))
         (days-to-items (ht-create)))
 
-    (ht-map
+    (ht-each
      (lambda (item-id item-config)
        (let ((attributes (ht-get item-config "attributes")))
          (dolist (attribute attributes)
@@ -1828,7 +1863,7 @@ If the value of NUMBER is an integer, no decimal point will be displayed."
 
      (plist-get config :all-item-config))
 
-    (ht-map
+    (ht-each
      (lambda (state-name state-config)
        (let ((attributes (ht-get state-config "attributes")))
          (dolist (attribute attributes)
@@ -1840,7 +1875,7 @@ If the value of NUMBER is an integer, no decimal point will be displayed."
 
      (plist-get config :all-state-config))
 
-    (ht-map
+    (ht-each
      (lambda (item-id timestamps)
        (dolist (timestamp-days timestamps)
          (org-catalyst-safe-update
@@ -2213,7 +2248,7 @@ REVERSE the order if REVERSE is non-nil."
       (when chain
         (let* ((last-chain-day-index
                 (org-catalyst--get-item-attribute
-                 snapshot item-id "last-chain-day-index" 1))
+                 snapshot item-id "last-chain" 1))
                (day-index
                 (1+ (org-catalyst--month-day-to-days month-day)))
                (days-since-last
@@ -2384,7 +2419,7 @@ REVERSE the order if REVERSE is non-nil."
                   (org-catalyst--inf-to-number count)))
          (last-chain-day-index
           (org-catalyst--get-item-attribute
-           snapshot item-id "last-chain-day-index" 1))
+           snapshot item-id "last-chain" 1))
          (day-index
           (1+ (org-catalyst--month-day-to-days month-day)))
          (days-since-last
@@ -2602,7 +2637,7 @@ REVERSE the order if REVERSE is non-nil."
      :reverse t
      :renderer-alist
      (let ((renderers nil))
-       (ht-map
+       (ht-each
         (lambda (item-id action)
           (let* ((done (org-catalyst-safe-get
                         action "done" 0))
@@ -2656,7 +2691,7 @@ REVERSE the order if REVERSE is non-nil."
                             (org-catalyst--inf-to-number count)))
                    (last-chain-day-index
                     (org-catalyst--get-item-attribute
-                     snapshot item-id "last-chain-day-index" 1))
+                     snapshot item-id "last-chain" 1))
                    (day-index
                     (1+ (org-catalyst--month-day-to-days month-day)))
                    (days-since-last
@@ -2723,7 +2758,7 @@ REVERSE the order if REVERSE is non-nil."
                             (org-catalyst--inf-to-number count)))
                    (last-chain-day-index
                     (org-catalyst--get-item-attribute
-                     snapshot item-id "last-chain-day-index" 1))
+                     snapshot item-id "last-chain" 1))
                    (day-index
                     (1+ (org-catalyst--month-day-to-days month-day)))
                    (days-since-last
@@ -3061,9 +3096,11 @@ If IGNORE-GROUP is non-nil, item groups do not count."
     (org-catalyst--render-item-with-info
      :prefix-renderer
      (org-catalyst--inline-renderer ()
-       (--each-r prefixes
-         (insert (org-catalyst--with-face
-                  it 'org-catalyst-secondary-face)))
+       (-each-r
+        prefixes
+        (lambda (item)
+          (insert (org-catalyst--with-face
+                   item 'org-catalyst-secondary-face))))
        (insert (org-catalyst--with-face
                 (if cur-children
                     (if expanded
@@ -3129,24 +3166,18 @@ ALL-ITEM-CONFIG and TOPOLOGICAL-ORDER are needed."
                                      all-item-config
                                      item-attributes
                                      actions
-                                     &optional reverse)
+                                     topological-order)
   "Return a hash table mapping from item-id to a number used for ordering.
 
-ORDER-FUNC, ALL-ITEM-CONFIG, ITEM-ATTRIBUTES, and ACTIONS are needed.
-
-If REVERSE is non-nil, the order is reversed."
+ORDER-FUNC, ALL-ITEM-CONFIG, ITEM-ATTRIBUTES, ACTIONS, SNAPSHOT, and TOPOLOGICAL-ORDER are needed."
   (let ((result (ht-create)))
-    (ht-map
-     (lambda (item-id item-config)
-       (ht-set result
+    (dolist (item-id topological-order)
+      (funcall order-func
                item-id
-               (* (if reverse -1 1)
-                  (funcall order-func
-                           item-id
-                           all-item-config
-                           item-attributes
-                           actions))))
-     all-item-config)
+               result
+               all-item-config
+               item-attributes
+               actions))
     result))
 
 (defun org-catalyst--sort-with-node-order (item-id-list node-order)
@@ -3154,13 +3185,23 @@ If REVERSE is non-nil, the order is reversed."
 
 ITEM-ID-LIST is modified by side-effects.
 
-NODE-ORDER should be returned from `org-catalyst--get-node-order'."
+NODE-ORDER should be returned from `org-catalyst--get-node-order'.
+
+If current UI state specifies order to be reversed, the returned order is reversed."
   (sort item-id-list
-        (lambda (a b)
-          (< (org-catalyst-safe-get
-              node-order a 0)
-             (org-catalyst-safe-get
-              node-order b 0)))))
+        (if (org-catalyst--get-ui-state
+             "order-reverse"
+             org-catalyst--inventory-default-order-reverse)
+            (lambda (a b)
+              (> (org-catalyst-safe-get
+                  node-order a 0)
+                 (org-catalyst-safe-get
+                  node-order b 0)))
+          (lambda (a b)
+            (< (org-catalyst-safe-get
+                node-order a 0)
+               (org-catalyst-safe-get
+                node-order b 0))))))
 
 (org-catalyst--define-renderer org-catalyst--render-inventory
     (month-day
@@ -3193,7 +3234,7 @@ NODE-ORDER should be returned from `org-catalyst--get-node-order'."
                                         all-item-config
                                         item-attributes
                                         computed-actions
-                                        t)))
+                                        topological-order)))
     (org-catalyst--render-section-heading :name "Inventory"
                                           :no-newline t)
     (insert "    ")
@@ -3329,17 +3370,19 @@ NODE-ORDER should be returned from `org-catalyst--get-node-order'."
 
 (defun org-catalyst--goto-tab (tab-id)
   "Jump to the tab having TAB-ID."
-  (let ((index (-find-index
-                (lambda (tab)
-                  (eq (plist-get tab :id) tab-id))
-                org-catalyst--status-tabs)))
-    (if index
-        (org-catalyst--update-ui-state
-         "tab" 0
-         (lambda (prev)
-           index)
-         t)
-      (error "Tab %s not found" (symbol-name tab-id)))))
+  (if (org-catalyst--in-status-buffer)
+      (let ((index (-find-index
+                    (lambda (tab)
+                      (eq (plist-get tab :id) tab-id))
+                    org-catalyst--status-tabs)))
+        (if index
+            (org-catalyst--update-ui-state
+             "tab" 0
+             (lambda (prev)
+               index)
+             t)
+          (error "Tab %s not found" (symbol-name tab-id))))
+    (error "Not in Catalyst buffer")))
 
 (defun org-catalyst--set-fold-level (&optional fold-level refresh)
   "Update fold state of each entry according to FOLD-LEVEL.
@@ -3360,7 +3403,7 @@ If REFRESH is non-nil, Catalyst buffer will be refreshed."
     (org-catalyst--update-ui-state
      "expanded" (ht-create)
      (lambda (prev)
-       (ht-map
+       (ht-each
         (lambda (item-id item-config)
           (org-catalyst-safe-update
            prev item-id org-catalyst--default-expanded
@@ -3384,7 +3427,7 @@ If REFRESH is non-nil, Catalyst buffer will be refreshed."
 
 ;;; Commands
 
-(defun org-catalyst-inventory ()
+(defun org-catalyst-status-inventory ()
   "Go to Catalyst inventory tab."
   (interactive)
   (org-catalyst--goto-tab 'inventory))
@@ -3394,12 +3437,12 @@ If REFRESH is non-nil, Catalyst buffer will be refreshed."
 ;;   (interactive)
 ;;   (org-catalyst--goto-tab 'inventory-tree))
 
-(defun org-catalyst-quest-map ()
+(defun org-catalyst-status-quest-map ()
   "Go to Catalyst quest map tab."
   (interactive)
   (org-catalyst--goto-tab 'quest-map))
 
-(defun org-catalyst-overview ()
+(defun org-catalyst-status-overview ()
   "Go to Catalyst overview tab."
   (interactive)
   (org-catalyst--goto-tab 'overview))
@@ -3736,6 +3779,30 @@ Note that this invalidates config cache."
    (lambda (prev)
      (% (1+ prev) (length org-catalyst--status-tabs)))
    t))
+
+(defun org-catalyst-inventory-order-reverse ()
+  "Toggle if inventory order should be reversed."
+  (interactive)
+  (org-catalyst--update-ui-state
+   "order-reverse" org-catalyst--inventory-default-order-reverse
+   (lambda (prev)
+     (not prev))
+   t))
+
+(defun org-catalyst-inventory-order-chain ()
+  "Switch to order by chain."
+  (interactive)
+  (org-catalyst--set-order "chain" t))
+
+(defun org-catalyst-inventory-order-recent ()
+  "Switch to order by recent."
+  (interactive)
+  (org-catalyst--set-order "recent" t))
+
+(defun org-catalyst-inventory-order-count ()
+  "Switch to order by count."
+  (interactive)
+  (org-catalyst--set-order "count" t))
 
 (defun org-catalyst-status ()
   "Open Catalyst status window."
