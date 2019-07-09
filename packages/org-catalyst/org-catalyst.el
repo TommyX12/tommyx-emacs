@@ -338,6 +338,23 @@ This is used to determine the default day to show in the status window."
      "Quest Map"
      :renderers
      (org-catalyst--render-quest-map))))
+(defconst org-catalyst--inventory-orders
+  (ht<-alist
+   `(("count"
+      . (:name
+         "Count"
+         :order-func
+         ,(lambda (item-id all-item-config item-attributes actions)
+            (org-catalyst-safe-get-chain
+             item-attributes 0 item-id "count"))))
+     ("chain"
+      . (:name
+         "Chain"
+         :order-func
+         ,(lambda (item-id all-item-config item-attributes actions)
+            (org-catalyst-safe-get-chain
+             item-attributes 0 item-id "chain")))))))
+(defconst org-catalyst--inventory-default-order "count")
 (defconst org-catalyst--quest-map-days 30)
 (defconst org-catalyst--tree-indent-line "│ ")
 (defconst org-catalyst--tree-indent-empty "  ")
@@ -364,11 +381,18 @@ This is used to determine the default day to show in the status window."
         (list (kbd "a") 'org-catalyst-complete-item)
         (list (kbd "s") 'org-catalyst-set-or-toggle-item)
         (list (kbd "d") 'org-catalyst-uncomplete-item)
+        (list (kbd "A") 'org-catalyst-complete-item-at-point)
+        (list (kbd "S") 'org-catalyst-set-or-toggle-item-at-point)
+        (list (kbd "D") 'org-catalyst-uncomplete-item-at-point)
         (list (kbd "p") 'org-catalyst-pardon-item)
         (list (kbd "H") 'org-catalyst-status-earlier)
         (list (kbd "L") 'org-catalyst-status-later)
         (list (kbd "t") 'org-catalyst-status-goto-date)
         (list (kbd ".") 'org-catalyst-status-goto-today)
+        (list (kbd "-") 'org-catalyst-decrease-fold-level)
+        (list (kbd "=") 'org-catalyst-increase-fold-level)
+        (list (kbd "_") 'org-catalyst-minimize-fold-level)
+        (list (kbd "+") 'org-catalyst-maximize-fold-level)
         (list (kbd "[") 'org-catalyst-previous-page)
         (list (kbd "]") 'org-catalyst-next-page)
         (list (kbd "{") 'org-catalyst-previous-tab)
@@ -443,7 +467,7 @@ This is used to determine the default day to show in the status window."
   "Cached ui data in status buffer.")
 (defvar org-catalyst--config-cache-valid nil
   "Whether cache is valid in status buffer.")
-(defvar org-catalyst--config-ui-data-valid nil
+(defvar org-catalyst--ui-data-cache-valid nil
   "Whether ui data is valid in status buffer.")
 (defvar-local org-catalyst--prev-window-conf nil
   "Saved window configuration for restore.")
@@ -452,8 +476,8 @@ This is used to determine the default day to show in the status window."
   "The current month-day displayed in status window.")
 (defvar org-catalyst--ui-state (ht-create)
   "The current UI state for status buffer.")
-(defvar org-catalyst--selected-item-id nil
-  "If non-nil, this value will be used as item-id in `org-catalyst--interactively-update-item'.")
+(defvar org-catalyst--update-item-at-point nil
+  "Whether `org-catalyst--interactively-update-item' should operate on item at point.")
 
 ;;; Faces
 
@@ -580,7 +604,7 @@ This is used to determine the default day to show in the status window."
   :group 'org-catalyst)
 
 (defface org-catalyst-today-face
-  '((t :inherit org-agenda-date-today))
+  '((t :inherit font-lock-keyword-face :weight bold))
   "Face for Catalyst today's date."
   :group 'org-catalyst)
 
@@ -685,6 +709,21 @@ Fallback to DEFAULT if TABLE is nil, or if KEY does not exist."
   (if table
       (ht-get table key default)
     default))
+
+(defun org-catalyst-safe-get-chain (table default &rest keys)
+  "Get the value for a chain of KEYS in TABLE (presumably nested hash tables).
+
+Fallback to DEFAULT if any table in the chain is nil, or if KEYS does not exist."
+  (let ((result table)
+        (loop t))
+    (while (and keys loop)
+      (let ((key (pop keys)))
+        (if result
+            (setq result
+                  (ht-get result key (and (null keys) default)))
+          (setq result default
+                loop nil))))
+    result))
 
 (defun org-catalyst-safe-update (table key default mapper)
   "Update TABLE's entry with KEY using MAPPER.
@@ -967,6 +1006,8 @@ If LOCAL is non-nil, return tag only if TAG is a local tag."
          (top-level-items nil)
          (children (ht-create))
          (timestamps (ht-create))
+         (max-fold-level 0)
+         (cur-fold-level 0)
 
          (prev-buffer nil)
          (params-stack nil)
@@ -1039,6 +1080,7 @@ If LOCAL is non-nil, return tag only if TAG is a local tag."
                                      (point-max)))))
              (setq params-stack nil
                    state-deltas-stack nil)
+             (setq cur-fold-level 0)
              (setq prev-buffer (current-buffer)))
            (setq prev-item-id nil
                  prev-item-pos nil)
@@ -1046,7 +1088,8 @@ If LOCAL is non-nil, return tag only if TAG is a local tag."
            (while (and params-stack
                        (<= level (caar params-stack)))
              (pop params-stack)
-             (pop state-deltas-stack))
+             (pop state-deltas-stack)
+             (decf cur-fold-level))
 
            (collect-children-stack level)
 
@@ -1197,6 +1240,9 @@ If LOCAL is non-nil, return tag only if TAG is a local tag."
                        (if params-stack
                            (ht-merge (cdar params-stack) params)
                          params))
+               (ht-set item-config "fold-level" cur-fold-level)
+               (setq max-fold-level (max max-fold-level
+                                         cur-fold-level))
                (ht-set all-item-config item-id
                        item-config)
 
@@ -1212,6 +1258,7 @@ If LOCAL is non-nil, return tag only if TAG is a local tag."
                        (ht-merge (cdar params-stack) child-params))
                  (setq child-state-deltas
                        (ht-merge (cdar state-deltas-stack) child-state-deltas)))
+               (incf cur-fold-level)
                (push (cons level child-params) params-stack)
                (push (cons level child-state-deltas) state-deltas-stack)
                (push (cons level nil) children-stack)
@@ -1231,6 +1278,7 @@ If LOCAL is non-nil, return tag only if TAG is a local tag."
           :all-state-config all-state-config
           :state-update-funcs state-update-funcs
           :item-update-funcs item-update-funcs
+          :max-fold-level max-fold-level
           :continuous-state-update-funcs continuous-state-update-funcs
           :continuous-item-update-funcs continuous-item-update-funcs
           :top-level-items top-level-items
@@ -1884,6 +1932,17 @@ PREV-SNAPSHOT, and cdr is the value in SNAPSHOT."
   (unless no-newline
     (insert "\n")
     (org-catalyst--render-subline-spacing)))
+
+(org-catalyst--define-renderer org-catalyst--render-fold-level
+    (config)
+  (let ((cur-fold-level (org-catalyst--get-ui-state
+                         "fold-level" 0))
+        (max-fold-level (plist-get config :max-fold-level)))
+    (insert (org-catalyst--with-face
+             (format "Fold Level: %d/%d"
+                     cur-fold-level
+                     max-fold-level)
+             'org-catalyst-secondary-face))))
 
 (org-catalyst--define-renderer org-catalyst--render-tab-bar
     (index
@@ -2861,10 +2920,7 @@ BODY should modify `action' (which is a hash table).
 
 If currently not in status window or if ARG is non-nil, the date will be
 interactively selected.
-Otherwise, the date will be the current day in the status window.
-
-If `org-catalyst--selected-item-id' is non-nil, that value will be used as item
-ID; otherwise, an item will be interactively selected."
+Otherwise, the date will be the current day in the status window."
   `(let* ((in-status-buffer (org-catalyst--in-status-buffer))
           (month-day (if (or ,arg
                              (not in-status-buffer))
@@ -2872,11 +2928,12 @@ ID; otherwise, an item will be interactively selected."
                           org-catalyst--status-month-day)
                        org-catalyst--status-month-day))
           (item-id
-           (or org-catalyst--selected-item-id
-               (and in-status-buffer
-                    (org-catalyst--point-on-item t)
-                    (org-catalyst--get-id-at-point))
-               (org-catalyst--select-item ,prompt)))
+           (if org-catalyst--update-item-at-point
+               (or (and in-status-buffer
+                        (org-catalyst--point-on-item t)
+                        (org-catalyst--get-id-at-point))
+                   (error "No item found at point"))
+             (org-catalyst--select-item ,prompt)))
           (params (org-catalyst-safe-get
                    (org-catalyst-safe-get
                     (plist-get
@@ -2983,15 +3040,18 @@ If IGNORE-GROUP is non-nil, item groups do not count."
      all-item-config
      children
      filtered-nodes
+     node-order
      item-id
      depth
      has-more-sibling
      prefixes)
-  (let* ((cur-children (seq-filter
-                        (lambda (item-id)
-                          (ht-contains-p filtered-nodes item-id))
-                        (org-catalyst-safe-get
-                         children item-id nil)))
+  (let* ((cur-children (org-catalyst--sort-with-node-order
+                        (seq-filter
+                         (lambda (item-id)
+                           (ht-contains-p filtered-nodes item-id))
+                         (org-catalyst-safe-get
+                          children item-id nil))
+                        node-order))
          (i (length cur-children))
          (expanded
           (org-catalyst-safe-get
@@ -3035,6 +3095,7 @@ If IGNORE-GROUP is non-nil, item groups do not count."
          :all-item-config all-item-config
          :children children
          :filtered-nodes filtered-nodes
+         :node-order node-order
          :item-id child
          :depth (1+ depth)
          :has-more-sibling (> i 0)
@@ -3064,12 +3125,49 @@ ALL-ITEM-CONFIG and TOPOLOGICAL-ORDER are needed."
           (ht-set filtered-nodes parent t))))
     filtered-nodes))
 
+(defun org-catalyst--get-node-order (order-func
+                                     all-item-config
+                                     item-attributes
+                                     actions
+                                     &optional reverse)
+  "Return a hash table mapping from item-id to a number used for ordering.
+
+ORDER-FUNC, ALL-ITEM-CONFIG, ITEM-ATTRIBUTES, and ACTIONS are needed.
+
+If REVERSE is non-nil, the order is reversed."
+  (let ((result (ht-create)))
+    (ht-map
+     (lambda (item-id item-config)
+       (ht-set result
+               item-id
+               (* (if reverse -1 1)
+                  (funcall order-func
+                           item-id
+                           all-item-config
+                           item-attributes
+                           actions))))
+     all-item-config)
+    result))
+
+(defun org-catalyst--sort-with-node-order (item-id-list node-order)
+  "Return sorted copy of ITEM-ID-LIST using NODE-ORDER.
+
+ITEM-ID-LIST is modified by side-effects.
+
+NODE-ORDER should be returned from `org-catalyst--get-node-order'."
+  (sort item-id-list
+        (lambda (a b)
+          (< (org-catalyst-safe-get
+              node-order a 0)
+             (org-catalyst-safe-get
+              node-order b 0)))))
+
 (org-catalyst--define-renderer org-catalyst--render-inventory
     (month-day
      snapshot
      computed-actions
      config)
-  
+
   (let* ((all-item-config (plist-get config :all-item-config))
          (top-level-items (plist-get config :top-level-items))
          (topological-order (plist-get config :topological-order))
@@ -3082,17 +3180,37 @@ ALL-ITEM-CONFIG and TOPOLOGICAL-ORDER are needed."
          (filtered-nodes (org-catalyst--get-tree-filtered-nodes
                           page-predicate
                           all-item-config
-                          topological-order)))
+                          topological-order))
+         (order (org-catalyst-safe-get
+                 org-catalyst--inventory-orders
+                 (org-catalyst--get-ui-state
+                  "order" org-catalyst--inventory-default-order)
+                 nil))
+         (order-func (plist-get order :order-func))
+         (item-attributes (ht-get snapshot "item-attributes"))
+         (node-order
+          (org-catalyst--get-node-order order-func
+                                        all-item-config
+                                        item-attributes
+                                        computed-actions
+                                        t)))
     (org-catalyst--render-section-heading :name "Inventory"
                                           :no-newline t)
     (insert "    ")
     (org-catalyst--render-tab-bar
      :index page-index
      :tabs org-catalyst--inventory-pages)
-    (dolist (item-id (seq-filter
-                      (lambda (item-id)
-                        (ht-contains-p filtered-nodes item-id))
-                      top-level-items))
+    (org-catalyst--render-subline-spacing)
+    (org-catalyst--render-fold-level
+     :config config)
+    (insert "\n")
+    (org-catalyst--render-subline-spacing)
+    (dolist (item-id (org-catalyst--sort-with-node-order
+                      (seq-filter
+                       (lambda (item-id)
+                         (ht-contains-p filtered-nodes item-id))
+                       top-level-items)
+                      node-order))
       (org-catalyst--render-item-tree
        :month-day month-day
        :snapshot snapshot
@@ -3101,6 +3219,7 @@ ALL-ITEM-CONFIG and TOPOLOGICAL-ORDER are needed."
        :children children
        :filtered-nodes filtered-nodes
        :item-id item-id
+       :node-order node-order
        :depth 0))))
 
 (defun org-catalyst--is-weekend (month-day)
@@ -3164,6 +3283,10 @@ ALL-ITEM-CONFIG and TOPOLOGICAL-ORDER are needed."
      ui-data)
   (org-catalyst--render-section-heading
    :name "Quest Map")
+  (org-catalyst--render-fold-level
+   :config config)
+  (insert "\n")
+  (org-catalyst--render-subline-spacing)
   (let ((all-item-config (plist-get config :all-item-config))
         (top-level-items (plist-get config :top-level-items))
         (days-to-items (org-catalyst-safe-get
@@ -3217,6 +3340,47 @@ ALL-ITEM-CONFIG and TOPOLOGICAL-ORDER are needed."
            index)
          t)
       (error "Tab %s not found" (symbol-name tab-id)))))
+
+(defun org-catalyst--set-fold-level (&optional fold-level refresh)
+  "Update fold state of each entry according to FOLD-LEVEL.
+
+If FOLD-LEVEL is nil, current fold level will be used.
+
+If REFRESH is non-nil, Catalyst buffer will be refreshed."
+  (let* ((cur-fold-level (org-catalyst--get-ui-state "fold-level" 0))
+         (fold-level (or fold-level cur-fold-level))
+         (config (org-catalyst--get-config-with-cache))
+         (all-item-config (plist-get config :all-item-config))
+         (max-fold-level (plist-get config :max-fold-level))
+         (fold-level (min (max fold-level 0) max-fold-level)))
+    (org-catalyst--update-ui-state
+     "fold-level" 0
+     (lambda (prev)
+       fold-level))
+    (org-catalyst--update-ui-state
+     "expanded" (ht-create)
+     (lambda (prev)
+       (ht-map
+        (lambda (item-id item-config)
+          (org-catalyst-safe-update
+           prev item-id org-catalyst--default-expanded
+           (lambda (_)
+             (let ((level (org-catalyst-safe-get
+                           item-config "fold-level" nil)))
+               (< level fold-level)))))
+        all-item-config)
+       prev)
+     refresh)))
+
+(defun org-catalyst--set-order (order &optional refresh)
+  "Set current Catalyst buffer item order to ORDER.
+
+If REFRESH is non-nil, Catalyst buffer will be refreshed."
+  (org-catalyst--update-ui-state
+   "order" org-catalyst--inventory-default-order
+   (lambda (prev)
+     order)
+   refresh))
 
 ;;; Commands
 
@@ -3274,6 +3438,37 @@ ALL-ITEM-CONFIG and TOPOLOGICAL-ORDER are needed."
                t))))
     (error "Not in Catalyst buffer")))
 
+(defun org-catalyst-minimize-fold-level (&optional norefresh)
+  "TODO"
+  (interactive)
+  (if (org-catalyst--in-status-buffer)
+      (org-catalyst--set-fold-level 0 (not norefresh))
+    (error "Not in Catalyst buffer")))
+
+(defun org-catalyst-maximize-fold-level (&optional norefresh)
+  "TODO"
+  (interactive)
+  (if (org-catalyst--in-status-buffer)
+      (let* ((config (org-catalyst--get-config-with-cache))
+             (max-fold-level (plist-get config :max-fold-level)))
+        (org-catalyst--set-fold-level max-fold-level (not norefresh)))
+    (error "Not in Catalyst buffer")))
+
+(defun org-catalyst-increase-fold-level (&optional count)
+  "TODO"
+  (interactive "p")
+  (if (org-catalyst--in-status-buffer)
+      (let* ((cur-fold-level (org-catalyst--get-ui-state
+                              "fold-level" 0)))
+        (org-catalyst--set-fold-level
+         (+ cur-fold-level (or count 1)) t))
+    (error "Not in Catalyst buffer")))
+
+(defun org-catalyst-decrease-fold-level (&optional count)
+  "TODO"
+  (interactive "p")
+  (org-catalyst-increase-fold-level (- (or count 1))))
+
 (defun org-catalyst-complete-item (&optional arg)
   "Complete an item.
 
@@ -3315,7 +3510,7 @@ done for that item will be decreased by said amount.  Otherwise, the
 completion status will be unset."
   (interactive "P")
   (org-catalyst--interactively-update-item
-   "Complete item: " arg
+   "Uncomplete item: " arg
    (if (org-catalyst-safe-get params "timed" nil)
        ;; timed
        (let ((amount (read-number "Enter amount: ")))
@@ -3342,7 +3537,7 @@ be set to having that amount done.  Otherwise, the completion status will be
 toggled."
   (interactive "P")
   (org-catalyst--interactively-update-item
-   "Complete item: " arg
+   "Set or toggle item: " arg
    (if (org-catalyst-safe-get params "timed" nil)
        ;; timed
        (let ((amount (read-number "Enter amount: ")))
@@ -3353,6 +3548,24 @@ toggled."
      (if (> (org-catalyst-safe-get action "done" 0) 0)
          (ht-remove action "done")
        (ht-set action "done" 1)))))
+
+(defun org-catalyst-complete-item-at-point (&optional arg)
+  "Same as `org-catalyst-complete-item', but operate on item at point in Catalyst buffer."
+  (interactive "P")
+  (let ((org-catalyst--update-item-at-point t))
+    (org-catalyst-complete-item arg)))
+
+(defun org-catalyst-uncomplete-item-at-point (&optional arg)
+  "Same as `org-catalyst-uncomplete-item', but operate on item at point in Catalyst buffer."
+  (interactive "P")
+  (let ((org-catalyst--update-item-at-point t))
+    (org-catalyst-uncomplete-item arg)))
+
+(defun org-catalyst-set-or-toggle-item-at-point (&optional arg)
+  "Same as `org-catalyst-set-or-toggle-item', but operate on item at point in Catalyst buffer."
+  (interactive "P")
+  (let ((org-catalyst--update-item-at-point t))
+    (org-catalyst-set-or-toggle-item arg)))
 
 (defun org-catalyst-pardon-item (&optional arg)
   "Toggle the pardon status of an item.
@@ -3547,6 +3760,9 @@ Note that this invalidates config cache."
           (org-catalyst-mode)
           (goto-char (point-min))
           (org-catalyst--invalidate-cache)
+          (if org-catalyst--default-expanded
+              (org-catalyst-maximize-fold-level t)
+            (org-catalyst-minimize-fold-level t))
           (org-catalyst-status-goto-today))))))
 
 ;;; Minor modes
