@@ -3824,10 +3824,16 @@ command (ran after) is mysteriously incorrect."
    (:bindings
 
     previous-item ,(lambda () (interactive)
+                             (previous-line-or-history-element)
+                             (end-of-line))
+    next-item ,(lambda () (interactive)
+                         (next-line-or-history-element)
+                         (end-of-line))
+    previous-history-item ,(lambda () (interactive)
                              (call-interactively
                               'previous-complete-history-element)
                              (end-of-line))
-    next-item ,(lambda () (interactive)
+    next-history-item ,(lambda () (interactive)
                          (call-interactively
                           'next-complete-history-element)
                          (end-of-line))
