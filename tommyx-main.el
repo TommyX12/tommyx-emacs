@@ -304,7 +304,8 @@
             (lambda ()
               (highlight-function-calls-mode))))
 
-(use-package dash :ensure t)
+(use-package dash :ensure t
+  :pin melpa)
 
 (use-package ht :ensure t)
 
@@ -2035,7 +2036,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
   (tommyx-bind-keys
    `(:case
-     :keymaps typescript-mode-map
+     :keymaps tide-mode-map
      :states (motion normal)
      (:bindings
       
@@ -2145,7 +2146,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 (use-package js2-mode :ensure t
   :config
   (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
-  (add-hook 'js2-mode-hook (lambda () (ycmd-mode 1)))
+  (add-hook 'js2-mode-hook #'setup-tide-mode)
   (setq js2-strict-missing-semi-warning nil)
   (push 'js2-mode ahs-modes))
 
@@ -3809,10 +3810,10 @@ command (ran after) is mysteriously incorrect."
    :keymaps (minibuffer-local-shell-command-map)
    (:bindings
 
-    previous-history-item ,(lambda () (interactive)
+    previous-item ,(lambda () (interactive)
                              (previous-line-or-history-element)
                              (end-of-line))
-    next-history-item ,(lambda () (interactive)
+    next-item ,(lambda () (interactive)
                          (next-line-or-history-element)
                          (end-of-line))
     select-action exit-minibuffer)))
@@ -3822,11 +3823,11 @@ command (ran after) is mysteriously incorrect."
    :keymaps (minibuffer-local-map evil-ex-completion-map)
    (:bindings
 
-    previous-history-item ,(lambda () (interactive)
+    previous-item ,(lambda () (interactive)
                              (call-interactively
                               'previous-complete-history-element)
                              (end-of-line))
-    next-history-item ,(lambda () (interactive)
+    next-item ,(lambda () (interactive)
                          (call-interactively
                           'next-complete-history-element)
                          (end-of-line))
