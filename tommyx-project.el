@@ -77,6 +77,10 @@
      "C-c" (:def
             kill-compilation
             :which-key "Kill Compilation")
+     "M-c" (:def
+            ,(lambda () (interactive)
+               (switch-to-buffer-other-window "*compilation*"))
+            :which-key "Go To Compilation")
      "t" (:def
           ansi-term
           :which-key "Open Terminal")
