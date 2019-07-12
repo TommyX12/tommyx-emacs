@@ -1065,6 +1065,33 @@ Useful for a search overview popup."
   (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
   (add-hook 'text-mode-hook #'rainbow-delimiters-mode))
 
+(use-package vdiff :ensure t
+  :config
+
+  ;; bindings
+  (tommyx-bind-keys
+   `(:case
+     (:bindings
+
+      diff-prefix
+      (:bindings
+
+       "b" (:def
+            vdiff-buffers
+            :which-key "Diff Buffers")
+
+       "q" (:def
+            vdiff-quit
+            :which-key "Diff Quit")))
+
+     :keymaps vdiff-mode-map
+     :states (motion normal visual)
+     (:bindings
+
+      ;; TODO: deal with folding
+      "<tab>" vdiff-toggle-fold
+      "TAB" vdiff-toggle-fold))))
+
 (use-package avy :ensure t
   :config
   ;; avy
@@ -2835,6 +2862,8 @@ command (ran after) is mysteriously incorrect."
     ;; jumping through jump list
     "m" evil-jump-backward
     "M" evil-jump-forward
+    "M-m" ,(lambda () (interactive)
+             (evil-set-jump))
 
     "C-h" (:def
            outline-up-heading-custom
@@ -3214,6 +3243,11 @@ command (ran after) is mysteriously incorrect."
      (:bindings
       :which-key "Helm"
       :key-name helm-prefix)
+
+     "d"
+     (:bindings
+      :which-key "Diff"
+      :key-name diff-prefix)
 
      "h"
      (:def
