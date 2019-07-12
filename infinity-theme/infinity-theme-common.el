@@ -373,8 +373,8 @@
   `(company-tooltip-selection ((,class (:background ,ttip-sl :foreground ,base))))
 
 ;;;;; diff
-  `(diff-added             ((,class :background nil :foreground ,green)))
-  `(diff-changed           ((,class :background nil :foreground ,keyword)))
+  `(diff-added             ((,class :background ,green-bg-s)))
+  `(diff-changed           ((,class :background ,blue-bg-s)))
   `(diff-header            ((,class :background ,cblk-ln-bg :foreground ,func)))
   `(diff-file-header       ((,class :background ,cblk-ln-bg :foreground ,cblk)))
   `(diff-indicator-added   ((,class :background nil :foreground ,green)))
@@ -383,7 +383,7 @@
   `(diff-refine-added      ((,class :background ,green :foreground ,bg4)))
   `(diff-refine-changed    ((,class :background ,keyword :foreground ,bg4)))
   `(diff-refine-removed    ((,class :background ,red :foreground ,bg4)))
-  `(diff-removed           ((,class :background nil :foreground ,red)))
+  `(diff-removed           ((,class :background ,red-bg-s)))
 
 ;;;;; diff-hl
   `(diff-hl-change ((,class :background ,blue-bg :foreground ,blue)))
@@ -883,9 +883,9 @@
   `(org-link ((,class (:underline t :foreground ,comment))))
   `(org-meta-line ((,class (:foreground ,meta))))
   `(org-mode-line-clock-overrun ((,class (:foreground ,err))))
-  `(org-priority ((,class (:foreground ,war :inherit bold))))
-  `(org-priority-1 ((,class (:foreground ,red :inherit bold))))
-  `(org-priority-2 ((,class (:foreground ,yellow :inherit bold))))
+  `(org-priority ((,class (:foreground ,base))))
+  `(org-priority-1 ((,class (:foreground ,emacs :inherit bold))))
+  `(org-priority-2 ((,class (:foreground ,blue :inherit bold))))
   `(org-priority-3 ((,class (:foreground ,green :inherit bold))))
   `(org-quote ((,class (:inherit org-block :slant italic))))
   `(org-scheduled ((,class (:foreground ,var))))
@@ -916,6 +916,10 @@
   `(org-catalyst-fun-item-face ((,class (:foreground ,suc))))
   `(org-catalyst-negative-item-face ((,class (:foreground ,err))))
   `(org-catalyst-task-item-face ((,class (:foreground ,blue))))
+  `(org-catalyst-priority-1-face ((,class (:foreground ,emacs))))
+  `(org-catalyst-priority-2-face ((,class (:foreground ,blue))))
+  `(org-catalyst-priority-3-face ((,class (:foreground ,green))))
+  `(org-catalyst-priority-4-face ((,class (:foreground ,base))))
 
 ;;;;; perspective
   `(persp-selected-face ((,class (:inherit bold :foreground ,func))))

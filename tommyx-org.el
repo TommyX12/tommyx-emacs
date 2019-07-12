@@ -14,6 +14,18 @@
 (require 'tommyx-org-def)
 (require 'tommyx-bind-def)
 
+;; face def
+
+(defface org-priority-1
+  '((t :inherit error))
+  "")
+(defface org-priority-2
+  '((t :inherit warning))
+  "")
+(defface org-priority-3
+  '((t :inherit success))
+  "")
+
 ;; startup settings
 (add-hook 'org-mode-hook (lambda () (interactive)
                            (setq-local indent-tabs-mode nil) ; use space instead of tabs
