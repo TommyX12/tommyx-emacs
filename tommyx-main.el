@@ -3237,7 +3237,20 @@ command (ran after) is mysteriously incorrect."
            :which-key "Peek Region In Split")
       "t" (,(lambda () (interactive)
               (evil-window-set-height 12))
-           :which-key "Make Into Terminal Height"))
+           :which-key "Make Into Terminal Height")
+      "s"
+      (:bindings
+       :which-key "Size"
+
+       "h" (,(lambda () (interactive)
+               (evil-window-set-height
+                (read-number "Enter window height: ")))
+            :which-key "Set Height")
+
+       "w" (,(lambda () (interactive)
+               (evil-window-set-width
+                (read-number "Enter window width: ")))
+            :which-key "Set Width")))
 
      "H"
      (:bindings
@@ -3845,11 +3858,11 @@ command (ran after) is mysteriously incorrect."
    (:bindings
 
     previous-item ,(lambda () (interactive)
-                             (previous-line-or-history-element)
-                             (end-of-line))
+                     (previous-line-or-history-element)
+                     (end-of-line))
     next-item ,(lambda () (interactive)
-                         (next-line-or-history-element)
-                         (end-of-line))
+                 (next-line-or-history-element)
+                 (end-of-line))
     select-action exit-minibuffer)))
 
 (tommyx-bind-keys
@@ -3858,11 +3871,11 @@ command (ran after) is mysteriously incorrect."
    (:bindings
 
     previous-item ,(lambda () (interactive)
-                             (previous-line-or-history-element)
-                             (end-of-line))
+                     (previous-line-or-history-element)
+                     (end-of-line))
     next-item ,(lambda () (interactive)
-                         (next-line-or-history-element)
-                         (end-of-line))
+                 (next-line-or-history-element)
+                 (end-of-line))
     previous-history-item ,(lambda () (interactive)
                              (call-interactively
                               'previous-complete-history-element)
