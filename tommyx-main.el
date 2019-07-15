@@ -1751,12 +1751,22 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
     "Return a prefix string representing an entry's DEPTH."
     (let ((indents (cl-loop for i from 1 to depth collect "\t")))
       (mapconcat #'identity indents "")))
+  (defun imenu-list--get-icon-face (depth)
+    "Get face for icon.
+DEPTH is the depth of the entry in the list."
+    (cl-case depth
+      (0 'org-level-5)
+      (1 'org-level-6)
+      (2 'org-level-7)
+      (3 'org-level-8)
+      (t 'org-level-8)))
   (defun imenu-list--insert-entry (entry depth)
     "Insert a line for ENTRY with DEPTH."
     (if (imenu--subalist-p entry)
         (progn
           (insert (imenu-list--depth-string depth))
-          (insert-button (format "+ %s" (car entry))
+          (insert (propertize "+ " 'font-lock-face (imenu-list--get-icon-face depth)))
+          (insert-button (format "%s" (car entry))
                          'face (imenu-list--get-face depth t)
                          'help-echo (format "Toggle: %s"
                                             (car entry))
@@ -1766,7 +1776,8 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
                          )
           (insert "\n"))
       (insert (imenu-list--depth-string depth))
-      (insert-button (format "● %s" (car entry))
+      (insert (propertize "● " 'font-lock-face (imenu-list--get-icon-face depth)))
+      (insert-button (format "%s" (car entry))
                      'face (imenu-list--get-face depth nil)
                      'help-echo (format "Go to: %s"
                                         (car entry))
