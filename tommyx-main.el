@@ -1744,7 +1744,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
      (imenu-list-start-timer)
      (imenu-list-update nil t)
      (neotree-show)
-     ;; (display-buffer-in-side-window (get-buffer imenu-list-buffer-name) '((side . left)))
+     (display-buffer-in-side-window (get-buffer imenu-list-buffer-name) '((side . left)))
      ))
   ;; patch to change appearance
   (defun imenu-list--depth-string (depth)
