@@ -74,6 +74,11 @@
       (message "hl-insert-region mode enabled."))))
 ;; (hl-insert-region-mode)
 
+(defmacro tommyx-config-layer (name &rest body)
+  "Define a configuration layer with NAME and BODY."
+  (declare (indent 1))
+  `(progn ,@body))
+
 
 (provide 'tommyx-main-def)
 

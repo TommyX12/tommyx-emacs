@@ -702,7 +702,7 @@
 
 (use-package ivy-posframe :ensure t :after ivy
   :config
-  
+
   (setq ivy-posframe-parameters '(
                                   (width . 50)
                                   (border-width . 1)
@@ -841,7 +841,7 @@ Useful for a search overview popup."
   :config
 
   ;; bindings
-  
+
   (tommyx-bind-keys
    `(:case
      :keymaps (counsel-find-file-map)
@@ -947,7 +947,7 @@ Useful for a search overview popup."
           (byte-compile-dest-file file-name)))
     (enable-auto-compilation file-name)
     (load compiled-file-name))
-  
+
   (setq highlight-indentation-blank-lines t)
   (add-hook 'prog-mode-hook 'highlight-indentation-mode)
   (add-hook 'text-mode-hook 'highlight-indentation-mode))
@@ -968,7 +968,7 @@ Useful for a search overview popup."
   ;;             'evil-normal-state)
   ;; (with-eval-after-load 'evil
   ;;     (vhl/install-extension 'evil)
-  ;;     (vhl/load-extension 'evil)) 
+  ;;     (vhl/load-extension 'evil))
   (vhl/define-extension 'undo-tree
                         'undo-tree-move
                         'undo-tree-yank)
@@ -1269,7 +1269,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;;   (setq-default company-backends
 ;;                 (cons #'company-lsp company-backends)))
 
-(use-package company-ycmd :ensure t 
+(use-package company-ycmd :ensure t
   :config
   (setq-default company-backends
                 (cons #'company-ycmd company-backends)))
@@ -1296,7 +1296,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
     (when (eq (car args) 'candidates)
       (setq company-tabnine--disable-next-transform t))
     (apply func args))
-  
+
   (advice-add #'company--transform-candidates :around #'my-company--transform-candidates)
   (advice-add #'company-tabnine :around #'my-company-tabnine))
 
@@ -1320,7 +1320,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
      :keymaps yas-minor-mode-map
      :states (insert)
      (:bindings
-      
+
       snippet-expand (menu-item "" yas-expand-from-trigger-key
                                 :filter yas--maybe-expand-key-filter)))))
 
@@ -1578,7 +1578,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 (use-package neotree :ensure t
   :config
-  
+
   (setq neo-buffer-name "*Files*")
   (setq neo-theme (if (display-graphic-p) 'icons 'nerd))
   ;; (setq neo-theme 'nerd)
@@ -1611,7 +1611,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
      :keymaps neotree-mode-map
      :states (motion normal)
      (:bindings
-      
+
       ;; "h" (neotree-make-executor :dir-fn neo-open-dir)
       ;; "l" (neotree-make-executor :dir-fn neo-open-dir)
       "R" neotree-refresh
@@ -1687,7 +1687,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 
 (use-package hl-todo :ensure t
   :config
-  (global-hl-todo-mode)) ; TODO 
+  (global-hl-todo-mode)) ; TODO
 
 (use-package emmet-mode :ensure t
   :config
@@ -1696,7 +1696,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   (setq emmet-indentation 2)
 
   ;; bindings
-  
+
   (tommyx-bind-keys
    `(:case
      :keymaps emmet-mode-keymap
@@ -1707,7 +1707,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
      :keymaps emmet-mode-keymap
      :states (insert)
      (:bindings
-      
+
       snippet-next-field      yas-next-field
       snippet-previous-field  yas-prev-field
       snippet-expand          yas-insert-snippet
@@ -1801,321 +1801,404 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;; (require 'smart-completer)
 
 
-;;; language specific packages
+;;; mode specific configs
 
-(require 'shaderlab-mode)
-(push 'shaderlab-mode ahs-modes)
+(tommyx-config-layer "Shaderlab"
+  (require 'shaderlab-mode)
+  (push 'shaderlab-mode ahs-modes))
 
-(use-package auctex :defer t :ensure t
-  :config
-  (dolist (hook '(latex-mode-hook TeX-mode-hook)))
-  (add-hook
-   hook
-   (lambda ()
-     (setq-local tab-width 2)
-     (setq-local indent-tabs-mode default-indent-tabs-mode)
-     (setq-local evil-shift-width tab-width)))
+(tommyx-config-layer "LaTeX"
+  (use-package auctex :defer t :ensure t
+    :config
+    (dolist (hook '(latex-mode-hook TeX-mode-hook))
+      (add-hook
+       hook
+       (lambda ()
+         (setq-local tab-width 2)
+         (setq-local indent-tabs-mode default-indent-tabs-mode)
+         (setq-local evil-shift-width tab-width))))
 
-  ;; bindings
-  (tommyx-bind-keys
-   `(:case
-     :keymaps latex-mode-map
-     :states (motion normal visual)
-     (:bindings
+    ;; bindings
+    (tommyx-bind-keys
+     `(:case
+       :keymaps latex-mode-map
+       :states (motion normal visual)
+       (:bindings
 
-      mode-specific-prefix
-      (:bindings
+        mode-specific-prefix
+        (:bindings
 
-       "p" (:def
-            preview-buffer
-            :which-key "Preview Buffer")
+         "p" (:def
+              preview-buffer
+              :which-key "Preview Buffer")
 
-       "P" (:def
-            preview-clearout-buffer
-            :which-key "Clear Preview Buffer"))))))
+         "P" (:def
+              preview-clearout-buffer
+              :which-key "Clear Preview Buffer")))))))
 
-(use-package kivy-mode :ensure t)
+(tommyx-config-layer "Kivy"
+  (use-package kivy-mode :ensure t))
 
-(use-package protobuf-mode :ensure t
-  :config
-  (add-hook
-   'protobuf-mode-hook
-   (lambda ()
-     (setq-local tab-width 2)
-     (setq-local evil-shift-width tab-width)
-     (setq-local highlight-indentation-offset 4)))
-  (push 'protobuf-mode ahs-modes)
-  (add-hook 'protobuf-mode-hook 'highlight-indentation-mode))
+(tommyx-config-layer "Protobuf"
+  (use-package protobuf-mode :ensure t
+    :config
+    (add-hook
+     'protobuf-mode-hook
+     (lambda ()
+       (setq-local tab-width 2)
+       (setq-local evil-shift-width tab-width)
+       (setq-local highlight-indentation-offset 4)))
+    (push 'protobuf-mode ahs-modes)
+    (add-hook 'protobuf-mode-hook 'highlight-indentation-mode)))
 
-(use-package cc-mode :ensure t
-  :config
-  (setq-default c-basic-offset 4)
-  (setq c-default-style
-        '((java-mode . "java")
-          (awk-mode . "awk")
-          (other . "linux")))
+(tommyx-config-layer "C/C++"
+  (use-package cc-mode :ensure t
+    :config
+    (setq-default c-basic-offset 4)
+    (setq c-default-style
+          '((java-mode . "java")
+            (awk-mode . "awk")
+            (other . "linux")))
+
+    (add-hook 'c++-mode-hook (lambda () (ycmd-mode 1)))
+
+    ;; bindings
+
+    (tommyx-bind-keys
+     `(:case
+       :keymaps c-mode-map
+       :states (motion normal)
+       (:bindings
+
+        jump-to-definition ycmd-goto)
+
+       :keymaps c++-mode-map
+       :states (motion normal)
+       (:bindings
+
+        jump-to-definition ycmd-goto)))))
+
+(tommyx-config-layer "Java"
+  (require 'cc-mode)
+
   (add-hook
    'java-mode-hook
    (lambda ()
      (setq-local tab-width 2)
      (setq-local evil-shift-width tab-width)
      (setq-local highlight-indentation-offset 4)))
-  (add-hook 'c++-mode-hook (lambda () (ycmd-mode 1)))
-
-  ;; bindings
 
   (tommyx-bind-keys
    `(:case
      :keymaps java-mode-map
      :states (motion normal)
      (:bindings
-      
-      jump-to-definition ycmd-goto)
 
-     :keymaps c-mode-map
-     :states (motion normal)
-     (:bindings
-      
-      jump-to-definition ycmd-goto)
-
-     :keymaps c++-mode-map
-     :states (motion normal)
-     (:bindings
-      
       jump-to-definition ycmd-goto))))
 
-(use-package ess :ensure t
-  :config
-  (add-hook 'ess-r-mode-hook
-            (lambda ()
-              (setq-local company-backends
-                          (let ((b #'company-tabnine))
-                            (cons b (remove b company-backends)))))))
+(tommyx-config-layer "R"
+  (use-package ess :ensure t
+    :config
+    (add-hook 'ess-r-mode-hook
+              (lambda ()
+                (setq-local company-backends
+                            (let ((b #'company-tabnine))
+                              (cons b (remove b company-backends))))))))
 
-(use-package csharp-mode :ensure t
-  :config
-  (setup-color-identifiers-parser 'c 'csharp-mode)
-  (add-hook 'csharp-mode-hook (lambda () (ycmd-mode 1)))
+(tommyx-config-layer "C#"
+  (use-package csharp-mode :ensure t
+    :config
+    (setup-color-identifiers-parser 'c 'csharp-mode)
+    (add-hook 'csharp-mode-hook (lambda () (ycmd-mode 1)))
 
-  ;; bindings
+    ;; bindings
 
-  (tommyx-bind-keys
-   `(:case
-     :keymaps csharp-mode-map
-     :states (motion normal)
-     (:bindings
-      
-      jump-to-definition ycmd-goto))))
+    (tommyx-bind-keys
+     `(:case
+       :keymaps csharp-mode-map
+       :states (motion normal)
+       (:bindings
 
-(use-package markdown-mode :ensure t)
+        jump-to-definition ycmd-goto)))))
 
-(use-package markdown-mode+ :ensure t)
+(tommyx-config-layer "Markdown"
+  (use-package markdown-mode :ensure t)
+  (use-package markdown-mode+ :ensure t))
 
-(use-package racket-mode :ensure t
-  :config
-  (add-hook 'racket-mode-hook (lambda () (modify-syntax-entry ?- "w")))
-  (push 'racket-mode ahs-modes))
+(tommyx-config-layer "Racket"
+  (use-package racket-mode :ensure t
+    :config
+    (add-hook 'racket-mode-hook (lambda () (modify-syntax-entry ?- "w")))
+    (push 'racket-mode ahs-modes)))
 
-(use-package haskell-mode :ensure t
-  :config
-  ;; flycheck has bug
-  (add-hook 'haskell-mode-hook (lambda () (flycheck-mode -1)))
+(tommyx-config-layer "Haskell"
+  (use-package haskell-mode :ensure t
+    :config
+    ;; flycheck has bug
+    (add-hook 'haskell-mode-hook (lambda () (flycheck-mode -1)))
+    (add-hook
+     'haskell-mode-hook
+     (lambda ()
+       (setq-local tab-width 4)
+       (setq-local evil-shift-width tab-width)
+       (setq-local haskell-indentation-starter-offset tab-width)
+       (setq-local haskell-indentation-left-offset tab-width)
+       (setq-local haskell-indentation-layout-offset tab-width)))
+    (push 'haskell-mode ahs-modes))
+
+  (use-package haskell-snippets :ensure t))
+
+(tommyx-config-layer "Rust"
+  (use-package rust-mode :ensure t))
+
+(tommyx-config-layer "CSV"
+  (use-package csv-mode :ensure t
+    :config
+    (setq csv-align-style 'auto)
+    (setq csv-invisibility-default nil)
+    (add-hook 'csv-mode-hook
+              (lambda ()
+                (toggle-truncate-lines 1)
+                (call-interactively 'csv-align-fields)))
+
+    ;; bindings
+    (tommyx-bind-keys
+     `(:case
+       :keymaps csv-mode-map
+       :states (motion normal)
+       (:bindings
+
+        goto-greater-element-left csv-backward-field
+        goto-greater-element-right csv-forward-field
+
+        mode-specific-prefix
+        (:bindings
+
+         "a" (csv-align-fields
+              :which-key "Align Fields"))
+
+        shortcuts-prefix
+        (:bindings
+
+         "a" (csv-align-fields
+              :which-key "Align Fields")))))))
+
+(tommyx-config-layer "SQL"
+  (use-package sql :ensure t
+    :config
+    (add-hook 'sql-mode-hook (lambda () (modify-syntax-entry ?_ "w")))
+    (push 'sql-mode ahs-modes)))
+
+(tommyx-config-layer "Python"
+  (setq-default python-indent 4)
   (add-hook
-   'haskell-mode-hook
+   'python-mode-hook
    (lambda ()
      (setq-local tab-width 4)
+     (setq-local indent-tabs-mode default-indent-tabs-mode)
+     (setq-local python-indent-offset tab-width)
+     (setq-local highlight-indentation-offset tab-width)
+     (setq-local python-indent tab-width)
      (setq-local evil-shift-width tab-width)
-     (setq-local haskell-indentation-starter-offset tab-width)
-     (setq-local haskell-indentation-left-offset tab-width)
-     (setq-local haskell-indentation-layout-offset tab-width)))
-  (push 'haskell-mode ahs-modes))
-
-(use-package haskell-snippets :ensure t)
-
-(use-package rust-mode :ensure t)
-
-(use-package csv-mode :ensure t
-  :config
-  (setq csv-align-style 'auto)
-  (setq csv-invisibility-default nil)
-  (add-hook 'csv-mode-hook
-            (lambda ()
-              (toggle-truncate-lines 1)
-              (call-interactively 'csv-align-fields)))
-
-  ;; bindings
-  (tommyx-bind-keys
-   `(:case
-     :keymaps csv-mode-map
-     :states (motion normal)
-     (:bindings
-
-      goto-greater-element-left csv-backward-field
-      goto-greater-element-right csv-forward-field
-
-      mode-specific-prefix
-      (:bindings
-
-       "a" (csv-align-fields
-            :which-key "Align Fields"))
-
-      shortcuts-prefix
-      (:bindings
-
-       "a" (csv-align-fields
-            :which-key "Align Fields"))))))
-
-(use-package sql :ensure t
-  :config
-  (add-hook 'sql-mode-hook (lambda () (modify-syntax-entry ?_ "w")))
-  (push 'sql-mode ahs-modes))
-
-;; python
-(setq-default python-indent 4)
-(add-hook
- 'python-mode-hook
- (lambda ()
-   (setq-local tab-width 4)
-   (setq-local indent-tabs-mode default-indent-tabs-mode)
-   (setq-local python-indent-offset tab-width)
-   (setq-local highlight-indentation-offset tab-width)
-   (setq-local python-indent tab-width)
-   (setq-local evil-shift-width tab-width)
-   (setq-local yas-indent-line 'auto))
- t)
-
-(tommyx-bind-keys
- `(:case
-   (:bindings
-
-    project-prefix
-    (:bindings
-
-     "C-p" run-python))
-
-   :keymaps python-mode-map
-   :states (motion normal)
-   (:bindings
-    
-    jump-to-definition elpy-goto-definition
-    eval-element-or-region
-    (:case
-     :states (motion normal)
-     (:def
-      python-shell-send-defun
-      :which-key "Eval Defun In Python")
-     :states (visual)
-     (:def
-      python-shell-send-region
-      :which-key "Eval Region In Python"))
-
-    eval-buffer
-    (:def
-     python-shell-send-buffer
-     :which-key "Eval Buffer In Python"))))
-
-(use-package elpy :ensure t
-  :init
-  (elpy-enable)
-
-  :config
-  (add-hook 'python-mode-hook (lambda () (flycheck-mode -1)))
-  (setq elpy-rpc-timeout 2.5)
-  (defun setup-elpy-mode ()
-    (interactive)
-    (ycmd-mode -1)
-    (setq-local company-idle-delay 0)
-    (setq-local company-backends
-                (let ((b #'company-tabnine))
-                  (cons b (remove b company-backends))))
-    (add-hook 'before-save-hook #'elpy-format-code nil 'local))
-
-  (add-hook 'elpy-mode-hook #'setup-elpy-mode))
-
-(use-package tide :ensure t
-  :config
-  (push 'typescript-mode ahs-modes)
-  (setup-color-identifiers-parser 'js 'typescript-mode)
-  (defun setup-tide-mode ()
-    (interactive)
-    (tide-setup)
-    (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
-    (tide-hl-identifier-mode +1)
-    (ycmd-mode -1)
-    ;; indentation
-    (setq-local tab-width 2)
-    (setq-local typescript-indent-level 2)
-    (setq-local evil-shift-width tab-width)
-    (setq-local highlight-indentation-offset 4)
-    (setq-local js-indent-level 2)
-    (setq-local company-backends
-                (let ((b #'company-tide))
-                  (cons b (remove b company-backends))))
-    (setq-local company-backends
-                (let ((b #'company-tabnine))
-                  (cons b (remove b company-backends)))))
-  ;; formats the buffer before saving
-  ;; TODO: we don't want this for now
-  ;; (add-hook 'before-save-hook 'tide-format-before-save)
-  (add-hook 'typescript-mode-hook #'setup-tide-mode)
-
-  ;; bindings
+     (setq-local yas-indent-line 'auto))
+   t)
 
   (tommyx-bind-keys
    `(:case
-     :keymaps tide-mode-map
+     (:bindings
+
+      project-prefix
+      (:bindings
+
+       "C-p" run-python))
+
+     :keymaps python-mode-map
      :states (motion normal)
      (:bindings
-      
-      jump-to-definition tide-jump-to-definition))))
 
-(use-package glsl-mode :ensure t
-  :config
-  ;; (add-to-list 'auto-mode-alist '("\\.vs\\'" . glsl-mode))
-  ;; (add-to-list 'auto-mode-alist '("\\.fs\\'" . glsl-mode))
-  (setup-color-identifiers-parser 'c 'glsl-mode)
-  (push 'glsl-mode ahs-modes))
+      jump-to-definition elpy-goto-definition
+      eval-element-or-region
+      (:case
+       :states (motion normal)
+       (:def
+        python-shell-send-defun
+        :which-key "Eval Defun In Python")
+       :states (visual)
+       (:def
+        python-shell-send-region
+        :which-key "Eval Region In Python"))
 
-(use-package json-mode :ensure t
-  :config
-  (setq json-reformat:indent-width 2)
-  (add-hook
-   'json-mode-hook
-   (lambda ()
-     (setq-local tab-width 2)
-     (setq-local evil-shift-width tab-width)
-     (setq-local highlight-indentation-offset 4)
-     (setq-local js-indent-level 2))))
+      eval-buffer
+      (:def
+       python-shell-send-buffer
+       :which-key "Eval Buffer In Python"))))
+
+  (use-package elpy :ensure t
+    :init
+    (elpy-enable)
+
+    :config
+    (add-hook 'python-mode-hook (lambda () (flycheck-mode -1)))
+    (setq elpy-rpc-timeout 2.5)
+    (defun setup-elpy-mode ()
+      (interactive)
+      (ycmd-mode -1)
+      (setq-local company-idle-delay 0)
+      (setq-local company-backends
+                  (let ((b #'company-tabnine))
+                    (cons b (remove b company-backends))))
+      (add-hook 'before-save-hook #'elpy-format-code nil 'local))
+
+    (add-hook 'elpy-mode-hook #'setup-elpy-mode)))
+
+(tommyx-config-layer "TypeScript"
+  (use-package tide :ensure t
+    :config
+    (push 'typescript-mode ahs-modes)
+    (setup-color-identifiers-parser 'js 'typescript-mode)
+    (defun setup-tide-mode ()
+      (interactive)
+      (tide-setup)
+      (setq-local flycheck-check-syntax-automatically '(save mode-enabled))
+      (tide-hl-identifier-mode +1)
+      (ycmd-mode -1)
+      ;; indentation
+      (setq-local tab-width 2)
+      (setq-local typescript-indent-level 2)
+      (setq-local evil-shift-width tab-width)
+      (setq-local highlight-indentation-offset 4)
+      (setq-local js-indent-level 2)
+      (setq-local company-backends
+                  (let ((b #'company-tide))
+                    (cons b (remove b company-backends))))
+      (setq-local company-backends
+                  (let ((b #'company-tabnine))
+                    (cons b (remove b company-backends)))))
+    ;; formats the buffer before saving
+    ;; TODO: we don't want this for now
+    ;; (add-hook 'before-save-hook 'tide-format-before-save)
+    (add-hook 'typescript-mode-hook #'setup-tide-mode)
+
+    ;; bindings
+
+    (tommyx-bind-keys
+     `(:case
+       :keymaps tide-mode-map
+       :states (motion normal)
+       (:bindings
+
+        jump-to-definition tide-jump-to-definition)))))
+
+(tommyx-config-layer "GLSL"
+  (use-package glsl-mode :ensure t
+    :config
+    ;; (add-to-list 'auto-mode-alist '("\\.vs\\'" . glsl-mode))
+    ;; (add-to-list 'auto-mode-alist '("\\.fs\\'" . glsl-mode))
+    (setup-color-identifiers-parser 'c 'glsl-mode)
+    (push 'glsl-mode ahs-modes)))
+
+(tommyx-config-layer "JSON"
+  (use-package json-mode :ensure t
+    :config
+    (setq json-reformat:indent-width 2)
+    (add-hook
+     'json-mode-hook
+     (lambda ()
+       (setq-local tab-width 2)
+       (setq-local evil-shift-width tab-width)
+       (setq-local highlight-indentation-offset 4)
+       (setq-local js-indent-level 2)))))
 
 ;; (use-package vue-mode :ensure t
 ;;     :config
 ;;     (setq mmm-submode-decoration-level 0)
 ;; )
 
-(use-package sgml-mode :ensure t
-  :config
-  (add-hook 'sgml-mode-hook (lambda () (toggle-word-wrap 1)))
-  (add-hook 'sgml-mode-hook 'emmet-mode))
+(tommyx-config-layer "SGML"
+  (use-package sgml-mode :ensure t
+    :config
+    (add-hook 'sgml-mode-hook (lambda () (toggle-word-wrap 1)))
+    (add-hook 'sgml-mode-hook 'emmet-mode)))
 
-(use-package web-mode :ensure t
-  :config
+(tommyx-config-layer "HTML"
+  (use-package web-mode :ensure t
+    :config
 
-  (add-hook 'web-mode-hook 'emmet-mode)
+    (add-hook 'web-mode-hook 'emmet-mode)
+
+    (dolist (hook '(html-mode-hook web-mode-hook))
+      (add-hook
+       hook
+       (lambda ()
+         (modify-syntax-entry ?- "w")
+         (modify-syntax-entry ?_ "w"))))
+
+    (add-hook
+     'web-mode-hook
+     (lambda ()
+       (setq-local tab-width 2)
+       (setq-local evil-shift-width tab-width)
+       (setq-local highlight-indentation-offset 4)))
+
+    ;; bindings
+
+    (tommyx-bind-keys
+     `(:case
+       :keymaps web-mode-map
+       (:bindings
+
+        "C-h" nil
+        "C-l" nil)
+
+       :keymaps web-mode-map
+       :states (motion normal visual)
+       (:bindings
+
+        jump-to-matching web-mode-navigate
+        goto-greater-element-up web-mode-element-previous
+        goto-greater-element-down web-mode-element-next
+
+        mode-specific-prefix
+        (:bindings
+
+         "r" web-mode-element-rename))))
+
+    (push 'web-mode ahs-modes)
+
+    (eval-after-load 'flycheck
+      '(flycheck-add-mode 'html-tidy 'web-mode))
+
+    (setq web-mode-enable-auto-expanding t)
+    (setq-default web-mode-markup-indent-offset 2)
+    (add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
+    (add-to-list 'auto-mode-alist '("\\.tpl\\.php\\'" . web-mode))
+    (add-to-list 'auto-mode-alist '("\\.[agj]sp\\'" . web-mode))
+    (add-to-list 'auto-mode-alist '("\\.as[cp]x\\'" . web-mode))
+    (add-to-list 'auto-mode-alist '("\\.erb\\'" . web-mode))
+    (add-to-list 'auto-mode-alist '("\\.mustache\\'" . web-mode))
+    (add-to-list 'auto-mode-alist '("\\.hbs\\'" . web-mode))
+    (add-to-list 'auto-mode-alist '("\\.djhtml\\'" . web-mode))
+    (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
+    (add-to-list 'auto-mode-alist '("\\.xml?\\'" . web-mode))
+    ;; use for vue files
+    (add-to-list 'auto-mode-alist '("\\.vue\\'" . web-mode))))
+
+(tommyx-config-layer "CSS"
+  (require 'web-mode)
+
+  (use-package counsel-css :ensure t
+    :config
+    (add-hook 'css-mode-hook 'counsel-css-imenu-setup))
+
   (add-hook 'css-mode-hook  'emmet-mode)
 
-  (dolist (hook '(html-mode-hook web-mode-hook css-mode-hook))
+  (dolist (hook '(css-mode-hook))
     (add-hook
      hook
      (lambda ()
        (modify-syntax-entry ?- "w")
        (modify-syntax-entry ?_ "w"))))
 
-  (add-hook
-   'web-mode-hook
-   (lambda ()
-     (setq-local tab-width 2)
-     (setq-local evil-shift-width tab-width)
-     (setq-local highlight-indentation-offset 4)))
   (add-hook
    'css-mode-hook
    (lambda ()
@@ -2125,61 +2208,17 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
      (setq-local web-mode-css-indent-offset 2)
      (setq-local css-indent-offset 2)))
 
-  ;; bindings
-  
-  (tommyx-bind-keys
-   `(:case
-     :keymaps web-mode-map
-     (:bindings
-
-      "C-h" nil
-      "C-l" nil)
-
-     :keymaps web-mode-map
-     :states (motion normal visual)
-     (:bindings
-
-      jump-to-matching web-mode-navigate
-      goto-greater-element-up web-mode-element-previous
-      goto-greater-element-down web-mode-element-next
-
-      mode-specific-prefix
-      (:bindings
-
-       "r" web-mode-element-rename))))
-
-  (push 'web-mode ahs-modes)
   (push 'css-mode ahs-modes)
-  (push 'scss-mode ahs-modes)
+  (push 'scss-mode ahs-modes))
 
-  (eval-after-load 'flycheck
-    '(flycheck-add-mode 'html-tidy 'web-mode))
-
-  (setq web-mode-enable-auto-expanding t)
-  (setq-default web-mode-markup-indent-offset 2)
-  (add-to-list 'auto-mode-alist '("\\.phtml\\'" . web-mode))
-  (add-to-list 'auto-mode-alist '("\\.tpl\\.php\\'" . web-mode))
-  (add-to-list 'auto-mode-alist '("\\.[agj]sp\\'" . web-mode))
-  (add-to-list 'auto-mode-alist '("\\.as[cp]x\\'" . web-mode))
-  (add-to-list 'auto-mode-alist '("\\.erb\\'" . web-mode))
-  (add-to-list 'auto-mode-alist '("\\.mustache\\'" . web-mode))
-  (add-to-list 'auto-mode-alist '("\\.hbs\\'" . web-mode))
-  (add-to-list 'auto-mode-alist '("\\.djhtml\\'" . web-mode))
-  (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
-  (add-to-list 'auto-mode-alist '("\\.xml?\\'" . web-mode))
-  ;; use for vue files
-  (add-to-list 'auto-mode-alist '("\\.vue\\'" . web-mode)))
-
-(use-package js2-mode :ensure t
-  :config
-  (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
-  (add-hook 'js2-mode-hook #'setup-tide-mode)
-  (setq js2-strict-missing-semi-warning nil)
-  (push 'js2-mode ahs-modes))
-
-(use-package counsel-css :ensure t
-  :config
-  (add-hook 'css-mode-hook 'counsel-css-imenu-setup))
+(tommyx-config-layer "JavaScript"
+  (require 'tide)
+  (use-package js2-mode :ensure t
+    :config
+    (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+    (add-hook 'js2-mode-hook #'setup-tide-mode)
+    (setq js2-strict-missing-semi-warning nil)
+    (push 'js2-mode ahs-modes)))
 
 ;; (use-package lsp-python :ensure t :after lsp-mode
 ;;  :config
@@ -2834,7 +2873,7 @@ command (ran after) is mysteriously incorrect."
     "l" (:def
          evil-forward-word-end
          :key-name goto-element-right)
-    
+
     ;; faster movement
     "K" (:def
          evil-backward-paragraph
@@ -3347,7 +3386,7 @@ command (ran after) is mysteriously incorrect."
      "a"
      (:bindings
       :which-key "Appearance"
-      
+
       "F" (:def
            ,(lambda () (interactive) (toggle-frame-fullscreen))
            :which-key "Toggle Full-screen")
@@ -3388,7 +3427,7 @@ command (ran after) is mysteriously incorrect."
      "c"
      (:bindings
       :which-key "Companion"
-      
+
       "d" (:def
            companion-notif-dismiss
            :which-key "Dismiss Notification")
