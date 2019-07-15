@@ -356,7 +356,9 @@ This is used to determine the default day to show in the status window."
       org-catalyst--render-separator
       org-catalyst--render-journal
       org-catalyst--render-separator
-      org-catalyst--render-breaking-chains))
+      org-catalyst--render-breaking-chains
+      org-catalyst--render-separator
+      org-catalyst--render-overdue-items))
     (:id
      inventory
      :command
@@ -451,6 +453,11 @@ This is used to determine the default day to show in the status window."
               (cond
                ((eq value 'not-done)
                 (or (not type) (eq type 'todo)))
+               ((eq value 'actionable)
+                (and (or (not type) (eq type 'todo))
+                     (<= (org-catalyst-safe-get
+                          item-config "start" 0)
+                         org-catalyst--today-daynr)))
                ((eq value 'todo)
                 (eq type 'todo))
                ((eq value 'done)
@@ -464,6 +471,8 @@ This is used to determine the default day to show in the status window."
              (org-catalyst--with-face
               (cond
                ((eq value 'not-done)
+                "Not Done")
+               ((eq value 'actionable)
                 "Actionable")
                ((eq value 'todo)
                 "Todo")
@@ -522,21 +531,53 @@ This is used to determine the default day to show in the status window."
 (defconst org-catalyst--timestamp-types
   (ht<-alist
    `(("deadline"
-      . (:regexp ,org-deadline-string :overdue t
-                 :display "[!]"
-                 :face org-catalyst-deadline-face))
+      . (:regexp ,org-deadline-string
+                 :is-end t
+                 :renderer
+                 ,(lambda (item-config)
+                    (insert (org-catalyst--with-face
+                             "[!]"
+                             'org-catalyst-deadline-face)))))
      ("scheduled"
-      . (:regexp ,org-scheduled-string :overdue nil
-                 :display "[S]"
-                 :face org-catalyst-scheduled-face))
+      . (:regexp ,org-scheduled-string
+                 :is-start t
+                 :exclude-dot-repeat t
+                 :renderer
+                 ,(lambda (item-config)
+                    (insert (org-catalyst--with-face
+                             "[S]"
+                             'org-catalyst-scheduled-face)))))
      ("closed"
-      . (:regexp ,org-closed-string :overdue nil
-                 :display "[C]"
-                 :face org-catalyst-closed-face))
+      . (:regexp ,org-closed-string
+                 :renderer
+                 ,(lambda (item-config)
+                    (insert (org-catalyst--with-face
+                             "[C]"
+                             'org-catalyst-closed-face)))))
      ("timestamp"
-      . (:regexp nil :overdue nil
-                 :display "[T]"
-                 :face org-catalyst-timestamp-face)))))
+      . (:regexp nil
+                 :renderer
+                 ,(lambda (item-config)
+                    (insert (org-catalyst--with-face
+                             "[T]"
+                             'org-catalyst-timestamp-face)))))
+     ("done"
+      . (:regexp nil
+                 :renderer
+                 ,(lambda (item-config)
+                    (insert (org-catalyst--with-face
+                             (concat "[" org-catalyst-done-chip "]")
+                             (if (org-catalyst-safe-get-chain
+                                  item-config nil "params" "negative")
+                                 'org-catalyst-negative-done-face
+                               'org-catalyst-done-face))))))
+     ("pardon"
+      . (:regexp nil
+                 :renderer
+                 ,(lambda (item-config)
+                    (insert (org-catalyst--with-face
+                             (concat "[" org-catalyst-pardon-chip "]")
+                             'org-catalyst-pardon-face))))))))
 (defconst org-catalyst--planning-timestamps
   '("deadline" "scheduled" "closed"))
 (defconst org-catalyst--quest-map-days 30)
@@ -572,10 +613,11 @@ This is used to determine the default day to show in the status window."
     (define-key map (kbd "c t") 'org-catalyst-filter-category-task)
     (define-key map (kbd "c f") 'org-catalyst-filter-category-fun)
     (define-key map (kbd "c n") 'org-catalyst-filter-category-negative)
-    (define-key map (kbd "c a") 'org-catalyst-filter-category-all)
-    (define-key map (kbd "t a") 'org-catalyst-filter-todo-all)
+    (define-key map (kbd "c SPC") 'org-catalyst-filter-category-all)
+    (define-key map (kbd "t SPC") 'org-catalyst-filter-todo-all)
     (define-key map (kbd "t d") 'org-catalyst-filter-todo-done)
     (define-key map (kbd "t n") 'org-catalyst-filter-todo-not-done)
+    (define-key map (kbd "t a") 'org-catalyst-filter-todo-actionable)
     (define-key map (kbd "t t") 'org-catalyst-filter-todo-todo)
     (define-key map (kbd "t N") 'org-catalyst-filter-todo-none)
     map))
@@ -614,6 +656,8 @@ This is used to determine the default day to show in the status window."
 
 ;;; Variables
 
+(defvar org-catalyst--today-daynr nil
+  "Absolute day number of today.")
 (defvar org-catalyst--state-systems (ht-create)
   "List of all installed state systems.")
 (defvar org-catalyst--item-systems (ht-create)
@@ -1210,6 +1254,7 @@ DEFAULT-MONTH-DAY is used if user do not select a date."
 
 (defun org-catalyst--map-entries (func)
   "Execute FUNC on all headlines."
+  ;; TODO: should we ignore archive
   (org-map-entries func nil 'agenda-with-archives))
 
 (defun org-catalyst--contains-tag (tag tags &optional local)
@@ -1237,6 +1282,18 @@ Point must be on the beginning of line."
   (when (looking-at org-priority-regexp)
 		(string-to-char (match-string-no-properties 2))))
 
+(defun org-catalyst--time-string-to-absolute (time-string &optional daynr exclude-dot-repeat)
+  "Return absolute day number for TIME-STRING.
+
+If DAYNR is non-nil, return the first occurrence on or after DAYNR.
+
+If EXCLUDE-DOT-REPEAT is non-nil, \".+\" repeater ignored."
+  (if (and exclude-dot-repeat
+           (string-match-p "\\.\\+" time-string))
+      (org-time-string-to-absolute time-string)
+    (org-time-string-to-absolute
+     time-string daynr 'future)))
+
 (defun org-catalyst--get-config ()
   "TODO"
   ;; TODO: allow only getting parts of the things to optimize
@@ -1252,6 +1309,7 @@ Point must be on the beginning of line."
          (top-level-items nil)
          (children (ht-create))
          (timestamps (ht-create))
+         (overdue-items nil)
          (max-fold-level 0)
          (cur-fold-level 0)
 
@@ -1267,9 +1325,15 @@ Point must be on the beginning of line."
 
          (org-use-tag-inheritance nil)
          (daynr (org-catalyst--month-day-to-days
-                 (org-catalyst--status-today-month-day))))
+                 (org-catalyst--status-today-month-day)))
 
-    (cl-flet
+         (timestamp-exclude-dot-repeat
+          (plist-get (org-catalyst-safe-get
+                      org-catalyst--timestamp-types
+                      "timestamp" nil)
+                     :exclude-dot-repeat)))
+
+    (cl-flet*
         ((collect-children-stack
           (&optional level)
           (let ((level (or level -1)))
@@ -1277,9 +1341,17 @@ Point must be on the beginning of line."
                         (<= level (caar children-stack)))
               (let* ((children-stack-entry (pop children-stack))
                      (cur-level (car children-stack-entry))
-                     (cur-children (cdr children-stack-entry))
+                     (cur-children (nreverse (cdr children-stack-entry)))
                      (parent-id (pop children-parent-id-stack)))
                 (ht-set children parent-id cur-children)))))
+
+         (add-timestamp
+          (item-id timestamp-days timestamp-type-name)
+          (org-catalyst-safe-update
+           timestamps item-id nil
+           (lambda (prev)
+             (cons (cons timestamp-days timestamp-type-name)
+                   prev))))
 
          (record-timestamps
           (item-id item-pos end-item-pos)
@@ -1308,37 +1380,56 @@ Point must be on the beginning of line."
                           (let* ((timestamp-string
                                   (match-string-no-properties 0))
                                  (timestamp-days
+                                  (org-catalyst--time-string-to-absolute
+                                   timestamp-string daynr
+                                   (plist-get timestamp-type
+                                              :exclude-dot-repeat)))
+                                 (timestamp-days-past
                                   (org-time-string-to-absolute
-                                   timestamp-string daynr 'future)))
-                            (org-catalyst-safe-update
-                             timestamps item-id nil
-                             (lambda (prev)
-                               (cons (cons timestamp-days timestamp-type-name)
-                                     prev)))
+                                   timestamp-string))
+                                 (is-start
+                                  (plist-get timestamp-type :is-start))
+                                 (is-end
+                                  (plist-get timestamp-type :is-end))
+                                 (item-config
+                                  (ht-get all-item-config item-id)))
 
-                            (when (plist-get timestamp-type :overdue)
-                              (let ((timestamp-days-past
-                                     (org-time-string-to-absolute
-                                      timestamp-string)))
-                                (when (not (= timestamp-days-past
-                                              timestamp-days))
-                                  (org-catalyst-safe-update
-                                   timestamps item-id nil
-                                   (lambda (prev)
-                                     (cons (cons timestamp-days-past
-                                                 timestamp-type-name)
-                                           prev))))))))))))))
+                            (add-timestamp item-id
+                                           timestamp-days
+                                           timestamp-type-name)
+                            (when (not (= timestamp-days-past
+                                          timestamp-days))
+                              (add-timestamp item-id
+                                             timestamp-days-past
+                                             timestamp-type-name))
+
+                            (when is-start
+                              (ht-set item-config "start" timestamp-days-past))
+
+                            (when is-end
+                              (ht-set item-config "end" timestamp-days-past)
+                              (when (and
+                                     (< timestamp-days-past daynr)
+                                     (not
+                                      (eq (org-catalyst-safe-get
+                                           item-config "todo-type" nil)
+                                          'done)))
+                                (push (list
+                                       :item-id item-id
+                                       :timestamp-days timestamp-days-past
+                                       :timestamp-type-name timestamp-type-name)
+                                      overdue-items)))))))))))
 
             (let ((regexp org-ts-regexp))
               (while (re-search-forward regexp end-item-pos t)
                 (let* ((timestamp-string (match-string-no-properties 0))
                        (timestamp-days
-                        (org-time-string-to-absolute
-                         timestamp-string daynr 'future)))
-                  (org-catalyst-safe-update
-                   timestamps item-id nil
-                   (lambda (prev)
-                     (cons (cons timestamp-days "timestamp") prev)))))))))
+                        (org-catalyst--time-string-to-absolute
+                         timestamp-string daynr
+                         timestamp-exclude-dot-repeat)))
+                  (add-timestamp item-id
+                                 timestamp-days
+                                 "timestamp")))))))
 
       (org-catalyst--map-entries
        (lambda ()
@@ -1433,7 +1524,8 @@ Point must be on the beginning of line."
                (ht-set state-config "params" params)
                (ht-set all-state-config state-name state-config)))
 
-            ((or (setq tag (org-catalyst--contains-tag "item" tags t))
+            ((or (setq tag (or (org-catalyst--contains-tag "item" tags t)
+                               (org-catalyst--contains-tag "group" tags t)))
                  todo-type)
 
              (let ((display-name (org-no-properties
@@ -1577,10 +1669,11 @@ Point must be on the beginning of line."
           :max-fold-level max-fold-level
           :continuous-state-update-funcs continuous-state-update-funcs
           :continuous-item-update-funcs continuous-item-update-funcs
-          :top-level-items top-level-items
+          :top-level-items (nreverse top-level-items)
           :topological-order topological-order
           :children children
-          :timestamps timestamps)))
+          :timestamps timestamps
+          :overdue-items overdue-items)))
 
 (defun org-catalyst--update-function (snapshot
                                       actions
@@ -2151,9 +2244,13 @@ If the value of NUMBER is an integer, no decimal point will be displayed."
          (let ((timestamp-days (car timestamp))
                (timestamp-type-name (cdr timestamp)))
            (org-catalyst-safe-update
-            days-to-timestamps timestamp-days nil
+            days-to-timestamps timestamp-days (ht-create)
             (lambda (prev)
-              (cons (cons item-id timestamp-type-name) prev))))))
+              (org-catalyst-safe-update
+               prev item-id nil
+               (lambda (prev)
+                 (cons timestamp-type-name prev)))
+              prev)))))
      (plist-get config :timestamps))
 
     (ht<-alist (list
@@ -2545,12 +2642,18 @@ REVERSE the order if REVERSE is non-nil."
   (let ((todo-text (org-catalyst-safe-get
                     item-config "todo-text" nil))
         (todo-type (org-catalyst-safe-get
-                    item-config "todo-type" nil)))
+                    item-config "todo-type" nil))
+        (start (org-catalyst-safe-get
+                item-config "start" nil)))
     (when todo-type
       (insert (org-catalyst--with-face
                todo-text
-               (if (eq todo-type 'todo) 'org-todo
-                 'org-done))
+               (cond
+                ((eq todo-type 'done) 'org-done)
+                ((and start org-catalyst--today-daynr
+                      (> start org-catalyst--today-daynr))
+                 'org-catalyst-secondary-face)
+                (t 'org-todo)))
               " "))))
 
 (org-catalyst--define-renderer org-catalyst--render-action-chip
@@ -3107,6 +3210,50 @@ REVERSE the order if REVERSE is non-nil."
        :reverse t
        :renderer-alist renderer-alist))))
 
+(org-catalyst--define-renderer org-catalyst--render-overdue-items
+    (config
+     month-day
+     today-month-day
+     snapshot
+     computed-actions)
+
+  ;; TODO can add to ui-data for caching
+  (when (equal month-day today-month-day)
+    (let* ((all-item-config (plist-get config :all-item-config))
+           (overdue-items (plist-get config :overdue-items))
+           (daynr (org-catalyst--month-day-to-days
+                   month-day))
+           (renderer-alist
+            (mapcar
+             (lambda (info)
+               (let ((item-id (plist-get info :item-id))
+                     (timestamp-days (plist-get info :timestamp-days)))
+                 (cons
+                  (or timestamp-days 0)
+                  (org-catalyst--partial-renderer
+                   org-catalyst--render-item-with-info
+                   :prefix-width 3
+                   :prefix-renderer
+                   (org-catalyst--inline-renderer ()
+                     (insert (org-catalyst--with-face
+                              (format "%dd" (- daynr timestamp-days))
+                              'org-catalyst-warning-face)))
+                   :month-day month-day
+                   :computed-actions computed-actions
+                   :snapshot snapshot
+                   :all-item-config all-item-config
+                   :item-id item-id))))
+             overdue-items)))
+
+      (when renderer-alist
+        (org-catalyst--render-section-heading
+         :name "Overdue Items"
+         :face 'org-catalyst-section-heading-warning-face)
+
+        (org-catalyst--render-sorted
+         :reverse nil
+         :renderer-alist renderer-alist)))))
+
 ;; (org-catalyst--define-renderer org-catalyst--render-inventory-list
 ;;     (config
 ;;      month-day
@@ -3229,6 +3376,9 @@ REVERSE the order if REVERSE is non-nil."
                      t))
          (prev-snapshot (car snapshots))
          (snapshot (cdr snapshots)))
+    (setq org-catalyst--today-daynr
+          (org-catalyst--month-day-to-days
+           today-month-day))
     (org-catalyst--render-overview
      :month-day month-day
      :today-month-day today-month-day)
@@ -3835,25 +3985,22 @@ If current UI state specifies order to be reversed, the returned order is revers
                           all-item-config topological-order)))
     (dotimes (i org-catalyst--quest-map-days)
       (let* ((days (org-catalyst--month-day-to-days cur-month-day))
-             (timestamps (seq-filter
-                          (lambda (timestamp)
-                            (ht-contains-p filtered-nodes
-                                           (car timestamp)))
-                          (org-catalyst-safe-get
-                           days-to-timestamps days nil)))
+             (timestamps (org-catalyst-safe-get
+                          days-to-timestamps days nil))
+             (item-ids (and timestamps
+                            (seq-filter
+                             (lambda (item-id)
+                               (ht-contains-p filtered-nodes
+                                              item-id))
+                             (ht-keys timestamps))))
              (days-renderer
               (org-catalyst--partial-renderer
                org-catalyst--render-quest-date
                :prev-month-day prev-month-day
                :month-day cur-month-day)))
-        (if timestamps
-            (dolist (timestamp timestamps)
-              (let* ((item-id (car timestamp))
-                     (timestamp-type-name (cdr timestamp))
-                     (timestamp-type
-                      (ht-get org-catalyst--timestamp-types
-                              timestamp-type-name))
-                     (item-config
+        (if item-ids
+            (dolist (item-id item-ids)
+              (let* ((item-config
                       (org-catalyst-safe-get
                        all-item-config item-id nil)))
                 (org-catalyst--render-item
@@ -3869,11 +4016,15 @@ If current UI state specifies order to be reversed, the returned order is revers
                     :filter-active filter-active
                     :filtered-nodes filtered-nodes))
                  :info-renderer
-                 (when timestamp-type
-                   (org-catalyst--inline-renderer ()
-                     (insert (org-catalyst--with-face
-                              (plist-get timestamp-type :display)
-                              (plist-get timestamp-type :face)))))
+                 (org-catalyst--inline-renderer ()
+                   (dolist (timestamp-type-name (org-catalyst-safe-get
+                                                 timestamps item-id nil))
+                     (let ((timestamp-type
+                            (ht-get org-catalyst--timestamp-types
+                                    timestamp-type-name)))
+                       (funcall (plist-get timestamp-type :renderer)
+                                item-config)
+                       (insert " "))))
                  :action (org-catalyst-safe-get
                           computed-actions item-id nil)
                  :item-config item-config
@@ -4435,6 +4586,12 @@ Note that this invalidates config cache."
   (interactive)
   (org-catalyst--set-filter
    "todo" 'not-done t))
+
+(defun org-catalyst-filter-todo-actionable ()
+  "Show only actionable items."
+  (interactive)
+  (org-catalyst--set-filter
+   "todo" 'actionable t))
 
 (defun org-catalyst-filter-todo-done ()
   "Show only done items."
