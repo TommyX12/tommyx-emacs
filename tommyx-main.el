@@ -1198,11 +1198,11 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
                                         ; C-z when company open will show help for that symbol in another window.
        (define-key company-active-map (kbd "S-TAB") 'company-select-previous)
        (define-key company-active-map (kbd "<S-tab>") 'company-select-previous)))
-  (setq company-frontends
-        '(company-tng-frontend
-          company-pseudo-tooltip-frontend
-          ;; company-preview-frontend
-          company-echo-metadata-frontend))
+  (setq-default company-frontends
+                '(company-tng-frontend
+                  company-pseudo-tooltip-frontend
+                  ;; company-preview-frontend
+                  company-echo-metadata-frontend))
   (setq company-idle-delay 0)
   (setq company-tooltip-align-annotations t)
   (setq company-selection-wrap-around t)
@@ -1744,7 +1744,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
      (imenu-list-start-timer)
      (imenu-list-update nil t)
      (neotree-show)
-     (display-buffer-in-side-window (get-buffer imenu-list-buffer-name) '((side . left)))
+     ;; (display-buffer-in-side-window (get-buffer imenu-list-buffer-name) '((side . left)))
      ))
   ;; patch to change appearance
   (defun imenu-list--depth-string (depth)

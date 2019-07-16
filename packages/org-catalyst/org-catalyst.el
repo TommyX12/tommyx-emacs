@@ -312,6 +312,7 @@ This is used to determine the default day to show in the status window."
 ;;; Constants
 
 ;; TODO make these customizable
+(defconst org-catalyst--num-random-items 5)
 (defconst org-catalyst--default-expanded t)
 (defconst org-catalyst--item-categories
   (ht<-alist
@@ -353,12 +354,11 @@ This is used to determine the default day to show in the status window."
      "Overview"
      :renderers
      (org-catalyst--render-accumulated-stats
-      org-catalyst--render-separator
+      org-catalyst--render-focus
       org-catalyst--render-journal
-      org-catalyst--render-separator
       org-catalyst--render-breaking-chains
-      org-catalyst--render-separator
-      org-catalyst--render-overdue-items))
+      org-catalyst--render-overdue-items
+      org-catalyst--render-random-items))
     (:id
      inventory
      :command
@@ -1294,6 +1294,75 @@ If EXCLUDE-DOT-REPEAT is non-nil, \".+\" repeater ignored."
     (org-time-string-to-absolute
      time-string daynr 'future)))
 
+;; Reference: https://emacs.stackexchange.com/questions/29786/how-to-remove-delete-nth-element-of-a-list
+(defun org-catalyst--remove-nth (nth list)
+  "Remove the NTH element in LIST.
+Return a cons cell with car being the removed element, and cdr being the new
+list.
+
+LIST may be modified."
+  (if list
+      (if (zerop nth) list
+        (let* ((last (nthcdr (1- nth) list))
+               (result (cadr last)))
+          (if (cdr last)
+              (progn (setcdr last (cddr last))
+                     (cons result list))
+            (cons nil list))))
+    (cons nil nil)))
+
+(defun org-catalyst--random-candidate-p (item-config timestamps fun)
+  "Return if an item should be considered in choosing random items."
+  (and (not (org-catalyst-safe-get
+             item-config "is-group" nil))
+       (not (eq (org-catalyst-safe-get
+                 item-config "todo-type" nil)
+                'done))
+       (not (org-catalyst-safe-get-chain
+             item-config nil "params" "negative"))
+       (eq (org-catalyst-safe-get-chain
+            item-config nil "params" "fun")
+           fun)
+       (cl-notany (lambda (timestamp)
+                    (>= (car timestamp)
+                        org-catalyst--today-daynr))
+                  (org-catalyst-safe-get
+                   timestamps (org-catalyst-safe-get
+                               item-config "item-id" nil)
+                   nil))))
+
+(defun org-catalyst--get-random-items (all-item-config timestamps)
+  "Return a cons cell having two lists of random items from ALL-ITEM-CONFIG.
+Car is a list of task items, cdr is a list of fun items.
+
+As of the current implementation, this function re-seed random state by calling
+`(random t)'."
+  (let ((results nil))
+    (random (number-to-string org-catalyst--today-daynr))
+    (dolist (fun '(t nil))
+      (let* ((candidates (seq-filter
+                          (lambda (item-id)
+                            (org-catalyst--random-candidate-p
+                             (org-catalyst-safe-get
+                              all-item-config item-id nil)
+                             timestamps
+                             fun))
+                          (and all-item-config
+                               (ht-keys all-item-config))))
+             (len (length candidates))
+             (result nil))
+        (dotimes (_ (min org-catalyst--num-random-items len))
+          (let* ((i (random len))
+                 (p (org-catalyst--remove-nth i candidates))
+                 (item-id (car p))
+                 (remaining (cdr p)))
+            (push item-id result)
+            (setq candidates remaining)
+            (decf len)))
+        (push result results)))
+    (random t)
+    results))
+
 (defun org-catalyst--get-config ()
   "TODO"
   ;; TODO: allow only getting parts of the things to optimize
@@ -1310,6 +1379,7 @@ If EXCLUDE-DOT-REPEAT is non-nil, \".+\" repeater ignored."
          (children (ht-create))
          (timestamps (ht-create))
          (overdue-items nil)
+         (random-items nil)
          (max-fold-level 0)
          (cur-fold-level 0)
 
@@ -1322,6 +1392,11 @@ If EXCLUDE-DOT-REPEAT is non-nil, \".+\" repeater ignored."
 
          (prev-item-id nil)
          (prev-item-pos nil)
+
+         (focus-id nil)
+         (focus-text nil)
+         (prev-focus-pos nil)
+         (focus-pos nil)
 
          (org-use-tag-inheritance nil)
          (daynr (org-catalyst--month-day-to-days
@@ -1429,7 +1504,18 @@ If EXCLUDE-DOT-REPEAT is non-nil, \".+\" repeater ignored."
                          timestamp-exclude-dot-repeat)))
                   (add-timestamp item-id
                                  timestamp-days
-                                 "timestamp")))))))
+                                 "timestamp"))))))
+
+         (record-focus
+          (end-pos)
+
+          (save-excursion
+            (setq focus-pos prev-focus-pos)
+            (goto-char prev-focus-pos)
+            (forward-line)
+            (setq focus-text
+                  (buffer-substring (point) (max (point) end-pos))
+                  prev-focus-pos nil))))
 
       (org-catalyst--map-entries
        (lambda ()
@@ -1446,17 +1532,22 @@ If EXCLUDE-DOT-REPEAT is non-nil, \".+\" repeater ignored."
                 (level (org-current-level)))
 
            (if (eq prev-buffer (current-buffer))
-               (when prev-item-id
-                 (record-timestamps prev-item-id
-                                    prev-item-pos
-                                    (point)))
+               (progn
+                 (when prev-item-id
+                   (record-timestamps prev-item-id
+                                      prev-item-pos
+                                      (point)))
+                 (when prev-focus-pos
+                   (record-focus (point))))
              (collect-children-stack)
              (when prev-item-id
                (with-current-buffer prev-buffer
                  (org-with-wide-buffer
                   (record-timestamps prev-item-id
                                      prev-item-pos
-                                     (point-max)))))
+                                     (point-max))
+                  (when prev-focus-pos
+                    (record-focus (point-max))))))
              (setq params-stack nil
                    state-deltas-stack nil)
              (setq cur-fold-level 0)
@@ -1652,15 +1743,32 @@ If EXCLUDE-DOT-REPEAT is non-nil, \".+\" repeater ignored."
                (push (cons level nil) children-stack)
                (push item-id children-parent-id-stack)
 
-               (push item-id topological-order)))))))
+               (push item-id topological-order)))
+
+            ((org-catalyst--contains-tag "focus" tags t)
+             (if focus-id
+                 (error "Multiple focus headings detected")
+               (setq focus-id (org-id-get-create))
+               (let ((marker (point-marker)))
+                 (setq focus-text
+                       (substring-no-properties
+                        (org-agenda-get-some-entry-text marker 5)))
+                 (move-marker marker nil))))))))
 
       (when prev-item-id
         (with-current-buffer prev-buffer
           (org-with-wide-buffer
            (record-timestamps prev-item-id
                               prev-item-pos
-                              (point-max)))))
-      (collect-children-stack))
+                              (point-max))
+           (when prev-focus-pos
+             (record-focus (point-max))))))
+      (collect-children-stack)
+
+      (setq random-items
+            (org-catalyst--get-random-items
+             all-item-config
+             timestamps)))
 
     (list :all-item-config all-item-config
           :all-state-config all-state-config
@@ -1673,7 +1781,10 @@ If EXCLUDE-DOT-REPEAT is non-nil, \".+\" repeater ignored."
           :topological-order topological-order
           :children children
           :timestamps timestamps
-          :overdue-items overdue-items)))
+          :overdue-items overdue-items
+          :random-items random-items
+          :focus-id focus-id
+          :focus-text focus-text)))
 
 (defun org-catalyst--update-function (snapshot
                                       actions
@@ -3106,7 +3217,9 @@ REVERSE the order if REVERSE is non-nil."
       (org-catalyst--render-sorted
        :reverse t
        :renderer-alist
-       renderer-alist))))
+       renderer-alist)))
+
+  (org-catalyst--render-separator))
 
 (org-catalyst--define-renderer org-catalyst--render-journal
     (config
@@ -3141,7 +3254,26 @@ REVERSE the order if REVERSE is non-nil."
                    :item-id item-id)))
                renderers))))
         computed-actions)
-       renderers))))
+       renderers)))
+
+  (org-catalyst--render-separator))
+
+(org-catalyst--define-renderer org-catalyst--render-focus
+    (config
+     month-day
+     today-month-day)
+  (when (equal month-day today-month-day)
+    (let ((focus-text (plist-get config :focus-text))
+          (focus-id (plist-get config :focus-id)))
+      (org-catalyst--render-section-heading :name "Focus")
+      (insert (propertize
+               (if (and focus-text (> (length focus-text) 0))
+                   focus-text
+                 (org-catalyst--with-face
+                  "None" 'org-catalyst-secondary-face))
+               'id focus-id)
+              "\n")
+      (org-catalyst--render-separator))))
 
 (org-catalyst--define-renderer org-catalyst--render-breaking-chains
     (config
@@ -3208,7 +3340,9 @@ REVERSE the order if REVERSE is non-nil."
 
       (org-catalyst--render-sorted
        :reverse t
-       :renderer-alist renderer-alist))))
+       :renderer-alist renderer-alist)
+
+      (org-catalyst--render-separator))))
 
 (org-catalyst--define-renderer org-catalyst--render-overdue-items
     (config
@@ -3252,7 +3386,46 @@ REVERSE the order if REVERSE is non-nil."
 
         (org-catalyst--render-sorted
          :reverse nil
-         :renderer-alist renderer-alist)))))
+         :renderer-alist renderer-alist)
+
+        (org-catalyst--render-separator)))))
+
+(org-catalyst--define-renderer org-catalyst--render-random-items
+    (config
+     month-day
+     today-month-day
+     snapshot
+     computed-actions)
+
+  (when (equal month-day today-month-day)
+
+    (org-catalyst--render-section-heading
+     :name "Random Items")
+
+    (dolist (items (plist-get config :random-items))
+      (let* ((all-item-config (plist-get config :all-item-config))
+             (renderer-alist
+              (mapcar
+               (lambda (item-id)
+                 (cons 0
+                       (org-catalyst--partial-renderer
+                        org-catalyst--render-item-with-info
+                        :month-day month-day
+                        :computed-actions computed-actions
+                        :snapshot snapshot
+                        :all-item-config all-item-config
+                        :item-id item-id)))
+               items)))
+
+        (when renderer-alist
+
+          (org-catalyst--render-sorted
+           :reverse nil
+           :renderer-alist renderer-alist)
+
+          (org-catalyst--render-subline-spacing))))
+
+    (org-catalyst--render-separator)))
 
 ;; (org-catalyst--define-renderer org-catalyst--render-inventory-list
 ;;     (config
