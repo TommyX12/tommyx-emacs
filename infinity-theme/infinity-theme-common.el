@@ -240,7 +240,7 @@
   `(font-lock-type-face ((,class (:foreground ,type))))
   `(font-lock-variable-name-face ((,class (:foreground ,var))))
   `(font-lock-warning-face ((,class (:foreground ,war :background ,bg1))))
-  `(fixed-pitch ((,class (:family nil))))
+  `(fixed-pitch ((,class ())))
   `(fringe ((,class (:background ,bg1 :foreground ,lnum))))
   `(header-line ((,class :inherit (mode-line))))
   `(highlight ((,class (:foreground ,base :background ,highlight))))

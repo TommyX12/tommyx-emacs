@@ -1149,7 +1149,7 @@ Useful for a search overview popup."
 
 (use-package company :ensure t
   :config
-  (make-local-variable 'company-backends)
+  (make-variable-buffer-local 'company-backends)
   (add-hook 'after-init-hook 'global-company-mode)
   (company-tng-configure-default)
   ;; (company-quickhelp-mode)
@@ -1198,6 +1198,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
                                         ; C-z when company open will show help for that symbol in another window.
        (define-key company-active-map (kbd "S-TAB") 'company-select-previous)
        (define-key company-active-map (kbd "<S-tab>") 'company-select-previous)))
+  (make-variable-buffer-local 'company-frontends)
   (setq-default company-frontends
                 '(company-tng-frontend
                   company-pseudo-tooltip-frontend
