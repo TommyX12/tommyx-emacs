@@ -142,6 +142,7 @@
   ;; (str           (if (eq theme 'dark) (if (has-true-color) "#2d9672" "#2aa198") (if (has-true-color) "#2d9574" "#2aa198")))
   (suc           (if (eq theme 'dark) (if (has-true-color) "#86dc2f" "#86dc2f") (if (has-true-color) "#42ae2c" "#00af00")))
   (ttip          (if (eq theme 'dark) (if (has-true-color) "#9AA2BA" "#888888") (if (has-true-color) "#79839F" "#5f5f87")))
+  (ttip-dim      (if (eq theme 'dark) (if (has-true-color) "#787F91" "#333333") (if (has-true-color) "#79839F" "#afafff")))
   (ttip-sl       (if (eq theme 'dark) (if (has-true-color) "#505B79" "#333333") (if (has-true-color) "#C6C9DD" "#afafff")))
   (ttip-bg       (if (eq theme 'dark) (if (has-true-color) "#323740" "#444444") (if (has-true-color) "#DEE1E8" "#dfdfff")))
   (ttip-bg2      (if (eq theme 'dark) (if (has-true-color) "#1F3866" "#444444") (if (has-true-color) "#DEE1E8" "#dfdfff")))
@@ -358,7 +359,7 @@
 
 ;;;;; company
   `(company-echo-common ((,class (:background ,base :foreground ,bg1))))
-  `(company-preview ((,class (:foreground ,base-dim))))
+  `(company-preview ((,class (:foreground ,ttip-dim :background ,ttip-bg))))
   `(company-preview-common ((,class (:inherit company-preview))))
   `(company-preview-search ((,class (:inherit match))))
   `(company-scrollbar-bg ((,class (:background ,bg2))))
