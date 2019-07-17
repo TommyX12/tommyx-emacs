@@ -358,8 +358,8 @@
 
 ;;;;; company
   `(company-echo-common ((,class (:background ,base :foreground ,bg1))))
-  `(company-preview ((,class (:background ,ttip-bg :foreground ,ttip))))
-  `(company-preview-common ((,class (:background ,ttip-bg :foreground ,base))))
+  `(company-preview ((,class (:foreground ,base-dim))))
+  `(company-preview-common ((,class (:inherit company-preview))))
   `(company-preview-search ((,class (:inherit match))))
   `(company-scrollbar-bg ((,class (:background ,bg2))))
   `(company-scrollbar-fg ((,class (:background ,act2))))
