@@ -1153,6 +1153,28 @@ Useful for a search overview popup."
   (add-hook 'after-init-hook 'global-company-mode)
   (company-tng-configure-default)
   ;; (company-quickhelp-mode)
+
+  ;; Patch tng front-end to not show overlay.
+  (defun company-tng-frontend (command)
+    "When the user changes the selection at least once, this
+frontend will display the candidate in the buffer as if it's
+already there and any key outside of `company-active-map' will
+confirm the selection and finish the completion."
+    (cl-case command
+      (show
+       (advice-add 'company-select-next :before-until 'company-tng--allow-unselected)
+       (advice-add 'company-fill-propertize :filter-args 'company-tng--adjust-tooltip-highlight))
+      (update)
+      (hide
+       (advice-remove 'company-select-next 'company-tng--allow-unselected)
+       (advice-remove 'company-fill-propertize 'company-tng--adjust-tooltip-highlight))
+      (pre-command
+       (when (and company-selection-changed
+                  (not (company--company-command-p (this-command-keys))))
+         (company--unread-this-command-keys)
+         (setq this-command 'company-complete-selection)
+         (advice-add 'company-call-backend :before-until 'company-tng--supress-post-completion)))))
+  
   (setq my-company--company-command-p-override nil)
   (defun my-company--company-command-p (func &rest args)
     "Patch company-mode to treat key sequences like \"jp\" not a company-mode command.
@@ -1201,7 +1223,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
   (setq-default company-frontends
                 '(company-tng-frontend
                   company-pseudo-tooltip-frontend
-                  ;; company-preview-frontend
+                  company-preview-frontend
                   company-echo-metadata-frontend))
   (setq company-idle-delay 0)
   (setq company-tooltip-align-annotations t)
@@ -2414,10 +2436,13 @@ This function uses `emms-show-format' to format the current track."
    (company-selection-changed
     (company-complete-selection))
    (company-candidates
-    (company-select-next))
+    (company-select-next)
+    (company-complete-selection))
    (t
     (company-auto-begin)
-    (company-select-next))))
+    (company-select-next)
+    (ignore-errors
+      (company-preview-frontend 'post-command)))))
 
 (defun company-complete-number-1 ()
   (interactive) (company-complete-number 1))
@@ -2447,7 +2472,7 @@ This function uses `emms-show-format' to format the current track."
   (interactive) (company-complete-number 9))
 
 (defun company-complete-number-0 ()
-  (interactive) (company-complete-number 0))
+  (interactive) (company-complete-number 10))
 
 (defun get-random-element (list)
   "Returns a random element of LIST."
@@ -3658,7 +3683,7 @@ command (ran after) is mysteriously incorrect."
                      'insert-todo "jt"))
               "f" (lambda () (interactive)
                     (call-with-command-hooks
-                     'insert-backslash "jf"))
+                     'yas-expand-from-trigger-key "jf"))
               ;; jk quit insert mode
               "k" (lambda () (interactive)
                     (call-with-command-hooks
