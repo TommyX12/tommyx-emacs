@@ -1366,6 +1366,9 @@ As of the current implementation, this function re-seed random state by calling
 (defun org-catalyst--get-config ()
   "TODO"
   ;; TODO: allow only getting parts of the things to optimize
+  (setq org-catalyst--today-daynr
+        (org-catalyst--month-day-to-days
+         (org-catalyst--status-today-month-day)))
   (let* ((all-item-config (ht-create))
          (all-state-config (ht-create))
          (state-update-funcs (ht-create))
@@ -1484,7 +1487,7 @@ As of the current implementation, this function re-seed random state by calling
                             (when is-end
                               (ht-set item-config "end" timestamp-days-past)
                               (when (and
-                                     (< timestamp-days-past daynr)
+                                     (<= timestamp-days-past daynr)
                                      (not
                                       (eq (org-catalyst-safe-get
                                            item-config "todo-type" nil)
@@ -3400,7 +3403,7 @@ REVERSE the order if REVERSE is non-nil."
   (when (equal month-day today-month-day)
 
     (org-catalyst--render-section-heading
-     :name "Random Items")
+     :name "Discover")
 
     (dolist (items (plist-get config :random-items))
       (let* ((all-item-config (plist-get config :all-item-config))
@@ -3551,7 +3554,7 @@ REVERSE the order if REVERSE is non-nil."
          (snapshot (cdr snapshots)))
     (setq org-catalyst--today-daynr
           (org-catalyst--month-day-to-days
-           today-month-day))
+          today-month-day))
     (org-catalyst--render-overview
      :month-day month-day
      :today-month-day today-month-day)
