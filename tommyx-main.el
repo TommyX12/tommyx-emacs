@@ -2441,9 +2441,7 @@ This function uses `emms-show-format' to format the current track."
     (company-complete-selection))
    (t
     (company-auto-begin)
-    (company-select-next)
-    (ignore-errors
-      (company-preview-frontend 'post-command)))))
+    (company-select-next))))
 
 (defun company-complete-number-1 ()
   (interactive) (company-complete-number 1))
@@ -3702,10 +3700,10 @@ command (ran after) is mysteriously incorrect."
                     (call-with-command-hooks
                      'move-end-of-line "jl"))
               ;; jp complete
-              "p" 'company-smart-complete
-              ;; "p" (lambda () (interactive)
-              ;;       (call-with-command-hooks
-              ;;        'company-smart-complete "jp"))
+              ;; "p" 'company-smart-complete
+              "p" (lambda () (interactive)
+                    (call-with-command-hooks
+                     'company-smart-complete "jp"))
               ;; j[ skip TabNine
               "[" (lambda () (interactive)
                     (call-with-command-hooks
