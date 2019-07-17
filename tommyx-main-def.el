@@ -28,7 +28,8 @@
 (defvar eager-redisplay-mode-on nil)
 (defvar eager-redisplay-inhibit-cmd
   '(evil-repeat
-    yas-expand))
+    yas-expand
+    evil-execute-macro))
 (defun eager-redisplay-mode ()
   "Minor mode that force redraw after command."
   (interactive)
