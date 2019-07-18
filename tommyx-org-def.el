@@ -62,18 +62,6 @@ regular expression,
                         (- len 1))))
 			""))
 
-(defun org-up-heading-custom ()
-  (interactive)
-  (if (org-at-heading-p)
-      (org-up-heading-safe)
-    (org-back-to-heading)))
-
-(defun org-backward-heading-same-level-custom ()
-  (interactive)
-  (if (org-at-heading-p)
-      (org-backward-heading-same-level 1)
-    (org-back-to-heading)))
-
 (defun org-show-all-latex-fragments ()
   (interactive)
   (org-remove-latex-fragment-image-overlays)

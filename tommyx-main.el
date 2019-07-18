@@ -257,7 +257,7 @@
 
 ;; sidebar face
 (defface sidebar-background
-  '((t (:inherit default)))
+  '((t :inherit default))
   "*Face used for the sidebar."
   :group 'appearence)
 
@@ -1052,7 +1052,9 @@ Useful for a search overview popup."
 
 (use-package flycheck :ensure t
   :config
-  (global-flycheck-mode 1))
+  (global-flycheck-mode 1)
+  (setq-default flycheck-check-syntax-automatically '(idle-change save mode-enabled))
+  (setq-default flycheck-idle-change-delay 3))
 
 (use-package flyspell-lazy :ensure t
   :config
@@ -1154,6 +1156,42 @@ Useful for a search overview popup."
   (company-tng-configure-default)
   ;; (company-quickhelp-mode)
 
+  (defface company-preview-active-face
+    '((t :inherit company-preview))
+    "Face used for company preview when nothing is selected."
+    :group 'appearence)
+
+  ;; Patch `company-preview-frontend'.
+  (defun company-preview-frontend (command)
+    "`company-mode' frontend showing the selection as if it had been inserted."
+    (pcase command
+      (`pre-command (company-preview-hide))
+      (`post-command
+       ;; TODO: should we make this run-at-time 0?
+       (let ((completion
+              (nth company-selection company-candidates)))
+         (company-preview-show-at-point
+          (point) completion)
+         (when (and company-preview-overlay
+                    company-selection-changed)
+           (let ((display (overlay-get company-preview-overlay
+                                       'display))
+                 (after-string (overlay-get company-preview-overlay
+                                            'after-string)))
+             (cond
+              (display
+               (overlay-put company-preview-overlay
+                            'display (propertize
+                                      display 'face
+                                      'company-preview-active-face)))
+              (after-string
+               (overlay-put company-preview-overlay
+                            'after-string
+                            (propertize
+                             after-string 'face
+                             'company-preview-active-face))))))))
+      (`hide (company-preview-hide))))
+
   ;; Patch tng front-end to not show overlay.
   (defun company-tng-frontend (command)
     "When the user changes the selection at least once, this
@@ -1164,7 +1202,7 @@ confirm the selection and finish the completion."
       (show
        (advice-add 'company-select-next :before-until 'company-tng--allow-unselected)
        (advice-add 'company-fill-propertize :filter-args 'company-tng--adjust-tooltip-highlight))
-      (update)
+      ;; (update)
       (hide
        (advice-remove 'company-select-next 'company-tng--allow-unselected)
        (advice-remove 'company-fill-propertize 'company-tng--adjust-tooltip-highlight))

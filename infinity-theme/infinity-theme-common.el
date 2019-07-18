@@ -360,6 +360,7 @@
 ;;;;; company
   `(company-echo-common ((,class (:background ,base :foreground ,bg1))))
   `(company-preview ((,class (:foreground ,ttip-dim :background ,bg2))))
+  `(company-preview-active-face ((,class (:foreground ,base :background ,ttip-bg))))
   `(company-preview-common ((,class (:inherit company-preview))))
   `(company-preview-search ((,class (:inherit match))))
   `(company-scrollbar-bg ((,class (:background ,bg2))))
