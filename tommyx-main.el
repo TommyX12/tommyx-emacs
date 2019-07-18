@@ -1173,18 +1173,21 @@ Useful for a search overview popup."
               (nth company-selection company-candidates)))
          (company-preview-show-at-point
           (point) completion)
-         (when (and company-preview-overlay
-                    company-selection-changed)
-           (overlay-put company-preview-overlay
-                        'after-string nil)
-           (move-overlay company-preview-overlay
-                         (max (point-min) (- (point) (length company-prefix)))
-                         (point))
-           (overlay-put company-preview-overlay
-                          'display (propertize
-                                    (substring-no-properties
-                                     completion)
-                                    'face 'company-preview-active-face)))))
+         (let ((ov company-preview-overlay)
+               (prefix-length (length company-prefix)))
+           (when (and ov company-selection-changed)
+             (overlay-put ov 'after-string nil)
+             (overlay-put ov 'display nil)
+             (move-overlay ov (max (point-min) (- (point) prefix-length))
+                           (point))
+             (overlay-put
+              ov (if (> prefix-length 0)
+                     'display
+                   'after-string)
+              (propertize
+               (substring-no-properties
+                completion)
+               'face 'company-preview-active-face))))))
       (`hide (company-preview-hide))))
 
   ;; Patch tng front-end to not show overlay.
