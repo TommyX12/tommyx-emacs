@@ -104,26 +104,16 @@
 
 ;;; main config
 
-(enable-auto-compilation 'tommyx-main-def)
-(enable-auto-compilation 'redo+)
-(enable-auto-compilation 'font-lock+)
-(enable-auto-compilation 'hl-line+)
-(enable-auto-compilation 'info+)
-(enable-auto-compilation 'companion)
 (require 'tommyx-main)
 
 
 ;;; status line config
 
-(enable-auto-compilation 'tommyx-status-lines-def)
 (require 'tommyx-status-lines)
 
 
 ;;; org config
 
-(enable-auto-compilation 'tommyx-org-def)
-(enable-auto-compilation 'org-life)
-(enable-auto-compilation 'org-catalyst)
 (require 'tommyx-org)
 
 

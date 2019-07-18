@@ -11,6 +11,7 @@
 (require 'companion)
 (require 'hydra)
 (require 'smartparens)
+(enable-auto-compilation 'tommyx-org-def)
 (require 'tommyx-org-def)
 (require 'tommyx-bind-def)
 
@@ -751,6 +752,7 @@
 
   ;;; my org-life
 
+  (enable-auto-compilation 'org-life)
   (require 'org-life)
   (setq org-life-config-file-path
         (expand-file-name "org-life-config.org" org-directory))
@@ -762,6 +764,7 @@
 
   ;;; my org-catalyst
 
+  (enable-auto-compilation 'org-catalyst)
   (require 'org-catalyst)
   (add-hook 'org-catalyst-mode-hook
             (lambda ()

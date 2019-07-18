@@ -1,5 +1,6 @@
 ;;; imports
 
+(enable-auto-compilation 'tommyx-main-def)
 (require 'tommyx-main-def)
 
 
@@ -291,9 +292,13 @@
 
 (require 'tommyx-bind-def)
 
+(enable-auto-compilation 'redo+)
 (require 'redo+)
+(enable-auto-compilation 'font-lock+)
 (require 'font-lock+)
+(enable-auto-compilation 'hl-line+)
 (require 'hl-line+)
+(enable-auto-compilation 'info+)
 (require 'info+)
 
 (use-package package-lint :ensure t)
@@ -936,21 +941,12 @@ Useful for a search overview popup."
 ;; (require 'highlight-indent-guides) ; my own version
 ;; (require 'indent-hint)
 
-(use-package highlight-indentation :ensure t
-  ;; TODO: we want to load our own version
-  :config
-  (let* ((file-name
-          (expand-file-name
-           "packages/Highlight-Indentation-for-Emacs/highlight-indentation.el"
-           tommyx-config-path))
-         (compiled-file-name
-          (byte-compile-dest-file file-name)))
-    (enable-auto-compilation file-name)
-    (load compiled-file-name))
-
-  (setq highlight-indentation-blank-lines t)
-  (add-hook 'prog-mode-hook 'highlight-indentation-mode)
-  (add-hook 'text-mode-hook 'highlight-indentation-mode))
+;; TODO: loading our own version
+(enable-auto-compilation 'highlight-indentation)
+(require 'highlight-indentation)
+(setq highlight-indentation-blank-lines t)
+(add-hook 'prog-mode-hook 'highlight-indentation-mode)
+(add-hook 'text-mode-hook 'highlight-indentation-mode)
 
 (require 'origami)
 (add-to-list 'origami-parser-alist
@@ -1859,6 +1855,7 @@ DEPTH is the depth of the entry in the list."
 ;;  (purpose-mode)
 ;; )
 
+(enable-auto-compilation 'companion)
 (require 'companion)
 ;; TODO: The following fix bug with companion's separator
 (add-hook 'after-init-hook

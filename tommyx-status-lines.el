@@ -7,6 +7,7 @@
 (require 'spaceline-all-the-icons)
 (require 'which-func)
 (require 'all-the-icons)
+(enable-auto-compilation 'tommyx-status-lines-def)
 (require 'tommyx-status-lines-def)
 
 ;; misc config
