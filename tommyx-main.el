@@ -1331,9 +1331,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 ;;                 (cons #'company-lsp company-backends)))
 
 (use-package company-ycmd :ensure t
-  :config
-  (setq-default company-backends
-                (cons #'company-ycmd company-backends)))
+  :config)
 
 ;; (require 'company-tabnine)
 
@@ -1932,7 +1930,13 @@ DEPTH is the depth of the entry in the list."
             (awk-mode . "awk")
             (other . "linux")))
 
-    (add-hook 'c++-mode-hook (lambda () (ycmd-mode 1)))
+    (add-hook
+     'c++-mode-hook
+     (lambda ()
+       (ycmd-mode 1)
+       (setq-local company-backends
+                   (append '(company-tabnine company-ycmd)
+                           company-backends))))
 
     ;; bindings
 
@@ -1981,7 +1985,13 @@ DEPTH is the depth of the entry in the list."
   (use-package csharp-mode :ensure t
     :config
     (setup-color-identifiers-parser 'c 'csharp-mode)
-    (add-hook 'csharp-mode-hook (lambda () (ycmd-mode 1)))
+    (add-hook
+     'csharp-mode-hook
+     (lambda ()
+       (ycmd-mode 1)
+       (setq-local company-backends
+                   (append '(company-tabnine company-ycmd)
+                           company-backends))))
 
     ;; bindings
 
