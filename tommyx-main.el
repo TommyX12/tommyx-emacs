@@ -1151,6 +1151,7 @@ Useful for a search overview popup."
 
 (use-package company :ensure t
   :config
+  ;; TODO: should we remove the existing backends?
   (make-variable-buffer-local 'company-backends)
   (add-hook 'after-init-hook 'global-company-mode)
   (company-tng-configure-default)
@@ -1174,22 +1175,16 @@ Useful for a search overview popup."
           (point) completion)
          (when (and company-preview-overlay
                     company-selection-changed)
-           (let ((display (overlay-get company-preview-overlay
-                                       'display))
-                 (after-string (overlay-get company-preview-overlay
-                                            'after-string)))
-             (cond
-              (display
-               (overlay-put company-preview-overlay
-                            'display (propertize
-                                      display 'face
-                                      'company-preview-active-face)))
-              (after-string
-               (overlay-put company-preview-overlay
-                            'after-string
-                            (propertize
-                             after-string 'face
-                             'company-preview-active-face))))))))
+           (overlay-put company-preview-overlay
+                        'after-string nil)
+           (move-overlay company-preview-overlay
+                         (max (point-min) (- (point) (length company-prefix)))
+                         (point))
+           (overlay-put company-preview-overlay
+                          'display (propertize
+                                    (substring-no-properties
+                                     completion)
+                                    'face 'company-preview-active-face)))))
       (`hide (company-preview-hide))))
 
   ;; Patch tng front-end to not show overlay.
