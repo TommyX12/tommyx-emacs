@@ -1165,25 +1165,27 @@ Useful for a search overview popup."
       (`pre-command (company-preview-hide))
       (`post-command
        ;; TODO: should we make this run-at-time 0?
-       (let ((completion
-              (nth company-selection company-candidates)))
-         (company-preview-show-at-point
-          (point) completion)
-         (let ((ov company-preview-overlay)
-               (prefix-length (length company-prefix)))
-           (when (and ov company-selection-changed)
-             (overlay-put ov 'after-string nil)
-             (overlay-put ov 'display nil)
-             (move-overlay ov (max (point-min) (- (point) prefix-length))
-                           (point))
-             (overlay-put
-              ov (if (> prefix-length 0)
-                     'display
-                   'after-string)
-              (propertize
-               (substring-no-properties
-                completion)
-               'face 'company-preview-active-face))))))
+       (let* ((completion
+               (nth company-selection company-candidates))
+              (completion-length (length completion))
+              (prefix-length (length company-prefix)))
+         (when (>= completion-length prefix-length)
+           (company-preview-show-at-point
+            (point) completion)
+           (let ((ov company-preview-overlay))
+             (when (and ov company-selection-changed)
+               (overlay-put ov 'after-string nil)
+               (overlay-put ov 'display nil)
+               (move-overlay ov (max (point-min) (- (point) prefix-length))
+                             (point))
+               (overlay-put
+                ov (if (> prefix-length 0)
+                       'display
+                     'after-string)
+                (propertize
+                 (substring-no-properties
+                  completion)
+                 'face 'company-preview-active-face)))))))
       (`hide (company-preview-hide))))
 
   ;; Patch tng front-end to not show overlay.
@@ -3338,6 +3340,9 @@ command (ran after) is mysteriously incorrect."
       "m" (:def
            ace-swap-window
            :which-key "Swap Window")
+      "f" (:def
+           delete-other-windows
+           :which-key "Delete Other Windows")
       "q" (:def
            ,(lambda () (interactive)
               (evil-quit)
