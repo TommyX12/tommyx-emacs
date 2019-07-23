@@ -86,6 +86,32 @@
    :min-height (or ivy-posframe-min-height (+ ivy-height 1))
    :min-width (or ivy-posframe-min-width (round (* (frame-width) 0.62)))))
 
+(defun $posframe-poshandler-point-horizontal (info &optional font-height)
+  (let* ((x-pixel-offset (plist-get info :x-pixel-offset))
+         (y-pixel-offset (plist-get info :y-pixel-offset))
+         (posframe-width (plist-get info :posframe-width))
+         (posframe-height (plist-get info :posframe-height))
+         (window (plist-get info :parent-window))
+         (xmax (plist-get info :parent-frame-width))
+         (ymax (plist-get info :parent-frame-height))
+         (position-info (plist-get info :position-info))
+         (header-line-height (plist-get info :header-line-height))
+         (x (+ (car (window-inside-pixel-edges window))
+               x-pixel-offset))
+         (y-top (+ (cadr (window-pixel-edges window))
+                   header-line-height
+                   (- (or (cdr (posn-x-y position-info)) 0)
+                      ;; Fix the conflict with flycheck
+                      ;; http://lists.gnu.org/archive/html/emacs-devel/2018-01/msg00537.html
+                      (or (cdr (posn-object-x-y position-info)) 0))
+                   y-pixel-offset))
+         (font-height (or font-height (plist-get info :font-height)))
+         (y-bottom (+ y-top font-height)))
+    (cons (max 0 (min x (- xmax (or posframe-width 0))))
+          (max 0 (if (> (+ y-bottom (or posframe-height 0)) ymax)
+                     (- y-top (or posframe-height 0))
+                   y-bottom)))))
+
 (defun $posframe-poshandler-adaptive-top-bottom (info)
   "Posframe's position handler.
 
@@ -121,6 +147,9 @@ Useful for a search overview popup."
 
 (defun $ivy-posframe-display-swiper (str)
   (ivy-posframe--display str #'$posframe-poshandler-adaptive-top-bottom))
+
+(defun $ivy-posframe-display-at-point-horizontal (str)
+  (ivy-posframe--display str #'$posframe-poshandler-point-horizontal))
 
 (defun $bury-compile-buffer-if-successful (buffer string)
   "Bury a compilation buffer if succeeded without warnings."
