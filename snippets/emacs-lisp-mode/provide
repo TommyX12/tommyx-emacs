@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: provide
+# key: provide
+# --
+(provide '${1:`(file-name-base (buffer-file-name))`})
+
+;;; $1.el ends here

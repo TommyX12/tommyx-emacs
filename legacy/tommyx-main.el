@@ -166,7 +166,7 @@
 (global-auto-revert-mode t)
 
 ;; profiler
-(setq profiler-max-stack-depth 64)
+(setq profiler-max-stack-depth 128)
 
 ;; auto start server if on GUI
 (when window-system
@@ -898,8 +898,7 @@ Useful for a search overview popup."
           (cond
            ((string-match "move to window 1" (cdr cell)) '("[0-9]" . "move to window [0-9]"))
            ((string-match "move to window [0-9]" (cdr cell)) nil)
-           (cell))))
-  )
+           (cell)))))
 
 (use-package spacemacs-theme :ensure t :defer t)
 
@@ -942,6 +941,9 @@ Useful for a search overview popup."
 ;; (require 'indent-hint)
 
 ;; TODO: loading our own version
+(add-to-list 'load-path (expand-file-name
+                         "packages/Highlight-Indentation-for-Emacs"
+                         tommyx-config-path))
 (enable-auto-compilation 'highlight-indentation)
 (require 'highlight-indentation)
 (setq highlight-indentation-blank-lines t)
@@ -1048,9 +1050,9 @@ Useful for a search overview popup."
 
 (use-package flycheck :ensure t
   :config
-  (global-flycheck-mode 1)
+  (setq-default flycheck-idle-change-delay 3)
   (setq-default flycheck-check-syntax-automatically '(idle-change save mode-enabled))
-  (setq-default flycheck-idle-change-delay 3))
+  (global-flycheck-mode 1))
 
 (use-package flyspell-lazy :ensure t
   :config
@@ -1209,6 +1211,19 @@ confirm the selection and finish the completion."
          (setq this-command 'company-complete-selection)
          (advice-add 'company-call-backend :before-until 'company-tng--supress-post-completion)))))
   
+  (defvar company-echo-metadata-frontend-bypass nil)
+
+  ;; Patch echo-metadata frontend to allow bypassing.
+  (defun company-echo-metadata-frontend (command)
+    "`company-mode' frontend showing the documentation in the echo area."
+    (pcase command
+      (`post-command
+       (if company-echo-metadata-frontend-bypass
+           (setq company-echo-metadata-frontend-bypass nil)
+         (when company-selection-changed
+           (company-echo-show-when-idle 'company-fetch-metadata))))
+      (`hide (company-echo-hide))))
+
   (setq my-company--company-command-p-override nil)
   (defun my-company--company-command-p (func &rest args)
     "Patch company-mode to treat key sequences like \"jp\" not a company-mode command.
@@ -2112,7 +2127,7 @@ DEPTH is the depth of the entry in the list."
        python-shell-send-buffer
        :which-key "Eval Buffer In Python"))))
 
-  (use-package elpy :ensure t
+  (use-package elpy :ensure t :defer t
     :init
     (elpy-enable)
 
@@ -2269,7 +2284,7 @@ DEPTH is the depth of the entry in the list."
     :config
     (add-hook 'css-mode-hook 'counsel-css-imenu-setup))
 
-  (add-hook 'css-mode-hook  'emmet-mode)
+  (add-hook 'css-mode-hook 'emmet-mode)
 
   (dolist (hook '(css-mode-hook))
     (add-hook
@@ -2364,7 +2379,9 @@ DEPTH is the depth of the entry in the list."
   ;;   (newline))
   ;; TODO: if we do not want to indent, comment this
   (save-excursion
-    (newline-and-indent))
+    (newline)
+    (unless (eolp)
+      (indent-according-to-mode)))
   (indent-according-to-mode))
 
 (defun update-heavy-tasks () (interactive)
@@ -2478,6 +2495,7 @@ This function uses `emms-show-format' to format the current track."
 
 (defun company-smart-complete ()
   (interactive)
+  (setq company-echo-metadata-frontend-bypass t)
   (cond
    (company-selection-changed
     (company-complete-selection))

@@ -1,6 +1,6 @@
 ;; requires
 (require 'projectile)
-(require 'tommyx-key-binding-framework)
+(require 'tommyx-bind-def)
 
 ;; general config
 (setq compile-command "")
@@ -41,7 +41,7 @@
 	                                :run #'project-cp-run)
 
 ;; key bindings
-($bind-keys
+(tommyx-bind-keys
  `(:case
    :states (motion normal visual)
    

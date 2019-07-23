@@ -220,33 +220,33 @@ If global companion buffer not exists, create it."
   "Make WINDOW a Companion window.
 Companion buffer is BUFFER."
   (companion--with-resizable-window
-	(switch-to-buffer buffer)
-	(setq-local face-remapping-alist
-              '((default companion-face)
-                (powerline-active2 companion-secondary)))
-	(set-window-parameter window 'no-delete-other-windows t)
-	(set-window-parameter window 'no-other-window t)
-	(set-window-margins window 0 0)
-	(set-window-fringes window 1 1)
-	(set-window-dedicated-p window t)
-	(set-window-scroll-bars window 0 nil 0 nil)
-	(setq-local window-min-height 1)
-	(setq-local window-safe-min-height 1)
-	(let (window-size-fixed)
-		(fit-window-to-buffer window 1))
-	(setq-local window-size-fixed t)
-	(window-preserve-size window nil t)
-	(when (fboundp 'window-preserve-size)
-		(window-preserve-size window nil t))
-	)
+	 (switch-to-buffer buffer)
+	 (setq-local face-remapping-alist
+               '((default companion-face)
+                 (powerline-active2 companion-secondary)))
+	 (set-window-parameter window 'no-delete-other-windows t)
+	 (set-window-parameter window 'no-other-window t)
+	 (set-window-margins window 0 0)
+	 (set-window-fringes window 1 1)
+	 (set-window-dedicated-p window t)
+	 (set-window-scroll-bars window 0 nil 0 nil)
+	 (setq-local window-min-height 1)
+	 (setq-local window-safe-min-height 1)
+	 (let (window-size-fixed)
+		 (fit-window-to-buffer window 1))
+	 (setq-local window-size-fixed t)
+	 (window-preserve-size window nil t)
+	 (when (fboundp 'window-preserve-size)
+		 (window-preserve-size window nil t))
+	 )
 	window)
 
 (defun companion--attach ()
   "Attach the global companion buffer."
   (setq companion--buffer (get-buffer companion-buffer-name))
   (setq companion--window (get-buffer-window
-                            companion--buffer))
-	 ;; disallow winum to select companion buffer
+                           companion--buffer))
+	;; disallow winum to select companion buffer
 	(when (and
 				 (boundp 'winum-ignored-buffers)
 				 (not (member companion-buffer-name winum-ignored-buffers)))
@@ -257,16 +257,16 @@ Companion buffer is BUFFER."
 (defun companion--render ()
 	"Renders the companion buffer."
 	(companion--with-window
-	(companion--with-editing-buffer
-	 (let
-			 ((content
-				 (format-mode-line (let ((powerline-selected-window (selected-window)))
-						(spaceline-ml-companion)))))
-			(when (> (length content) 0)
-				(goto-char 0)
-				(save-excursion
-				 (erase-buffer)
-				 (insert content)))))))
+	  (companion--with-editing-buffer
+	   (let
+			   ((content
+				   (format-mode-line (let ((powerline-selected-window (selected-window)))
+						                   (spaceline-ml-companion)))))
+			 (when (> (length content) 0)
+				 (goto-char 0)
+				 (save-excursion
+				   (erase-buffer)
+				   (insert content)))))))
 
 (defun companion--create-window ()
   "Create global companion window."
@@ -308,22 +308,22 @@ Companion buffer is BUFFER."
 	(let ((powerline-default-separator 'bar)
 				(spaceline-separator-dir-left '(left . left))
 				(spaceline-separator-dir-right '(right . right)))
-  (spaceline-compile 'companion
-    companion-segments-left
-    companion-segments-right)))
+    (spaceline-compile 'companion
+      companion-segments-left
+      companion-segments-right)))
 
 (defun companion-notif--stream-update (name)
 	"Updates a notification stream."
 	(let* (
-		(stream (plist-get companion-notif--streams name))
-		(queue (plist-get stream :queue))
-	)
+		     (stream (plist-get companion-notif--streams name))
+		     (queue (plist-get stream :queue))
+	       )
 		(when-let ((notif (car queue)))
 			(companion-notif--alert-notifier notif)
 			(setq companion-notif--streams (plist-put companion-notif--streams name (plist-put stream :queue (cdr queue))))
-		)
-	)
-)
+		  )
+	  )
+  )
 
 (defun companion-notif-create-stream (name interval)
 	"Create a new notification stream."
@@ -331,25 +331,25 @@ Companion buffer is BUFFER."
 	;; delete when stream exists
 	(when (plist-get companion-notif--streams name)
 		(companion-notif-delete-stream name)
-	)
+	  )
 
 	(let ((stream `(
-			:timer
-			,(run-at-time 0 interval 'companion-notif--stream-update name)
-			:queue
-			nil
-		)))
+			            :timer
+			            ,(run-at-time 0 interval 'companion-notif--stream-update name)
+			            :queue
+			            nil
+		              )))
 		(setq companion-notif--streams (plist-put companion-notif--streams name stream))
-	)
-)
+	  )
+  )
 
 (defun companion-notif-delete-stream (name)
 	"Delete a notification stream."
 	(when-let ((stream (plist-get companion-notif--streams name)))
 		(cancel-timer (plist-get stream :timer))
 		(setq companion-notif--streams (plist-put companion-notif--streams name nil))
-	)
-)
+	  )
+  )
 
 (defun companion-notif--alert-notifier (info)
 	"Notifier function for alert.el using companion's notification system."
@@ -378,45 +378,45 @@ Companion buffer is BUFFER."
 	;; (plist-get info :data)
 
 	(let* (
-		(content (plist-get info :message))
-		(severity (plist-get info :severity))
-		(data (plist-get info :data))
-		(duration (and
-               (not (plist-get info :persistent))
-               (or (when (listp data) (plist-get data :duration))
-			             companion-notif-default-duration)))
-		(id (plist-get info :id))
-		(stream-name (when (listp data) (plist-get data :stream)))
-		(stream (when stream-name (plist-get companion-notif--streams stream-name)))
-		(queue (when stream (plist-get stream :queue)))
-	)
+		     (content (plist-get info :message))
+		     (severity (plist-get info :severity))
+		     (data (plist-get info :data))
+		     (duration (and
+                    (not (plist-get info :persistent))
+                    (or (when (listp data) (plist-get data :duration))
+			                  companion-notif-default-duration)))
+		     (id (plist-get info :id))
+		     (stream-name (when (listp data) (plist-get data :stream)))
+		     (stream (when stream-name (plist-get companion-notif--streams stream-name)))
+		     (queue (when stream (plist-get stream :queue)))
+	       )
 		(if stream
-			(progn
-				; remove :stream attribute
-				(setq info (plist-put info :data (plist-put data :stream nil)))
-				; set :id to stream-id if :id is 'stream
-				(when (eq id 'stream)
-					(setq info (plist-put info :id stream-name))
-				)
-				; add to notification stream
-				(setq companion-notif--streams (plist-put companion-notif--streams stream-name (plist-put stream :queue (-snoc queue info))))
-			)
-			; show notification
+			  (progn
+                                        ; remove :stream attribute
+				  (setq info (plist-put info :data (plist-put data :stream nil)))
+                                        ; set :id to stream-id if :id is 'stream
+				  (when (eq id 'stream)
+					  (setq info (plist-put info :id stream-name))
+				    )
+                                        ; add to notification stream
+				  (setq companion-notif--streams (plist-put companion-notif--streams stream-name (plist-put stream :queue (-snoc queue info))))
+			    )
+                                        ; show notification
 			(progn
 				(when id (companion-notif--dismiss-id id))
 				(push
-					`(
-						:content ,content
-						:severity ,severity
-						:duration ,duration
-						:id ,id
-					)
-					companion-notif--stack)
+				 `(
+					 :content ,content
+					 :severity ,severity
+					 :duration ,duration
+					 :id ,id
+					 )
+				 companion-notif--stack)
 				(companion-notif--update)
-			)
-		)
-	)
-)
+			  )
+		  )
+	  )
+  )
 
 
 (defun companion-notif--update ()
@@ -424,27 +424,27 @@ Companion buffer is BUFFER."
 	(setq companion-notif--screen-time 0)
 	(setq companion-notif--current (car companion-notif--stack))
 	(companion-update)
-)
+  )
 
 (defun companion-notif--dismiss-id (id)
 	"Dismiss all notifications with id ID."
 	(setq companion-notif--stack
-		(-remove
-			(lambda (item) (eq (plist-get item :id) id))
-			companion-notif--stack))
-)
+		    (-remove
+			   (lambda (item) (eq (plist-get item :id) id))
+			   companion-notif--stack))
+  )
 
 (defun companion-notif--tick ()
 	"Called periodically to perform tasks related to notification, such as timing."
 	(let ((duration (plist-get companion-notif--current :duration)))
 		(when (and duration (> duration 0))
 			(if (> companion-notif--screen-time duration)
-				(companion-notif-dismiss)
+				  (companion-notif-dismiss)
 				(setq companion-notif--screen-time (1+ companion-notif--screen-time))
-			)
-		)
-	)
-)
+			  )
+		  )
+	  )
+  )
 
 ;;
 ;; Advices
@@ -527,11 +527,11 @@ Argument STATUS is the http status of the request."
 Taken from https://github.com/narendraj9/quoted-scratch."
   (interactive)
   (with-temp-buffer
-      (let ((url-request-method "GET")
-            (qod-service-url "http://quotes.rest/qod.json"))
-        (ignore-errors
-          (url-retrieve (url-generic-parse-url qod-service-url)
-                        'companion-qod-callback)))))
+    (let ((url-request-method "GET")
+          (qod-service-url "http://quotes.rest/qod.json"))
+      (ignore-errors
+        (url-retrieve (url-generic-parse-url qod-service-url)
+                      'companion-qod-callback)))))
 
 ;; TODO: bug: set-buffer nil when calling this without internet.
 (defun companion-qod--tick ()
@@ -563,16 +563,16 @@ Taken from https://github.com/narendraj9/quoted-scratch."
   (interactive)
   (if (companion--window-exists-p)
 			(kill-buffer companion--buffer)
-      (delete-window companion--window)))
+    (delete-window companion--window)))
 
 (defun companion-open ()
   "Open the Companion window."
   (interactive)
 	(let ((cw (selected-window)))
-	(companion--get-window)
-	(companion-compile)
-	(companion--render)
-	(select-window cw)))
+	  (companion--get-window)
+	  (companion-compile)
+	  (companion--render)
+	  (select-window cw)))
 
 (defun companion-reopen ()
   "Close then open the Companion window again."
@@ -584,17 +584,20 @@ Taken from https://github.com/narendraj9/quoted-scratch."
 (defun companion-update()
 	"Update the companion buffer."
 	(interactive)
-	(with-demoted-errors "Compaion error: %S" (when (companion--window-exists-p)
-		(companion--render))))
+	(unless (and (boundp 'evil-state)
+               (eq evil-state 'insert))
+    (with-demoted-errors "Compaion error: %S"
+      (when (companion--window-exists-p)
+		    (companion--render)))))
 
 (defun companion-notif-dismiss()
 	"Dismiss one active notification in the companion buffer."
 	(interactive)
-	; TODO
+                                        ; TODO
 	(pop companion-notif--stack)
 
 	(companion-notif--update)
-)
+  )
 
 ;;
 ;; Segments definition
@@ -609,37 +612,37 @@ Taken from https://github.com/narendraj9/quoted-scratch."
 (spaceline-define-segment companion-time
   "A spaceline segment to display date and time."
 	(concat
-		(format-time-string "%Y-%m-%d")
-		(propertize
-			(format-time-string " %H:%M")
-			'face 'mode-line-buffer-id)))
+	 (format-time-string "%Y-%m-%d")
+	 (propertize
+		(format-time-string " %H:%M")
+		'face 'mode-line-buffer-id)))
 
 (spaceline-define-segment companion-notification
   "A spaceline segment to display notifications."
 	(when companion-notif--current
-	(let
-		((icon-face
-			(if (or
-				(eq (plist-get companion-notif--current :severity) 'low)
-				(eq (plist-get companion-notif--current :severity) 'trivial)
-				)
-				'companion-notif-icon-info
-				'companion-notif-icon-warn)))
+	  (let
+		    ((icon-face
+			    (if (or
+				       (eq (plist-get companion-notif--current :severity) 'low)
+				       (eq (plist-get companion-notif--current :severity) 'trivial)
+				       )
+				      'companion-notif-icon-info
+				    'companion-notif-icon-warn)))
 
-		(concat
-			(propertize "●" 'face icon-face)
-			" "
-			(plist-get companion-notif--current :content)
-	))))
+		  (concat
+			 (propertize "●" 'face icon-face)
+			 " "
+			 (plist-get companion-notif--current :content)
+	     ))))
 
 (spaceline-define-segment companion-battery
   "A spaceline segment to display battery status."
 	(if battery-status-function
-		(propertize
-			(battery-format "[%p]%b %t | "
-			(funcall battery-status-function))
-		'face 'bold)
-	nil))
+		  (propertize
+			 (battery-format "[%p]%b %t | "
+			                 (funcall battery-status-function))
+		   'face 'bold)
+	  nil))
 
 (spaceline-define-segment companion-system-load
   "A spaceline segment to display system load."
@@ -707,48 +710,49 @@ Taken from https://github.com/narendraj9/quoted-scratch."
 ;; 		(replace-regexp-in-string "%" "%%" (apply 'concat (mapcar 'funcall display-fn))))
 ;; )
 
-(setq companion-segments-left `(
-	((companion-emacs-version
-	 companion-notification)
-	 :separator " | "
-	 :face 'companion-face
-	 :priority 1
-	)
-))
-(setq companion-segments-right `(
-  (org-pomodoro)
-  (org-clock)
-  (persp-name)
-  (workspace-number)
-  (companion-emms :tight-right t :face 'companion-face
-                  :priority 99)
-	(" | " :tight t :face 'companion-face)
-  (companion-type-break :tight t :face 'companion-face)
-	(" | " :tight t :face 'companion-face)
-  (companion-battery :tight t :face 'companion-face)
-	;; (companion-symon :face 'companion-face :tight t)
-	(companion-system-load :face 'companion-face :tight t)
-	(" | " :tight t :face 'companion-face)
-	(companion-time :face 'companion-face :tight t)
-	(" " :face 'companion-face :tight t)
-))
+(setq companion-segments-left
+      `(((companion-emacs-version
+	        companion-notification)
+	       :separator " | "
+	       :face 'companion-face
+	       :priority 1
+	       )
+        ))
+(setq companion-segments-right
+      `((org-pomodoro)
+        (org-clock)
+        (persp-name)
+        (workspace-number)
+        (companion-emms :tight-right t :face 'companion-face
+                        :priority 99)
+	      (" | " :tight t :face 'companion-face)
+        (companion-type-break :tight t :face 'companion-face)
+	      (" | " :tight t :face 'companion-face)
+        (companion-battery :tight t :face 'companion-face)
+	      ;; (companion-symon :face 'companion-face :tight t)
+	      (companion-system-load :face 'companion-face :tight t)
+	      (" | " :tight t :face 'companion-face)
+	      (companion-time :face 'companion-face :tight t)
+	      (" " :face 'companion-face :tight t)
+        ))
 (companion-compile)
 
 ;;
 ;; alert.el integration
 ;; 
 
-(alert-define-style 'companion :title "Companion"
-	:notifier
-	#'companion-notif--alert-notifier
+(alert-define-style
+ 'companion :title "Companion"
+ :notifier
+ #'companion-notif--alert-notifier
 
-	;; Removers are optional.  Their job is to remove
-	;; the visual or auditory effect of the alert.
-	:remover
-	(lambda (info)
-		;; It is the same property list that was passed to
-		;; the notifier function.
-	))
+ ;; Removers are optional.  Their job is to remove
+ ;; the visual or auditory effect of the alert.
+ :remover
+ (lambda (info)
+	 ;; It is the same property list that was passed to
+	 ;; the notifier function.
+	 ))
 
 ;;
 ;; Setup

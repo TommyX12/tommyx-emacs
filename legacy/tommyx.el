@@ -1,25 +1,28 @@
-;; TODO: refactor status line, project, org, to here.
-
 ;; emergency key setting for debug
 (global-set-key (kbd "C-M-x") 'execute-extended-command)
 
-;; some load paths
+
+;;; add directories to load-path
+
 (setq tommyx-config-path (file-name-directory load-file-name))
+;; TODO make sure these overrides package archive install directories
 (add-to-list 'load-path tommyx-config-path)
 (add-to-list 'load-path
              (expand-file-name "infinity-theme" tommyx-config-path))
 (add-to-list 'custom-theme-load-path
              (expand-file-name "infinity-theme" tommyx-config-path))
 (add-to-list 'load-path
+             (expand-file-name "packages" tommyx-config-path))
+(add-to-list 'load-path
              (expand-file-name "packages/company-tabnine" tommyx-config-path))
 (add-to-list 'load-path
-             (expand-file-name "packages/org-life"
-                               (file-name-directory load-file-name)))
+	           (expand-file-name "packages/org-life" (file-name-directory load-file-name)))
 (add-to-list 'load-path
-             (expand-file-name "packages/org-catalyst"
-                               (file-name-directory load-file-name)))
+	           (expand-file-name "packages/org-catalyst" (file-name-directory load-file-name)))
 
-;;; startup appearance
+
+;;; startup appearence
+
 ;; theme
 (setq doom-themes-enable-bold t
       doom-themes-enable-italic t)
@@ -28,6 +31,7 @@
 (if (and (boundp 'use-light-theme) use-light-theme)
     (load-theme light-theme t)
   (load-theme dark-theme t))
+
 ;; font
 (if (not (boundp 'selected-font))
     (progn
@@ -52,58 +56,74 @@
                     :height font-size-small
                     :weight 'normal
                     :width 'normal)
-;; full screen
+
+;; full screen automatically
+
 (toggle-frame-fullscreen)
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
 (menu-bar-mode -1)
 
-;;; main
 
-(require 'tommyx-config-framework)
-(require 'tommyx-packages)
-(require 'tommyx-modules)
-(require 'tommyx-key-bindings)
+;;; initialize packages
 
-($install-modules
- '(
-   tommyx-main
-   tommyx-default-major-modes
-   tommyx-log-modes
-   tommyx-emacs-lisp-mode
-   tommyx-sgml-mode
-   tommyx-emacs-internal-modes
-   tommyx-emms-playlist-mode
-   tommyx-neotree-mode
-   tommyx-imenu-list-mode
-   tommyx-dashboard-mode
-   tommyx-shaderlab-mode
-   tommyx-latex-mode
-   tommyx-protobuf-mode
-   tommyx-java-mode
-   tommyx-c++-mode
-   tommyx-r-mode
-   tommyx-csharp-mode
-   tommyx-glsl-mode
-   tommyx-json-mode
-   tommyx-html-mode
-   tommyx-css-mode
-   tommyx-racket-mode
-   tommyx-haskell-mode
-   tommyx-csv-mode
-   tommyx-sql-mode
-   tommyx-python-mode
-   tommyx-javascript-mode
-   tommyx-typescript-mode
-   ))
+(setq load-prefer-newer t)
 
-(tommyx-bind-keys)
+(require 'package)
 
-;;; extra things not yet refactored
+(add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/"))
+(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
+(add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/"))
+
+(setq package-enable-at-startup nil)
+(package-initialize)
+
+(package-refresh-contents)
+(unless (package-installed-p 'use-package)
+  (package-install 'use-package))
+
+(eval-when-compile (require 'use-package))
+
+(use-package auto-compile :ensure t
+  :config
+  (auto-compile-on-load-mode))
+
+(defun enable-auto-compilation (file)
+  (when (symbolp file)
+    (setq file (packed-locate-library (symbol-name file))))
+  (let (dest)
+    (when (and file
+               (setq dest (byte-compile-dest-file file))
+               (not (file-exists-p dest)))
+      (message "Compiling %s..." file)
+      (byte-compile-file file)
+      (message "Compilation of %s done." file))))
+
+
+;;; main config
+
+(require 'tommyx-main)
+
+
+;;; status line config
 
 (require 'tommyx-status-lines)
+
+
+;;; org config
+
 (require 'tommyx-org)
+
+
+;;; project + workspace config
+
 (require 'tommyx-project)
+
+
+;;; finalize
+
+;; Note: remove advice for auto compile
+(advice-remove #'auto-compile-on-load #'auto-compile-on-load-force)
 
 
 (provide 'tommyx)

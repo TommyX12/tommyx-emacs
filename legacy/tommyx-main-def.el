@@ -30,10 +30,15 @@
   '(evil-repeat
     yas-expand
     evil-execute-macro))
-(defun eager-redisplay-mode ()
-  "Minor mode that force redraw after command."
+(defun eager-redisplay-mode (&optional arg)
+  "Minor mode that force redraw after command.
+
+If ARG is positive, enable the mode; otherwise, disable the mode.
+If ARG is non-nil, toggle the mode."
   (interactive)
-  (if eager-redisplay-mode-on
+  (if (if arg
+          (<= arg 0)
+        eager-redisplay-mode-on)
       (progn
         (setq eager-redisplay-mode-on nil)
         ;; (advice-remove 'self-insert-command #'eager-redisplay-insert-advice)

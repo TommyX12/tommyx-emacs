@@ -13,7 +13,7 @@
 (require 'smartparens)
 (enable-auto-compilation 'tommyx-org-def)
 (require 'tommyx-org-def)
-(require 'tommyx-key-binding-framework)
+(require 'tommyx-bind-def)
 
 ;; face def
 
@@ -262,7 +262,7 @@
   ("k" evil-org-backward-heading-same-level "previous heading same level")
   ("j" evil-org-forward-heading-same-level "next heading same level"))
 
-($bind-keys
+(tommyx-bind-keys
  `(:case
    (:bindings
 
@@ -773,7 +773,7 @@
   (setq org-catalyst-save-path (f-join org-directory "org-catalyst"))
   (org-catalyst-setup-evil-status-bindings)
   (org-catalyst-auto-save-mode 1)
-  ($bind-keys
+  (tommyx-bind-keys
    `(:case
      (:bindings
 
