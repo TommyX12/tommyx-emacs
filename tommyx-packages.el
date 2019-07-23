@@ -159,7 +159,12 @@
 ;;   (setq-default company-backends
 ;;                 (cons #'company-lsp company-backends)))
 (use-package company-ycmd :ensure t)
-(use-package company-tabnine :ensure t :after company)
+(add-to-list 'load-path (expand-file-name
+                         "packages/company-tabnine"
+                         (file-name-directory load-file-name)))
+(enable-auto-compilation 'company-tabnine)
+(require 'company-tabnine)
+;; (use-package company-tabnine :ensure t :after company)
 (use-package yasnippet :ensure t)
 (use-package ycmd :ensure t)
 (use-package flycheck-ycmd :ensure t)
