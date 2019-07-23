@@ -11,8 +11,6 @@
 (add-to-list 'custom-theme-load-path
              (expand-file-name "infinity-theme" tommyx-config-path))
 (add-to-list 'load-path
-             (expand-file-name "packages/company-tabnine" tommyx-config-path))
-(add-to-list 'load-path
              (expand-file-name "packages/org-life"
                                (file-name-directory load-file-name)))
 (add-to-list 'load-path
