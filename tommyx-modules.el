@@ -155,7 +155,6 @@
 
     ;; media
     ((:require emms)
-     ('emms-default-music-dir :default "~/data/files/music")
      ('emms-repeat-playlist t)
      ('emms-random-playlist nil)
      ((:require evil)
