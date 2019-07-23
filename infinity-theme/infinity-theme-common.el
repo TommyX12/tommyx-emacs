@@ -700,7 +700,7 @@
 
 ;;;;; ivy-posframe
   `(ivy-posframe ((,class (:inherit default :background ,back-border))))
-  `(ivy-posframe-border ((,class (:background ,secondary))))
+  `(ivy-posframe-border ((,class (:background ,secondary-1))))
 
 ;;;;; latex
   `(font-latex-bold-face ((,class (:inherit bold))))
@@ -848,7 +848,7 @@
   `(neo-vc-user-face ((,class (:foreground ,yellow))))
   `(neo-vc-unregistered-face ((,class (:foreground ,green))))
   `(neo-vc-removed-face ((,class (:foreground ,red))))
-  `(neo-root-dir-face ((,class (:foreground ,func :inherit bold :height 1.0 :underline (:color ,border :style line)))))
+  `(neo-root-dir-face ((,class (:foreground ,func :inherit bold :height 1.0 :background ,bg11 :box (:line-width 4 :color ,bg11)))))
 
 ;;;;; org
   `(org-agenda-clocking ((,class (:background ,green-bg-s :inherit bold :foreground ,comp))))
