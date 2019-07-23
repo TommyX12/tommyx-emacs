@@ -85,7 +85,7 @@
 
       ;; help
       "C-M-h" ,help-map
-      "C-M-h C-M-h" counsel-apropos
+      "C-M-h SPC" counsel-apropos
       "C-M-x" execute-extended-command)
 
      :states (motion normal visual insert)

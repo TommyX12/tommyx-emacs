@@ -68,48 +68,48 @@
                (lambda (component)
                  (let ((key (car component))
                        (value (cdr component)))
-                   (cond
-                    ((eq (car value) :append-front)
-                     `(,(if local 'setq-local 'setq-default)
-                       ,(eval key)
-                       (append (list ,@(cdr value))
-                               ,(eval key))))
-                    ((eq (car value) :delete)
-                     `(progn
-                        ,@(mapcar
-                           (lambda (val)
-                             `(,(if local 'setq-local 'setq-default)
-                               ,(eval key)
-                               (remove ,val ,(eval key))))
-                           (reverse (cdr value)))))
-                    ((eq (car value) :ensure-front)
-                     `(progn
-                        ,@(mapcar
-                           (lambda (val)
-                             `(,(if local 'setq-local 'setq-default)
-                               ,(eval key)
-                               (cons ,val (remove ,val ,(eval key)))))
-                           (reverse (cdr value)))))
-                    ((eq (car value) :default)
-                     (if (cddr value)
-                         ($warning
-                          "Multiple values provided for setting %s"
-                          (prin1-to-string key))
-                       `(unless (boundp ,key)
-                          (,(if local 'setq-local 'setq-default)
+                   (if (keywordp (car value))
+                       (cond
+                        ((eq (car value) :append-front)
+                         `(,(if local 'setq-local 'setq-default)
                            ,(eval key)
-                           ,(cadr value)))))
-                    ((keywordp (car value))
-                     ($warning "Unrecognized modifier %s"
-                               (prin1-to-string (car value))))
-                    (t
+                           (append (list ,@(cdr value))
+                                   ,(eval key))))
+                        ((eq (car value) :delete)
+                         `(progn
+                            ,@(mapcar
+                               (lambda (val)
+                                 `(,(if local 'setq-local 'setq-default)
+                                   ,(eval key)
+                                   (remove ,val ,(eval key))))
+                               (reverse (cdr value)))))
+                        ((eq (car value) :ensure-front)
+                         `(progn
+                            ,@(mapcar
+                               (lambda (val)
+                                 `(,(if local 'setq-local 'setq-default)
+                                   ,(eval key)
+                                   (cons ,val (remove ,val ,(eval key)))))
+                               (reverse (cdr value)))))
+                        ((eq (car value) :default)
+                         (if (cddr value)
+                             ($warning
+                              "Multiple values provided for setting %s"
+                              (prin1-to-string key))
+                           `(unless (boundp ,key)
+                              (,(if local 'setq-local 'setq-default)
+                               ,(eval key)
+                               ,(cadr value)))))
+                        ((keywordp (car value))
+                         ($warning "Unrecognized modifier %s"
+                                   (prin1-to-string (car value)))))
                      (if (cdr value)
                          ($warning
                           "Multiple values provided for setting %s"
                           (prin1-to-string key))
                        `(,(if local 'setq-local 'setq-default)
                          ,(eval key)
-                         ,(car value)))))))
+                         ,(car value))))))
                components))))
     (eval setter)))
 

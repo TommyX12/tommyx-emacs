@@ -70,16 +70,6 @@
   (when (null type-break-time-next-break)
     (type-break-schedule)))
 
-(defun $ivy-format-function-custom (cands)
-  "Transform CANDS into a string for minibuffer."
-  (ivy--format-function-generic
-   (lambda (str)
-     (concat "> " (ivy--add-face (concat str "\n") 'ivy-current-match)))
-   (lambda (str)
-     (concat "  " str "\n"))
-   cands
-   ""))
-
 (defun $ivy-posframe-get-size ()
   "Functon used by `ivy-posframe-size-function'."
   (list
@@ -94,8 +84,7 @@
 Get a position which let posframe stay onto current window's
 top or bottom side without blocking center content.
 Useful for a search overview popup."
-  (let* (
-         (posframe (plist-get info :posframe))
+  (let* ((posframe (plist-get info :posframe))
          (parent-frame (plist-get info :parent-frame))
          (frame-height (frame-pixel-height parent-frame))
          (window (plist-get info :parent-window))

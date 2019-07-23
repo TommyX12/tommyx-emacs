@@ -70,7 +70,7 @@
         (swiper-multi . ivy--regex-plus)
         (t . ivy--regex-fuzzy)))
      ('ivy-initial-inputs-alist nil)
-     ('ivy-format-function #'$ivy-format-function-custom)
+     ;; ('ivy-format-functions-alist #'$ivy-format-function-custom)
      ('ivy-count-format "%d/%d | "))
     ((:require ivy-posframe)
      ('ivy-posframe-parameters
@@ -81,7 +81,7 @@
         (min-width . 50)
         (refresh . 1)))
      ('ivy-posframe-height 13)
-     ('ivy-posframe-border-width 1)
+     ('ivy-posframe-border-width 2)
      ('ivy-display-function nil)
      ((:require tommyx-extensions)
       ('ivy-posframe-size-function #'$ivy-posframe-get-size)
@@ -668,6 +668,8 @@
       ;; TODO: bug
       ;; ($ivy-posframe-patch)
       )
+     ((:require ivy)
+      ($ivy-format-function-patch))
      ((:require auto-highlight-symbol)
       ($ahs-persistent-highlight-patch)
       ($ahs-bug-patch))

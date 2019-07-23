@@ -89,6 +89,7 @@
   (bg12b         (if (eq theme 'dark) (if (has-true-color) "#2f3948" "#262626") (if (has-true-color) "#d2E2Eb" "#ffffff")))
   (bg13          (if (eq theme 'dark) (if (has-true-color) "#1B1C1F" "#262626") (if (has-true-color) "#D4D4D4" "#ffffff")))
   (bg14          (if (eq theme 'dark) (if (has-true-color) "#404147" "#262626") (if (has-true-color) "#C7C7C7" "#ffffff")))
+  (bg15          (if (eq theme 'dark) (if (has-true-color) "#333540" "#262626") (if (has-true-color) "#C7C7C7" "#ffffff")))
   (bg2           (if (eq theme 'dark) (if (has-true-color) "#222329" "#1c1c1c") (if (has-true-color) "#e9e9e9" "#e4e4e4")))
   (bg3           (if (eq theme 'dark) (if (has-true-color) "#0a1014" "#121212") (if (has-true-color) "#dedede" "#d0d0d0")))
   (bg4           (if (eq theme 'dark) (if (has-true-color) "#080a14" "#080808") (if (has-true-color) "#dadada" "#bcbcbc")))
@@ -251,7 +252,7 @@
   `(link ((,class (:foreground ,comment :underline t))))
   `(link-visited ((,class (:foreground ,comp :underline t))))
   `(match ((,class (:foreground ,mat :inverse-video t))))
-  `(minibuffer-prompt ((,class (:inherit bold :foreground ,keyword))))
+  `(minibuffer-prompt ((,class (:inherit bold :foreground ,keyword :underline (:color ,secondary-2 :style line)))))
   ;; `(minibuffer-background ((,class (:inherit default :background ,back-border))))
   `(sidebar-background ((,class (:inherit default :background ,back-border2))))
   `(page-break-lines ((,class (:foreground ,act2))))
@@ -699,6 +700,7 @@
 
 ;;;;; ivy-posframe
   `(ivy-posframe ((,class (:inherit default :background ,back-border))))
+  `(ivy-posframe-border ((,class (:background ,secondary))))
 
 ;;;;; latex
   `(font-latex-bold-face ((,class (:inherit bold))))
