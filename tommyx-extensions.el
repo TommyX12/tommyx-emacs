@@ -47,14 +47,22 @@
              yascroll-bar-mode)
     (yascroll:safe-show-scroll-bar)))
 
+(defvar $flash-cursor--overlay nil)
+
+(defun $flash-cursor-pre-command-hook ()
+  (when $flash-cursor--overlay
+    (delete-overlay $flash-cursor--overlay))
+  (remove-hook 'pre-command-hook #'$flash-cursor-pre-command-hook))
+
 (defun $flash-cursor (&rest _)
-  (hl-line-highlight)
+  (when $flash-cursor--overlay
+    (delete-overlay $flash-cursor--overlay))
   (let ((ov (make-overlay (point) (- (point) 1))))
     (overlay-put ov 'priority 9999)
     (overlay-put ov 'window (selected-window))
     (overlay-put ov 'face 'cursor)
-    (sit-for 1)
-    (delete-overlay ov)))
+    (setq $flash-cursor--overlay ov)
+    (add-hook 'pre-command-hook #'$flash-cursor-pre-command-hook)))
 
 (defun $set-jump-on-insert-mode ()
   (add-hook 'evil-insert-state-entry-hook 'evil-set-jump))
