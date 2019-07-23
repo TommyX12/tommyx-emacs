@@ -93,7 +93,7 @@
          (counsel-ag . nil)
          (counsel-rg . nil)
          (counsel-grep . nil)
-         (t . ivy-posframe-display-at-point)))))
+         (t . $ivy-posframe-display-at-point-horizontal)))))
     ((:require all-the-icons-ivy)
      ('all-the-icons-spacer "  ")
      ('all-the-icons-ivy-buffer-commands
