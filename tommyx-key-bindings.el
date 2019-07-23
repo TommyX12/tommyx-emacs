@@ -1706,7 +1706,7 @@
       "TAB" company-select-next
       "<tab>" company-select-next
       "S-TAB" company-select-previous
-      "<S-tab>" company-select-previous))))
+      "<backtab>" company-select-previous))))
 
 (provide 'tommyx-key-bindings)
 
