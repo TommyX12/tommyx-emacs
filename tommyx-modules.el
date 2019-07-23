@@ -95,6 +95,7 @@
          (counsel-grep . nil)
          (t . ivy-posframe-display-at-point)))))
     ((:require all-the-icons-ivy)
+     ('all-the-icons-spacer "  ")
      ('all-the-icons-ivy-buffer-commands
       '(ivy-switch-buffer
         ivy-switch-buffer-other-window
@@ -103,7 +104,8 @@
       '(counsel-find-file
         counsel-file-jump
         counsel-recentf
-        counsel-projectile-find-file counsel-projectile-find-dir)))
+        counsel-projectile-find-file
+        counsel-projectile-find-dir)))
     ((:require ivy-rich)
      ('ivy-rich--display-transformers-list
       '(counsel-M-x
@@ -805,7 +807,7 @@
      ((:require yascroll)
       (yascroll-bar-mode -1))
      ((:require highlight-indentation)
-      (highlight-indentation-mode 1)))))
+      (highlight-indentation-mode -1)))))
 
 ($define-module tommyx-imenu-list-mode
   '((:mode-local imenu-list-major-mode)
