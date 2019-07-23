@@ -60,7 +60,7 @@
     ((:require ivy)
      ('ivy-wrap t)
      ('ivy-action-wrap t)
-     ('ivy-height 12)
+     ('ivy-height 20)
      ('ivy-height-alist nil)
      ;; add recent files and bookmarks to ivy-switch-buffer
      ('ivy-use-virtual-buffers t)
@@ -80,7 +80,7 @@
         (undecorated . t)
         (min-width . 50)
         (refresh . 1)))
-     ('ivy-posframe-height 13)
+     ('ivy-posframe-height 21)
      ('ivy-posframe-border-width 2)
      ('ivy-display-function nil)
      ((:require tommyx-extensions)
