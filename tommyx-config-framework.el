@@ -206,6 +206,9 @@
       (let ((context-key (car cur-context))
             (context-value (cdr cur-context)))
         (cond
+         ((eq context-key :when)
+          (setq requirements-met
+                (eval (car context-value))))
          ((eq context-key :require)
           (dolist (dep context-value)
             (unless (featurep dep)

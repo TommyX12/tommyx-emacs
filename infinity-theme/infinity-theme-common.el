@@ -254,6 +254,7 @@
   `(match ((,class (:foreground ,mat :inverse-video t))))
   `(minibuffer-prompt ((,class (:inherit bold :foreground ,keyword :underline (:color ,secondary-2 :style line)))))
   ;; `(minibuffer-background ((,class (:inherit default :background ,back-border))))
+  `(sidebar-hl-line ((,class (:background ,bg11))))
   `(sidebar-background ((,class (:inherit default :background ,back-border2))))
   `(page-break-lines ((,class (:foreground ,act2))))
   `(region ((,class (:background ,highlight))))

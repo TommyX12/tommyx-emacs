@@ -48,6 +48,11 @@
      "")))
 
 (defun $company-preview-patch ()
+  (defface company-preview-active-face
+    '((t :inherit company-preview))
+    "Face used for company preview when nothing is selected."
+    :group 'appearence)
+
   (defun company-preview-frontend (command)
     "`company-mode' frontend showing the selection as if it had been inserted."
     (pcase command
@@ -74,15 +79,10 @@
                 (propertize
                  (substring-no-properties
                   completion)
-                 'face '$company-preview-active-face)))))))
+                 'face 'company-preview-active-face)))))))
       (`hide (company-preview-hide)))))
 
 (defun $company-tng-frontend-patch ()
-  (defface $company-preview-active-face
-    '((t :inherit company-preview))
-    "Face used for company preview when nothing is selected."
-    :group 'appearence)
-
   (defun company-tng-frontend (command)
     "When the user changes the selection at least once, this
 frontend will display the candidate in the buffer as if it's
@@ -266,6 +266,42 @@ DEPTH is the depth of the entry in the list."
                      'follow-link t
                      'action #'imenu-list--action-goto-entry)
       (insert "\n"))))
+
+(defun $all-the-icons-dir-patch ()
+  (defun all-the-icons-icon-for-dir (dir &optional chevron padding)
+    "Format an icon for DIR with CHEVRON similar to tree based directories.
+
+If PADDING is provided, it will prepend and separate the chevron
+and directory with PADDING.
+
+Produces different symbols by inspecting DIR to distinguish
+symlinks and git repositories which do not depend on the
+directory contents"
+    (let* ((matcher (all-the-icons-match-to-alist (file-name-base (directory-file-name dir)) all-the-icons-dir-icon-alist))
+           (path (expand-file-name dir))
+           ;; (chevron (if chevron (all-the-icons-octicon (format "chevron-%s" chevron) :height 0.8 :v-adjust -0.1) ""))
+           (chevron (propertize
+                     (pcase chevron
+                       ("down" "-")
+                       ("right" "+")
+                       (_ ""))
+                     'face '(:weight bold)))
+           (padding (or padding "\t"))
+           (icon (cond
+                  ((file-symlink-p path)
+                   (all-the-icons-octicon "file-symlink-directory" :height 1.0))
+                  ((all-the-icons-dir-is-submodule path)
+                   (all-the-icons-octicon "file-submodule" :height 1.0))
+                  ((file-exists-p (format "%s/.git" path))
+                   (format "%s" (all-the-icons-octicon "repo" :height 1.1)))
+                  (t (apply (car matcher) (cdr matcher))))))
+      (format "%s%s%s%s%s" padding chevron padding icon padding))))
+
+(defun $org-mode-angular-brackets-patch ()
+  (add-hook 'org-mode-hook
+            (lambda ()
+              (modify-syntax-entry ?< ".")
+              (modify-syntax-entry ?> "."))))
 
 (provide 'tommyx-patches)
 

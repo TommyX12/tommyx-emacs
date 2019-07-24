@@ -10,12 +10,6 @@
              (expand-file-name "infinity-theme" tommyx-config-path))
 (add-to-list 'custom-theme-load-path
              (expand-file-name "infinity-theme" tommyx-config-path))
-(add-to-list 'load-path
-             (expand-file-name "packages/org-life"
-                               (file-name-directory load-file-name)))
-(add-to-list 'load-path
-             (expand-file-name "packages/org-catalyst"
-                               (file-name-directory load-file-name)))
 
 ;;; startup appearance
 ;; theme
@@ -93,6 +87,8 @@
    tommyx-python-mode
    tommyx-javascript-mode
    tommyx-typescript-mode
+   tommyx-term-mode
+   tommyx-org-mode
    ))
 
 (tommyx-bind-keys)
@@ -100,7 +96,6 @@
 ;;; extra things not yet refactored
 
 (require 'tommyx-status-lines)
-(require 'tommyx-org)
 (require 'tommyx-project)
 
 

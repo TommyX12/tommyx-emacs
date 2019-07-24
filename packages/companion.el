@@ -16,7 +16,6 @@
 (require 'alert)
 (require 'all-the-icons)
 (require 'battery)
-(require 'companion-segments)
 (require 'dash)
 (require 'spaceline)
 (require 'type-break)

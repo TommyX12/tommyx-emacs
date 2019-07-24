@@ -31,11 +31,14 @@
       (message "Compilation of %s done." file))))
 
 ;; packages
-(use-package auto-package-update :ensure t)
-(enable-auto-compilation 'tommyx-main-def)
+(add-to-list 'load-path (file-name-directory load-file-name))
 (add-to-list 'load-path
              (expand-file-name "packages"
                                (file-name-directory load-file-name)))
+(add-to-list 'load-path
+             (expand-file-name "packages/external"
+                               (file-name-directory load-file-name)))
+(use-package auto-package-update :ensure t)
 (enable-auto-compilation 'redo+)
 (require 'redo+)
 (enable-auto-compilation 'font-lock+)
@@ -189,6 +192,7 @@
 ;;  (symon-mode))
 (use-package which-func :ensure t)
 (use-package workgroups :ensure t)
+(use-package window-layout :ensure t)
 ;; (use-package persp-mode :ensure t
 ;;  :config
 ;;  (persp-mode))
@@ -206,6 +210,7 @@
 (use-package org-pomodoro :ensure t)
 (use-package org-bullets :ensure t)
 (use-package org-preview-html :ensure t)
+(require 'org-notify)
 (use-package helm-org-rifle :ensure t)
 (use-package outshine :ensure t)
 (use-package load-relative :ensure t)
@@ -249,7 +254,16 @@
 (use-package counsel-css :ensure t)
 (use-package js2-mode :ensure t)
 ;; (use-package js2-refactor :ensure t)
-(add-to-list 'load-path (file-name-directory load-file-name))
+(add-to-list 'load-path
+             (expand-file-name "packages/org-life"
+                               (file-name-directory load-file-name)))
+(enable-auto-compilation 'org-life)
+(require 'org-life)
+(add-to-list 'load-path
+             (expand-file-name "packages/org-catalyst"
+                               (file-name-directory load-file-name)))
+(enable-auto-compilation 'org-catalyst)
+(require 'org-catalyst)
 (require 'tommyx-extensions)
 (require 'tommyx-patches)
 

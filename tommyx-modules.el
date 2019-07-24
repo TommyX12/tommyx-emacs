@@ -173,8 +173,8 @@
     ('scroll-margin 16)
     ('hl-line-sticky-flag t)
     ('window-divider-default-places 't)
-    ('window-divider-default-right-width 7)
-    ('window-divider-default-bottom-width 7)
+    ('window-divider-default-right-width 5)
+    ('window-divider-default-bottom-width 5)
     ('left-fringe-width 16)
     ('right-fringe-width 10)
     ('ring-bell-function 'ignore)
@@ -686,7 +686,9 @@
      ((:require company-tabnine)
       ($company-tabnine-patch))
      ((:require imenu-list)
-      ($imenu-list-appearence-patch)))))
+      ($imenu-list-appearence-patch))
+     ((:require all-the-icons)
+      ($all-the-icons-dir-patch)))))
 
 ($define-module tommyx-default-major-modes
   '((:mode-local prog-mode text-mode)
@@ -799,7 +801,9 @@
      ('right-fringe-width 0)
      ('use-line-nav t)
      ((:require tommyx-extensions)
-      ('face-remapping-alist :append-front '(default sidebar-background)))
+      ('face-remapping-alist :append-front
+                             '(default sidebar-background)
+                             '(hl-line sidebar-hl-line)))
      ((:macro set-indent) 2))
 
     (:minor-modes
@@ -817,7 +821,9 @@
      ('right-fringe-width 0)
      ('use-line-nav t)
      ((:require tommyx-extensions)
-      ('face-remapping-alist :append-front '(default sidebar-background)))
+      ('face-remapping-alist :append-front
+                             '(default sidebar-background)
+                             '(hl-line sidebar-hl-line)))
      ((:macro set-indent) 2))
 
     (:minor-modes
@@ -1116,6 +1122,171 @@
       ($setup-color-identifiers-parser 'js 'typescript-mode))
      ((:require tide)
       (tide-setup)))))
+
+($define-module tommyx-term-mode
+  '((:mode-local term-mode)
+
+    (:settings
+     ('scroll-margin 0))))
+
+($define-module tommyx-org-mode
+  '(:settings
+    ((:require org)
+     ('org-startup-indented t)
+     ('org-startup-folded nil)
+     ('org-log-done 'time)
+     ('org-clock-into-drawer t)
+     ('org-list-allow-alphabetical t)
+     ('org-tags-column 0)
+     ('org-descriptive-links t)
+     ('org-link-file-path-type 'relative)
+     ('org-id-link-to-org-use-id nil)
+     ('org-highlight-latex-and-related '(latex))
+     ('org-startup-with-latex-preview t)
+     ('org-format-latex-options
+      `(
+        :foreground default
+        :background default
+        :scale ,(if (eq system-type 'darwin)
+                    1.6
+                  1.5)
+        :html-foreground "Black"
+        :html-background "Transparent"
+        :html-scale 1.0
+        :matchers ("begin" "$1" "$" "$$" "\\(" "\\[")))
+     ('org-preview-latex-default-process 'dvipng)
+     ('org-format-latex-header-default
+      org-format-latex-header)
+     ('org-format-latex-header
+      (concat
+       org-format-latex-header-default
+       "\n\\DeclareMathOperator*{\\argmax}{arg\\,max}"
+       "\n\\DeclareMathOperator*{\\argmin}{arg\\,min}"))
+     ('org-clock-report-include-clocking-task t)
+     ('org-clock-persist t)
+     ('org-clock-history-length 25)
+     ('org-enforce-todo-dependencies t)
+     ('org-enforce-todo-checkbox-dependencies t)
+     ('org-image-actual-width nil)
+     ('org-M-RET-may-split-line nil)
+     ('org-fontify-done-headline t)
+     ('org-fontify-whole-heading-line t)
+     ('org-imenu-depth 4)
+     ((:require org-agenda)
+      ((:require org-super-agenda)
+       ('org-super-agenda-fontify-whole-header-line t)
+       ('org-super-agenda-header-map (make-sparse-keymap)))
+      ('org-agenda-dim-blocked-tasks t)
+      ('org-agenda-window-setup 'only-window)
+      ('org-agenda-start-with-clockreport-mode t)
+      ('org-agenda-start-with-log-mode t)
+      ('org-agenda-log-mode-items '(closed clock state))
+      ('org-agenda-restore-windows-after-quit t)
+      ('org-agenda-use-tag-inheritance t)
+      ('org-agenda-sticky t)
+      ('org-agenda-span 'day)
+      ('org-agenda-skip-deadline-if-done t)
+      ('org-agenda-skip-scheduled-if-done t)
+      ('org-agenda-skip-scheduled-if-done t)
+      ('org-agenda-skip-scheduled-if-deadline-is-shown t)
+      ('org-agenda-move-date-from-past-immediately-to-today t)
+      ('org-agenda-time-grid
+       '((daily today)
+         (800 1000 1200 1400 1600 1800 2000)
+         "......" "----------------"))
+      ('org-agenda-entry-text-leaders "    > ")
+      ('org-agenda-prefix-format
+       '((agenda  . " %i %?-12t %(org-agenda-special-prefix) %-12:c")
+         ;; (agenda  . " %i %?-12t % s %-12:c")
+         (todo  . " %i %-12:c")
+         (tags  . " %i %-12:c")
+         (search . " %i %-12:c")))
+      ('org-agenda-timerange-leaders '("" "(%d/%d): "))
+      ('org-agenda-scheduled-leaders '("[S]        : "
+                                       "[S]     -%2d: "))
+      ('org-agenda-deadline-leaders '("@0  " "@%-3d" "@-%-2d"))
+      ('org-agenda-inactive-leader "[")
+      ('org-agenda-entry-text-exclude-regexps
+       '("^- State.*\n" "^[ \t]*\n")))
+     ((:require org-habit)
+      ('org-modules :ensure-front 'org-habit))
+     ((:require org-bullets)
+      ('org-bullets-bullet-list '("●")))
+     ((:require counsel)
+      ('counsel-org-headline-display-style 'path)
+      ('counsel-org-headline-path-separator "/"))))
+
+  '(:minor-modes
+    (org-super-agenda-mode 1))
+
+  '(:on-init
+    ((:require org)
+     (org-clock-persistence-insinuate)
+     ((:require tommyx-extensions)
+      ($ask-for-clock-out-on-quit)
+      ((:require smartparens)
+       ($setup-org-mode-local-pairs)))
+     ((:require evil)
+      (evil-set-initial-state 'org-agenda-mode 'motion))
+     ((:require companion org-notify)
+      (org-notify-add 'default
+                      '(:time "1h" :actions nil :period "2m" :duration 60))
+      (companion-notif-create-stream 'org-notify 120))))
+
+  '(:patches
+    ((:require tommyx-patches org smartparens)
+     ($org-mode-angular-brackets-patch)))
+
+  '((:when (bound-and-true-p org-directory))
+
+    (:settings
+     ((:require org-life)
+      ('org-life-config-file-path
+       (expand-file-name "org-life-config.org" org-directory))
+      ((:require org-agenda)
+       ('org-agenda-custom-commands
+        :append-front '("x" "org-life agenda"
+                        ((org-life-agenda ""
+                                          ()))))))
+     ((:require org-catalyst)
+      ('org-catalyst-save-path
+       (expand-file-name "org-catalyst" org-directory))))
+
+    (:minor-modes
+     ((:require org-catalyst)
+      (org-catalyst-auto-save-mode 1)))
+
+    (:on-init
+     ((:require tommyx-extensions)
+      (update-all-org-directory-files)
+      ($load-external-org-config-if-exist))
+     ((:require org-catalyst)
+      (org-catalyst-setup-evil-status-bindings)))
+
+    ((:mode-local org-catalyst-mode)
+
+     (:settings
+      ('use-line-nav t))
+
+     (:minor-modes
+      (hl-line-mode -1))))
+
+  '((:mode-local org-mode)
+
+    (:settings
+     ((:macro set-indent) 2 4))
+
+    (:minor-modes
+     ((:require org-bullets)
+      (org-bullets-mode 1))))
+
+  '((:mode-local org-agenda-mode)
+
+    (:settings
+     ('use-line-nav t))
+
+    (:minor-modes
+     (hl-line-mode 1))))
 
 (provide 'tommyx-modules)
 
