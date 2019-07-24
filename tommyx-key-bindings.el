@@ -1522,8 +1522,8 @@
      :states (insert)
      (:bindings
 
-      snippet-expand (menu-item "" yas-expand-from-trigger-key
-                                :filter yas--maybe-expand-key-filter))))
+      snippet-expand (menu-item "" yas-expand
+                                :filter yas-maybe-expand-abbrev-key-filter))))
 
   ($bind-keys
    `(:case
@@ -2198,4 +2198,3 @@
 (provide 'tommyx-key-bindings)
 
 ;;; tommyx-key-bindings.el ends here
-
