@@ -265,6 +265,8 @@
                                (file-name-directory load-file-name)))
 (enable-auto-compilation 'org-catalyst)
 (require 'org-catalyst)
+(require 'eon)
+(require 'tommyx-layout)
 (require 'tommyx-extensions)
 (require 'tommyx-patches)
 

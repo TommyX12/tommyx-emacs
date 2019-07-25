@@ -542,6 +542,9 @@
        "n" (:def
             ivy-switch-buffer
             :which-key "Switch Buffer")
+       "N" (:def
+            ivy-switch-buffer-other-window
+            :which-key "Switch Buffer")
        "0" (:def
             ,(progn
                (eval-after-load 'which-key
@@ -671,9 +674,6 @@
         "U" (:def
              winner-redo
              :which-key "Redo Window Config")
-        "p" (:def
-             peek-region-in-split
-             :which-key "Peek Region In Split")
         "t" (,(lambda () (interactive)
                 (evil-window-set-height 12))
              :which-key "Make Into Terminal Height")
@@ -871,6 +871,9 @@
         "n" (:def
              yas-new-snippet
              :which-key "New")
+        "l" (:def
+             yas-describe-tables
+             :which-key "List")
         "e" (:def
              yas-visit-snippet-file
              :which-key "Edit")
@@ -1045,9 +1048,10 @@
                 "t" (lambda () (interactive)
                       (call-with-command-hooks
                        'insert-todo "jt"))
-                "f" (lambda () (interactive)
+                ;; j' expand snippet
+                "'" (lambda () (interactive)
                       (call-with-command-hooks
-                       'yas-expand-from-trigger-key "jf"))
+                       'yas-expand-from-trigger-key "j'"))
                 ;; jk quit insert mode
                 "k" (lambda () (interactive)
                       (call-with-command-hooks
@@ -2188,12 +2192,27 @@
       global-leader
       (:bindings
 
-       "l"
+       "k"
        (:bindings
         :which-key "Catalyst"
 
         "s" org-catalyst-status
-        "r" org-catalyst-recompute-history))))))
+        "r" org-catalyst-recompute-history)))))
+
+  ($bind-keys
+   `(:case
+     (:bindings
+
+      global-leader
+      (:bindings
+
+       "l"
+       (:bindings
+        :which-key "Layout"
+
+        "s" (:def
+             easy-layout-switch
+             :which-key "Switch Layout")))))))
 
 (provide 'tommyx-key-bindings)
 

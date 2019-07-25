@@ -395,6 +395,9 @@ Useful for a search overview popup."
 (defun $bury-compile-buffer-if-successful (buffer string)
   "Bury a compilation buffer if succeeded without warnings."
   (when (and
+         (or (not (fboundp 'easy-layout-get-property))
+             (not (easy-layout-get-property
+                   'persist-compilation-window)))
          (buffer-live-p buffer)
          (string-match "compilation" (buffer-name buffer))
          (string-match "finished" string)
