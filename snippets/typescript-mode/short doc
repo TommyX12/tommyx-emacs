@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: short doc
+# key: sdoc
+# --
+/** $0 */
