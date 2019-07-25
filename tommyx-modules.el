@@ -23,8 +23,7 @@
     ((:require alert)
      ('alert-default-style 'companion))
     ((:require hydra)
-     ('lv-use-separator t)
-     ('hydra-lv nil))
+     ('lv-use-separator t))
     ((:require auto-package-update)
      ('auto-package-update-interval 7)
      ('auto-package-update-prompt-before-update t))
@@ -522,8 +521,9 @@
     (winner-mode 1)
 
     ;; type break
-    (type-break-mode 1)
-    (type-break-query-mode 1)
+    ;; TODO: disabled
+    ;; (type-break-mode 1)
+    ;; (type-break-query-mode 1)
 
     ;; snippets
     ((:require yasnippet)
@@ -655,9 +655,10 @@
      (0.5 ($show-yascroll-if-not-in-insert-mode)))
     (5 (garbage-collect)))
 
-  '(:on-interval
-    ((:require tommyx-extensions)
-     (120 ($type-break-schedule-check))))
+  ;; TODO: disabled
+  ;; '(:on-interval
+  ;;   ((:require tommyx-extensions)
+  ;;    (120 ($type-break-schedule-check))))
 
   '(:on-focus-out
     ;; performance

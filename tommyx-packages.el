@@ -211,6 +211,7 @@
 (use-package org-bullets :ensure t)
 (use-package org-preview-html :ensure t)
 (require 'org-notify)
+(require 'org-habit)
 (use-package helm-org-rifle :ensure t)
 (use-package outshine :ensure t)
 (use-package load-relative :ensure t)
