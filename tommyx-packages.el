@@ -266,6 +266,7 @@
 (enable-auto-compilation 'org-catalyst)
 (require 'org-catalyst)
 (require 'eon)
+(require 'tommyx-music)
 (require 'tommyx-layout)
 (require 'tommyx-extensions)
 (require 'tommyx-patches)

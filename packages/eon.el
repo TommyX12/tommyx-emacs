@@ -65,7 +65,7 @@
          (if (ht-p result)
              (if keys
                  (setq result (ht-get result key))
-               (ht-set result (car keys)
+               (ht-set result key
                        (if op
                            (funcall op
                                     (ht-get result (car keys) default)
@@ -74,6 +74,18 @@
            (error "Cannot access property %s of %s"
                   (prin1-to-string key)
                   (prin1-to-string result)))))))
+
+(defmacro eon-from-each (item items key value)
+  `(let ((result (eon)))
+     (dolist (,item ,items)
+       (eon-set result (prop) ,value))
+     result))
+
+(defun eon-map (obj func)
+  (ht-map func obj))
+
+(defun eon-each (obj func)
+  (ht-each func obj))
 
 (provide 'eon)
 

@@ -3454,7 +3454,7 @@ command (ran after) is mysteriously incorrect."
              :which-key "Search In Directory")
       "C-S-d" (:def
                ,(lambda () (interactive)
-                  (counsel-rg (selection-or-word-at-point)))
+                  (counsel-rg (selection-or-word-at-point t)))
                :which-key "Search Cursor In Directory")
       "d" (:def
            counsel-projectile-rg

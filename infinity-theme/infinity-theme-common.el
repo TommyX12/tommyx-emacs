@@ -669,15 +669,15 @@
   `(ido-vertical-match-face ((,class (:foreground ,comp :underline nil))))
 
 ;;;;; imenu-list
-  `(imenu-list-entry-face ((,class (:inherit default))))
-  `(imenu-list-entry-face-0 ((,class (:inherit default))))
-  `(imenu-list-entry-face-1 ((,class (:inherit default))))
-  `(imenu-list-entry-face-2 ((,class (:inherit default))))
-  `(imenu-list-entry-face-3 ((,class (:inherit default))))
-  `(imenu-list-entry-subalist-face-0 ((,class (:inherit (org-level-5 bold)))))
-  `(imenu-list-entry-subalist-face-1 ((,class (:inherit (org-level-5 bold)))))
-  `(imenu-list-entry-subalist-face-2 ((,class (:inherit (org-level-5 bold)))))
-  `(imenu-list-entry-subalist-face-3 ((,class (:inherit (org-level-5 bold)))))
+  `(imenu-list-entry-face ((,class ())))
+  `(imenu-list-entry-face-0 ((,class ())))
+  `(imenu-list-entry-face-1 ((,class ())))
+  `(imenu-list-entry-face-2 ((,class ())))
+  `(imenu-list-entry-face-3 ((,class ())))
+  `(imenu-list-entry-subalist-face-0 ((,class (:inherit (org-level-5 bold) :box (:line-width 3 :color ,bg1)))))
+  `(imenu-list-entry-subalist-face-1 ((,class (:inherit (org-level-5 bold) :box (:line-width 3 :color ,bg1)))))
+  `(imenu-list-entry-subalist-face-2 ((,class (:inherit (org-level-5 bold) :box (:line-width 3 :color ,bg1)))))
+  `(imenu-list-entry-subalist-face-3 ((,class (:inherit (org-level-5 bold) :box (:line-width 3 :color ,bg1)))))
 
 ;;;;; info
   `(info-header-xref ((,class (:foreground ,func :underline t))))
@@ -838,7 +838,7 @@
   `(notmuch-tag-flagged ((,class (:foreground ,war))))
 
 ;;;;; neotree
-  `(neo-dir-link-face ((,class (:foreground ,keyword))))
+  `(neo-dir-link-face ((,class (:foreground ,keyword :box (:line-width 3 :color ,back-border2)))))
   `(neo-expand-btn-face ((,class (:foreground ,base))))
   `(neo-file-link-face ((,class (:foreground ,base))))
   `(neo-vc-up-to-date-face ((,class (:inherit neo-file-link-face))))
@@ -849,7 +849,7 @@
   `(neo-vc-user-face ((,class (:foreground ,yellow))))
   `(neo-vc-unregistered-face ((,class (:foreground ,green))))
   `(neo-vc-removed-face ((,class (:foreground ,red))))
-  `(neo-root-dir-face ((,class (:foreground ,func :inherit bold :height 1.0 :background ,bg11 :box (:line-width 4 :color ,bg11)))))
+  `(neo-root-dir-face ((,class (:foreground ,func :inherit bold :height 1.0 :background ,bg11 :box (:line-width 5 :color ,bg11)))))
 
 ;;;;; org
   `(org-agenda-clocking ((,class (:background ,green-bg-s :inherit bold :foreground ,comp))))

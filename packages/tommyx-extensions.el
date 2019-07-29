@@ -636,91 +636,6 @@ Useful for a search overview popup."
   (let (compile-command)
     (compile (buffer-substring (region-beginning) (region-end)))))
 
-(defun emms-echo-no-error (&optional insertp)
-  "Describe the current EMMS track in the minibuffer.
-If INSERTP is non-nil, insert the description into the current buffer instead.
-This function uses `emms-show-format' to format the current track."
-  (interactive "P")
-  (condition-case nil
-      (progn
-        (let ((string (format emms-show-format
-                              (emms-track-description
-                               (emms-playlist-current-selected-track)))))
-          (message "%s" string))
-        t)
-    (error nil)))
-
-(defun emms-next-and-echo ()
-  (interactive)
-  (emms-next)
-  (emms-echo-no-error)
-  (sit-for 2))
-
-(defun emms-previous-and-echo ()
-  (interactive)
-  (emms-previous)
-  (emms-echo-no-error)
-  (sit-for 2))
-
-(defun emms-seek-backward-more ()
-  (interactive)
-  (emms-seek -30))
-
-(defun emms-seek-forward-more ()
-  (interactive)
-  (emms-seek 30))
-
-(defun emms-restart ()
-  (interactive)
-  (emms-seek-to 0))
-
-(defun counsel-emms-get-playlist-items ()
-  (let (items)
-    (with-current-emms-playlist
-      (save-excursion
-        (beginning-of-buffer)
-        (while (< (point) (point-max))
-          (let ((pos (point))
-                (name (file-name-base
-                       (buffer-substring-no-properties (point)
-                                                       (line-end-position)))))
-            (push (propertize name 'property pos) items))
-          (forward-line)))
-      ;; (split-string (buffer-string) "[\n\r]+" t)
-      )
-    items))
-
-(defun counsel-emms-play-item (item)
-  (let ((pos (get-text-property 0 'property item)))
-    (with-current-emms-playlist
-      (save-excursion
-        (goto-char pos)
-        (emms-playlist-mode-play-current-track)))))
-
-(defun counsel-emms-play ()
-  (interactive)
-  (ivy-read "Play track: "
-            (counsel-emms-get-playlist-items)
-            :history 'counsel-emms-play-history
-            :action #'counsel-emms-play-item
-            :require-match t))
-
-(defun emms-show-progress (&rest _)
-  (let* ((total-playing-time (emms-track-get
-                              (emms-playlist-current-selected-track)
-                              'info-playing-time))
-         (playing-time emms-playing-time)
-         (elapsed/total (/ (* 100 emms-playing-time) total-playing-time)))
-    (with-temp-message (format "[%-100s] [%02d:%02d/%02d:%02d] %2d%%"
-                               (make-string elapsed/total ?=)
-                               (/ playing-time 60)
-                               (% playing-time 60)
-                               (/ total-playing-time 60)
-                               (% total-playing-time 60)
-                               elapsed/total)
-      (sit-for 2))))
-(add-hook 'emms-player-seeked-functions #'emms-show-progress 'append)
-
 (defun company-smart-complete ()
   (interactive)
   (setq company-echo-metadata-frontend-bypass t)
@@ -830,14 +745,14 @@ This function uses `emms-show-format' to format the current track."
           (point-saved (point)))
       (deactivate-mark)
       (buffer-substring-no-properties mark-saved point-saved)))
-   ;; Otherwise, use symbol at point or empty
+   ;; Otherwise, use word at point or empty
    (t
     (save-excursion
+      (when (not (looking-at "\\sw"))
+        (while (and (> (point) (point-min)) (= (char-before) ? ))
+          (backward-char)))
       (if no-symbol
           (word-at-point)
-        (when (not (looking-at "\\sw"))
-          (while (and (> (point) (point-min)) (= (char-before) ? ))
-            (backward-char)))
         (format "\\<%s\\>"
                 (or (word-at-point)
                     "")))))))

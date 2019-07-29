@@ -411,6 +411,14 @@ This is used to determine the default day to show in the status window."
             (ht-set node-order item-id
                     (org-catalyst-safe-get-chain
                      item-attributes 0 item-id "chain")))))
+     ("highest-chain"
+      . (:name
+         "Highest Chain"
+         :order-func
+         ,(lambda (item-id node-order all-item-config item-attributes actions)
+            (ht-set node-order item-id
+                    (org-catalyst-safe-get-chain
+                     item-attributes 0 item-id "highest-chain")))))
      ("recent"
       . (:name
          "Recent"
@@ -603,10 +611,12 @@ This is used to determine the default day to show in the status window."
     (define-key map (kbd "o r") 'org-catalyst-inventory-order-recent)
     (define-key map (kbd "o s") 'org-catalyst-inventory-order-count)
     (define-key map (kbd "o c") 'org-catalyst-inventory-order-chain)
+    (define-key map (kbd "o h") 'org-catalyst-inventory-order-highest-chain)
     (define-key map (kbd "o p") 'org-catalyst-inventory-order-priority)
     (define-key map (kbd "o R") 'org-catalyst-inventory-order-recent-reverse)
     (define-key map (kbd "o S") 'org-catalyst-inventory-order-count-reverse)
     (define-key map (kbd "o C") 'org-catalyst-inventory-order-chain-reverse)
+    (define-key map (kbd "o H") 'org-catalyst-inventory-order-highets-chain-reverse)
     (define-key map (kbd "o P") 'org-catalyst-inventory-order-priority-reverse)
     (define-key map (kbd "n") 'org-catalyst-filter-name)
     (define-key map (kbd "l") 'org-catalyst-inventory-toggle-list)
@@ -1712,12 +1722,11 @@ As of the current implementation, this function re-seed random state by calling
                (ht-set item-config "display-name" display-name)
                (ht-set item-config "todo-text" todo-text)
                (ht-set item-config "todo-type" todo-type)
-               (when is-full-item
-                 (ht-set item-config "state-deltas"
-                         (if state-deltas-stack
-                             (ht-merge (cdar state-deltas-stack) state-deltas)
-                           state-deltas))
-                 (ht-set item-config "attributes" attributes))
+               (ht-set item-config "state-deltas"
+                       (if state-deltas-stack
+                           (ht-merge (cdar state-deltas-stack) state-deltas)
+                         state-deltas))
+               (ht-set item-config "attributes" attributes)
                (ht-set item-config "params"
                        (if params-stack
                            (ht-merge (cdar params-stack) params)
@@ -3554,7 +3563,7 @@ REVERSE the order if REVERSE is non-nil."
          (snapshot (cdr snapshots)))
     (setq org-catalyst--today-daynr
           (org-catalyst--month-day-to-days
-          today-month-day))
+           today-month-day))
     (org-catalyst--render-overview
      :month-day month-day
      :today-month-day today-month-day)
@@ -4842,6 +4851,11 @@ Note that this invalidates config cache."
   (interactive)
   (org-catalyst--set-order "chain" t t))
 
+(defun org-catalyst-inventory-order-highest-chain ()
+  "Switch to order by highest chain."
+  (interactive)
+  (org-catalyst--set-order "highest-chain" t t))
+
 (defun org-catalyst-inventory-order-priority ()
   "Switch to order by priority."
   (interactive)
@@ -4861,6 +4875,11 @@ Note that this invalidates config cache."
   "Switch to order by chain (reversed)."
   (interactive)
   (org-catalyst--set-order "chain" nil t))
+
+(defun org-catalyst-inventory-order-highest-chain-reverse ()
+  "Switch to order by highest chain (reversed)."
+  (interactive)
+  (org-catalyst--set-order "highest-chain" nil t))
 
 (defun org-catalyst-inventory-order-priority-reverse ()
   "Switch to order by priority (reversed)."

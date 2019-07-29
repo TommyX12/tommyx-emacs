@@ -1,6 +1,6 @@
 # TommyX's Emacs Configuration
 
-![Screenshot](screenshots/screenshot-2019-05-04.png) 
+![Screenshot](screenshots/screenshot-2019-05-04.png)
 
 ## Installation
 

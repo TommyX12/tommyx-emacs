@@ -31,17 +31,18 @@
 ;;; Code:
 
 (require 'window-layout)
+(require 'imenu-list)
 (require 'eon)
 (require 'ht)
 
-(defvar easy-layout-active-layout nil)
+(defvar easy-layout-active-layout-config nil)
 (defvar easy-layout-active-wset nil)
 
 (defconst easy-layout-view-configs
   (eon 'terminal
        (eon :buffer-name "*terminal*"
             :constructor
-            (lambda ()
+            (lambda (buffer-name)
               (save-window-excursion
                 (ansi-term
                  (read-from-minibuffer
@@ -49,39 +50,144 @@
                   (or explicit-shell-file-name
                       (getenv "ESHELL")
                       shell-file-name))
-                 "terminal"))))
+                 (substring buffer-name 1
+                            (1- (length buffer-name)))))))
+       ;; TODO: this has bugs and issues
+       ;; 'files
+       ;; (eon :buffer-name "*Files*"
+       ;;      :constructor
+       ;;      (lambda (buffer-name)
+       ;;        (save-window-excursion
+       ;;          (setq neo-buffer-name buffer-name)
+       ;;          (neotree-show))))
        'compilation
        (eon :buffer-name "*compilation*"
+            :constructor #'get-buffer-create)
+       'outline
+       (eon :buffer-name "*Outline*"
             :constructor
-            (lambda () (get-buffer-create "*compilation*")))
+            (lambda (buffer-name)
+              (setq imenu-list-buffer-name buffer-name)
+              (imenu-list-get-buffer-create)
+              (imenu-list-start-timer)))
        'code
-       (eon :buffer-name nil)))
+       (eon :buffer-name nil)
+       'help
+       (eon :buffer-name "*Help*"
+            :constructor #'get-buffer-create)
+       'elisp-scratch
+       (eon :buffer-name "*scratch*"
+            :constructor
+            (lambda (buffer-name)
+              (with-current-buffer (get-buffer-create buffer-name)
+                (lisp-interaction-mode))))
+       'messages
+       (eon :buffer-name "*Messages*"
+            :constructor #'get-buffer-create)))
 
 (defconst easy-layout-layout-configs
-  (eon 'project-with-terminal
-       (eon :name "Project with terminal"
+  (eon 'ide
+       (eon :name "Integrated Development Environment"
             :properties
             (eon 'persist-compilation-window t)
             :views
-            '(code terminal compilation)
+            (list (eon :id 'code
+                       :main t)
+                  ;; (eon :id 'files
+                  ;;      :dedicated t)
+                  (eon :id 'outline
+                       :dedicated t)
+                  (eon :id 'terminal
+                       :dedicated t)
+                  (eon :id 'compilation
+                       :dedicated t))
             :layout
             '(- (:lower-size 12)
-                code
+                (| (:right-size 25)
+                   code
+                   outline)
                 (| (:left-size-ratio 0.5)
                    terminal
                    compilation)))
+       'Outline
+       (eon :name "Outline"
+            :properties
+            (eon 'persist-compilation-window nil)
+            :views
+            (list (eon :id 'code
+                       :main t)
+                  (eon :id 'outline
+                       :dedicated t))
+            :layout
+            '(| (:right-size 25)
+                code outline))
+       'emacs-lisp-debug
+       (eon :name "Emacs Lisp Debug"
+            :properties
+            (eon 'persist-compilation-window nil)
+            :views
+            (list (eon :id 'code
+                       :main t)
+                  (eon :id 'elisp-scratch
+                       :dedicated t
+                       :on-init
+                       (lambda ()
+                         (goto-char (point-max))
+                         (recenter)))
+                  (eon :id 'help
+                       :dedicated t)
+                  (eon :id 'messages
+                       :dedicated t
+                       :on-init
+                       (lambda ()
+                         (goto-char (point-max))
+                         (recenter))))
+            :layout
+            '(| (:left-size-ratio 0.5)
+                code
+                (- (:upper-size-ratio 0.6666)
+                   (- (:upper-size-ratio 0.5)
+                      elisp-scratch
+                      help)
+                   messages)))
        'free-editing
-       (eon :name "Free editing"
-            :views '(code)
+       (eon :name "Free Editing"
+            :properties
+            (eon 'persist-compilation-window nil)
+            :views (list (eon :id 'code))
             :layout 'full-screen)))
 
+(defun easy-layout-setup-sidebar ()
+  "TODO"
+  )
+
+(defun easy-layout-finalize (layout-config wset)
+  (when (and layout-config wset)
+    (dolist (view (eon-get layout-config (:views)))
+      (let* ((view-id (eon-get view (:id)))
+             (window (wlf:get-window wset view-id))
+             (buffer (wlf:get-buffer wset view-id))
+             (on-init (eon-get view (:on-init))))
+        (when (eon-get view (:main))
+          (wlf:select wset view-id))
+        (when window
+          (set-window-dedicated-p window
+                                  (eon-get view (:dedicated))))
+        (when (and window buffer on-init)
+          (with-selected-window window
+            (with-current-buffer buffer
+              (funcall on-init))))))))
+
 (defun easy-layout-get-property (property &optional default layout)
-  (setq layout (or layout easy-layout-active-layout))
-  (if layout
-      (eon-get easy-layout-layout-configs
-               (layout :properties property)
-               default)
-    default))
+  (let ((layout-config
+         (if layout
+             (eon-get easy-layout-layout-configs (layout))
+           easy-layout-active-layout-config)))
+    (if layout-config
+        (eon-get layout-config
+                 (:properties property)
+                 default)
+      default)))
 
 (defun easy-layout-switch (layout)
   (interactive
@@ -89,7 +195,7 @@
           0
           'property
           (completing-read
-           "Enter layout: "
+           "Switch to layout: "
            (mapcar
             (lambda (layout)
               (let ((layout-config
@@ -104,21 +210,23 @@
            nil ; initial-input
            'easy-layout--select-layout-history))))
   ;; TODO
-  (let* ((buffer (current-buffer))
+  (let* ((inhibit-redisplay t)
+         (buffer (current-buffer))
          (layout-config (eon-get easy-layout-layout-configs (layout))))
     (unless layout-config
       (error "Layout %s not found" (prin1-to-string layout)))
     (let* ((views (eon-get layout-config (:views)))
-           (main-view (car views))
            wset)
       (dolist (view (eon-get layout-config (:views)))
-        (let ((view-config (eon-get easy-layout-view-configs (view))))
+        (let* ((view-id (eon-get view (:id)))
+               (view-config (eon-get easy-layout-view-configs (view-id))))
           (unless view-config
-            (error "View %s not found" (prin1-to-string view)))
-          (when (let ((buffer-name (eon-get view-config (:buffer-name))))
-                  (and buffer-name
-                       (not (get-buffer buffer-name))))
-            (funcall (eon-get view-config (:constructor))))))
+            (error "View %s not found" (prin1-to-string view-id)))
+          (let ((buffer-name (eon-get view-config (:buffer-name))))
+            (when (and buffer-name
+                       (not (get-buffer buffer-name)))
+              (funcall (eon-get view-config (:constructor))
+                       buffer-name)))))
       (let ((recipe (eon-get layout-config (:layout))))
         (cond
          ((eq recipe 'full-screen)
@@ -128,14 +236,23 @@
                 (wlf:layout
                  recipe
                  (mapcar (lambda (view)
-                           (list :name view
-                                 :buffer (eon-get easy-layout-view-configs
-                                                  (view :buffer-name))))
+                           (let ((view-id (eon-get view (:id))))
+                             (list :name view-id
+                                   :buffer (eon-get easy-layout-view-configs
+                                                    (view-id :buffer-name)))))
                          views))))))
-      (when wset
-        (wlf:select wset main-view))
-      (setq easy-layout-active-layout layout
+      (easy-layout-finalize layout-config wset)
+      (setq easy-layout-active-layout-config layout-config
             easy-layout-active-wset wset))))
+
+(defun easy-layout-refresh ()
+  (interactive)
+  (if easy-layout-active-wset
+      (progn
+        (wlf:refresh easy-layout-active-wset)
+        (easy-layout-finalize easy-layout-active-layout-config
+                              easy-layout-active-wset))
+    (message "No active layout")))
 
 (provide 'tommyx-layout)
 

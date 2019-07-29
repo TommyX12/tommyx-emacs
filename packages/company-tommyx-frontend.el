@@ -1,11 +1,11 @@
-;;; company-tommyx-frontend.el --- summary -*- lexical-binding: t -*-
+;;; company-tommyx-frontend.el --- TODO -*- lexical-binding: t -*-
 
 ;; Author: TommyX
 ;; Maintainer: TommyX
-;; Version: version
-;; Package-Requires: (dependencies)
-;; Homepage: homepage
-;; Keywords: keywords
+;; Version: TODO
+;; Package-Requires: (TODO)
+;; Homepage: TODO
+;; Keywords: TODO
 
 
 ;; This file is not part of GNU Emacs
@@ -26,7 +26,7 @@
 
 ;;; Commentary:
 
-;; commentary
+;; TODO
 
 ;;; Code:
 

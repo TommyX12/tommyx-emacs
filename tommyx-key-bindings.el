@@ -852,11 +852,14 @@
         ;;          '((side . left))))
         ;;      :which-key "Files")
         "f" (:def
-             neotree-show
-             :which-key "Files")
-        "F" (:def
              neotree-find
              :which-key "Locate Current File")
+        "F" (:def
+             neotree-show
+             :which-key "Files")
+        "p" (:def
+             neotree-projectile-action
+             :which-key "Locate Project")
         "o" (:def
              ,(lambda () (interactive)
                 (display-buffer-in-side-window
@@ -925,6 +928,9 @@
         "l"
         (:bindings
          :which-key "Playlist"
+         "f" (:def
+              emms-set-active-playlist
+              :which-key "Set Active Playlist")
          "l" (:def
               emms-add-playlist
               :which-key "Add Playlist")
@@ -937,13 +943,17 @@
          "D" (:def
               emms-add-directory-tree
               :which-key "Add Directory Recursively")
+         "p" (:def
+              emms-state-push
+              :which-key "Push Playlist State")
+         "P" (:def
+              emms-state-pop
+              :which-key "Pop Playlist State")
          "s" (:def
               emms-playlist-save
               :which-key "Save Playlist")
          "g" (:def
-              ,(lambda () (interactive)
-                 (emms-playlist-mode-go)
-                 (emms-playlist-mode-center-current))
+              emms
               :which-key "Go To Playlist")
          "s" (:def
               ,(lambda () (interactive)
@@ -962,6 +972,9 @@
               emms-playlist-clear
               :which-key "Clear Playlist"))
 
+        "q" (:def
+             counsel-emms-enqueue
+             :which-key "Enqueue Music")
         "f" (:def
              counsel-emms-play
              :which-key "Play Music")
@@ -1547,6 +1560,10 @@
       "d" neotree-delete-node ; delete
       "c" neotree-copy-node ; copy
       "o" neotree-enter
+      goto-parent-semantic-element neotree-select-up-node
+      goto-child-semantic-element neotree-select-down-node
+      goto-previous-semantic-element neotree-select-previous-sibling-node
+      goto-next-semantic-element neotree-select-next-sibling-node
       "<return>" neotree-enter)))
 
   ($bind-keys
@@ -2212,7 +2229,11 @@
 
         "s" (:def
              easy-layout-switch
-             :which-key "Switch Layout")))))))
+             :which-key "Switch Layout")
+
+        "r" (:def
+             easy-layout-refresh
+             :which-key "Refresh Active Layout")))))))
 
 (provide 'tommyx-key-bindings)
 

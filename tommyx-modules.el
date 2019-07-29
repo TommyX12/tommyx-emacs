@@ -11,6 +11,12 @@
     ((:require highlight-indentation)
      ('highlight-indentation-offset ,(or highlight-width width)))))
 
+($define-settings-macro use-side-bar-background ()
+  '(((:require tommyx-extensions)
+     ('face-remapping-alist :append-front
+                            '(default sidebar-background)
+                            '(hl-line sidebar-hl-line)))))
+
 ;;; Config definition
 
 ($define-module tommyx-main
@@ -23,7 +29,8 @@
     ((:require alert)
      ('alert-default-style 'companion))
     ((:require hydra)
-     ('lv-use-separator t))
+     ('lv-use-separator t)
+     ('hydra-hint-display-type 'message))
     ((:require auto-package-update)
      ('auto-package-update-interval 7)
      ('auto-package-update-prompt-before-update t))
@@ -158,6 +165,7 @@
     ((:require emms)
      ('emms-repeat-playlist t)
      ('emms-random-playlist nil)
+     ('emms-playlist-mode-center-when-go t)
      ((:require evil)
       ('evil-emacs-state-modes :delete #'emms-playlist-mode)))
 
@@ -304,6 +312,7 @@
 
     ;; file tree
     ((:require neotree)
+     ('neo-autorefresh nil)
      ('neo-confirm-change-root 'off-p)
      ('neo-banner-message "")
      ('neo-show-updir-line nil)
@@ -415,7 +424,8 @@
     ;; layout
     ((:require evil)
      ('evil-split-window-below t)
-     ('evil-vsplit-window-right t))
+     ('evil-vsplit-window-right t)
+     ('evil-auto-balance-windows nil))
 
     ;; version control
     ((:require git-gutter)
@@ -596,7 +606,9 @@
      (emms-all)
      (emms-default-players)
      (when (bound-and-true-p emms-default-music-dir)
-       (emms-add-directory-tree emms-default-music-dir)))
+       (emms-add-directory-tree emms-default-music-dir))
+     ((:require tommyx-music)
+      (emms-setup-show-progress-on-seek)))
 
     ;; linter
     ((:require flycheck ycmd tommyx-extensions)
@@ -643,6 +655,7 @@
 
   '(:after-init
     ((:require tommyx-extensions imenu-list neotree)
+     ;; We use eays-layout to manage these
      ($start-imenu-list-and-neotree))
     ((:require companion)
      (companion-compile)
@@ -801,10 +814,7 @@
      ('left-fringe-width 0)
      ('right-fringe-width 0)
      ('use-line-nav t)
-     ((:require tommyx-extensions)
-      ('face-remapping-alist :append-front
-                             '(default sidebar-background)
-                             '(hl-line sidebar-hl-line)))
+     ((:macro use-side-bar-background))
      ((:macro set-indent) 2))
 
     (:minor-modes
@@ -821,15 +831,12 @@
      ('left-fringe-width 0)
      ('right-fringe-width 0)
      ('use-line-nav t)
-     ((:require tommyx-extensions)
-      ('face-remapping-alist :append-front
-                             '(default sidebar-background)
-                             '(hl-line sidebar-hl-line)))
+     ;; ((:macro use-side-bar-background))
      ((:macro set-indent) 2))
 
     (:minor-modes
      (hl-line-mode 1)
-     (whitespace-mode 1)
+     ;; (whitespace-mode 1)
      ((:require yascroll)
       (yascroll-bar-mode -1))
      ((:require highlight-indentation)
@@ -1129,6 +1136,13 @@
 
     (:settings
      ('scroll-margin 0))))
+
+($define-module tommyx-compilation-mode
+  '((:mode-local compilation-mode)
+
+    (:settings
+     ;; ((:macro use-side-bar-background))
+     )))
 
 ($define-module tommyx-org-mode
   '(:settings

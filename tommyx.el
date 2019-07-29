@@ -88,6 +88,7 @@
    tommyx-javascript-mode
    tommyx-typescript-mode
    tommyx-term-mode
+   tommyx-compilation-mode
    tommyx-org-mode
    ))
 
