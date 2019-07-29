@@ -1,0 +1,10 @@
+# -*- mode: snippet -*-
+# name: doc return
+# key: dret
+# --
+`(let* ((existing (buffer-substring-no-properties (line-beginning-position) (point)))
+        (str " * @return  ")
+        (i 0)
+        (len (min (length existing) (length str))))
+   (while (and (< i len) (string= (substring existing i (1+ i)) (substring str i (1+ i)))) (incf i))
+   (substring str i (length str)))`$0
