@@ -15,7 +15,9 @@
   '(((:require tommyx-extensions)
      ('face-remapping-alist :append-front
                             '(default sidebar-background)
-                            '(hl-line sidebar-hl-line)))))
+                            '(hl-line sidebar-hl-line)
+                            ;; '(fringe sidebar-fringe)
+                            ))))
 
 ;;; Config definition
 
@@ -32,7 +34,7 @@
      ('lv-use-separator t)
      ('hydra-hint-display-type 'message))
     ((:require auto-package-update)
-     ('auto-package-update-interval 7)
+     ('auto-package-update-interval 14)
      ('auto-package-update-prompt-before-update t))
 
     ;; control center
@@ -113,7 +115,7 @@
         counsel-projectile-find-file
         counsel-projectile-find-dir)))
     ((:require ivy-rich)
-     ('ivy-rich--display-transformers-list
+     ('ivy-rich-display-transformers-list
       '(counsel-M-x
         (:columns
          ((counsel-M-x-transformer
@@ -1135,7 +1137,9 @@
   '((:mode-local term-mode)
 
     (:settings
-     ('scroll-margin 0))))
+     ('scroll-margin 0)
+     ;; ((:macro use-side-bar-background))
+     )))
 
 ($define-module tommyx-compilation-mode
   '((:mode-local compilation-mode)

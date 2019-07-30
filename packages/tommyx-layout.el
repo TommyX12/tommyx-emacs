@@ -62,7 +62,10 @@
        ;;          (neotree-show))))
        'compilation
        (eon :buffer-name "*compilation*"
-            :constructor #'get-buffer-create)
+            :constructor
+            (lambda (buffer-name)
+              (with-current-buffer (get-buffer-create buffer-name)
+                (compilation-mode))))
        'outline
        (eon :buffer-name "*Outline*"
             :constructor

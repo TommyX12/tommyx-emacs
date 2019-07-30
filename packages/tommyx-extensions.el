@@ -519,9 +519,14 @@ Useful for a search overview popup."
   "*Face used for the sidebar."
   :group 'appearence)
 
+(defface sidebar-fringe
+  '((t :inherit fringe))
+  "*Face used for the sidebar fringe."
+  :group 'appearence)
+
 (defface sidebar-hl-line
   '((t :inherit hl-line))
-  "*Face used for the sidebar."
+  "*Face used for the sidebar line highlight."
   :group 'appearence)
 
 (defface color-identifiers-avoid-face-1

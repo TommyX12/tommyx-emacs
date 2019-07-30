@@ -256,6 +256,7 @@
   ;; `(minibuffer-background ((,class (:inherit default :background ,back-border))))
   `(sidebar-hl-line ((,class (:background ,bg11))))
   `(sidebar-background ((,class (:inherit default :background ,back-border2))))
+  `(sidebar-fringe ((,class (:inherit fringe :background ,back-border2))))
   `(page-break-lines ((,class (:foreground ,act2))))
   `(region ((,class (:background ,highlight))))
   `(secondary-selection ((,class (:background ,bg3))))

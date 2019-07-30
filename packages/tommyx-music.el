@@ -249,13 +249,12 @@ This function uses `emms-show-format' to format the current track."
                                      (:playlist-buffer))
                           emms-playlist-buffer))
          (tracks (counsel-emms-get-playlist-items
-                  tracks-buffer))
-         (queue-buffer (emms-get-create-queue)))
+                  tracks-buffer)))
     (ivy-read "Enqueue track: " tracks
               :history 'counsel-emms-enqueue-history
               :action (lambda (item)
                         (counsel-emms-enqueue-item
-                         tracks-buffer queue-buffer item))
+                         tracks-buffer (emms-get-create-queue) item))
               :preselect (counsel-emms-get-current-track)
               :require-match t)))
 

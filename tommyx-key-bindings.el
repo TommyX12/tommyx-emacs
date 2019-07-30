@@ -1734,7 +1734,8 @@
       "TAB" company-select-next
       "<tab>" company-select-next
       "S-TAB" company-select-previous
-      "<backtab>" company-select-previous)))
+      "<backtab>" company-select-previous
+      "<S-tab>" company-select-previous)))
 
   ($bind-keys
    `(:case
