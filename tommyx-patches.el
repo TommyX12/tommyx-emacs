@@ -267,6 +267,9 @@ DEPTH is the depth of the entry in the list."
                      'action #'imenu-list--action-goto-entry)
       (insert "\n"))))
 
+(defun $imenu-list-mode-line-patch ()
+  (remove-hook 'imenu-list-major-mode-hook #'imenu-list--set-mode-line))
+
 (defun $all-the-icons-dir-patch ()
   (defun all-the-icons-icon-for-dir (dir &optional chevron padding)
     "Format an icon for DIR with CHEVRON similar to tree based directories.
@@ -306,4 +309,3 @@ directory contents"
 (provide 'tommyx-patches)
 
 ;;; tommyx-patches.el ends here
-

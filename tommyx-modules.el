@@ -656,6 +656,9 @@
      (ivy-posframe-enable)))
 
   '(:after-init
+    ;; performance
+    ((:require tommyx-extensions)
+     ($remove-vc-hooks))
     ((:require tommyx-extensions imenu-list neotree)
      ;; We use eays-layout to manage these
      ($start-imenu-list-and-neotree))
@@ -702,7 +705,8 @@
      ((:require company-tabnine)
       ($company-tabnine-patch))
      ((:require imenu-list)
-      ($imenu-list-appearence-patch))
+      ($imenu-list-appearence-patch)
+      ($imenu-list-mode-line-patch))
      ((:require all-the-icons)
       ($all-the-icons-dir-patch)))))
 
@@ -768,6 +772,13 @@
     (:on-init
      ((:require tommyx-extensions)
       ($extra-word-char '(?-))))))
+
+($define-module tommyx-sh-mode
+  '((:mode-local sh-mode)
+
+    (:settings
+     ((:require company-tabnine)
+      ('company-tabnine-auto-fallback nil)))))
 
 ($define-module tommyx-sgml-mode
   '((:mode-local nxml-mode)
@@ -1056,6 +1067,9 @@
      ($extra-word-char '(?-)))))
 
 ($define-module tommyx-python-mode
+  '(:settings
+    ('python-auto-format-code t))
+
   '((:mode-local python-mode)
 
     (:settings
@@ -1074,7 +1088,7 @@
 
     (:on-before-save
      ((:require elpy)
-      (elpy-format-code)))
+      (python-format-code)))
 
     ((:mode-local elpy-mode)
 

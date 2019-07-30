@@ -63,6 +63,7 @@
    tommyx-default-major-modes
    tommyx-log-modes
    tommyx-emacs-lisp-mode
+   tommyx-sh-mode
    tommyx-sgml-mode
    tommyx-emacs-internal-modes
    tommyx-emms-playlist-mode
