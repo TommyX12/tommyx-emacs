@@ -1,6 +1,41 @@
 ;; TODO: dependencies here
 ;; TODO: refactor lots of the hacks here
 
+;; startup appearance
+
+(defun setup-appearance ()
+  ;; theme
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic t)
+  (setq dark-theme 'infinity-dark)
+  (setq light-theme 'infinity-light)
+  (if (bound-and-true-p use-light-theme)
+      (load-theme light-theme t)
+    (load-theme dark-theme t))
+  ;; font
+  (unless (bound-and-true-p selected-font)
+    (cond
+     ((and (eq system-type 'ms-dos)
+           (find-font (font-spec :name "Consolas")))
+      (setq selected-font "Consolas"))
+     ((find-font (font-spec :name "Fira Mono"))
+      (setq selected-font "Fira Mono"))
+     ((find-font (font-spec :name "Source Code Pro"))
+      (setq selected-font "Source Code Pro"))
+     ((find-font (font-spec :name "DejaVu Sans Mono"))
+      (setq selected-font "DejaVu Sans Mono"))
+     (t
+      (setq selected-font "Menlo"))))
+  (unless (boundp 'font-size-small)
+    (setq font-size-small 120))
+  (unless (boundp 'font-size-big)
+    (setq font-size-big 150))
+  (set-face-attribute 'default nil
+                      :family selected-font
+                      :height font-size-small
+                      :weight 'normal
+                      :width 'normal))
+
 ;; scanning all org files
 
 (defvar all-org-directory-files nil
@@ -521,17 +556,17 @@ Useful for a search overview popup."
 (defface sidebar-background
   '((t :inherit default))
   "*Face used for the sidebar."
-  :group 'appearence)
+  :group 'appearance)
 
 (defface sidebar-fringe
   '((t :inherit fringe))
   "*Face used for the sidebar fringe."
-  :group 'appearence)
+  :group 'appearance)
 
 (defface sidebar-hl-line
   '((t :inherit hl-line))
   "*Face used for the sidebar line highlight."
-  :group 'appearence)
+  :group 'appearance)
 
 (defface color-identifiers-avoid-face-1
   '((t :foreground "#d53b9c34cd15"))

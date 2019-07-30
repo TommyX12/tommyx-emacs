@@ -51,7 +51,7 @@
   (defface company-preview-active-face
     '((t :inherit company-preview))
     "Face used for company preview when nothing is selected."
-    :group 'appearence)
+    :group 'appearance)
 
   (defun company-preview-frontend (command)
     "`company-mode' frontend showing the selection as if it had been inserted."
@@ -228,7 +228,7 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
                          (nth 1 hl)
                          (nth 2 hl)))))))
 
-(defun $imenu-list-appearence-patch ()
+(defun $imenu-list-appearance-patch ()
   (defun imenu-list--depth-string (depth)
     "Return a prefix string representing an entry's DEPTH."
     (let ((indents (cl-loop for i from 1 to depth collect "\t")))

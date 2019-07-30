@@ -38,6 +38,12 @@
 (add-to-list 'load-path
              (expand-file-name "packages/external"
                                (file-name-directory load-file-name)))
+(add-to-list 'load-path
+             (expand-file-name "infinity-theme"
+                               (file-name-directory load-file-name)))
+(add-to-list 'custom-theme-load-path
+             (expand-file-name "infinity-theme"
+                               (file-name-directory load-file-name)))
 (use-package auto-package-update :ensure t)
 (enable-auto-compilation 'redo+)
 (require 'redo+)

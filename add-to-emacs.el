@@ -1,39 +1,42 @@
-
-;;; before-load configurations
+;;; Dependencies
 
 (setq tommyx-config-path "~/tommyx-emacs/")
+(push tommyx-config-path load-path)
 
-;; flyspell (for windows)
-;; (setq ispell-program-name (expand-file-name "third_party/hunspell/bin/hunspell.exe" tommyx-config-path))
-;; (setq ispell-really-hunspell t)
-
-;; org
-(setq org-directory "~/notes/org") ; set this to nil if you are not me.
-(setq use-light-theme nil) ; set to t if you want to startup with light theme.
-
-;; ycmd
-;; (setq ycmd-server-python-command "python3")
-
-;; emms
-;; (setq mpg123-path "D:/data/projects/new/Tools/tommyx-emacs/third_party/mpg123/mpg123.exe")
-(setq emms-default-music-dir "~/data/files/music") ; set this to nil if you don't have one.
-
-;; others
-;; (setq font-size-small 130)
-;; (setq font-size-big 150)
-
-;;; load tommyx configuration
-
-(add-to-list 'load-path tommyx-config-path)
+(require 'tommyx-packages)
+(require 'tommyx-config-framework)
+(require 'tommyx-key-binding-framework)
 (require 'tommyx)
 
-;;; after-load configurations
+;;; Extra dependencies
 
-;; flyspell
-;; (add-to-list 'ispell-extra-args "--sug-mode=ultra")
+;;; Extra extensions
 
-;; curl (windows)
-;; (setq request-curl (expand-file-name "third_party/curl/curl.exe" tommyx-config-path))
+;;; Extra modules
 
-;; org
-(setq org-agenda-files (append org-agenda-files '()))
+($define-module init-module
+  '(:settings
+    ;; ('font-size-small 130)
+    ('use-light-theme nil)
+    ;; Set this to nil if you are not me.
+    ('org-directory "~/notes/org")
+    ((:require tommyx-music)
+     ;; Set this to nil if you don't have one.
+     ('emms-default-music-dir "~/data/files/music"))))
+
+($define-module config-module
+  ;; Extra configurations
+  )
+
+($define-module key-binding-module
+  ;; Extra key bindings
+  )
+
+;;; Install modules
+
+($install-modules
+ (list 'init-module
+       tommyx-main-modules-list
+       tommyx-key-binding-modules-list
+       'config-module
+       'key-binding-module))

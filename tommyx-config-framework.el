@@ -40,8 +40,13 @@
   (and (consp symbol)
        (eq (car symbol) 'quote)))
 
-(defun $warning (msg &rest args)
-  (display-warning 'tommyx-config-framework (apply #'format msg args))
+(defun $warning (module context msg &rest args)
+  (display-warning
+   'tommyx-config-framework
+   (format "(Module: %s, Context: %s) %s"
+           (prin1-to-string module)
+           (prin1-to-string context)
+           (apply #'format msg args)))
   nil)
 
 (defmacro $define-settings-macro (name inputs &rest body)
@@ -60,7 +65,7 @@
        (setq c (cdr c)))
      (puthash (symbol-name (quote ,name)) c $modules)))
 
-(defun $make-setter (local components)
+(defun $make-setter (local components &optional context module)
   "TODO"
   (let ((setter
          `(lambda ()
@@ -94,6 +99,7 @@
                         ((eq (car value) :default)
                          (if (cddr value)
                              ($warning
+                              module context
                               "Multiple values provided for setting %s"
                               (prin1-to-string key))
                            `(unless (boundp ,key)
@@ -101,10 +107,12 @@
                                ,(eval key)
                                ,(cadr value)))))
                         ((keywordp (car value))
-                         ($warning "Unrecognized modifier %s"
+                         ($warning module context
+                                   "Unrecognized modifier %s"
                                    (prin1-to-string (car value)))))
                      (if (cdr value)
                          ($warning
+                          module context
                           "Multiple values provided for setting %s"
                           (prin1-to-string key))
                        `(,(if local 'setq-local 'setq-default)
@@ -119,82 +127,92 @@
             ,@components)))
     (eval function-runner)))
 
-(defun $install-chunk (components &optional context)
+(defun $install-chunk (components &optional context module)
   "TODO"
   (when components
-    (let* ((type (plist-get context :type))
-           (modes (plist-get context :mode-local))
-           (mode-hooks
-            (and modes
-                 (mapcar (lambda (m)
-                           (intern (concat (symbol-name m) "-hook")))
-                         modes))))
-      (pcase type
-        (:settings
-         (let ((setter ($make-setter mode-hooks components)))
-           (if mode-hooks
-               (dolist (mode-hook mode-hooks) (add-hook mode-hook setter t))
-             (funcall setter))))
-        ((or :minor-modes :on-init :patches)
-         (if (and modes (eq type :patches))
-             ($warning ":patches not supported in mode-local (%s) config"
-                       (prin1-to-string modes))
-           (let ((function-runner ($make-function-runner components)))
+    (condition-case err
+        (let* ((type (plist-get context :type))
+               (modes (plist-get context :mode-local))
+               (mode-hooks
+                (and modes
+                     (mapcar (lambda (m)
+                               (intern (concat (symbol-name m) "-hook")))
+                             modes))))
+          (pcase type
+            (:settings
+             (let ((setter ($make-setter mode-hooks components context module)))
+               (if mode-hooks
+                   (dolist (mode-hook mode-hooks) (add-hook mode-hook setter t))
+                 (funcall setter))))
+            ((or :minor-modes :on-init :patches)
+             (if (and modes (eq type :patches))
+                 ($warning module context
+                           ":patches not supported in mode-local (%s) config"
+                           (prin1-to-string modes))
+               (let ((function-runner ($make-function-runner components)))
+                 (if mode-hooks
+                     (dolist (mode-hook mode-hooks)
+                       (add-hook mode-hook function-runner t))
+                   (funcall function-runner)))))
+            (:after-init
              (if mode-hooks
-                 (dolist (mode-hook mode-hooks)
-                   (add-hook mode-hook function-runner t))
-               (funcall function-runner)))))
-        (:after-init
-         (if mode-hooks
-             ($warning ":after-init not supported in mode-local (%s) config"
-                       (prin1-to-string modes))
-           (let ((function-runner ($make-function-runner components)))
-             (add-hook 'after-init-hook function-runner t))))
-        (:on-idle
-         (if mode-hooks
-             ($warning ":on-idle not supported in mode-local (%s) config"
-                       (prin1-to-string modes))
-           (dolist (component components)
-             (if (and (numberp (car component))
-                      (consp (cdr component)))
-                 (run-with-idle-timer (car component) t
-                                      ($make-function-runner
-                                       (cdr component)))
-               ($warning "Unrecognized idle timer definition: %s"
-                         (prin1-to-string component))))))
-        (:on-interval
-         (if mode-hooks
-             ($warning ":on-interval not supported in mode-local (%s) config"
-                       (prin1-to-string modes))
-           (dolist (component components)
-             (if (and (numberp (car component))
-                      (consp (cdr component)))
-                 (run-at-time 0 (car component)
-                              ($make-function-runner
-                               (cdr component)))
-               ($warning "Unrecognized interval timer definition: %s"
-                         (prin1-to-string component))))))
-        (:on-focus-out
-         (let ((function-runner ($make-function-runner components)))
-           (if mode-hooks
-               (dolist (mode-hook mode-hooks)
-                 (add-hook mode-hook
-                           (lambda ()
-                             (add-hook 'focus-out-hook function-runner t t))))
-             (add-hook 'focus-out-hook function-runner t))))
-        (:on-before-save
-         (let ((function-runner ($make-function-runner components)))
-           (if mode-hooks
-               (dolist (mode-hook mode-hooks)
-                 (add-hook mode-hook
-                           (lambda ()
-                             (add-hook 'before-save-hook function-runner t t))))
-             (add-hook 'before-save-hook function-runner t))))
-        (_ ($warning "Unrecognized keyword: %s %s"
-                     (prin1-to-string type)
-                     (prin1-to-string components)))))))
+                 ($warning module context
+                           ":after-init not supported in mode-local (%s) config"
+                           (prin1-to-string modes))
+               (let ((function-runner ($make-function-runner components)))
+                 (add-hook 'after-init-hook function-runner t))))
+            (:on-idle
+             (if mode-hooks
+                 ($warning module context
+                           ":on-idle not supported in mode-local (%s) config"
+                           (prin1-to-string modes))
+               (dolist (component components)
+                 (if (and (numberp (car component))
+                          (consp (cdr component)))
+                     (run-with-idle-timer (car component) t
+                                          ($make-function-runner
+                                           (cdr component)))
+                   ($warning module context
+                             "Unrecognized idle timer definition: %s"
+                             (prin1-to-string component))))))
+            (:on-interval
+             (if mode-hooks
+                 ($warning module context
+                           ":on-interval not supported in mode-local (%s) config"
+                           (prin1-to-string modes))
+               (dolist (component components)
+                 (if (and (numberp (car component))
+                          (consp (cdr component)))
+                     (run-at-time 0 (car component)
+                                  ($make-function-runner
+                                   (cdr component)))
+                   ($warning module context
+                             "Unrecognized interval timer definition: %s"
+                             (prin1-to-string component))))))
+            (:on-focus-out
+             (let ((function-runner ($make-function-runner components)))
+               (if mode-hooks
+                   (dolist (mode-hook mode-hooks)
+                     (add-hook mode-hook
+                               (lambda ()
+                                 (add-hook 'focus-out-hook function-runner t t))))
+                 (add-hook 'focus-out-hook function-runner t))))
+            (:on-before-save
+             (let ((function-runner ($make-function-runner components)))
+               (if mode-hooks
+                   (dolist (mode-hook mode-hooks)
+                     (add-hook mode-hook
+                               (lambda ()
+                                 (add-hook 'before-save-hook function-runner t t))))
+                 (add-hook 'before-save-hook function-runner t))))
+            (_ ($warning module context
+                         "Unrecognized keyword: %s %s"
+                         (prin1-to-string type)
+                         (prin1-to-string components)))))
+      (error ($warning module context
+                       "Error: %s" (error-message-string err))))))
 
-(defun $install-component (component &optional context)
+(defun $install-component (component &optional context module)
   "TODO"
   (let ((cur-context (car component))
         (raw-elements (cdr component))
@@ -212,7 +230,8 @@
          ((eq context-key :require)
           (dolist (dep context-value)
             (unless (featurep dep)
-              ($warning "Feature %s not found"
+              ($warning module context
+                        "Feature %s not found"
                         (symbol-name dep))
               (setq requirements-met nil))))
          ((eq context-key :macro)
@@ -220,7 +239,8 @@
                                      $config-macros)))
             (if macro-func
                 (setq raw-elements (apply macro-func raw-elements))
-              ($warning "Macro %s not found"
+              ($warning module context
+                        "Macro %s not found"
                         (prin1-to-string (car context-value))))))
          (t
           (setq context (append (list context-key context-value)
@@ -234,27 +254,28 @@
                      (consp (car element)))
                 (keywordp (car element)))
             (progn
-              ($install-chunk (nreverse elements) context)
+              ($install-chunk (nreverse elements) context module)
               (setq elements nil)
-              ($install-component element context))
+              ($install-component element context module))
           (push element elements)))
-      ($install-chunk (nreverse elements) context)
+      ($install-chunk (nreverse elements) context module)
       (setq elements nil))))
 
 (defun $install-modules (modules)
   "TODO"
   (dolist (module modules)
-    (let ((components (gethash (symbol-name module) $modules nil)))
-      (message "Installing module %s" (prin1-to-string module))
-      (if components
-          (progn
-            (dolist (component components)
-              ($install-component component))
-            (message "Done"))
-        ($warning "No definition found for module %s" (symbol-name module))))))
+    (if (listp module)
+        ($install-modules module)
+      (let ((components (gethash (symbol-name module) $modules nil)))
+        (message "Installing module %s" (prin1-to-string module))
+        (if components
+            (progn
+              (dolist (component components)
+                ($install-component component nil module))
+              (message "Done"))
+          ($warning module nil
+                    "No definition found for module %s" (symbol-name module)))))))
 
 (provide 'tommyx-config-framework)
 
 ;;; tommyx-config-framework.el ends here
-
-

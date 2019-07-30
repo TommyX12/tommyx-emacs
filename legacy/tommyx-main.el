@@ -250,7 +250,7 @@
 ;; (defface minibuffer-background
 ;;   '((t (:inherit default)))
 ;;   "*Face used for the minibuffer."
-;;   :group 'appearence)
+;;   :group 'appearance)
 ;; (add-hook 'minibuffer-setup-hook
 ;;           (lambda ()
 ;;             (make-local-variable 'face-remapping-alist)
@@ -260,7 +260,7 @@
 (defface sidebar-background
   '((t :inherit default))
   "*Face used for the sidebar."
-  :group 'appearence)
+  :group 'appearance)
 
 ;; undo limits
 (setq undo-limit 1000000)
@@ -1158,7 +1158,7 @@ Useful for a search overview popup."
   (defface company-preview-active-face
     '((t :inherit company-preview))
     "Face used for company preview when nothing is selected."
-    :group 'appearence)
+    :group 'appearance)
 
   ;; Patch `company-preview-frontend'.
   (defun company-preview-frontend (command)

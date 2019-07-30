@@ -1,10 +1,9 @@
-;; TODO: refactor the key bindings to use more functions
-
 (require 'tommyx-packages)
 (require 'tommyx-extensions)
 (require 'general)
 (require 'evil)
 (require 'hydra)
+(require 'tommyx-config-framework)
 (require 'tommyx-key-binding-framework)
 
 (defhydra hydra-emms-control ()
@@ -2236,6 +2235,12 @@
              easy-layout-refresh
              :which-key "Refresh Active Layout")))))))
 
-(provide 'tommyx-key-bindings)
+(message "is this on")
+($define-module tommyx-key-bindings
+  '(:on-init
+    (tommyx-bind-keys)))
 
-;;; tommyx-key-bindings.el ends here
+
+(provide 'tommyx-key-binding-modules)
+
+;;; tommyx-key-binding-modules.el ends here

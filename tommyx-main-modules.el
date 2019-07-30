@@ -21,6 +21,14 @@
 
 ;;; Config definition
 
+($define-module tommyx-appearance
+  '(:on-init
+    (setup-appearance)
+    (toggle-frame-fullscreen)
+    (tool-bar-mode -1)
+    (scroll-bar-mode -1)
+    (menu-bar-mode -1)))
+
 ($define-module tommyx-main
   '(:settings
     ;; internal
@@ -503,7 +511,7 @@
     ((:require winum)
      (winum-mode 1))
 
-    ;; appearence
+    ;; appearance
     (window-divider-mode 1)
     (eager-redisplay-mode 1)
     (blink-cursor-mode -1)
@@ -593,7 +601,7 @@
     ((:require tommyx-extensions)
      ($start-emacs-server))
 
-    ;; appearence
+    ;; appearance
     (all-the-icons-ivy-setup)
     ((:require volatile-highlights undo-tree)
      ((:require tommyx-extensions)
@@ -705,7 +713,7 @@
      ((:require company-tabnine)
       ($company-tabnine-patch))
      ((:require imenu-list)
-      ($imenu-list-appearence-patch)
+      ($imenu-list-appearance-patch)
       ($imenu-list-mode-line-patch))
      ((:require all-the-icons)
       ($all-the-icons-dir-patch)))))
@@ -1307,7 +1315,9 @@
   '((:mode-local org-mode)
 
     (:settings
-     ((:macro set-indent) 2 4))
+     ((:macro set-indent) 2 4)
+     ((:require company-tabnine)
+      ('company-tabnine-auto-fallback nil)))
 
     (:minor-modes
      ((:require org-bullets)
@@ -1321,7 +1331,7 @@
     (:minor-modes
      (hl-line-mode 1))))
 
-(provide 'tommyx-modules)
+(provide 'tommyx-main-modules)
 
-;;; tommyx-modules.el ends here
+;;; tommyx-main-modules.el ends here
 
