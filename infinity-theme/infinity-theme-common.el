@@ -1024,7 +1024,7 @@
   `(term-color-yellow ((,class (:foreground ,yellow))))
 
 ;;;;; tide
-  `(tide-hl-identifier-face ((,class (:foreground ,yellow :background ,yellow-bg))))
+  `(tide-hl-identifier-face ((,class (:inherit ahs-face))))
 
 ;;;;; treemacs
   `(treemacs-git-added-face ((,class (:foreground ,green :background ,green-bg))))

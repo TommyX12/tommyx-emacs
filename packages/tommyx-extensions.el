@@ -242,6 +242,10 @@ regular expression,
                          (float-time))))
       result)))
 
+(defun $remove-vc-hooks ()
+  (remove-hook 'find-file-hooks 'vc-find-file-hook)
+  (remove-hook 'find-file-hooks 'vc-refresh-state))
+
 (defun $type-break-my-query-function (prompt)
   (yes-or-no-p
    (concat
@@ -1019,6 +1023,11 @@ If ARG is non-nil, toggle the mode."
       (add-hook 'evil-insert-state-exit-hook 'hl-insert-region-insert-exit)
       (message "hl-insert-region mode enabled."))))
 ;; (hl-insert-region-mode)
+
+(defvar python-auto-format-code t)
+(defun python-format-code ()
+  (when python-auto-format-code
+    (elpy-format-code)))
 
 (provide 'tommyx-extensions)
 
