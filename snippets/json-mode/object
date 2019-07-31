@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: object
+# key: o
+# --
+{
+  $0
+}

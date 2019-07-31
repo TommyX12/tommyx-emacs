@@ -253,6 +253,7 @@ This function uses `emms-show-format' to format the current track."
     (ivy-read "Enqueue track: " tracks
               :history 'counsel-emms-enqueue-history
               :action (lambda (item)
+                        (message "Enqueued: %s" item)
                         (counsel-emms-enqueue-item
                          tracks-buffer (emms-get-create-queue) item))
               :preselect (counsel-emms-get-current-track)

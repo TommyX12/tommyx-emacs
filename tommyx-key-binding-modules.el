@@ -448,9 +448,13 @@
 
         "<tab>" (:case
                  :states (motion normal)
-                 indent-buffer
+                 (:def
+                  indent-buffer
+                  :key-name format-buffer)
                  :states (visual)
-                 indent-region)
+                 (:def
+                  indent-region
+                  :key-name format-region))
 
         "r" (:case
              :states (motion normal)
@@ -1863,8 +1867,6 @@
       ;; Just use shift-tab itself, or C-u tab
       ;; "Z" org-shifttab ; cycle global visibility
 
-      "t" hydra-org-nav/body
-
       goto-parent-semantic-element evil-org-up-heading
       goto-child-semantic-element evil-outline-next-heading
       goto-previous-semantic-element evil-org-backward-heading-same-level
@@ -2233,7 +2235,14 @@
 
         "r" (:def
              easy-layout-refresh
-             :which-key "Refresh Active Layout")))))))
+             :which-key "Refresh Active Layout"))))))
+
+  ($bind-keys
+   `(:case
+     :keymaps (json-mode-map)
+     (:bindings
+      format-region json-pretty-print
+      format-buffer json-pretty-print-buffer))))
 
 ($define-module tommyx-key-bindings
   '(:on-init

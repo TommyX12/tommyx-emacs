@@ -195,7 +195,7 @@
     ('window-divider-default-right-width 5)
     ('window-divider-default-bottom-width 5)
     ('left-fringe-width 16)
-    ('right-fringe-width 10)
+    ('right-fringe-width 8)
     ('ring-bell-function 'ignore)
     ((:require evil)
      ('evil-insert-state-message nil)
@@ -650,6 +650,7 @@
     ((:require evil)
      ($disable-hl-line-in-insert-and-visual-mode)
      ($disable-trailing-whitespace-in-insert-mode)
+     ($disable-yascroll-in-insert-mode)
      ($set-jump-on-insert-mode))
 
     ;; key bindings
@@ -964,7 +965,12 @@
      ((:macro set-indent) 2 4)
      ((:require json-mode)
       ('json-reformat:indent-width 2)
-      ('js-indent-level 2)))))
+      ('js-indent-level 2)))
+
+    (:on-before-save
+     (with-demoted-errors "Error: %s"
+       (save-excursion
+         (json-pretty-print-buffer))))))
 
 ($define-module tommyx-html-mode
   '(:settings

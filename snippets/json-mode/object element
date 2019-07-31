@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: object element
+# key: oe
+# --
+"$1": $2

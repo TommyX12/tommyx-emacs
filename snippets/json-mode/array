@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: array
+# key: a
+# --
+[
+  $0
+]
