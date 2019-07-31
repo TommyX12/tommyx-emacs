@@ -666,6 +666,8 @@ This is used to determine the default day to show in the status window."
 
 ;;; Variables
 
+(defvar org-catalyst--first-load t
+  "If true, the next game load will recompute history.")
 (defvar org-catalyst--today-daynr nil
   "Absolute day number of today.")
 (defvar org-catalyst--state-systems (ht-create)
@@ -4586,7 +4588,7 @@ Otherwise, an item will be interactively selected."
        (ht-remove action "pardon")
      (ht-set action "pardon" 1))))
 
-(defun org-catalyst-recompute-history ()
+(defun org-catalyst-recompute-history (&optional inhibit-refresh)
   "Recompute all snapshots from the entire history."
   (interactive)
   ;; NOTE: probably update some view?
@@ -4594,7 +4596,8 @@ Otherwise, an item will be interactively selected."
   (org-catalyst--update-cached-snapshots
    (org-catalyst--get-earliest-month-day))
   (message "Recomputed Catalyst history.")
-  (when (org-catalyst--in-status-buffer)
+  (when (and (not inhibit-refresh)
+             (org-catalyst--in-status-buffer))
     (org-catalyst-status-refresh)))
 
 (defun org-catalyst-update-inline-info ()
@@ -4918,7 +4921,11 @@ Note that this invalidates config cache."
           (org-catalyst--clear-ui-state)
           (org-catalyst-mode)
           (goto-char (point-min))
-          (org-catalyst--invalidate-cache)
+          (if org-catalyst--first-load
+              (progn
+                (org-catalyst-recompute-history t)
+                (setq org-catalyst--first-load nil))
+            (org-catalyst--invalidate-cache))
           (org-catalyst--update-ui-state
            "filters" (ht-create)
            (lambda (prev)

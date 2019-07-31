@@ -180,6 +180,8 @@
       ('evil-emacs-state-modes :delete #'emms-playlist-mode)))
 
     ;; appearance
+    ((:require winum)
+     ('winum-auto-setup-mode-line nil))
     ('frame-title-format (concat "TommyX's Emacs " emacs-version))
     ('make-pointer-invisible t)
     ('blink-matching-paren t)
@@ -1276,7 +1278,8 @@
 
   '(:patches
     ((:require tommyx-patches org smartparens)
-     ($org-mode-angular-brackets-patch)))
+     ($org-mode-angular-brackets-patch)
+     ($org-mode-heading-coloring-patch)))
 
   '((:when (bound-and-true-p org-directory))
 

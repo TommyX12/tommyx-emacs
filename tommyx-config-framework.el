@@ -266,15 +266,14 @@
   (dolist (module modules)
     (if (listp module)
         ($install-modules module)
-      (let ((components (gethash (symbol-name module) $modules nil)))
+      (let ((components (gethash (symbol-name module) $modules 'not-found)))
         (message "Installing module %s" (prin1-to-string module))
-        (if components
-            (progn
-              (dolist (component components)
-                ($install-component component nil module))
-              (message "Done"))
-          ($warning module nil
-                    "No definition found for module %s" (symbol-name module)))))))
+        (if (eq components 'not-found)
+            ($warning module nil
+                      "No definition found for module %s" (symbol-name module))
+          (dolist (component components)
+            ($install-component component nil module))
+          (message "Done"))))))
 
 (provide 'tommyx-config-framework)
 

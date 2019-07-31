@@ -2235,7 +2235,6 @@
              easy-layout-refresh
              :which-key "Refresh Active Layout")))))))
 
-(message "is this on")
 ($define-module tommyx-key-bindings
   '(:on-init
     (tommyx-bind-keys)))

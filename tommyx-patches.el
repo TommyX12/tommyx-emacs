@@ -237,11 +237,11 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
     "Get face for icon.
 DEPTH is the depth of the entry in the list."
     (cl-case depth
-      (0 'org-level-5)
-      (1 'org-level-6)
-      (2 'org-level-7)
-      (3 'org-level-8)
-      (t 'org-level-8)))
+      (0 'imenu-list-entry-face-0)
+      (1 'imenu-list-entry-face-1)
+      (2 'imenu-list-entry-face-2)
+      (3 'imenu-list-entry-face-3)
+      (t 'imenu-list-entry-face-3)))
   (defun imenu-list--insert-entry (entry depth)
     "Insert a line for ENTRY with DEPTH."
     (if (imenu--subalist-p entry)
@@ -249,7 +249,9 @@ DEPTH is the depth of the entry in the list."
           (insert (imenu-list--depth-string depth))
           (insert (propertize "+ " 'font-lock-face (imenu-list--get-icon-face depth)))
           (insert-button (format "%s" (car entry))
-                         'face (imenu-list--get-face depth t)
+                         'face (if (<= depth 0)
+                                   'imenu-list-entry-subalist-face-0
+                                 'imenu-list-entry-subalist-face-1)
                          'help-echo (format "Toggle: %s"
                                             (car entry))
                          'follow-link t
@@ -260,7 +262,7 @@ DEPTH is the depth of the entry in the list."
       (insert (imenu-list--depth-string depth))
       (insert (propertize "● " 'font-lock-face (imenu-list--get-icon-face depth)))
       (insert-button (format "%s" (car entry))
-                     'face (imenu-list--get-face depth nil)
+                     'face 'imenu-list-entry-face
                      'help-echo (format "Go to: %s"
                                         (car entry))
                      'follow-link t
@@ -305,6 +307,65 @@ directory contents"
             (lambda ()
               (modify-syntax-entry ?< ".")
               (modify-syntax-entry ?> "."))))
+
+(defun $org-mode-heading-coloring-patch ()
+  (defface org-heading-text-level-1 '((t :inherit org-level-1))
+    "Face used for level 1 headline text."
+    :group 'org-faces)
+
+  (defface org-heading-text-level-2 '((t :inherit org-level-2))
+    "Face used for level 2 headline text."
+    :group 'org-faces)
+
+  (defface org-heading-text-level-3 '((t :inherit org-level-3))
+    "Face used for level 3 headline text."
+    :group 'org-faces)
+
+  (defface org-heading-text-level-4 '((t :inherit org-level-4))
+    "Face used for level 4 headline text."
+    :group 'org-faces)
+
+  (defface org-heading-text-level-5 '((t :inherit org-level-5))
+    "Face used for level 5 headline text."
+    :group 'org-faces)
+
+  (defface org-heading-text-level-6 '((t :inherit org-level-6))
+    "Face used for level 6 headline text."
+    :group 'org-faces)
+
+  (defface org-heading-text-level-7 '((t :inherit org-level-7))
+    "Face used for level 7 headline text."
+    :group 'org-faces)
+
+  (defface org-heading-text-level-8 '((t :inherit org-level-8))
+    "Face used for level 8 headline text."
+    :group 'org-faces)
+
+  (defconst org-level-heading-text-faces
+    '(org-heading-text-level-1
+      org-heading-text-level-2
+      org-heading-text-level-3
+      org-heading-text-level-4
+      org-heading-text-level-5
+      org-heading-text-level-6
+      org-heading-text-level-7
+      org-heading-text-level-8))
+
+  (defconst org-n-level-heading-text-faces
+    (length org-level-heading-text-faces))
+
+  (defun org-get-level-face (n)
+    "Get the right face for match N in font-lock matching of headlines."
+    (setq org-l (- (match-end 2) (match-beginning 1) 1))
+    (when org-odd-levels-only (setq org-l (1+ (/ org-l 2))))
+    (if org-cycle-level-faces
+        (setq org-f (nth (% (1- org-l) org-n-level-faces) org-level-faces))
+      (setq org-f (nth (1- (min org-l org-n-level-faces)) org-level-faces)))
+    (cond
+     ((eq n 1) (if org-hide-leading-stars 'org-hide org-f))
+     ((eq n 2) org-f)
+     (t (nth (1- (min org-l org-n-level-heading-text-faces))
+             org-level-heading-text-faces)))))
 
 (provide 'tommyx-patches)
 
