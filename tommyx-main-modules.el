@@ -651,6 +651,7 @@
      ($disable-hl-line-in-insert-and-visual-mode)
      ($disable-trailing-whitespace-in-insert-mode)
      ($disable-yascroll-in-insert-mode)
+     ($defer-hl-indentation-in-insert-mode)
      ($set-jump-on-insert-mode))
 
     ;; key bindings

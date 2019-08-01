@@ -289,6 +289,14 @@ regular expression,
                         (get-random-element
                          type-break-health-quotes))))))
 
+(defun $defer-hl-indentation-in-insert-mode ()
+  (add-hook 'evil-insert-state-entry-hook
+            (lambda ()
+              (setq highlight-indentation--defer-redraw t)))
+  (add-hook 'evil-insert-state-exit-hook
+            (lambda ()
+              (setq highlight-indentation--defer-redraw nil))))
+
 (defun $disable-hl-line-in-insert-and-visual-mode ()
   (defvar-local $hl-line-prev-state nil)
   (dolist (state '("insert" "visual"))
