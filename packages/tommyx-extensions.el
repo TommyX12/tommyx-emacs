@@ -814,11 +814,20 @@ Useful for a search overview popup."
 (evil-define-motion swiper-movement () :type exclusive :repeat nil :jump t
   (swiper))
 
-(evil-define-command evil-noh-blink () :repeat nil (interactive)
+(evil-define-command evil-noh-blink () :repeat nil
   (evil-ex-nohighlight) (beacon-blink))
 
 (evil-define-command evil-comfortable-recenter () :repeat nil
   (recenter-top-bottom (/ (* (window-total-height) 2) 7)))
+
+(evil-define-command evil-delete-backward-line ()
+  (let ((first-non-blank (save-excursion (back-to-indentation)
+                                         (point))))
+    (if (<= (point) first-non-blank)
+        (delete-region (line-beginning-position)
+                       (point))
+      (delete-region first-non-blank
+                     (point)))))
 
 (defun change-theme (theme)
   "Change to a new theme."

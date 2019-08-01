@@ -1167,7 +1167,11 @@
                 ;; JV to use counsel yank-pop
                 "V" (lambda () (interactive)
                       (call-with-command-hooks
-                       'counsel-yank-pop "JV"))))
+                       'counsel-yank-pop "JV"))
+                ;; JH to delete line
+                "H" (lambda () (interactive)
+                      (call-with-command-hooks
+                       'evil-delete-backward-line "JH"))))
 
              (evil-define-command insert-mode-J-mapping () :repeat nil
                (interactive)
@@ -1329,6 +1333,19 @@
      :keymaps (minibuffer-local-map evil-ex-completion-map)
      (:bindings
 
+      "j" ,(general-key-dispatch 'self-insert-command
+             :timeout tommyx-key-chord-timeout
+             "j" 'self-insert-command
+             ;; "l" 'ivy-done
+             "k" 'minibuffer-keyboard-quit
+             "v" 'yank
+             "h" 'ivy-backward-kill-word
+             "p" 'completion-at-point)
+      "J" ,(general-key-dispatch 'self-insert-command
+             :timeout tommyx-key-chord-timeout
+             "J" 'self-insert-command
+             "H" 'delete-minibuffer-contents)
+
       previous-item ,(lambda () (interactive)
                        (previous-line-or-history-element)
                        (end-of-line))
@@ -1464,7 +1481,11 @@
              "k" 'minibuffer-keyboard-quit
              "v" 'yank
              "h" 'ivy-backward-kill-word
-             "p" 'ivy-partial))
+             "p" 'ivy-partial)
+      "J" ,(general-key-dispatch 'self-insert-command
+             :timeout tommyx-key-chord-timeout
+             "J" 'self-insert-command
+             "H" 'delete-minibuffer-contents))
 
      :keymaps (ivy-occur-grep-mode-map ivy-occur-mode-map)
      (:bindings
