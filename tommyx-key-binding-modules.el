@@ -1453,7 +1453,7 @@
 
   ($bind-keys
    `(:case
-     :keymaps (swiper-map ivy-minibuffer-map counsel-imenu-map)
+     :keymaps (swiper-map ivy-minibuffer-map ivy-switch-buffer-map counsel-imenu-map)
      (:bindings
 
       next-item ivy-next-line
