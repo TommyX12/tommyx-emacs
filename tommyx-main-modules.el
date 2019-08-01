@@ -969,8 +969,9 @@
 
     (:on-before-save
      (with-demoted-errors "Error: %s"
-       (save-excursion
-         (json-pretty-print-buffer))))))
+       (let ((pos (point)))
+         (json-pretty-print-buffer)
+         (goto-char pos))))))
 
 ($define-module tommyx-html-mode
   '(:settings
@@ -1184,6 +1185,7 @@
      ('org-startup-indented t)
      ('org-startup-folded nil)
      ('org-log-done 'time)
+     ('org-log-into-drawer t)
      ('org-clock-into-drawer t)
      ('org-list-allow-alphabetical t)
      ('org-tags-column 0)

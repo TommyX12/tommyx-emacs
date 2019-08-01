@@ -756,7 +756,7 @@
                :which-key "Search In Directory")
         "C-S-d" (:def
                  ,(lambda () (interactive)
-                    (counsel-rg (selection-or-word-at-point)))
+                    (counsel-rg (selection-or-word-at-point t)))
                  :which-key "Search Cursor In Directory")
         "d" (:def
              counsel-projectile-rg
@@ -1777,6 +1777,9 @@
        "O" (:def
             org-clock-cancel
             :which-key "Org Clock Cancel")
+       "M-l" (:def
+              org-insert-last-stored-link
+              :which-key "Org Insert Last Link")
        "l" (:def
             org-insert-link-global
             :which-key "Insert Org Link")
@@ -1979,6 +1982,9 @@
         "l" (:def
              org-insert-link ; also allow editing link
              :which-key "Org Insert Link")
+        "M-l" (:def
+               org-insert-last-stored-link
+               :which-key "Org Insert Last Link")
         "L" (:def
              org-store-link
              :which-key "Org Store Link")

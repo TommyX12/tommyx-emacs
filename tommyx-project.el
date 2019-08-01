@@ -13,7 +13,7 @@
 (setq projectile-globally-ignored-directories (append '("node_modules" "dist" "bin" "build") projectile-globally-ignored-directories))
 
 ;; TODO: temporary bug fix
-(setq projectile-project-compilation-cmd "")
+;; (setq projectile-project-compilation-cmd "")
 
 ;; helper functions
 (defun project/project-relative-name ()
@@ -60,8 +60,9 @@
           persp-rename
           :which-key "Rename Workspace")
      "d" (:def
-          persp-kill
-          :which-key "Delete Workspace")
+          ;; persp-kill
+          projectile-edit-dir-locals
+          :which-key "Edit dir-locals Config")
      "R" (:def
           projectile-invalidate-cache
           :which-key "Re-index Project Files")
