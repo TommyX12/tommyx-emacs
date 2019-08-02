@@ -213,7 +213,8 @@
      ('beacon-color "#2499ff"))
     ((:require highlight-indentation)
      ('highlight-indentation-blank-lines t)
-     ('highlight-indentation-offset 4))
+     ('highlight-indentation-offset 4)
+     ('highlight-indentation--defer-redraw t))
     ((:require evil-goggles)
      ('evil-goggles-pulse nil)
      ('evil-goggles-duration 1)
@@ -651,7 +652,7 @@
      ($disable-hl-line-in-insert-and-visual-mode)
      ($disable-trailing-whitespace-in-insert-mode)
      ($disable-yascroll-in-insert-mode)
-     ($defer-hl-indentation-in-insert-mode)
+     ;; ($defer-hl-indentation-in-insert-mode)
      ($set-jump-on-insert-mode))
 
     ;; key bindings
