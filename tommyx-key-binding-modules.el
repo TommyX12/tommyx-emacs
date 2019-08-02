@@ -361,6 +361,10 @@
         :which-key "Shortcuts"
         :key-name shortcuts-prefix
 
+        "e" (:def
+             sp-rewrap-sexp
+             :which-key "Re-wrap parens")
+
         ;; join lines
         "j" evil-join
 
