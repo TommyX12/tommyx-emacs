@@ -1776,8 +1776,14 @@
             helm-org-rifle-org-directory
             :which-key "Helm Org Rifle")
        "f" (:def
+            counsel-find-org-files
+            :which-key "Org Goto File")
+       "d" (:def
+            counsel-org-rg
+            :which-key "Org Search")
+       "F" (:def
             counsel-org-goto-all ; go to heading of opened org files
-            :which-key "Org Goto All")
+            :which-key "Org Goto Opened Heading")
        "r" (:def
             ,(lambda () (interactive) (org-refile '(4)))
             :which-key "Org Goto Refile Targets")

@@ -1088,6 +1088,20 @@ If ARG is non-nil, toggle the mode."
   (when python-auto-format-code
     (elpy-format-code)))
 
+(defun counsel-find-org-files ()
+  (interactive)
+  (unless org-directory
+    (error "org-directory is nil"))
+  (counsel-projectile-switch-project-action
+   org-directory))
+
+(defun counsel-org-rg ()
+  (interactive)
+  (unless org-directory
+    (error "org-directory is nil"))
+  (counsel-projectile-switch-project-action-rg
+   org-directory))
+
 (provide 'tommyx-extensions)
 
 ;;; tommyx-extensions.el ends here

@@ -120,8 +120,10 @@
       '(counsel-find-file
         counsel-file-jump
         counsel-recentf
+        counsel-projectile
         counsel-projectile-find-file
-        counsel-projectile-find-dir)))
+        counsel-projectile-find-dir
+        counsel-git)))
     ((:require ivy-rich)
      ('ivy-rich-display-transformers-list
       '(counsel-M-x

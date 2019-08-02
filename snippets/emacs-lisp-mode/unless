@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: unless
+# key: u
+# --
+(unless $0)
