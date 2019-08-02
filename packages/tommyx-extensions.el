@@ -789,7 +789,7 @@ Useful for a search overview popup."
   (save-excursion
     (indent-region (point-min) (point-max) nil)))
 
-(defun selection-or-word-at-point (&optional no-symbol)
+(defun selection-or-word-at-point (&optional rg-symbol)
   (cond
    ;; If there is selection use it
    ((and transient-mark-mode
@@ -805,11 +805,11 @@ Useful for a search overview popup."
       (when (not (looking-at "\\sw"))
         (while (and (> (point) (point-min)) (= (char-before) ? ))
           (backward-char)))
-      (if no-symbol
-          (word-at-point)
-        (format "\\<%s\\>"
-                (or (word-at-point)
-                    "")))))))
+      (format (if rg-symbol
+                  "\\b%s\\b"
+                "\\<%s\\>")
+              (or (word-at-point)
+                  ""))))))
 
 (evil-define-motion swiper-movement () :type exclusive :repeat nil :jump t
   (swiper))
@@ -1111,7 +1111,7 @@ If ARG is non-nil, toggle the mode."
   (unless org-directory
     (error "org-directory is nil"))
   (let ((counsel-projectile-rg-initial-input
-         (concat "-g*.org -- " counsel-org-rg-initial-input)))
+         (concat "-g '*.org' -- " counsel-org-rg-initial-input)))
     (counsel-projectile-switch-project-action-rg
      org-directory)))
 

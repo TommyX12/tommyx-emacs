@@ -756,14 +756,18 @@
              ,(lambda () (interactive) (call-interactively 'imenu))
              :which-key "Semantic Item Tree")
         "C-d" (:def
-               counsel-rg
+               ,(lambda () (interactive)
+                  (counsel-rg "\\b"))
                :which-key "Search In Directory")
         "C-S-d" (:def
                  ,(lambda () (interactive)
                     (counsel-rg (selection-or-word-at-point t)))
                  :which-key "Search Cursor In Directory")
         "d" (:def
-             counsel-projectile-rg
+             ,(lambda () (interactive)
+                (let ((counsel-projectile-rg-initial-input
+                       "\\b"))
+                  (counsel-projectile-rg)))
              :which-key "Search In Project")
         "D" (:def
              ,(lambda () (interactive)
@@ -1779,7 +1783,9 @@
             counsel-find-org-files
             :which-key "Org Goto File")
        "d" (:def
-            counsel-org-rg
+            ,(lambda () (interactive)
+               (let ((counsel-org-rg-initial-input "\\b"))
+                 (counsel-org-rg)))
             :which-key "Org Search")
        "D" (:def
             ,(lambda () (interactive)
