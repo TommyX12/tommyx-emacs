@@ -1476,7 +1476,7 @@
       "M-N" ivy-dispatching-call
       "M-h" ivy-backward-kill-word
       "M-o" ivy-occur ; save to temp buffer for manipulation
-      "<tab>" ivy-posframe-avy
+      "<tab>" $ivy-avy
 
       "j" ,(general-key-dispatch 'self-insert-command
              :timeout tommyx-key-chord-timeout
@@ -1523,7 +1523,7 @@
      (:bindings
 
       "M-s" swiper-query-replace
-      "<tab>" ivy-posframe-swiper-avy)))
+      "<tab>" $ivy-avy)))
 
   ($bind-keys
    `(:case
@@ -1781,6 +1781,12 @@
        "d" (:def
             counsel-org-rg
             :which-key "Org Search")
+       "D" (:def
+            ,(lambda () (interactive)
+               (let ((counsel-org-rg-initial-input
+                      (selection-or-word-at-point t)))
+                 (counsel-org-rg)))
+            :which-key "Org Search Cursor")
        "F" (:def
             counsel-org-goto-all ; go to heading of opened org files
             :which-key "Org Goto Opened Heading")

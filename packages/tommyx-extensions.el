@@ -1088,19 +1088,38 @@ If ARG is non-nil, toggle the mode."
   (when python-auto-format-code
     (elpy-format-code)))
 
+(defun counsel--find-org-files-matcher (regexp candidates)
+  (seq-filter
+   (lambda (x)
+     (string-match-p "\\.org$" x))
+   (counsel--find-file-matcher regexp candidates)))
+
 (defun counsel-find-org-files ()
   (interactive)
+  ;; TODO make possible to search for org files only
   (unless org-directory
     (error "org-directory is nil"))
-  (counsel-projectile-switch-project-action
-   org-directory))
+  (let ((counsel-projectile-find-file-matcher
+         #'counsel--find-org-files-matcher))
+    (counsel-projectile-switch-project-action
+     org-directory)))
+
+(defvar counsel-org-rg-initial-input "")
 
 (defun counsel-org-rg ()
   (interactive)
   (unless org-directory
     (error "org-directory is nil"))
-  (counsel-projectile-switch-project-action-rg
-   org-directory))
+  (let ((counsel-projectile-rg-initial-input
+         (concat "-g*.org -- " counsel-org-rg-initial-input)))
+    (counsel-projectile-switch-project-action-rg
+     org-directory)))
+
+(defun $ivy-avy ()
+  (interactive)
+  (if (bound-and-true-p ivy-posframe--display-p)
+      (ivy-posframe-avy)
+    (ivy-avy)))
 
 (provide 'tommyx-extensions)
 
