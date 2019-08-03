@@ -304,6 +304,7 @@ Companion buffer is BUFFER."
 
 (defun companion-compile ()
   "Compile the companion spaceline segments."
+  (interactive)
   (let ((powerline-default-separator 'bar)
         (spaceline-separator-dir-left '(left . left))
         (spaceline-separator-dir-right '(right . right)))

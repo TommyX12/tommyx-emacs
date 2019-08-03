@@ -46,6 +46,8 @@
         'tommyx-typescript-mode
         'tommyx-term-mode
         'tommyx-compilation-mode
+        'tommyx-help-mode
+        'tommyx-message-mode
         'tommyx-org-mode))
 
 (defconst tommyx-key-binding-modules-list

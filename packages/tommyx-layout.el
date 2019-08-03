@@ -38,6 +38,11 @@
 (defvar easy-layout-active-layout-config nil)
 (defvar easy-layout-active-wset nil)
 
+(defmacro easy-layout-constructor (&rest body)
+  `(lambda (buffer-name)
+     (with-current-buffer (get-buffer-create buffer-name)
+       ,@body)))
+
 (defconst easy-layout-view-configs
   (eon 'terminal
        (eon :buffer-name "*terminal*"
@@ -63,9 +68,8 @@
        'compilation
        (eon :buffer-name "*compilation*"
             :constructor
-            (lambda (buffer-name)
-              (with-current-buffer (get-buffer-create buffer-name)
-                (compilation-mode))))
+            (easy-layout-constructor
+             (compilation-mode)))
        'outline
        (eon :buffer-name "*Outline*"
             :constructor
@@ -77,16 +81,19 @@
        (eon :buffer-name nil)
        'help
        (eon :buffer-name "*Help*"
-            :constructor #'get-buffer-create)
+            :constructor
+            (easy-layout-constructor
+             (help-mode)))
        'elisp-scratch
        (eon :buffer-name "*scratch*"
             :constructor
-            (lambda (buffer-name)
-              (with-current-buffer (get-buffer-create buffer-name)
-                (lisp-interaction-mode))))
+            (easy-layout-constructor
+             (lisp-interaction-mode)))
        'messages
        (eon :buffer-name "*Messages*"
-            :constructor #'get-buffer-create)))
+            :constructor
+            (easy-layout-constructor
+             (message-mode)))))
 
 (defconst easy-layout-layout-configs
   (eon 'ide

@@ -64,10 +64,11 @@
   (primary+4     (if (eq theme 'dark) (if (has-true-color) "#bcdfff" "#268bd2") (if (has-true-color) "#1c48ad" "#268bd2")))
 
   (secondary-4   (if (eq theme 'dark) (if (has-true-color) "#1C1D21" "#268bd2") (if (has-true-color) "#eeeeee" "#268bd2")))
-  (secondary-4x  (if (eq theme 'dark) (if (has-true-color) "#242C38" "#268bd2") (if (has-true-color) "#DEDEDE" "#268bd2")))
+  (secondary-41  (if (eq theme 'dark) (if (has-true-color) "#242C38" "#268bd2") (if (has-true-color) "#DEDEDE" "#268bd2")))
+  (secondary-42  (if (eq theme 'dark) (if (has-true-color) "#344052" "#268bd2") (if (has-true-color) "#D8D8D8" "#268bd2")))
   ;; (secondary-4   (if (eq theme 'dark) (if (has-true-color) "#212121" "#268bd2") (if (has-true-color) "#eeeeee" "#268bd2")))
   ;; (secondary-3   (if (eq theme 'dark) (if (has-true-color) "#424242" "#268bd2") (if (has-true-color) "#d0d0d0" "#268bd2")))
-  (secondary-3   (if (eq theme 'dark) (if (has-true-color) "#3A3D45" "#268bd2") (if (has-true-color) "#d0d0d0" "#268bd2")))
+  (secondary-3   (if (eq theme 'dark) (if (has-true-color) "#363a41" "#268bd2") (if (has-true-color) "#d0d0d0" "#268bd2")))
   (secondary-2   (if (eq theme 'dark) (if (has-true-color) "#565B66" "#268bd2") (if (has-true-color) "#bbbbbb" "#268bd2")))
   (secondary-1   (if (eq theme 'dark) (if (has-true-color) "#757575" "#268bd2") (if (has-true-color) "#aaaaaa" "#268bd2")))
   (secondary     (if (eq theme 'dark) (if (has-true-color) "#999999" "#268bd2") (if (has-true-color) "#999999" "#268bd2")))
@@ -80,20 +81,21 @@
   (dark          (if (eq theme 'dark) (if (has-true-color) "#111111" "#b2b2b2") (if (has-true-color) "#111111" "#5f5f87")))
   (act1          (if (eq theme 'dark) (if (has-true-color) "#222226" "#121212") (if (has-true-color) "#e7e7e7" "#d7dfff")))
   (act2          (if (eq theme 'dark) (if (has-true-color) "#1c48ad" "#444444") (if (has-true-color) "#bcdfff" "#afafd7")))
-  (base          (if (eq theme 'dark) (if (has-true-color) "#b8b8b8" "#b2b2b2") (if (has-true-color) "#555555" "#5f5f87")))
-  (base-dim      (if (eq theme 'dark) (if (has-true-color) "#686868" "#585858") (if (has-true-color) "#9a9a9a" "#afafd7")))
+  (base          (if (eq theme 'dark) (if (has-true-color) "#C0C5CC" "#b2b2b2") (if (has-true-color) "#555555" "#5f5f87")))
+  (base-dim      (if (eq theme 'dark) (if (has-true-color) "#616A73" "#585858") (if (has-true-color) "#9a9a9a" "#afafd7")))
   (bg1           (if (eq theme 'dark) (if (has-true-color) "#282c34" "#262626") (if (has-true-color) "#f4f4f4" "#ffffff")))
 	;; (bg1           (if (eq theme 'dark) (if (has-true-color) "#2B2C30" "#262626") (if (has-true-color) "#f4f4f4" "#ffffff")))
-  (bg11          (if (eq theme 'dark) (if (has-true-color) "#303136" "#262626") (if (has-true-color) "#EBEBEB" "#ffffff")))
-  (bg12          (if (eq theme 'dark) (if (has-true-color) "#35363B" "#262626") (if (has-true-color) "#E0E0E0" "#ffffff")))
-  (bg12b         (if (eq theme 'dark) (if (has-true-color) "#2f3948" "#262626") (if (has-true-color) "#d2E2Eb" "#ffffff")))
+  (bg11          (if (eq theme 'dark) (if (has-true-color) "#31343D" "#262626") (if (has-true-color) "#EBEBEB" "#ffffff")))
+  (bg12          (if (eq theme 'dark) (if (has-true-color) "#34373D" "#262626") (if (has-true-color) "#E0E0E0" "#ffffff")))
+  (bg12b         (if (eq theme 'dark) (if (has-true-color) "#2D3848" "#262626") (if (has-true-color) "#d2E2Eb" "#ffffff")))
   (bg13          (if (eq theme 'dark) (if (has-true-color) "#1B1C1F" "#262626") (if (has-true-color) "#D4D4D4" "#ffffff")))
   (bg14          (if (eq theme 'dark) (if (has-true-color) "#404147" "#262626") (if (has-true-color) "#C7C7C7" "#ffffff")))
   (bg15          (if (eq theme 'dark) (if (has-true-color) "#333540" "#262626") (if (has-true-color) "#C7C7C7" "#ffffff")))
-  (bg2           (if (eq theme 'dark) (if (has-true-color) "#222329" "#1c1c1c") (if (has-true-color) "#e9e9e9" "#e4e4e4")))
+  (bg2           (if (eq theme 'dark) (if (has-true-color) "#212329" "#1c1c1c") (if (has-true-color) "#e9e9e9" "#e4e4e4")))
   (bg3           (if (eq theme 'dark) (if (has-true-color) "#0a1014" "#121212") (if (has-true-color) "#dedede" "#d0d0d0")))
   (bg4           (if (eq theme 'dark) (if (has-true-color) "#080a14" "#080808") (if (has-true-color) "#dadada" "#bcbcbc")))
-  (border        (if (eq theme 'dark) (if (has-true-color) "#555555" "#111111") (if (has-true-color) "#aaaaaa" "#b3b9be")))
+  (border        (if (eq theme 'dark) (if (has-true-color) "#565C66" "#111111") (if (has-true-color) "#aaaaaa" "#b3b9be")))
+  (border-dim    (if (eq theme 'dark) (if (has-true-color) "#434A54" "#111111") (if (has-true-color) "#aaaaaa" "#b3b9be")))
   (back-border   (if (eq theme 'dark) (if (has-true-color) "#1C1E24" "#121212") (if (has-true-color) "#dedede" "#d0d0d0")))
   (back-border2  (if (eq theme 'dark) (if (has-true-color) "#20232A" "#121212") (if (has-true-color) "#E6E6E6" "#d0d0d0")))
   (border-shadow (if (eq theme 'dark) (if (has-true-color) "#060606" "#111111") (if (has-true-color) "#555555" "#b3b9be")))
@@ -109,7 +111,7 @@
   (emacs         (if (eq theme 'dark) (if (has-true-color) "#a45bad" "#d75fd7") (if (has-true-color) "#4e3163" "#8700af")))
   (comment       (if (eq theme 'dark) (if (has-true-color) "#2aa1ae" "#008787") (if (has-true-color) "#2aa1ae" "#008787")))
   (comment-light (if (eq theme 'dark) (if (has-true-color) "#2aa1ae" "#008787") (if (has-true-color) "#a49da5" "#008787")))
-  (comment-bg    (if (eq theme 'dark) (if (has-true-color) "#313036" "#262626") (if (has-true-color) "#ebf2eb" "#ffffff")))
+  (comment-bg    (if (eq theme 'dark) (if (has-true-color) "#31373B" "#262626") (if (has-true-color) "#ebf2eb" "#ffffff")))
   (comp          (if (eq theme 'dark) (if (has-true-color) "#67b11d" "#d75fd7") (if (has-true-color) "#5faf00" "#8700af")))
   (err           (if (eq theme 'dark) (if (has-true-color) "#E03B38" "#e0211d") (if (has-true-color) "#E03B38" "#e0211d")))
   (func          (if (eq theme 'dark) (if (has-true-color) "#248bf2" "#d75fd7") (if (has-true-color) "#2067cc" "#8700af")))
@@ -158,7 +160,7 @@
   (green         (if (eq theme 'dark) (if (has-true-color) "#67b11d" "#67b11d") (if (has-true-color) "#67b11d" "#5faf00")))
   (green-bg      (if (eq theme 'dark) (if (has-true-color) "#293235" "#262626") (if (has-true-color) "#edf2e9" "#ffffff")))
   (green-bg-s    (if (eq theme 'dark) (if (has-true-color) "#29422d" "#262626") (if (has-true-color) "#dae6d0" "#ffffff")))
-  (green-bg-s2   (if (eq theme 'dark) (if (has-true-color) "#40804A" "#262626") (if (has-true-color) "#6F994D" "#ffffff")))
+  (green-bg-s2   (if (eq theme 'dark) (if (has-true-color) "#33663B" "#262626") (if (has-true-color) "#94CC67" "#ffffff")))
   (cyan          (if (eq theme 'dark) (if (has-true-color) "#28def0" "#00ffff") (if (has-true-color) "#21b8c7" "#008080")))
   (red           (if (eq theme 'dark) (if (has-true-color) "#f2241f" "#d70000") (if (has-true-color) "#f2241f" "#d70008")))
   (red-bg        (if (eq theme 'dark) (if (has-true-color) "#3c2a2c" "#262626") (if (has-true-color) "#faede4" "#ffffff")))
@@ -167,7 +169,7 @@
   (blue          (if (eq theme 'dark) (if (has-true-color) "#4f97d7" "#268bd2") (if (has-true-color) "#3a81c3" "#268bd2")))
   (blue-bg       (if (eq theme 'dark) (if (has-true-color) "#293239" "#262626") (if (has-true-color) "#edf1ed" "#d7d7ff")))
   (blue-bg-s     (if (eq theme 'dark) (if (has-true-color) "#2d4252" "#262626") (if (has-true-color) "#d1dcdf" "#d7d7ff")))
-  (blue-bg-s2    (if (eq theme 'dark) (if (has-true-color) "#406075" "#262626") (if (has-true-color) "#5C8299" "#d7d7ff")))
+  (blue-bg-s2    (if (eq theme 'dark) (if (has-true-color) "#406075" "#262626") (if (has-true-color) "#7BA4CC" "#d7d7ff")))
   (magenta       (if (eq theme 'dark) (if (has-true-color) "#a31db1" "#af00df") (if (has-true-color) "#a31db1" "#800080")))
   (yellow        (if (eq theme 'dark) (if (has-true-color) "#b1951d" "#875f00") (if (has-true-color) "#b1951d" "#875f00")))
   (yellow-bg     (if (eq theme 'dark) (if (has-true-color) "#32322c" "#262626") (if (has-true-color) "#f6f1e1" "#ffffff")))
@@ -272,9 +274,9 @@
   `(aw-leading-char-face ((,class (:foreground ,func :weight bold :height 2.0 :box (:line-width 1 :color ,keyword :style released-button)))))
 
 ;;;;; ahs
-  `(ahs-face ((,class (:background ,blue-bg-s :underline (:color ,blue :style line)))))
+  `(ahs-face ((,class (:background ,blue-bg-s2 :underline (:color ,blue :style line)))))
   `(ahs-plugin-defalt-face ((,class (:background ,blue-bg :underline (:color ,cyan :style line)))))
-  `(ahs-definition-face ((,class (:background ,green-bg-s :underline (:color ,green :style line)))))
+  `(ahs-definition-face ((,class (:background ,green-bg-s2 :underline (:color ,green :style line)))))
   `(ahs-plugin-whole-buffer-face ((,class (:background ,mat :foreground ,bg1))))
 
 ;;;;; all the icons
@@ -355,8 +357,8 @@
   `(cider-traced-face ((,class :box (:color ,cyan :line-width -1 :style nil))))
 
 ;;;;; companion
-  `(companion-face ((,class (:inherit default))))
-  `(companion-secondary ((,class (:inherit default))))
+  `(companion-face ((,class (:inherit default :background ,back-border2))))
+  `(companion-secondary ((,class (:inherit default :background ,back-border2))))
   `(companion-notif-icon-info ((,class (:foreground ,suc :inherit companion-face))))
   `(companion-notif-icon-warn ((,class (:foreground ,err :inherit companion-face))))
 
@@ -564,9 +566,9 @@
   `(jabber-roster-user-xa ((,class (:foreground ,aqua))))
 
 ;;;;; git-gutter
-   `(git-gutter:added ((,class (:foreground ,green :background ,green-bg-s2))))
-   `(git-gutter:deleted ((,class (:foreground ,red :background ,red-bg-s2))))
-   `(git-gutter:modified ((,class (:foreground ,blue :background ,blue-bg-s2))))
+   `(git-gutter:added ((,class (:foreground ,green :background nil))))
+   `(git-gutter:deleted ((,class (:foreground ,red :background nil))))
+   `(git-gutter:modified ((,class (:foreground ,blue :background nil))))
 
 ;;;;; git-gutter-fr
   `(git-gutter-fr:added ((,class (:foreground ,green :inherit bold))))
@@ -675,10 +677,10 @@
   `(imenu-list-entry-face-1 ((,class (:foreground ,head2))))
   `(imenu-list-entry-face-2 ((,class (:foreground ,head3))))
   `(imenu-list-entry-face-3 ((,class (:foreground ,head4))))
-  `(imenu-list-entry-subalist-face-0 ((,class (:inherit bold :foreground ,head2 :box (:line-width 3 :color ,bg1)))))
-  `(imenu-list-entry-subalist-face-1 ((,class (:inherit bold :foreground ,head1 :box (:line-width 3 :color ,bg1)))))
-  `(imenu-list-entry-subalist-face-2 ((,class (:inherit (org-level-5 bold) :box (:line-width 3 :color ,bg1)))))
-  `(imenu-list-entry-subalist-face-3 ((,class (:inherit (org-level-5 bold) :box (:line-width 3 :color ,bg1)))))
+  `(imenu-list-entry-subalist-face-0 ((,class (:inherit bold :foreground ,head2 :box (:line-width 3 :color ,back-border2)))))
+  `(imenu-list-entry-subalist-face-1 ((,class (:inherit bold :foreground ,head1 :box (:line-width 3 :color ,back-border2)))))
+  `(imenu-list-entry-subalist-face-2 ((,class (:inherit (org-level-5 bold) :box (:line-width 3 :color ,back-border2)))))
+  `(imenu-list-entry-subalist-face-3 ((,class (:inherit (org-level-5 bold) :box (:line-width 3 :color ,back-border2)))))
 
 ;;;;; info
   `(info-header-xref ((,class (:foreground ,func :underline t))))
@@ -798,9 +800,11 @@
   `(markdown-table-face ((,class (:foreground ,base :background ,head1-bg))))
 
 ;;;;; mode-line
-  `(mode-line           ((,class (:foreground ,base :background ,secondary-4x :box (:color ,border :line-width 1 :style ,(if (eq theme 'dark) 'released-button nil))))))
+  `(mode-line           ((,class (:foreground ,base :background ,secondary-41 :box (:color ,border-dim :line-width 1 :style nil)))))
+  `(mode-line-inactive  ((,class (:foreground ,base :background ,secondary-4 :box (:color ,border-dim :line-width 1 :style nil)))))
+  ;; `(mode-line           ((,class (:foreground ,base :background ,secondary-41 :box (:color ,border :line-width 1 :style ,(if (eq theme 'dark) 'released-button nil))))))
+  ;; `(mode-line-inactive  ((,class (:foreground ,base :background ,secondary-4 :box (:color ,border :line-width 1 :style ,(if (eq theme 'dark) 'released-button nil))))))
   `(mode-line-buffer-id ((,class (:foreground ,func :inherit bold))))
-  `(mode-line-inactive  ((,class (:foreground ,base :background ,secondary-4 :box (:color ,border :line-width 1 :style ,(if (eq theme 'dark) 'released-button nil))))))
 
 ;;;;; mu4e
   `(mu4e-attach-number-face ((,class (:foreground ,var))))
@@ -958,8 +962,8 @@
 
 ;;;;; powerline
   `(powerline-active1 ((,class (:background ,primary-4 :foreground ,base))))
-  `(powerline-active2 ((,class (:background ,secondary-3 :foreground ,base))))
-  `(powerline-inactive1 ((,class (:background ,secondary-3 :foreground ,base))))
+  `(powerline-active2 ((,class (:background ,secondary-4 :foreground ,base))))
+  `(powerline-inactive1 ((,class (:background ,secondary-42 :foreground ,base))))
   `(powerline-inactive2 ((,class (:background ,secondary-4 :foreground ,base))))
 
 ;;;;; rainbow-delimiters
@@ -1030,7 +1034,7 @@
   `(tabbar-unselected ((,class (:inherit tabbar-default :background ,bg1 :slant italic :weight light))))
 
 ;;;;; term
-  `(term ((,class (:foreground ,base :background ,bg1))))
+  `(term ((,class (:foreground ,base :background ,back-border2))))
   `(term-color-black ((,class (:foreground ,bg4))))
   `(term-color-blue ((,class (:foreground ,keyword))))
   `(term-color-cyan ((,class (:foreground ,cyan))))
@@ -1095,7 +1099,8 @@
   `(whitespace-trailing ((,class (:background ,err :foreground ,war))))
 
 ;;;;; window-divider
-  `(window-divider ((,class (:background ,back-border :foreground ,back-border))))
+  ;; `(window-divider ((,class (:background ,back-border :foreground ,back-border))))
+  `(window-divider ((,class (:background ,border-dim :foreground ,border-dim))))
   `(window-divider-first-pixel ((,class (:background ,back-border :foreground ,back-border))))
   `(window-divider-last-pixel ((,class (:background ,back-border :foreground ,back-border))))
 

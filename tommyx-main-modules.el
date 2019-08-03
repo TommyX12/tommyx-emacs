@@ -12,7 +12,9 @@
      ('highlight-indentation-offset ,(or highlight-width width)))))
 
 ($define-settings-macro use-side-bar-background ()
-  '(((:require tommyx-extensions)
+  '(('left-fringe-width 0)
+    ('right-fringe-width 0)
+    ((:require tommyx-extensions)
      ('face-remapping-alist :append-front
                             '(default sidebar-background)
                             '(hl-line sidebar-hl-line)
@@ -193,9 +195,11 @@
     ('indicate-buffer-boundaries t)
     ('scroll-margin 16)
     ('hl-line-sticky-flag t)
-    ('window-divider-default-places 't)
-    ('window-divider-default-right-width 5)
-    ('window-divider-default-bottom-width 5)
+    ('window-divider-default-places 'right-only)
+    ('window-divider-default-right-width 1)
+    ;; ('window-divider-default-places 't)
+    ;; ('window-divider-default-right-width 5)
+    ;; ('window-divider-default-bottom-width 5)
     ('left-fringe-width 16)
     ('right-fringe-width 8)
     ('ring-bell-function 'ignore)
@@ -377,16 +381,16 @@
      ('c-default-style '((other . "linux"))))
 
     ;; dashboard
-    ((:require dashboard)
-     ('dashboard-items '((recents  . 5)
-                         (projects . 5)
-                         (bookmarks . 5)))
-     ('dashboard-banner-length 250)
-     ('dashboard-banner-logo-title
-      (concat "Emacs " emacs-version
-              " (" system-configuration ")"))
-     ('dashboard-startup-banner
-      (expand-file-name "logo.png" tommyx-config-path)))
+    ;; ((:require dashboard)
+    ;;  ('dashboard-items '((recents  . 5)
+    ;;                      (projects . 5)
+    ;;                      (bookmarks . 5)))
+    ;;  ('dashboard-banner-length 250)
+    ;;  ('dashboard-banner-logo-title
+    ;;   (concat "Emacs " emacs-version
+    ;;           " (" system-configuration ")"))
+    ;;  ('dashboard-startup-banner
+    ;;   (expand-file-name "logo.png" tommyx-config-path)))
 
     ;; snippets
     ((:require yasnippet)
@@ -446,9 +450,9 @@
     ((:require git-gutter)
      ('git-gutter:window-width 1)
      ('git-gutter:update-interval 5)
-     ('git-gutter:modified-sign " ")
-     ('git-gutter:added-sign " ")
-     ('git-gutter:deleted-sign " ")
+     ('git-gutter:modified-sign "|")
+     ('git-gutter:added-sign "|")
+     ('git-gutter:deleted-sign "-")
      ('git-gutter:visual-line nil))
     ((:require magit)
      ('magit-display-buffer-function
@@ -613,8 +617,6 @@
       ($volatile-highlights-undo-tree-setup)))
     ((:require evil smartparens)
      ($remove-parens-overlay-on-insert-exit))
-    ((:require tommyx-extensions)
-     ($improve-fringe-bitmaps))
 
     ;; media
     ((:require emms)
@@ -671,6 +673,9 @@
      (ivy-posframe-enable)))
 
   '(:after-init
+    ;; appearance
+    ((:require tommyx-extensions)
+     ($improve-fringe-bitmaps))
     ;; performance
     ((:require tommyx-extensions)
      ($remove-vc-hooks))
@@ -786,7 +791,12 @@
 
     (:on-init
      ((:require tommyx-extensions)
-      ($extra-word-char '(?-))))))
+      ($extra-word-char '(?-)))))
+
+  '((:mode-local lisp-interaction-mode)
+
+    (:settings
+     ((:macro use-side-bar-background)))))
 
 ($define-module tommyx-sh-mode
   '((:mode-local sh-mode)
@@ -839,8 +849,6 @@
   '((:mode-local neotree-mode)
 
     (:settings
-     ('left-fringe-width 0)
-     ('right-fringe-width 0)
      ('use-line-nav t)
      ((:macro use-side-bar-background))
      ((:macro set-indent) 2))
@@ -856,10 +864,8 @@
   '((:mode-local imenu-list-major-mode)
 
     (:settings
-     ('left-fringe-width 0)
-     ('right-fringe-width 0)
      ('use-line-nav t)
-     ;; ((:macro use-side-bar-background))
+     ((:macro use-side-bar-background))
      ((:macro set-indent) 2))
 
     (:minor-modes
@@ -1173,15 +1179,25 @@
 
     (:settings
      ('scroll-margin 0)
-     ;; ((:macro use-side-bar-background))
-     )))
+     ((:macro use-side-bar-background)))))
 
 ($define-module tommyx-compilation-mode
   '((:mode-local compilation-mode)
 
     (:settings
-     ;; ((:macro use-side-bar-background))
-     )))
+     ((:macro use-side-bar-background)))))
+
+($define-module tommyx-help-mode
+  '((:mode-local help-mode)
+
+    (:settings
+     ((:macro use-side-bar-background)))))
+
+($define-module tommyx-message-mode
+  '((:mode-local message-mode)
+
+    (:settings
+     ((:macro use-side-bar-background)))))
 
 ($define-module tommyx-org-mode
   '(:settings

@@ -17,7 +17,7 @@
 (spaceline-helm-mode)
 (spaceline-info-mode)
 (spaceline-compile)
-(setq status-lines-scale 1.15)
+(setq status-lines-scale 1.35)
 
 ;; solve bug about MacOS status line separator
 (when (eq system-type 'darwin)
@@ -157,6 +157,7 @@ in pdf-view mode (enabled by the `pdf-tools' package)."
 			status-lines-footer-segments-left
 			status-lines-footer-segments-right)))
 (defun status-lines-compile ()
+  (interactive)
 	(set-powerline-scale status-lines-scale)
 	(status-lines-compile-header)
 	(status-lines-compile-footer))
