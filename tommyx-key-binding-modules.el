@@ -1096,7 +1096,7 @@
                 ;; "p" 'company-smart-complete
                 "p" (lambda () (interactive)
                       (call-with-command-hooks
-                       'company-smart-complete "jp"))
+                       'company-smart-complete "jp" t))
                 ;; j[ skip TabNine
                 "[" (lambda () (interactive)
                       (call-with-command-hooks

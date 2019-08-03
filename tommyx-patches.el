@@ -117,6 +117,7 @@ confirm the selection and finish the completion."
 
 (defun $company-general-compatibility-patch ()
   (setq $my-company--company-command-p-override nil)
+  (defvar $company-bypass-tng nil)
   (defun $my-company--company-command-p (func &rest args)
     "Patch company-mode to treat key sequences like \"jp\" not a company-mode command.
 
@@ -126,16 +127,18 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
 \"jp\" as one (so do completion)."
     (if $my-company--company-command-p-override
         nil ; treat all command as breaking company completion
-      (let ((return (apply func args)))
+      (if $company-bypass-tng
+          t ; treat all command as not breaking company completion
+        (let ((return (apply func args)))
 
-        ;; (message
-        ;;  (concat "debug: "
-        ;;          (prin1-to-string company-selection-changed) " "
-        ;;          (prin1-to-string return) " "
-        ;;          (prin1-to-string (and return (not (numberp return)))) " "
-        ;;          (prin1-to-string args)))
+          ;; (message
+          ;;  (concat "debug: "
+          ;;          (prin1-to-string company-selection-changed) " "
+          ;;          (prin1-to-string return) " "
+          ;;          (prin1-to-string (and return (not (numberp return)))) " "
+          ;;          (prin1-to-string args)))
 
-        (and return (not (numberp return))))))
+          (and return (not (numberp return)))))))
   (advice-add #'company--company-command-p :around #'$my-company--company-command-p)
   ;; make evil-normal-state abort completion. note that this works only if 'not is the
   ;; first element in company-continue-commands.
