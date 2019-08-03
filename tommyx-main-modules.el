@@ -448,6 +448,8 @@
 
     ;; version control
     ((:require git-gutter)
+     ('git-gutter:disabled-modes
+      '(org-mode compilation-mode term-mode))
      ('git-gutter:window-width 1)
      ('git-gutter:update-interval 5)
      ('git-gutter:modified-sign "|")
