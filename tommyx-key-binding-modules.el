@@ -240,6 +240,22 @@
            :states (normal)
            redo)
 
+      "R" (:case
+           :states (motion normal)
+           (:def
+            ,(lambda () (interactive)
+               (evil-ex-search-word-forward)
+               (evil-ex-search-previous)
+               (evil-ex "%s//"))
+            :which-key "Replace Element")
+           :states (visual)
+           (:def
+            ,(lambda () (interactive)
+               (call-interactively 'evil-visualstar/begin-search-forward)
+               (evil-ex-search-previous)
+               (evil-ex "%s//"))
+            :which-key "Replace Element"))
+
       "s" evil-surround-edit
       "S" evil-Surround-edit
 
@@ -460,22 +476,6 @@
                   indent-region
                   :key-name format-region))
 
-        "r" (:case
-             :states (motion normal)
-             (:def
-              ,(lambda () (interactive)
-                 (evil-ex-search-word-forward)
-                 (evil-ex-search-previous)
-                 (evil-ex "%s//"))
-              :which-key "Replace Element")
-             :states (visual)
-             (:def
-              ,(lambda () (interactive)
-                 (call-interactively 'evil-visualstar/begin-search-forward)
-                 (evil-ex-search-previous)
-                 (evil-ex "%s//"))
-              :which-key "Replace Element"))
-
         ;; macro
         "q" (:case
              :states (motion normal)
@@ -498,16 +498,16 @@
          "y" evilnc-copy-and-comment-lines
          "y" evilnc-copy-and-comment-lines)
 
+        ;; manually update heavy tasks
+        "r" (:def
+             update-heavy-tasks
+             :which-key "update heavy tasks")
+
         ;; extended shortcut
         ","
         (:bindings
          :which-key "Extended Shortcuts"
          :key-name extended-shortcuts-prefix
-
-         ;; manually update heavy tasks
-         "r" (:def
-              update-heavy-tasks
-              :which-key "update heavy tasks")
 
          ;; narrowing
          "n" (:case
@@ -1075,7 +1075,7 @@
                 ;; j' expand snippet
                 "'" (lambda () (interactive)
                       (call-with-command-hooks
-                       'yas-expand-from-trigger-key "j'"))
+                       'emmet-expand-line "j'"))
                 ;; jk quit insert mode
                 "k" (lambda () (interactive)
                       (call-with-command-hooks
@@ -1754,7 +1754,8 @@
       mode-specific-prefix
       (:bindings
 
-       "r" web-mode-element-rename))))
+       "r" web-mode-element-rename
+       "w" web-mode-element-wrap))))
 
   ($bind-keys
    `(:case
