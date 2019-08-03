@@ -846,7 +846,7 @@ Useful for a search overview popup."
   (when kill-ring-yank-pointer
     (setq kill-ring-yank-pointer kill-ring)))
 
-(defun call-with-command-hooks (command &optional enforce-keys)
+(defun call-with-command-hooks (command &optional enforce-keys bypass-tng)
   "Call command, invoking pre-command and post-command hooks of company.
 
 company-tng-frontend only update on 'pre-command-hook',
@@ -860,16 +860,19 @@ ENFORCE-KEYS is set to the key sequence for this command to enforce
 the value of 'this-command-keys' for general-key-dispatch key sequence
 during 'post-command-hook'.  It is observed that, when company-tng unreads
 key sequence to complete selection, 'this-command-keys' for the actual
-command (ran after) is mysteriously incorrect."
+command (ran after) is mysteriously incorrect.
+
+If BYPASS-TNG is non-nil, make sure tng frontend does not trigger a completion.
+This is useful for commands that will call `company-complete-selection'."
   (let ((old-command this-command))
-    (setq this-command command)
-    (run-hooks 'pre-command-hook)
-    (call-interactively this-command)
-    (when (and (eq command this-command) enforce-keys)
-      (set--this-command-keys enforce-keys))
-    (run-hooks 'post-command-hook)
-    (setq this-command old-command)
-    ))
+    (let (($company-bypass-tng bypass-tng))
+      (setq this-command command)
+      (run-hooks 'pre-command-hook)
+      (call-interactively this-command)
+      (when (and (eq command this-command) enforce-keys)
+        (set--this-command-keys enforce-keys))
+      (run-hooks 'post-command-hook)
+      (setq this-command old-command))))
 
 (defun insert-todo () (interactive)
        (insert "TODO"))
@@ -1101,7 +1104,7 @@ If ARG is non-nil, toggle the mode."
     (error "org-directory is nil"))
   (let ((counsel-projectile-find-file-matcher
          #'counsel--find-org-files-matcher))
-    (counsel-projectile-switch-project-action
+    (counsel-projectile-switch-project-action-find-file
      org-directory)))
 
 (defvar counsel-org-rg-initial-input "")
