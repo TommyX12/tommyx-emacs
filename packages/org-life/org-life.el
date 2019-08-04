@@ -1200,7 +1200,7 @@ PROCESS is the process under watch, OUTPUT is the output received."
 ;; TODO: Bug: last updated will not reflect true update time using the new view system.
 (cl-defun org-life-agenda-render-last-updated ()
   (insert (propertize
-           (format-time-string "Last Updated: %Y-%m-%d %H:%M\n"
+           (format-time-string "Last Updated: %Y-%m-%d %H:%M:%S\n"
                                org-life--last-updated-time)
            'face 'org-life-agenda-secondary-face)))
 

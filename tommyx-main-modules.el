@@ -1221,11 +1221,11 @@
      (yascroll-bar-mode -1))))
 
 ($define-module tommyx-message-mode
-  '((:mode-local message-mode)
+  '((:mode-local messages-buffer-mode)
 
     (:settings
      ((:require git-gutter)
-      ('git-gutter:disabled-modes :append-front 'message-mode))
+      ('git-gutter:disabled-modes :append-front 'messages-buffer-mode))
      ((:macro use-side-bar-background)))
 
     (:minor-modes
@@ -1395,6 +1395,22 @@
 
     (:minor-modes
      (hl-line-mode 1))))
+
+($define-module tommyx-spellcaster
+  '(:settings
+    ((:require spellcaster)
+     ('spellcaster-auto-start t)
+     ;; TODO: Spellcaster config path currently set in org-config.el
+     ))
+
+  '(:on-init
+    ((:require spellcaster)
+     (spellcaster-define-spaceline-segment)
+     (spellcaster-setup-evil-status-bindings)))
+
+  '(:after-init
+    (when (bound-and-true-p spellcaster-auto-start)
+      (spellcaster-start))))
 
 (provide 'tommyx-main-modules)
 

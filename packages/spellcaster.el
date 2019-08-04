@@ -85,10 +85,25 @@
 (defconst spellcaster--process-name "spellcaster--process")
 (defconst spellcaster--log-buffer-name "*spellcaster-log*")
 (defconst spellcaster--key-bindings
-  (list (list (kbd "q") 'spellcaster-status-quit)))
+  (list (list (kbd "q") 'spellcaster-status-quit)
+        (list (kbd "r") 'spellcaster-status-refresh)
+        (list (kbd "d") 'spellcaster-kill-spell-at-point)
+        (list (kbd "c") 'spellcaster-auto-cast-spell-at-point)
+        (list (kbd "C") 'spellcaster-cast-spell-at-point)))
+(defconst spellcaster--status-faces
+  (ht<-plist
+   (list "standby" 'default
+         "running" 'spellcaster-running-face
+         "warning" 'warning
+         "error" 'error
+         "success" 'success)))
 
 ;;; Variables
 
+(defvar spellcaster--spaceline-content nil)
+(defvar spellcaster--status-changed nil)
+(defvar spellcaster--timer nil)
+(defvar spellcaster--last-updated-time nil)
 (defvar spellcaster-executable-args nil
   "Extra arguments passed to Spellcaster.")
 (defvar-local spellcaster--prev-window-conf nil
@@ -100,6 +115,8 @@
   "Temporarily stored Spellcaster server responses.")
 (defvar spellcaster--response-chunks nil
   "The string to store response chunks from Spellcaster server.")
+(defvar spellcaster--spells (ht-create)
+  "The collection of spells.")
 
 ;;; Faces
 
@@ -108,23 +125,49 @@
   "Face for Spellcaster section heading."
   :group 'spellcaster)
 
+(defface spellcaster-item-face
+  '((t :inherit font-lock-keyword-face))
+  "Face for Spellcaster item."
+  :group 'spellcaster)
+
+(defface spellcaster-running-face
+  '((t :inherit font-lock-function-name-face))
+  "Face for Spellcaster running spells."
+  :group 'spellcaster)
+
+(defface spellcaster-secondary-face
+  '((t :inherit font-lock-comment-face))
+  "Face for Spellcaster secondary text."
+  :group 'spellcaster)
+
 ;;; Functions and Macros
+
+(defun spellcaster--clear-spells ()
+  "Clear the spells collection."
+  (setq spellcaster--spells (ht-create))
+  (setq spellcaster--status-changed t))
 
 (defun spellcaster-start-process ()
   "Start Spellcaster process."
   (spellcaster-kill-process)
+  (spellcaster--clear-spells)
   (spellcaster--with-log-buffer
    (erase-buffer))
-  (setq spellcaster--process
-        (make-process
-         :name spellcaster--process-name
-         :command (append
-                   (list spellcaster-command
-                         (expand-file-name
-                          spellcaster-config-path))
-                   spellcaster-executable-args)
-         :filter #'spellcaster--process-filter
-         :sentinel #'spellcaster--process-sentinel))
+  (condition-case err
+      (setq spellcaster--process
+            (make-process
+             :name spellcaster--process-name
+             :command (append
+                       (list spellcaster-command
+                             (expand-file-name
+                              spellcaster-config-path))
+                       spellcaster-executable-args)
+             :filter #'spellcaster--process-filter
+             :sentinel #'spellcaster--process-sentinel))
+    (error (let ((msg "Failed to start Spellcaster."))
+             (spellcaster--with-log-buffer
+              (insert msg))
+             (display-warning 'spellcaster msg))))
   ;; hook setup
   (message "Spellcaster server started.")
   (dolist (hook spellcaster--hooks-alist)
@@ -144,23 +187,21 @@
 (defun spellcaster-send-request (request)
   "Send REQUEST to Spellcaster server.
 REQUEST needs to be a JSON-serializable object."
-  (when (null spellcaster--process)
-    (spellcaster-start-process))
-  (when spellcaster--process
-    ;; TODO make sure utf-8 encoding works
-    (let ((encoded (concat
-                    (if (and spellcaster-use-native-json
-                             (fboundp 'json-serialize))
-                        (json-serialize request
-                                        :null-object nil
-                                        :false-object json-false)
-                      (let ((json-null nil)
-                            (json-encoding-pretty-print nil))
-                        (json-encode-list request)))
-                    "\n")))
-      (setq spellcaster--response nil)
-      (process-send-string spellcaster--process encoded)
-      (accept-process-output spellcaster--process spellcaster-wait))))
+  (if spellcaster--process
+      ;; TODO make sure utf-8 encoding works
+      (let ((encoded (concat
+                      (if (and spellcaster-use-native-json
+                               (fboundp 'json-serialize))
+                          (json-serialize request
+                                          :null-object nil
+                                          :false-object json-false)
+                        (let ((json-null nil)
+                              (json-encoding-pretty-print nil))
+                          (json-encode-list request)))
+                      "\n")))
+        (setq spellcaster--response nil)
+        (process-send-string spellcaster--process encoded))
+    (error "Spellcaster process not started\n")))
 
 (defmacro spellcaster--with-log-buffer (&rest body)
   "Run BODY with Spellcaster log buffer.
@@ -171,6 +212,17 @@ Point will be positioned at the end of the buffer."
        (goto-char (point-max))
        ,@body)))
 
+(defun spellcaster--handle-update (update)
+  "Process the parsed JSON object UPDATE."
+  (let ((spell-path (plist-get update :spell_path))
+        (spell-name (plist-get update :spell_name))
+        (status (plist-get update :status)))
+    (ht-set spellcaster--spells
+            spell-path
+            (list :name spell-name
+                  :status status))
+    (setq spellcaster--status-changed t)))
+
 (defun spellcaster--handle-response (msg)
   "Decode Spellcaster server response MSG, and return the decoded object."
   ;; (if (and spellcaster-use-native-json
@@ -180,8 +232,19 @@ Point will be positioned at the end of the buffer."
   ;;   (let ((json-array-type 'list)
   ;;         (json-object-type 'alist))
   ;;     (json-read-from-string msg)))
-  (spellcaster--with-log-buffer
-   (insert msg)))
+  (if (s-starts-with-p spellcaster--update-prefix msg)
+      (if (and spellcaster-use-native-json
+               (fboundp 'json-parse-string))
+          (ignore-errors
+            (json-parse-string msg :object-type 'plist))
+        (let ((json-array-type 'list)
+              (json-object-type 'plist))
+          (spellcaster--handle-update
+           (json-read-from-string
+            (substring msg (length spellcaster--update-prefix))))))
+    (spellcaster--with-log-buffer
+     (unless (equal msg "")
+       (insert msg "\n")))))
 
 (defun spellcaster--process-sentinel (process event)
   "Sentinel for Spellcaster server process.
@@ -204,8 +267,27 @@ PROCESS is the process under watch, OUTPUT is the output received."
            (mapconcat #'identity
                       (nreverse spellcaster--response-chunks)
                       nil)))
-      (spellcaster--handle-response response)
+      (dolist (line (s-split "\n" response))
+        (spellcaster--handle-response line))
       (setq spellcaster--response-chunks nil))))
+
+(defun spellcaster-auto-cast-spell (spell-id)
+  "Cast the spell with SPELL-ID."
+  (spellcaster-send-request
+   (list :action "auto_cast"
+         :spell_id spell-id)))
+
+(defun spellcaster-cast-spell (spell-id)
+  "Cast the spell with SPELL-ID."
+  (spellcaster-send-request
+   (list :action "cast"
+         :spell_id spell-id)))
+
+(defun spellcaster-kill-spell (spell-id)
+  "Kill the spell with SPELL-ID."
+  (spellcaster-send-request
+   (list :action "kill"
+         :spell_id spell-id)))
 
 (defun spellcaster--with-face (text face)
   "Return TEXT with FACE."
@@ -369,153 +451,82 @@ Note: DO NOT quote RENDERER."
   `(defun ,name (&rest rest)
      (apply (quote ,renderer) ,@inputs rest)))
 
-(defun spellcaster--number-to-string (number)
-  "Convert NUMBER to a display string (at most 1 decimal point).
+(defmacro spellcaster--with-status-buffer-if-open (&rest body)
+  "Run BODY with Spellcaster status buffer selected.
+If no Spellcaster buffer active, do nothing."
+  `(when (and (get-buffer spellcaster-buffer-name)
+              (get-buffer-window spellcaster-buffer-name))
+     (with-current-buffer spellcaster-buffer-name
+       ,@body)))
 
-If the value of NUMBER is an integer, no decimal point will be displayed."
-  (let ((rounded (round number)))
-    (if (= rounded number)
-        (number-to-string rounded)
-      (let ((number (round number 0.1)))
-        (cond ((= (% number 10) 0)
-               (number-to-string (round (* number 0.1))))
-              (t
-               (format "%.1f" (* number 0.1)))))))
-  ;; ;; Two decimal point implementation
-  ;; (let ((rounded (round number)))
-  ;;   (if (= rounded number)
-  ;;       (number-to-string rounded)
-  ;;     (let ((number (round number 0.01)))
-  ;;       (cond ((= (% number 100) 0)
-  ;;              (number-to-string (round (* number 0.01))))
-  ;;             ((= (% number 10) 0)
-  ;;              (format "%.1f" (* number 0.01)))
-  ;;             (t
-  ;;              (format "%.2f" (* number 0.01)))))))
-  )
+(defun spellcaster-status-refresh-if-dirty ()
+  "Refresh active Spellcaster buffer if dirty."
+  ;; TODO: optimize to not refresh entire buffer
+  (when spellcaster--status-changed
+    (spellcaster--refresh-spaceline)
+    (spellcaster--with-status-buffer-if-open
+     (spellcaster-status-refresh))))
 
-(defun spellcaster--get-ui-data (config)
-  "Extract data from CONFIG for use in status window."
-  (let ((attribute-to-items (ht-create))
-        (attribute-to-states (ht-create))
-        (days-to-timestamps (ht-create)))
+(defun spellcaster--get-id-at-point ()
+  "Return the spell-id at point."
+  (get-text-property (point) 'spell-id))
 
-    (ht-each
-     (lambda (item-id item-config)
-       (let ((attributes (ht-get item-config "attributes")))
-         (dolist (attribute attributes)
-           (ht-set attribute-to-items
-                   attribute
-                   (cons item-id
-                         (ht-get attribute-to-items
-                                 attribute))))))
-
-     (plist-get config :all-item-config))
-
-    (ht-each
-     (lambda (state-name state-config)
-       (let ((attributes (ht-get state-config "attributes")))
-         (dolist (attribute attributes)
-           (ht-set attribute-to-states
-                   attribute
-                   (cons state-name
-                         (ht-get attribute-to-states
-                                 attribute))))))
-
-     (plist-get config :all-state-config))
-
-    (ht-each
-     (lambda (item-id timestamps)
-       (dolist (timestamp timestamps)
-         (let ((timestamp-days (car timestamp))
-               (timestamp-type-name (cdr timestamp)))
-           (spellcaster-safe-update
-            days-to-timestamps timestamp-days (ht-create)
-            (lambda (prev)
-              (spellcaster-safe-update
-               prev item-id nil
-               (lambda (prev)
-                 (cons timestamp-type-name prev)))
-              prev)))))
-     (plist-get config :timestamps))
-
-    (ht<-alist (list
-                (cons "attribute-to-items" attribute-to-items)
-                (cons "attribute-to-states" attribute-to-states)
-                (cons "days-to-timestamps" days-to-timestamps)))))
-
-(defun spellcaster--number-to-delta-string (delta)
-  "Convert DELTA to a readable string representation with appropriate face."
-  (spellcaster--with-face
-   (cond
-    ((or (equal delta "inf")
-         (equal delta 1.0e+INF))
-     "inf")
-    ((= delta 0)
-     "")
-    (t
-     (concat
-      (if (< delta 0)
-          ""
-        "+")
-      (spellcaster--number-to-string delta))))
-   (if (> delta 0)
-       'spellcaster-state-delta-face
-     'spellcaster-state-negative-delta-face)))
-
-(defun spellcaster--get-item-attribute (snapshot item-id prop &optional default)
-  "Return the attribute with name PROP for item with ITEM-ID in SNAPSHOT.
-
-Use DEFAULT when the value is not found."
-  (let* ((item-attributes (spellcaster-safe-get
-                           snapshot "item-attributes" nil))
-         (item-attr (spellcaster-safe-get
-                     item-attributes item-id nil)))
-    (spellcaster-safe-get item-attr prop default)))
-
-(defun spellcaster--inf-to-number (number)
-  "Convert NUMBER to 1.0e+INF if NUMBER is \"inf\", otherwise return NUMBER."
-  (if (equal number "inf")
-      1.0e+INF
-    number))
-
-(defun spellcaster--stringify-inf (number)
-  "Convert NUMBER to \"inf\" if NUMBER is 1.0e+INF, otherwise return NUMBER."
-  (if (equal number 1.0e+INF)
-      "inf"
-    number))
-
-(defun spellcaster--difference (value1 value2)
-  "Compute VALUE1 - VALUE2, while taking care of the \"inf\" special case."
-  (spellcaster--stringify-inf (- (spellcaster--inf-to-number value1)
-                                 (spellcaster--inf-to-number value2))))
-
-(defun spellcaster--get-state-attribute (snapshot state-name prop &optional default prev-snapshot)
-  "Return the attribute with name PROP for state with STATE-NAME in SNAPSHOT.
-
-Use DEFAULT when the value is not found.
-
-If PREV-SNAPSHOT is non-nil, return a cons cell where car is the value in
-PREV-SNAPSHOT, and cdr is the value in SNAPSHOT."
-  (if prev-snapshot
-      (cons
-       (spellcaster--get-state-attribute
-        prev-snapshot state-name prop default)
-       (spellcaster--get-state-attribute
-        snapshot state-name prop default))
-    (let* ((state-attributes (ht-get snapshot "state-attributes"))
-           (state-attr (ht-get state-attributes state-name)))
-      (or (and state-attr
-               (ht-get state-attr prop))
-          default))))
+(defun spellcaster-start-timer ()
+  "Start a timer to refresh Spellcaster buffer."
+  (unless spellcaster--timer
+    (setq spellcaster--timer
+          (run-at-time 0 5 #'spellcaster-status-refresh-if-dirty))))
 
 (spellcaster--define-renderer spellcaster--render-status
     ()
-  (insert "Hello World!"))
+  (insert
+   (spellcaster--with-face
+    (format-time-string "Last Updated: %Y-%m-%d %H:%M:%S\n"
+                        spellcaster--last-updated-time)
+    'spellcaster-secondary-face)
+   "\n")
+  (let ((spell-ids
+         (sort (ht-keys spellcaster--spells)
+               #'string<)))
+    (dolist (spell-id spell-ids)
+      (let* ((spell (ht-get spellcaster--spells spell-id))
+             (spell-name (plist-get spell :name))
+             (spell-status (plist-get spell :status)))
+        (insert
+         (propertize
+          (format "%-10s %-30s %s\n"
+                  (spellcaster--with-face
+                   spell-status
+                   (ht-get spellcaster--status-faces spell-status))
+                  (spellcaster--with-face
+                   spell-name 'spellcaster-item-face)
+                  (spellcaster--with-face
+                   spell-id 'spellcaster-secondary-face))
+          'spell-id spell-id))))))
+
+(defun spellcaster--refresh-spaceline ()
+  (setq
+   spellcaster--spaceline-content
+   (let ((spell-ids
+          (sort (ht-keys spellcaster--spells)
+                #'string<)))
+     (s-join
+      " "
+      (mapcar
+       (lambda (spell-id)
+         (let* ((spell (ht-get spellcaster--spells spell-id))
+                (spell-status (plist-get spell :status)))
+           (spellcaster--with-face
+            "●"
+            (ht-get spellcaster--status-faces spell-status))))
+       spell-ids)))))
 
 (defun spellcaster--render ()
   ;; TODO
   "Render status window."
+  (setq spellcaster--last-updated-time
+        (current-time))
+  (setq spellcaster--status-changed nil)
   (spellcaster--render-status))
 
 (defun spellcaster--in-status-buffer ()
@@ -548,10 +559,14 @@ PREV-SNAPSHOT, and cdr is the value in SNAPSHOT."
 (defun spellcaster-status-refresh ()
   "Refresh Spellcaster window."
   (interactive)
+  (when (called-interactively-p)
+    (spellcaster--refresh-spaceline))
   (if (spellcaster--in-status-buffer)
-      (let ((inhibit-read-only t))
+      (let ((inhibit-read-only t)
+            (pos (point)))
         (erase-buffer)
-        (spellcaster--render))
+        (spellcaster--render)
+        (goto-char pos))
     (error "Not in Spellcaster buffer\n")))
 
 (defun spellcaster-status-quit ()
@@ -583,8 +598,59 @@ PREV-SNAPSHOT, and cdr is the value in SNAPSHOT."
           (unless (eq old-frame new-frame)
             (select-frame-set-input-focus new-frame))
 
-          (spellcaster-mode)
-          (spellcaster-status-refresh))))))
+          (spellcaster-mode))))
+    (spellcaster-status-refresh)))
+
+(defun spellcaster-show-log ()
+  "Open Spellcaster log buffer."
+  (interactive)
+  (switch-to-buffer-other-window
+   (get-buffer-create spellcaster--log-buffer-name)))
+
+(defun spellcaster-auto-cast-spell-at-point ()
+  "Cast the spell's auto-command at point."
+  (interactive)
+  ;; TODO: generalize this
+  (if (spellcaster--in-status-buffer)
+      (let ((spell-id (spellcaster--get-id-at-point)))
+        (if spell-id
+            (when (y-or-n-p (format "Auto-cast the spell [%s]? "
+                                    (plist-get
+                                     (ht-get spellcaster--spells spell-id)
+                                     :name)))
+              (spellcaster-auto-cast-spell spell-id)
+              (run-at-time 0.5 nil #'spellcaster-status-refresh-if-dirty))
+          (error "No spell found at point\n")))
+    (error "Not in Spellcaster buffer\n")))
+
+(defun spellcaster-cast-spell-at-point ()
+  "Cast the spell at point."
+  (interactive)
+  (if (spellcaster--in-status-buffer)
+      (let ((spell-id (spellcaster--get-id-at-point)))
+        (if spell-id
+            (when (y-or-n-p (format "Cast the spell [%s]? "
+                                    (plist-get
+                                     (ht-get spellcaster--spells spell-id)
+                                     :name)))
+              (spellcaster-cast-spell spell-id))
+          (error "No spell found at point\n")))
+    (error "Not in Spellcaster buffer\n")))
+
+(defun spellcaster-kill-spell-at-point ()
+  "Kill the spell at point."
+  (interactive)
+  (if (spellcaster--in-status-buffer)
+      (let ((spell-id (spellcaster--get-id-at-point)))
+        (if spell-id
+            (when (y-or-n-p (format "Kill the spell [%s]? "
+                                    (plist-get
+                                     (ht-get spellcaster--spells spell-id)
+                                     :name)))
+              (spellcaster-kill-spell spell-id)
+              (run-at-time 0.5 nil #'spellcaster-status-refresh-if-dirty))
+          (error "No spell found at point\n")))
+    (error "Not in Spellcaster buffer\n")))
 
 ;;; Minor modes
 
@@ -608,6 +674,15 @@ PREV-SNAPSHOT, and cdr is the value in SNAPSHOT."
 ;;; Hooks
 
 ;;; Init
+
+(spellcaster-start-timer)
+
+;;; Spaceline segment
+
+(defun spellcaster-define-spaceline-segment ()
+  (spaceline-define-segment spellcaster
+    "A spaceline segment to display Spellcaster spells."
+    spellcaster--spaceline-content))
 
 ;;; Footer
 

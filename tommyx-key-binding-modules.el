@@ -2275,6 +2275,22 @@
       global-leader
       (:bindings
 
+       "u"
+       (:bindings
+        :which-key "Spellcaster"
+
+        "s" spellcaster-status
+        "l" spellcaster-show-log
+        "r" spellcaster-restart
+        "k" spellcaster-stop)))))
+
+  ($bind-keys
+   `(:case
+     (:bindings
+
+      global-leader
+      (:bindings
+
        "l"
        (:bindings
         :which-key "Layout"

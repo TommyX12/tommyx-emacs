@@ -710,21 +710,24 @@ Taken from https://github.com/narendraj9/quoted-scratch."
 ;;    (replace-regexp-in-string "%" "%%" (apply 'concat (mapcar 'funcall display-fn))))
 ;; )
 
+(unless (fboundp 'spaceline-toggle-spellcaster)
+  (spaceline-define-segment spellcaster
+    nil))
+
 (setq companion-segments-left
       `(((companion-emacs-version
-          companion-notification)
+          companion-notification
+          companion-emms)
          :separator " | "
          :face 'companion-face
-         :priority 1
-         )
-        ))
+         :priority 1)))
 (setq companion-segments-right
       `((org-pomodoro)
         (org-clock)
         (persp-name)
         (workspace-number)
-        (companion-emms :tight-right t :face 'companion-face
-                        :priority 99)
+        (spellcaster :tight-right t :face 'companion-face
+                     :priority 99)
         (" | " :tight t :face 'companion-face)
         ;; (companion-type-break :tight t :face 'companion-face)
         ;; (" | " :tight t :face 'companion-face)

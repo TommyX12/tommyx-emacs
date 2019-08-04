@@ -48,7 +48,8 @@
         'tommyx-compilation-mode
         'tommyx-help-mode
         'tommyx-message-mode
-        'tommyx-org-mode))
+        'tommyx-org-mode
+        'tommyx-spellcaster))
 
 (defconst tommyx-key-binding-modules-list
   (list 'tommyx-key-bindings))

@@ -272,6 +272,7 @@
 (enable-auto-compilation 'org-catalyst)
 (require 'org-catalyst)
 (require 'eon)
+(require 'spellcaster)
 (require 'tommyx-music)
 (require 'tommyx-layout)
 (require 'tommyx-extensions)
