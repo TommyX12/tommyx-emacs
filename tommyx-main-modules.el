@@ -11,15 +11,18 @@
     ((:require highlight-indentation)
      ('highlight-indentation-offset ,(or highlight-width width)))))
 
-($define-settings-macro use-side-bar-background ()
-  '(('left-fringe-width 0)
-    ('right-fringe-width 0)
-    ((:require tommyx-extensions)
-     ('face-remapping-alist :append-front
-                            '(default sidebar-background)
-                            '(hl-line sidebar-hl-line)
-                            ;; '(fringe sidebar-fringe)
-                            ))))
+($define-settings-macro use-side-bar-background (&optional left-fringe right-fringe)
+  (append
+   (unless left-fringe
+     '(('left-fringe-width 0)))
+   (unless right-fringe
+     '(('right-fringe-width 0)))
+   '(((:require tommyx-extensions)
+      ('face-remapping-alist :append-front
+                             '(default sidebar-background)
+                             '(hl-line sidebar-hl-line)
+                             ;; '(fringe sidebar-fringe)
+                             )))))
 
 ;;; Config definition
 
@@ -448,8 +451,6 @@
 
     ;; version control
     ((:require git-gutter)
-     ('git-gutter:disabled-modes
-      '(org-mode compilation-mode term-mode))
      ('git-gutter:window-width 1)
      ('git-gutter:update-interval 5)
      ('git-gutter:modified-sign "|")
@@ -798,7 +799,12 @@
   '((:mode-local lisp-interaction-mode)
 
     (:settings
-     ((:macro use-side-bar-background)))))
+     ((:require git-gutter)
+      ('git-gutter:disabled-modes :append-front 'lisp-interaction-mode))
+     ((:macro use-side-bar-background)))
+
+    (:minor-modes
+     (yascroll-bar-mode -1))))
 
 ($define-module tommyx-sh-mode
   '((:mode-local sh-mode)
@@ -852,6 +858,8 @@
 
     (:settings
      ('use-line-nav t)
+     ((:require git-gutter)
+      ('git-gutter:disabled-modes :append-front 'neotree-mode))
      ((:macro use-side-bar-background))
      ((:macro set-indent) 2))
 
@@ -867,6 +875,8 @@
 
     (:settings
      ('use-line-nav t)
+     ((:require git-gutter)
+      ('git-gutter:disabled-modes :append-front 'imenu-list-major-mode))
      ((:macro use-side-bar-background))
      ((:macro set-indent) 2))
 
@@ -980,10 +990,10 @@
       ('js-indent-level 2)))
 
     (:on-before-save
-     (with-demoted-errors "Error: %s"
-       (let ((pos (point)))
-         (json-pretty-print-buffer)
-         (goto-char pos))))))
+     (let ((pos (point)))
+       (with-demoted-errors "Error: %s"
+         (json-pretty-print-buffer))
+       (goto-char pos)))))
 
 ($define-module tommyx-html-mode
   '(:settings
@@ -1180,30 +1190,52 @@
   '((:mode-local term-mode)
 
     (:settings
+     ((:require git-gutter)
+      ('git-gutter:disabled-modes :append-front 'term-mode))
      ('scroll-margin 0)
-     ((:macro use-side-bar-background)))))
+     ((:macro use-side-bar-background)))
+
+    (:minor-modes
+     (yascroll-bar-mode -1))))
 
 ($define-module tommyx-compilation-mode
   '((:mode-local compilation-mode)
 
     (:settings
-     ((:macro use-side-bar-background)))))
+     ((:require git-gutter)
+      ('git-gutter:disabled-modes :append-front 'compilation-mode))
+     ((:macro use-side-bar-background)))
+
+    (:minor-modes
+     (yascroll-bar-mode -1))))
 
 ($define-module tommyx-help-mode
   '((:mode-local help-mode)
 
     (:settings
-     ((:macro use-side-bar-background)))))
+     ((:require git-gutter)
+      ('git-gutter:disabled-modes :append-front 'help-mode))
+     ((:macro use-side-bar-background)))
+
+    (:minor-modes
+     (yascroll-bar-mode -1))))
 
 ($define-module tommyx-message-mode
   '((:mode-local message-mode)
 
     (:settings
-     ((:macro use-side-bar-background)))))
+     ((:require git-gutter)
+      ('git-gutter:disabled-modes :append-front 'message-mode))
+     ((:macro use-side-bar-background)))
+
+    (:minor-modes
+     (yascroll-bar-mode -1))))
 
 ($define-module tommyx-org-mode
   '(:settings
     ((:require org)
+     ((:require git-gutter)
+      ('git-gutter:disabled-modes :append-front 'org-mode))
      ('org-startup-indented t)
      ('org-startup-folded nil)
      ('org-log-done 'time)

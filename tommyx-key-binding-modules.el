@@ -1103,34 +1103,34 @@
                        'company-tabnine-call-other-backends "j["))
                 "0" (lambda () (interactive)
                       (call-with-command-hooks
-                       'company-complete-number-0 "j0"))
+                       'company-complete-number-0 "j0" t))
                 "1" (lambda () (interactive)
                       (call-with-command-hooks
-                       'company-complete-number-1 "j1"))
+                       'company-complete-number-1 "j1" t))
                 "2" (lambda () (interactive)
                       (call-with-command-hooks
-                       'company-complete-number-2 "j2"))
+                       'company-complete-number-2 "j2" t))
                 "3" (lambda () (interactive)
                       (call-with-command-hooks
-                       'company-complete-number-3 "j3"))
+                       'company-complete-number-3 "j3" t))
                 "4" (lambda () (interactive)
                       (call-with-command-hooks
-                       'company-complete-number-4 "j4"))
+                       'company-complete-number-4 "j4" t))
                 "5" (lambda () (interactive)
                       (call-with-command-hooks
-                       'company-complete-number-5 "j5"))
+                       'company-complete-number-5 "j5" t))
                 "6" (lambda () (interactive)
                       (call-with-command-hooks
-                       'company-complete-number-6 "j6"))
+                       'company-complete-number-6 "j6" t))
                 "7" (lambda () (interactive)
                       (call-with-command-hooks
-                       'company-complete-number-7 "j7"))
+                       'company-complete-number-7 "j7" t))
                 "8" (lambda () (interactive)
                       (call-with-command-hooks
-                       'company-complete-number-8 "j8"))
+                       'company-complete-number-8 "j8" t))
                 "9" (lambda () (interactive)
                       (call-with-command-hooks
-                       'company-complete-number-9 "j9"))
+                       'company-complete-number-9 "j9" t))
                 ;; j[ context complete (TODO)
                 ;; "[" 'evil-complete-next
                 ;; j[ insert snippet
