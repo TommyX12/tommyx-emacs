@@ -87,6 +87,7 @@
 (defconst spellcaster--key-bindings
   (list (list (kbd "q") 'spellcaster-status-quit)
         (list (kbd "r") 'spellcaster-status-refresh)
+        (list (kbd "u") 'spellcaster-update)
         (list (kbd "d") 'spellcaster-kill-spell-at-point)
         (list (kbd "c") 'spellcaster-auto-cast-spell-at-point)
         (list (kbd "C") 'spellcaster-cast-spell-at-point)))
@@ -606,6 +607,17 @@ If no Spellcaster buffer active, do nothing."
   (interactive)
   (switch-to-buffer-other-window
    (get-buffer-create spellcaster--log-buffer-name)))
+
+(defun spellcaster-update ()
+  "Signal Spellcaster to run an update."
+  (interactive)
+  ;; TODO: generalize this
+  (if (spellcaster--in-status-buffer)
+      (progn
+        (spellcaster-send-request
+         (list :action "update"))
+        (run-at-time 0.5 nil #'spellcaster-status-refresh-if-dirty))
+    (error "Not in Spellcaster buffer\n")))
 
 (defun spellcaster-auto-cast-spell-at-point ()
   "Cast the spell's auto-command at point."
