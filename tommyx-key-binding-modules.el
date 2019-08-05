@@ -2282,6 +2282,7 @@
         "s" spellcaster-status
         "l" spellcaster-show-log
         "r" spellcaster-restart
+        "u" spellcaster-update
         "k" spellcaster-stop)))))
 
   ($bind-keys

@@ -611,13 +611,9 @@ If no Spellcaster buffer active, do nothing."
 (defun spellcaster-update ()
   "Signal Spellcaster to run an update."
   (interactive)
-  ;; TODO: generalize this
-  (if (spellcaster--in-status-buffer)
-      (progn
-        (spellcaster-send-request
-         (list :action "update"))
-        (run-at-time 0.5 nil #'spellcaster-status-refresh-if-dirty))
-    (error "Not in Spellcaster buffer\n")))
+  (spellcaster-send-request
+   (list :action "update"))
+  (run-at-time 0.5 nil #'spellcaster-status-refresh-if-dirty))
 
 (defun spellcaster-auto-cast-spell-at-point ()
   "Cast the spell's auto-command at point."
