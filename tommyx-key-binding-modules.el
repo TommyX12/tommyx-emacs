@@ -1100,7 +1100,7 @@
                 ;; j[ skip TabNine
                 "[" (lambda () (interactive)
                       (call-with-command-hooks
-                       'company-tabnine-call-other-backends "j["))
+                       'company-other-backend "j["))
                 "0" (lambda () (interactive)
                       (call-with-command-hooks
                        'company-complete-number-0 "j0" t))
