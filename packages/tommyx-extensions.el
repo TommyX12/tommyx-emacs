@@ -691,17 +691,17 @@ Useful for a search overview popup."
 (defun company-smart-complete ()
   (interactive)
   (setq company-echo-metadata-frontend-bypass t)
-  (cond
-   (company-selection-changed
-    (company-complete-selection))
-   (company-candidates
+  (if company-selection-changed
+      (company-complete-selection)
     (if (yas-maybe-expand-abbrev-key-filter t)
         (yas-expand)
-      (company-select-next)
-      (company-complete-selection)))
-   (t
-    (company-auto-begin)
-    (company-select-next))))
+      (cond
+       (company-candidates
+        (company-select-next)
+        (company-complete-selection))
+       (t
+        (company-auto-begin)
+        (company-select-next))))))
 
 (defun company-complete-number-1 ()
   (interactive) (company-complete-number 1))
