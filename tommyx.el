@@ -19,6 +19,10 @@
         'tommyx-default-major-modes
         'tommyx-log-modes
         'tommyx-emacs-lisp-mode
+        'tommyx-clojure-mode
+        'tommyx-common-lisp-mode
+        'tommyx-scheme-mode
+        'tommyx-lisp-mode
         'tommyx-sh-mode
         'tommyx-sgml-mode
         'tommyx-emacs-internal-modes

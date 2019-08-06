@@ -2309,7 +2309,24 @@
      :keymaps (json-mode-map)
      (:bindings
       format-region json-pretty-print
-      format-buffer json-pretty-print-buffer))))
+      format-buffer json-pretty-print-buffer)))
+
+  ($bind-keys
+   `(:case
+     (:bindings
+      extended-shortcuts-prefix
+      (:bindings
+
+       "m" parinfer-toggle-mode
+       "M" ,(lambda () (interactive)
+              (parinfer-mode
+               (if parinfer-mode -1 1))
+              (smartparens-mode
+               (if parinfer-mode -1 1))
+              (if parinfer-mode
+                  (message "Enabled parinfer-mode")
+                (message "Enabled smartparens-mode"))))))))
+
 
 ($define-module tommyx-key-bindings
   '(:on-init

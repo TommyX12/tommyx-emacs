@@ -20,9 +20,8 @@
    '(((:require tommyx-extensions)
       ('face-remapping-alist :append-front
                              '(default sidebar-background)
-                             '(hl-line sidebar-hl-line)
-                             ;; '(fringe sidebar-fringe)
-                             )))))
+                             '(hl-line sidebar-hl-line))))))
+;; '(fringe sidebar-fringe)
 
 ;;; Config definition
 
@@ -707,10 +706,10 @@
 
   '(:patches
     ((:require tommyx-patches)
-     ((:require ivy-posframe)
-      ;; TODO: bug
-      ;; ($ivy-posframe-patch)
-      )
+     ((:require ivy-posframe))
+     ;; TODO: bug
+     ;; ($ivy-posframe-patch)
+     
      ((:require ivy)
       ($ivy-format-function-patch))
      ((:require auto-highlight-symbol)
@@ -790,7 +789,9 @@
 
     (:minor-modes
      ((:require highlight-function-calls)
-      (highlight-function-calls-mode 1)))
+      (highlight-function-calls-mode 1))
+     ((:require parinfer)
+      (parinfer-mode 1)))
 
     (:on-init
      ((:require tommyx-extensions)
@@ -804,7 +805,40 @@
      ((:macro use-side-bar-background)))
 
     (:minor-modes
-     (yascroll-bar-mode -1))))
+     ((:require yascroll)
+      (yascroll-bar-mode -1))
+     ((:require parinfer)
+      (parinfer-mode 1)))))
+
+($define-module tommyx-clojure-mode
+  '((:mode-local clojure-mode)
+
+    (:minor-modes
+     ((:require parinfer)
+      (parinfer-mode 1)))))
+
+($define-module tommyx-common-lisp-mode
+  '((:mode-local common-lisp-mode)
+
+    (:minor-modes
+     ((:require parinfer)
+      (parinfer-mode 1)))))
+
+($define-module tommyx-scheme-mode
+  '((:mode-local scheme-mode)
+
+    (:minor-modes
+     ((:require parinfer)
+      (parinfer-mode 1)))))
+
+($define-module tommyx-lisp-mode
+  '((:mode-local lisp-mode)
+
+    (:minor-modes
+     ((:require smartparens)
+      (smartparens-mode -1))
+     ((:require parinfer)
+      (parinfer-mode 1)))))
 
 ($define-module tommyx-sh-mode
   '((:mode-local sh-mode)
@@ -1196,7 +1230,8 @@
      ((:macro use-side-bar-background)))
 
     (:minor-modes
-     (yascroll-bar-mode -1))))
+     ((:require yascroll)
+      (yascroll-bar-mode -1)))))
 
 ($define-module tommyx-compilation-mode
   '((:mode-local compilation-mode)
@@ -1207,7 +1242,8 @@
      ((:macro use-side-bar-background)))
 
     (:minor-modes
-     (yascroll-bar-mode -1))))
+     ((:require yascroll)
+      (yascroll-bar-mode -1)))))
 
 ($define-module tommyx-help-mode
   '((:mode-local help-mode)
@@ -1218,7 +1254,8 @@
      ((:macro use-side-bar-background)))
 
     (:minor-modes
-     (yascroll-bar-mode -1))))
+     ((:require yascroll)
+      (yascroll-bar-mode -1)))))
 
 ($define-module tommyx-message-mode
   '((:mode-local messages-buffer-mode)
@@ -1229,7 +1266,8 @@
      ((:macro use-side-bar-background)))
 
     (:minor-modes
-     (yascroll-bar-mode -1))))
+     ((:require yascroll)
+      (yascroll-bar-mode -1)))))
 
 ($define-module tommyx-org-mode
   '(:settings
@@ -1399,9 +1437,9 @@
 ($define-module tommyx-spellcaster
   '(:settings
     ((:require spellcaster)
-     ('spellcaster-auto-start t)
-     ;; TODO: Spellcaster config path currently set in org-config.el
-     ))
+     ('spellcaster-auto-start t)))
+  ;; TODO: Spellcaster config path currently set in org-config.el
+  
 
   '(:on-init
     ((:require spellcaster)
