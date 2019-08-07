@@ -1120,7 +1120,10 @@ If ARG is non-nil, toggle the mode."
 
 (defun $ivy-avy ()
   (interactive)
-  (if (bound-and-true-p ivy-posframe--display-p)
+  (if (frame-visible-p
+       (buffer-local-value
+        'posframe--frame
+        (get-buffer ivy-posframe-buffer)))
       (ivy-posframe-avy)
     (ivy-avy)))
 
