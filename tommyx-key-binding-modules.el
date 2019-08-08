@@ -532,6 +532,10 @@
        :which-key "Global Leader"
        :key-name global-leader
 
+       "SPC" (:def
+              display-about-screen
+              :which-key "About Emacs")
+
        "f" (:def
             swiper-movement
             :which-key "Search")
