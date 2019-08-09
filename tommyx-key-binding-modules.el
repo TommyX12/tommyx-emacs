@@ -378,6 +378,10 @@
         :key-name shortcuts-prefix
 
         "e" (:def
+             sp-unwrap-sexp
+             :which-key "Un-wrap parens")
+
+        "E" (:def
              sp-rewrap-sexp
              :which-key "Re-wrap parens")
 
