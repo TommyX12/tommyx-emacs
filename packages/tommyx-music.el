@@ -201,11 +201,11 @@ This function uses `emms-show-format' to format the current track."
         (goto-char pos)
         (emms-playlist-mode-play-current-track)))))
 
-(defun counsel-emms-enqueue-item-at (from-buffer to-buffer pos)
+(defun counsel-emms-enqueue-item-at (from-buffer to-buffer from-pos)
   (let (track)
     (with-current-buffer from-buffer
       (save-excursion
-        (goto-char pos)
+        (goto-char from-pos)
         (setq track (buffer-substring
                      (line-beginning-position)
                      (1+ (line-end-position))))))
@@ -221,9 +221,9 @@ This function uses `emms-show-format' to format the current track."
         (emms-start)))))
 
 (defun counsel-emms-enqueue-item (from-buffer to-buffer item)
-  (let ((pos (get-text-property 0 'property item)))
+  (let ((from-pos (get-text-property 0 'property item)))
     (counsel-emms-enqueue-item-at
-     from-buffer to-buffer pos)))
+     from-buffer to-buffer from-pos)))
 
 (defun counsel-emms-get-current-track ()
   (with-current-emms-playlist
