@@ -126,6 +126,10 @@
            evil-jump-item
            :key-name jump-to-matching)
 
+      "p" (:def
+           indent-pasted-region
+           :which-key "Indent pasted region")
+
       "p" ,(lambda () (interactive)
              (call-interactively 'evil-paste-after)
              (evil-goto-mark ?\]))
@@ -432,7 +436,7 @@
                (delayed-mode-line-update))
 
         ;; break line
-        "h" newline
+        "h" newline-and-maybe-indent
 
         ;; use ivy to select kill ring
         "p" counsel-yank-pop
@@ -1059,6 +1063,8 @@
 
      :states (insert)
      (:bindings
+
+      "RET" newline-and-maybe-indent
 
       "j" ,(progn
              (setq

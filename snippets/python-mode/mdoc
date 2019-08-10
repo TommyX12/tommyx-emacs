@@ -1,0 +1,14 @@
+# -*- mode: snippet -*-
+# name: Google method docstring
+# key: mdoc
+# --
+"""${1:TODO}
+
+${2:TODO
+}
+Args:
+
+Returns:
+
+Raises:
+"""

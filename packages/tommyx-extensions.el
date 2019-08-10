@@ -643,6 +643,13 @@ Useful for a search overview popup."
   (evil-visual-char)
   (evil-goto-mark ?\]))
 
+(defun indent-pasted-region ()
+  (interactive)
+  (evil-goto-mark ?\[)
+  (evil-visual-char)
+  (evil-goto-mark ?\])
+  (call-interactively #'indent-region))
+
 (defun delete-line-content ()
   (interactive)
   (if (save-excursion
@@ -1126,6 +1133,13 @@ If ARG is non-nil, toggle the mode."
         (get-buffer ivy-posframe-buffer)))
       (ivy-posframe-avy)
     (ivy-avy)))
+
+(defvar-local newline-auto-indent t)
+(defun newline-and-maybe-indent ()
+  (interactive)
+  (if newline-auto-indent
+      (newline-and-indent)
+    (newline)))
 
 (provide 'tommyx-extensions)
 

@@ -1,0 +1,11 @@
+# -*- mode: snippet -*-
+# name: getter and setter
+# key: getset
+# --
+public ${1:int} get${2:$(upcase-initials yas-text)}() {
+  return this.${2:prop};
+}
+
+public void set${2:$(upcase-initials yas-text)}($1 $2) {
+  this.$2 = $2;
+}

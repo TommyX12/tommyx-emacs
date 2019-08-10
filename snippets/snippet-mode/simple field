@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: simple field
+# key: sf
+# --
+\${${1:1}}$0
