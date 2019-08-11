@@ -21,6 +21,15 @@
       ('face-remapping-alist :append-front
                              '(default sidebar-background)
                              '(hl-line sidebar-hl-line))))))
+
+($define-settings-macro use-parinfer-mode ()
+  `(((:require parinfer)
+     (parinfer-mode 1))
+    ((:require smartparens)
+     (smartparens-mode 1)
+     (show-smartparens-mode 1)
+     (smartparens-mode -1))))
+
 ;; '(fringe sidebar-fringe)
 
 ;;; Config definition
@@ -790,8 +799,7 @@
     (:minor-modes
      ((:require highlight-function-calls)
       (highlight-function-calls-mode 1))
-     ((:require parinfer)
-      (parinfer-mode 1)))
+     ((:macro use-parinfer-mode)))
 
     (:on-init
      ((:require tommyx-extensions)
@@ -807,38 +815,31 @@
     (:minor-modes
      ((:require yascroll)
       (yascroll-bar-mode -1))
-     ((:require parinfer)
-      (parinfer-mode 1)))))
+     ((:macro use-parinfer-mode)))))
 
 ($define-module tommyx-clojure-mode
   '((:mode-local clojure-mode)
 
     (:minor-modes
-     ((:require parinfer)
-      (parinfer-mode 1)))))
+     ((:macro use-parinfer-mode)))))
 
 ($define-module tommyx-common-lisp-mode
   '((:mode-local common-lisp-mode)
 
     (:minor-modes
-     ((:require parinfer)
-      (parinfer-mode 1)))))
+     ((:macro use-parinfer-mode)))))
 
 ($define-module tommyx-scheme-mode
   '((:mode-local scheme-mode)
 
     (:minor-modes
-     ((:require parinfer)
-      (parinfer-mode 1)))))
+     ((:macro use-parinfer-mode)))))
 
 ($define-module tommyx-lisp-mode
   '((:mode-local lisp-mode)
 
     (:minor-modes
-     ((:require smartparens)
-      (smartparens-mode -1))
-     ((:require parinfer)
-      (parinfer-mode 1)))))
+     ((:macro use-parinfer-mode)))))
 
 ($define-module tommyx-sh-mode
   '((:mode-local sh-mode)
@@ -939,7 +940,15 @@
       (auto-highlight-symbol-mode 1)))))
 
 ($define-module tommyx-latex-mode
-  '((:mode-local latex-mode)
+  '(:settings
+    ((:require tex-site)
+     ('TeX-parse-self t)
+     ('TeX-auto-save t)
+     ('auto-mode-alist
+      :append-front
+      '("\\.tex\\'" . TeX-latex-mode))))
+
+  '((:mode-local latex-mode tex-mode LaTex-mode TeX-mode)
 
     (:settings
      ((:macro set-indent) 2 4))))
@@ -1234,7 +1243,7 @@
       (yascroll-bar-mode -1)))))
 
 ($define-module tommyx-compilation-mode
-  '((:mode-local compilation-mode)
+  '((:mode-local compilation-mode comint-mode)
 
     (:settings
      ((:require git-gutter)

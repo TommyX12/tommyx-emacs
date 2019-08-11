@@ -1114,7 +1114,7 @@
                 ;; j[ skip TabNine
                 "[" (lambda () (interactive)
                       (call-with-command-hooks
-                       'company-other-backend "j["))
+                       'company-tabnine-call-other-backends "j["))
                 "0" (lambda () (interactive)
                       (call-with-command-hooks
                        'company-complete-number-0 "j0" t))
@@ -1326,6 +1326,8 @@
      :keymaps term-raw-map
      :states (insert)
      (:bindings
+
+      "RET" term-send-raw
 
       "j" ,(general-key-dispatch
                (lambda () (interactive)
@@ -1645,7 +1647,7 @@
 
   ($bind-keys
    `(:case
-     :keymaps latex-mode-map
+     :keymaps (latex-mode-map LaTeX-mode-map TeX-mode-map tex-mode-map)
      :states (motion normal visual)
      (:bindings
 
