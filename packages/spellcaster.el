@@ -88,6 +88,7 @@
   (list (list (kbd "q") 'spellcaster-status-quit)
         (list (kbd "r") 'spellcaster-status-refresh)
         (list (kbd "u") 'spellcaster-update)
+        (list (kbd "U") 'spellcaster-update-forced)
         (list (kbd "d") 'spellcaster-kill-spell-at-point)
         (list (kbd "c") 'spellcaster-auto-cast-spell-at-point)
         (list (kbd "C") 'spellcaster-cast-spell-at-point)))
@@ -614,6 +615,15 @@ If no Spellcaster buffer active, do nothing."
   (message "Running Spellcaster update.")
   (spellcaster-send-request
    (list :action "update"))
+  (run-at-time 0.5 nil #'spellcaster-status-refresh-if-dirty))
+
+(defun spellcaster-update-forced ()
+  "Signal Spellcaster to run a forced update."
+  (interactive)
+  (message "Running Spellcaster update (forced).")
+  (spellcaster-send-request
+   (list :action "update"
+         :force_run t))
   (run-at-time 0.5 nil #'spellcaster-status-refresh-if-dirty))
 
 (defun spellcaster-auto-cast-spell-at-point ()
