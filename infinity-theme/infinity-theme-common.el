@@ -999,7 +999,7 @@
 ;;;;; smartparens
      `(sp-pair-overlay-face ((,class (:background ,bg12))))
      ;; `(sp-show-pair-match-face ((,class (:foreground ,green :background ,green-bg :bold t :underline t))))
-     `(sp-show-pair-match-face ((,class (:foreground ,green :background ,green-bg :inherit bold :underline t))))
+     `(sp-show-pair-match-face ((,class (:foreground ,green :background ,bg14 :inherit bold :underline t))))
      `(sp-show-pair-match-content-face ((,class (:background ,bg12))))
 
 ;;;;; smerge

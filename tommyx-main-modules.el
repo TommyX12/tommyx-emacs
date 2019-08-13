@@ -975,6 +975,9 @@
      ((:macro set-indent) 2))))
 
 ($define-module tommyx-c++-mode
+  '((:settings
+     ('auto-mode-alist :append-front '("\\.h\\'" . c++-mode))))
+
   '((:mode-local c++-mode)
 
     (:settings
@@ -1243,6 +1246,9 @@
       (yascroll-bar-mode -1)))))
 
 ($define-module tommyx-compilation-mode
+  '(:on-init
+    (evil-set-initial-state 'comint-mode 'normal))
+
   '((:mode-local compilation-mode comint-mode)
 
     (:settings

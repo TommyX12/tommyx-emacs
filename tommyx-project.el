@@ -34,8 +34,8 @@
    ((eq major-mode 'python-mode)
     (concat "python \""
             (project/project-relative-name)
-            "\""))
-   ))
+            "\""))))
+   
 (projectile-register-project-type 'cp '("cp.txt")
                                   :compile #'project-cp-run
                                   :run #'project-cp-run)
@@ -50,6 +50,9 @@
     project-prefix
     (:bindings
 
+     "TAB" (:def
+            projectile-find-other-file
+            :which-key "Other File")
      "p" (:def
           counsel-projectile-switch-project
           :which-key "Switch Project")

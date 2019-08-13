@@ -1400,12 +1400,12 @@
 
   ($bind-keys
    `(:case
-     :keymaps compilation-mode-map
+     :keymaps (comint-mode-map compilation-mode-map)
      (:bindings
 
       "h" nil
       "SPC" nil)
-     :keymaps compilation-mode-map
+     :keymaps (comint-mode-map compilation-mode-map)
      :states (motion normal visual)
      (:bindings
 

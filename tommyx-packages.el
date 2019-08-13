@@ -265,6 +265,11 @@
 (use-package haskell-snippets :ensure t)
 (use-package rust-mode :ensure t)
 (use-package csv-mode :ensure t)
+(require 'cmake-mode)
+(use-package cmake-font-lock :ensure t
+  :config
+  (autoload 'cmake-font-lock-activate "cmake-font-lock" nil t)
+  (add-hook 'cmake-mode-hook 'cmake-font-lock-activate))
 (use-package sql :ensure t)
 (use-package elpy :ensure t
   :init
@@ -272,6 +277,7 @@
 (use-package tide :ensure t)
 (use-package jsonnet-mode :ensure t)
 (use-package glsl-mode :ensure t)
+(use-package gitignore-mode :ensure t)
 (use-package json-mode :ensure t)
 (use-package sgml-mode :ensure t)
 (use-package web-mode :ensure t)
