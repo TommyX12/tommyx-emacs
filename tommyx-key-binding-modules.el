@@ -2334,8 +2334,8 @@
       extended-shortcuts-prefix
       (:bindings
 
-       "m" parinfer-toggle-mode
-       "M" ,(lambda () (interactive)
+       "M" parinfer-toggle-mode
+       "m" ,(lambda () (interactive)
               (parinfer-mode
                (if parinfer-mode -1 1))
               (smartparens-mode

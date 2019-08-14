@@ -36,6 +36,13 @@
          :internal-border-color (face-attribute 'ivy-posframe-border :background nil t)
          :override-parameters ivy-posframe-parameters)))))
 
+(defun $compile-always-comint ()
+  (defun $compilation-start-advice (func &rest args)
+    (when (cdr args)
+      (setcar (cdr args) (or (cadr args) t)))
+    (apply func args))
+  (advice-add #'compilation-start :around #'$compilation-start-advice))
+
 (defun $ivy-format-function-patch ()
   (defun ivy-format-function-default (cands)
     "Transform CANDS into a string for minibuffer."
@@ -259,8 +266,8 @@ DEPTH is the depth of the entry in the list."
                                             (car entry))
                          'follow-link t
                          'action ;; #'imenu-list--action-goto-entry
-                         #'imenu-list--action-toggle-hs
-                         )
+                         #'imenu-list--action-toggle-hs)
+                         
           (insert "\n"))
       (insert (imenu-list--depth-string depth))
       (insert (propertize "● " 'font-lock-face (imenu-list--get-icon-face depth)))

@@ -715,6 +715,7 @@
 
   '(:patches
     ((:require tommyx-patches)
+     ($compile-always-comint)
      ((:require ivy-posframe))
      ;; TODO: bug
      ;; ($ivy-posframe-patch)
@@ -798,8 +799,8 @@
 
     (:minor-modes
      ((:require highlight-function-calls)
-      (highlight-function-calls-mode 1))
-     ((:macro use-parinfer-mode)))
+      (highlight-function-calls-mode 1)))
+     ;;((:macro use-parinfer-mode)))
 
     (:on-init
      ((:require tommyx-extensions)
@@ -814,32 +815,32 @@
 
     (:minor-modes
      ((:require yascroll)
-      (yascroll-bar-mode -1))
-     ((:macro use-parinfer-mode)))))
+      (yascroll-bar-mode -1)))))
+     ;;((:macro use-parinfer-mode)))))
 
 ($define-module tommyx-clojure-mode
   '((:mode-local clojure-mode)
 
-    (:minor-modes
-     ((:macro use-parinfer-mode)))))
+    (:minor-modes)))
+     ;;((:macro use-parinfer-mode)))))
 
 ($define-module tommyx-common-lisp-mode
   '((:mode-local common-lisp-mode)
 
-    (:minor-modes
-     ((:macro use-parinfer-mode)))))
+    (:minor-modes)))
+     ;;((:macro use-parinfer-mode)))))
 
 ($define-module tommyx-scheme-mode
   '((:mode-local scheme-mode)
 
-    (:minor-modes
-     ((:macro use-parinfer-mode)))))
+    (:minor-modes)))
+     ;;((:macro use-parinfer-mode)))))
 
 ($define-module tommyx-lisp-mode
   '((:mode-local lisp-mode)
 
-    (:minor-modes
-     ((:macro use-parinfer-mode)))))
+    (:minor-modes)))
+     ;;((:macro use-parinfer-mode)))))
 
 ($define-module tommyx-sh-mode
   '((:mode-local sh-mode)
