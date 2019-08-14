@@ -806,11 +806,13 @@
      ((:require tommyx-extensions)
       ($extra-word-char '(?-)))))
 
+  '(:settings
+    ((:require git-gutter)
+      ('git-gutter:disabled-modes :append-front 'messages-buffer-mode)))
+
   '((:mode-local lisp-interaction-mode)
 
     (:settings
-     ((:require git-gutter)
-      ('git-gutter:disabled-modes :append-front 'lisp-interaction-mode))
      ((:macro use-side-bar-background)))
 
     (:minor-modes
@@ -890,12 +892,14 @@
      (hl-line-mode 1))))
 
 ($define-module tommyx-neotree-mode
+  '(:settings
+    ((:require git-gutter)
+      ('git-gutter:disabled-modes :append-front 'messages-buffer-mode)))
+
   '((:mode-local neotree-mode)
 
     (:settings
      ('use-line-nav t)
-     ((:require git-gutter)
-      ('git-gutter:disabled-modes :append-front 'neotree-mode))
      ((:macro use-side-bar-background))
      ((:macro set-indent) 2))
 
@@ -907,12 +911,14 @@
       (highlight-indentation-mode -1)))))
 
 ($define-module tommyx-imenu-list-mode
+  '(:settings
+    ((:require git-gutter)
+      ('git-gutter:disabled-modes :append-front 'messages-buffer-mode)))
+
   '((:mode-local imenu-list-major-mode)
 
     (:settings
      ('use-line-nav t)
-     ((:require git-gutter)
-      ('git-gutter:disabled-modes :append-front 'imenu-list-major-mode))
      ((:macro use-side-bar-background))
      ((:macro set-indent) 2))
 
@@ -1234,11 +1240,13 @@
       (tide-setup)))))
 
 ($define-module tommyx-term-mode
+  '(:settings
+    ((:require git-gutter)
+      ('git-gutter:disabled-modes :append-front 'messages-buffer-mode)))
+
   '((:mode-local term-mode)
 
     (:settings
-     ((:require git-gutter)
-      ('git-gutter:disabled-modes :append-front 'term-mode))
      ('scroll-margin 0)
      ((:macro use-side-bar-background)))
 
@@ -1250,11 +1258,13 @@
   '(:on-init
     (evil-set-initial-state 'comint-mode 'normal))
 
+  '(:settings
+    ((:require git-gutter)
+      ('git-gutter:disabled-modes :append-front 'messages-buffer-mode)))
+
   '((:mode-local compilation-mode comint-mode)
 
     (:settings
-     ((:require git-gutter)
-      ('git-gutter:disabled-modes :append-front 'compilation-mode))
      ((:macro use-side-bar-background)))
 
     (:minor-modes
@@ -1262,11 +1272,13 @@
       (yascroll-bar-mode -1)))))
 
 ($define-module tommyx-help-mode
+  '(:settings
+    ((:require git-gutter)
+      ('git-gutter:disabled-modes :append-front 'messages-buffer-mode)))
+
   '((:mode-local help-mode)
 
     (:settings
-     ((:require git-gutter)
-      ('git-gutter:disabled-modes :append-front 'help-mode))
      ((:macro use-side-bar-background)))
 
     (:minor-modes
@@ -1274,11 +1286,13 @@
       (yascroll-bar-mode -1)))))
 
 ($define-module tommyx-message-mode
+  '(:settings
+    ((:require git-gutter)
+      ('git-gutter:disabled-modes :append-front 'messages-buffer-mode)))
+
   '((:mode-local messages-buffer-mode)
 
     (:settings
-     ((:require git-gutter)
-      ('git-gutter:disabled-modes :append-front 'messages-buffer-mode))
      ((:macro use-side-bar-background)))
 
     (:minor-modes

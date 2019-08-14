@@ -172,7 +172,7 @@
        (blue-bg-s     (if (eq theme 'dark) (if (has-true-color) "#2d4252" "#262626") (if (has-true-color) "#d1dcdf" "#d7d7ff")))
        (blue-bg-s2    (if (eq theme 'dark) (if (has-true-color) "#406075" "#262626") (if (has-true-color) "#7BA4CC" "#d7d7ff")))
        (blue-bg-s3    (if (eq theme 'dark) (if (has-true-color) "#2C3845" "#262626") (if (has-true-color) "#7BA4CC" "#d7d7ff")))
-       (blue-bg-s4    (if (eq theme 'dark) (if (has-true-color) "#3D546E" "#262626") (if (has-true-color) "#7BA4CC" "#D7E8FF")))
+       (blue-bg-s4    (if (eq theme 'dark) (if (has-true-color) "#415A75" "#262626") (if (has-true-color) "#7BA4CC" "#D7E8FF")))
        (magenta       (if (eq theme 'dark) (if (has-true-color) "#a31db1" "#af00df") (if (has-true-color) "#a31db1" "#800080")))
        (yellow        (if (eq theme 'dark) (if (has-true-color) "#b1951d" "#875f00") (if (has-true-color) "#b1951d" "#875f00")))
        (yellow-bg     (if (eq theme 'dark) (if (has-true-color) "#32322c" "#262626") (if (has-true-color) "#f6f1e1" "#ffffff")))
