@@ -54,6 +54,37 @@
      cands
      "")))
 
+(defun $ivy-actions-patch ()
+  (ivy-set-actions
+   t
+   `(("i" ,(lambda (x) (insert (if (stringp x) x (car x)))) "insert")
+     ("w" ,(lambda (x) (kill-new (if (stringp x) x (car x)))) "copy")
+     ;; TODO: the following does not work on swiper-all. only swiper
+     ("y" ,(lambda (x)
+             (goto-char swiper--opoint)
+             (kill-new
+              (let ((s (if (stringp x) x (car x))))
+                (with-temp-buffer
+                  (insert s)
+                  (goto-char (point-min))
+                  (skip-chars-forward " \t\n")
+                  (skip-chars-forward "0123456789")
+                  (skip-chars-forward " \t\n")
+                  (buffer-substring (point) (point-max))))))
+      "copy swiper")
+     ("p" ,(lambda (x)
+             (goto-char swiper--opoint)
+             (insert
+              (let ((s (if (stringp x) x (car x))))
+                (with-temp-buffer
+                  (insert s)
+                  (goto-char (point-min))
+                  (skip-chars-forward " \t\n")
+                  (skip-chars-forward "0123456789")
+                  (skip-chars-forward " \t\n")
+                  (buffer-substring (point) (point-max))))))
+      "insert swiper"))))
+
 (defun $company-preview-patch ()
   (defface company-preview-active-face
     '((t :inherit company-preview))
@@ -267,7 +298,7 @@ DEPTH is the depth of the entry in the list."
                          'follow-link t
                          'action ;; #'imenu-list--action-goto-entry
                          #'imenu-list--action-toggle-hs)
-                         
+          
           (insert "\n"))
       (insert (imenu-list--depth-string depth))
       (insert (propertize "● " 'font-lock-face (imenu-list--get-icon-face depth)))

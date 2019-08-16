@@ -721,7 +721,8 @@
      ;; ($ivy-posframe-patch)
      
      ((:require ivy)
-      ($ivy-format-function-patch))
+      ($ivy-format-function-patch)
+      ($ivy-actions-patch))
      ((:require auto-highlight-symbol)
       ($ahs-persistent-highlight-patch)
       ($ahs-bug-patch))
@@ -883,7 +884,7 @@
      (hl-line-mode 1))))
 
 ($define-module tommyx-emms-playlist-mode
-  '((:mode-local emms-playlist-mode-hook)
+  '((:mode-local emms-playlist-mode)
 
     (:settings
      ('use-line-nav t))

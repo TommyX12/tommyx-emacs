@@ -397,6 +397,8 @@
 
         "z" evil-comfortable-recenter
 
+        "M-d" delete-trailing-whitespace
+
         "Q" (:def
              ,(lambda () (interactive) (evil-record-macro ?q))
              :which-key "fast record macro")
@@ -548,14 +550,18 @@
             swiper-movement
             :which-key "Search")
        "C-f" (:def
-              swiper-all
+              ,(lambda () (interactive)
+                 (evil-set-jump)
+                 (swiper-all))
               :which-key "Search In All Buffers")
        "F" (:def
             ,(lambda () (interactive)
+               (evil-set-jump)
                (swiper (selection-or-word-at-point)))
             :which-key "Search Selection")
        "C-S-f" (:def
                 ,(lambda () (interactive)
+                   (evil-set-jump)
                    (swiper-all (selection-or-word-at-point)))
                 :which-key "Search Selection All Buf")
        "n" (:def
@@ -1491,6 +1497,7 @@
       "<C-return>" ivy-immediate-done ; use exact input, not candidate
       select-action ivy-done
       "C-M-l" ivy-immediate-done
+      "M-y" ivy-kill-ring-save
       "M-L" ivy-dispatching-done
       "M-n" ivy-call
       "M-N" ivy-dispatching-call
