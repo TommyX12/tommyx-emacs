@@ -288,7 +288,7 @@ DEPTH is the depth of the entry in the list."
     (if (imenu--subalist-p entry)
         (progn
           (insert (imenu-list--depth-string depth))
-          (insert (propertize "+ " 'font-lock-face (imenu-list--get-icon-face depth)))
+          (insert (propertize "- " 'font-lock-face (imenu-list--get-icon-face depth)))
           (insert-button (format "%s" (car entry))
                          'face (if (<= depth 0)
                                    'imenu-list-entry-subalist-face-0

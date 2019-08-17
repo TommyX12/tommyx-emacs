@@ -4,6 +4,10 @@
 ;; so we should automatically find the require statements in the packages imported through require.
 
 ;; initialize
+
+;; TODO: This is for GNU archive bug fix
+(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+
 (setq load-prefer-newer t)
 (require 'package)
 (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/"))
@@ -169,8 +173,17 @@
   :config
   (require 'smartparens-config)
   :diminish smartparens-mode)
+;; (require 'jsonrpc)
+;; (require 'eglot) ; TODO GNU archive problem
+(use-package eglot :ensure t)
 (use-package lsp-mode :ensure t)
 (use-package lsp-ui :ensure t :after lsp-mode)
+(use-package company-lsp :ensure t :after lsp-mode)
+(use-package ccls :ensure t
+  :after projectile)
+;; (use-package cquery :ensure t)
+(use-package posframe :ensure t)
+;; (require 'eldoc-posframe)
 (use-package company :ensure t
   :config
   (require 'company-tng))
@@ -270,6 +283,8 @@
   :config
   (autoload 'cmake-font-lock-activate "cmake-font-lock" nil t)
   (add-hook 'cmake-mode-hook 'cmake-font-lock-activate))
+(use-package cmake-ide :ensure t :after projectile
+  :init (cmake-ide-setup))
 (use-package sql :ensure t)
 (use-package elpy :ensure t
   :init

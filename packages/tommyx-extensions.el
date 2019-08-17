@@ -695,20 +695,17 @@ Useful for a search overview popup."
   (let (compile-command)
     (compile (buffer-substring (region-beginning) (region-end)))))
 
-(defun company-smart-complete ()
-  (interactive)
+(evil-define-command company-smart-complete () :repeat change
   (setq company-echo-metadata-frontend-bypass t)
   (if company-selection-changed
       (company-complete-selection)
-    (if (yas-maybe-expand-abbrev-key-filter t)
-        (yas-expand)
-      (cond
-       (company-candidates
-        (company-select-next)
-        (company-complete-selection))
-       (t
-        (company-auto-begin)
-        (company-select-next))))))
+    (cond
+     (company-candidates
+      (company-select-next)
+      (company-complete-selection))
+     (t
+      (company-auto-begin)
+      (company-select-next)))))
 
 (defun company-complete-number-1 ()
   (interactive) (company-complete-number 1))
@@ -1140,6 +1137,20 @@ If ARG is non-nil, toggle the mode."
   (if newline-auto-indent
       (newline-and-indent)
     (newline)))
+
+(defun yas-expand-or-insert (text)
+  (if (yas-maybe-expand-abbrev-key-filter t)
+      (yas-expand)
+    (insert text)))
+
+(defun $cmake-ide-find-project ()
+  "Finds the directory of the project for cmake-ide."
+  (with-eval-after-load 'projectile
+    (setq cmake-ide-project-dir (projectile-project-root))
+    (setq cmake-ide-build-dir (concat cmake-ide-project-dir "build")))
+  (setq cmake-ide-compile-command
+        (concat "cd " cmake-ide-build-dir " && cmake .. && make"))
+  (cmake-ide-load-db))
 
 (provide 'tommyx-extensions)
 

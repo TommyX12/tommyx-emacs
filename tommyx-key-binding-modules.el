@@ -1117,6 +1117,11 @@
                 "p" (lambda () (interactive)
                       (call-with-command-hooks
                        'company-smart-complete "jp" t))
+                ;; ji snippet
+                "i" (lambda () (interactive)
+                      (call-with-command-hooks
+                       (lambda () (interactive)
+                         (yas-expand-or-insert "ji")) "ji"))
                 ;; j[ skip TabNine
                 "[" (lambda () (interactive)
                       (call-with-command-hooks
@@ -1415,6 +1420,8 @@
      :states (motion normal visual)
      (:bindings
 
+      "q" quit-window
+
       goto-greater-element-up compilation-previous-error
       goto-greater-element-down compilation-next-error)))
 
@@ -1675,13 +1682,17 @@
      :states (motion normal)
      (:bindings
 
-      jump-to-definition ycmd-goto)
+      jump-to-definition ,(lambda () (interactive)
+                            (evil-set-jump)
+                            (ycmd-goto)))
 
      :keymaps c++-mode-map
      :states (motion normal)
      (:bindings
 
-      jump-to-definition ycmd-goto)))
+      jump-to-definition ,(lambda () (interactive)
+                            (evil-set-jump)
+                            (ycmd-goto)))))
 
   ($bind-keys
    `(:case
@@ -1689,7 +1700,9 @@
      :states (motion normal)
      (:bindings
 
-      jump-to-definition ycmd-goto)))
+      jump-to-definition ,(lambda () (interactive)
+                            (evil-set-jump)
+                            (ycmd-goto)))))
 
   ($bind-keys
    `(:case
@@ -1697,7 +1710,9 @@
      :states (motion normal)
      (:bindings
 
-      jump-to-definition ycmd-goto)))
+      jump-to-definition ,(lambda () (interactive)
+                            (evil-set-jump)
+                            (ycmd-goto)))))
 
   ($bind-keys
    `(:case
@@ -1733,7 +1748,9 @@
      :states (motion normal)
      (:bindings
 
-      jump-to-definition elpy-goto-definition
+      jump-to-definition ,(lambda () (interactive)
+                            (evil-set-jump)
+                            (elpy-goto-definition))
       eval-element-or-region
       (:case
        :states (motion normal)
@@ -1756,7 +1773,9 @@
      :states (motion normal)
      (:bindings
 
-      jump-to-definition tide-jump-to-definition)))
+      jump-to-definition ,(lambda () (interactive)
+                            (evil-set-jump)
+                            (tide-jump-to-definition)))))
 
   ($bind-keys
    `(:case
@@ -2287,6 +2306,10 @@
        "k"
        (:bindings
         :which-key "Catalyst"
+
+        "a" (:def
+             org-catalyst-complete-item
+             :which-key "Complete Item")
 
         "s" org-catalyst-status
         "r" org-catalyst-recompute-history)))))

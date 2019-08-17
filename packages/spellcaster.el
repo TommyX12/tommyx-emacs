@@ -218,11 +218,13 @@ Point will be positioned at the end of the buffer."
   "Process the parsed JSON object UPDATE."
   (let ((spell-path (plist-get update :spell_path))
         (spell-name (plist-get update :spell_name))
-        (status (plist-get update :status)))
+        (status (plist-get update :status))
+        (message (plist-get update :message)))
     (ht-set spellcaster--spells
             spell-path
             (list :name spell-name
-                  :status status))
+                  :status status
+                  :message message))
     (setq spellcaster--status-changed t)))
 
 (defun spellcaster--handle-response (msg)
@@ -493,7 +495,8 @@ If no Spellcaster buffer active, do nothing."
     (dolist (spell-id spell-ids)
       (let* ((spell (ht-get spellcaster--spells spell-id))
              (spell-name (plist-get spell :name))
-             (spell-status (plist-get spell :status)))
+             (spell-status (plist-get spell :status))
+             (msg (plist-get spell :message)))
         (insert
          (propertize
           (format "%-10s %-30s %s\n"
@@ -504,7 +507,14 @@ If no Spellcaster buffer active, do nothing."
                    spell-name 'spellcaster-item-face)
                   (spellcaster--with-face
                    spell-id 'spellcaster-secondary-face))
-          'spell-id spell-id))))))
+          'spell-id spell-id))
+        (when msg
+          (let* ((msg (if (stringp msg)
+                          msg
+                        (prin1-to-string msg)))
+                 (msg (s-trim-right msg)))
+            (when (not (equal msg ""))
+              (insert msg "\n"))))))))
 
 (defun spellcaster--refresh-spaceline ()
   (setq

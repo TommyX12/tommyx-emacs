@@ -413,9 +413,12 @@
      ('emmet-indentation 2))
 
     ;; linter
+    ((:require lsp)
+     ('lsp-prefer-flymake nil))
     ((:require flycheck)
      ('flycheck-idle-change-delay 3)
      ('flycheck-check-syntax-automatically '(idle-change save mode-enabled)))
+    ('flymake-no-changes-timeout 3)
 
     ;; auto-completion
     ((:require company)
@@ -447,7 +450,7 @@
       `(,ycmd-server-python-command
         "-u" ,(expand-file-name "third_party/ycmd/ycmd/"
                                 tommyx-config-path)))
-     ('ycmd-file-type-map '(java-mode "java")))
+     ('ycmd-file-type-map :ensure-front '(java-mode "java")))
     ((:require company-ycmd)
      ('company-ycmd-request-sync-timeout 0))
 
@@ -801,7 +804,7 @@
     (:minor-modes
      ((:require highlight-function-calls)
       (highlight-function-calls-mode 1)))
-     ;;((:macro use-parinfer-mode)))
+    ;;((:macro use-parinfer-mode)))
 
     (:on-init
      ((:require tommyx-extensions)
@@ -809,7 +812,7 @@
 
   '(:settings
     ((:require git-gutter)
-      ('git-gutter:disabled-modes :append-front 'messages-buffer-mode)))
+     ('git-gutter:disabled-modes :append-front 'emacs-lisp-mode)))
 
   '((:mode-local lisp-interaction-mode)
 
@@ -819,31 +822,31 @@
     (:minor-modes
      ((:require yascroll)
       (yascroll-bar-mode -1)))))
-     ;;((:macro use-parinfer-mode)))))
+;;((:macro use-parinfer-mode)))))
 
 ($define-module tommyx-clojure-mode
   '((:mode-local clojure-mode)
 
     (:minor-modes)))
-     ;;((:macro use-parinfer-mode)))))
+;;((:macro use-parinfer-mode)))))
 
 ($define-module tommyx-common-lisp-mode
   '((:mode-local common-lisp-mode)
 
     (:minor-modes)))
-     ;;((:macro use-parinfer-mode)))))
+;;((:macro use-parinfer-mode)))))
 
 ($define-module tommyx-scheme-mode
   '((:mode-local scheme-mode)
 
     (:minor-modes)))
-     ;;((:macro use-parinfer-mode)))))
+;;((:macro use-parinfer-mode)))))
 
 ($define-module tommyx-lisp-mode
   '((:mode-local lisp-mode)
 
     (:minor-modes)))
-     ;;((:macro use-parinfer-mode)))))
+;;((:macro use-parinfer-mode)))))
 
 ($define-module tommyx-sh-mode
   '((:mode-local sh-mode)
@@ -895,7 +898,7 @@
 ($define-module tommyx-neotree-mode
   '(:settings
     ((:require git-gutter)
-      ('git-gutter:disabled-modes :append-front 'messages-buffer-mode)))
+     ('git-gutter:disabled-modes :append-front 'neotree-mode)))
 
   '((:mode-local neotree-mode)
 
@@ -914,7 +917,7 @@
 ($define-module tommyx-imenu-list-mode
   '(:settings
     ((:require git-gutter)
-      ('git-gutter:disabled-modes :append-front 'messages-buffer-mode)))
+     ('git-gutter:disabled-modes :append-front 'imenu-list-major-mode)))
 
   '((:mode-local imenu-list-major-mode)
 
@@ -984,18 +987,41 @@
 
 ($define-module tommyx-c++-mode
   '((:settings
-     ('auto-mode-alist :append-front '("\\.h\\'" . c++-mode))))
+     ('auto-mode-alist :append-front '("\\.h\\'" . c++-mode))
+     ;; ((:require ccls)
+     ;;  ('ccls-args nil)
+     ;;  ('ccls-executable (executable-find "ccls")))
+     ;; ((:require cquery)
+     ;;  ('cquery-executable (executable-find "cquery")))
+     ((:require projectile)
+      ('projectile-project-root-files-top-down-recurring
+       :append-front "compile_commands.json" ".ccls")
+      ('projectile-globally-ignored-directories
+       :append-front ".ccls-cache"))))
 
   '((:mode-local c++-mode)
 
     (:settings
      ((:require company ycmd company-tabnine)
       ('company-backends :ensure-front 'company-tabnine 'company-ycmd))
+     ;; ((:require company lsp-mode company-tabnine)
+     ;;  ('company-backends :ensure-front 'company-tabnine 'company-lsp))
+     ;; ((:require company eglot company-tabnine)
+     ;;  ('company-backends :ensure-front 'company-tabnine 'company-capf))
      ((:macro set-indent) 4))
 
     (:minor-modes
      ((:require ycmd)
-      (ycmd-mode 1)))))
+      (ycmd-mode 1))
+     ;; ((:require lsp-mode)
+     ;;  (lsp))
+     ;; ((:require eglot)
+     ;;  (eglot))
+     )
+
+    (:on-init
+     ((:require tommyx-extensions cmake-ide)
+      ($cmake-ide-find-project)))))
 
 ($define-module tommyx-r-mode
   '((:mode-local ess-r-mode)
@@ -1243,7 +1269,7 @@
 ($define-module tommyx-term-mode
   '(:settings
     ((:require git-gutter)
-      ('git-gutter:disabled-modes :append-front 'messages-buffer-mode)))
+     ('git-gutter:disabled-modes :append-front 'term-mode)))
 
   '((:mode-local term-mode)
 
@@ -1261,7 +1287,7 @@
 
   '(:settings
     ((:require git-gutter)
-      ('git-gutter:disabled-modes :append-front 'messages-buffer-mode)))
+     ('git-gutter:disabled-modes :append-front 'compilation-mode 'comint-mode)))
 
   '((:mode-local compilation-mode comint-mode)
 
@@ -1275,7 +1301,7 @@
 ($define-module tommyx-help-mode
   '(:settings
     ((:require git-gutter)
-      ('git-gutter:disabled-modes :append-front 'messages-buffer-mode)))
+     ('git-gutter:disabled-modes :append-front 'help-mode)))
 
   '((:mode-local help-mode)
 
@@ -1289,7 +1315,7 @@
 ($define-module tommyx-message-mode
   '(:settings
     ((:require git-gutter)
-      ('git-gutter:disabled-modes :append-front 'messages-buffer-mode)))
+     ('git-gutter:disabled-modes :append-front 'messages-buffer-mode)))
 
   '((:mode-local messages-buffer-mode)
 
@@ -1391,7 +1417,8 @@
       ('counsel-org-headline-path-separator "/"))))
 
   '(:minor-modes
-    (org-super-agenda-mode 1))
+    ((:require org-super-agenda)
+     (org-super-agenda-mode 1)))
 
   '(:on-init
     ((:require org)
@@ -1455,7 +1482,9 @@
 
     (:minor-modes
      ((:require org-bullets)
-      (org-bullets-mode 1))))
+      (org-bullets-mode 1))
+     ((:require git-gutter)
+      (git-gutter-mode -1))))
 
   '((:mode-local org-agenda-mode)
 
