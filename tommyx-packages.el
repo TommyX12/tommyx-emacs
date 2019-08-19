@@ -188,6 +188,8 @@
   :config
   (require 'company-tng))
 (use-package company-posframe :ensure t :after company)
+(enable-auto-compilation 'company-tommyx-frontend)
+(require 'company-tommyx-frontend)
 ;; (use-package company-box :ensure t :after company
 ;;  :hook (company-mode-hook . company-box-mode))
 (use-package company-quickhelp :ensure t)

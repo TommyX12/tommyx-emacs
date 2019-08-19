@@ -231,7 +231,9 @@
     ((:require highlight-indentation)
      ('highlight-indentation-blank-lines t)
      ('highlight-indentation-offset 4)
-     ('highlight-indentation--defer-redraw t))
+     ('highlight-indentation--defer-redraw t)
+     ;; We are using custom front-end
+     ('highlight-indentation-fix-company nil))
     ((:require evil-goggles)
      ('evil-goggles-pulse nil)
      ('evil-goggles-duration 1)
@@ -387,9 +389,6 @@
      ('sp-show-pair-from-inside t)
      ('smartparens-strict-mode nil)
      ('sp-cancel-autoskip-on-backward-movement nil))
-    ((:require cc-mode)
-     ('c-basic-offset 4)
-     ('c-default-style '((other . "linux"))))
 
     ;; dashboard
     ;; ((:require dashboard)
@@ -422,11 +421,12 @@
 
     ;; auto-completion
     ((:require company)
-     ((:require company-tng)
+     ((:require company-tng company-tommyx-frontend)
       ('company-frontends
        '(company-tng-frontend
-         company-pseudo-tooltip-frontend
-         company-preview-frontend
+         ;; company-pseudo-tooltip-frontend
+         company-tommyx-frontend
+         ;; company-preview-frontend
          company-echo-metadata-frontend)))
      ('company-idle-delay 0)
      ('company-tooltip-align-annotations t)
@@ -731,7 +731,7 @@
       ($ahs-bug-patch))
      ((:require company)
       ($company-preview-patch)
-      ($company-tng-frontend-patch)
+      ($company-tng-frontend-no-preview-patch)
       ($company-echo-metadata-frontend-patch)
       ($company-general-compatibility-patch)
       ((:require yasnippet)
@@ -986,38 +986,47 @@
      ((:macro set-indent) 2))))
 
 ($define-module tommyx-c++-mode
-  '((:settings
-     ('auto-mode-alist :append-front '("\\.h\\'" . c++-mode))
-     ;; ((:require ccls)
-     ;;  ('ccls-args nil)
-     ;;  ('ccls-executable (executable-find "ccls")))
-     ;; ((:require cquery)
-     ;;  ('cquery-executable (executable-find "cquery")))
-     ((:require projectile)
-      ('projectile-project-root-files-top-down-recurring
-       :append-front "compile_commands.json" ".ccls")
-      ('projectile-globally-ignored-directories
-       :append-front ".ccls-cache"))))
+  '(:settings
+    ('c++-ide-type 'lsp)
+    ('c-basic-offset 2)
+    ('c-default-style '((other . "linux")))
+    ('auto-mode-alist :append-front '("\\.h\\'" . c++-mode))
+    ((:when (eq c++-ide-type 'lsp))
+     ((:require ccls)
+      ('ccls-args nil)
+      ('ccls-executable (executable-find "ccls"))))
+    ;; ((:require cquery)
+    ;;  ('cquery-executable (executable-find "cquery")))
+    ((:require projectile)
+     ('projectile-project-root-files-top-down-recurring
+      :append-front "compile_commands.json" ".ccls")
+     ('projectile-globally-ignored-directories
+      :append-front ".ccls-cache")))
 
   '((:mode-local c++-mode)
 
     (:settings
-     ((:require company ycmd company-tabnine)
-      ('company-backends :ensure-front 'company-tabnine 'company-ycmd))
-     ;; ((:require company lsp-mode company-tabnine)
-     ;;  ('company-backends :ensure-front 'company-tabnine 'company-lsp))
-     ;; ((:require company eglot company-tabnine)
-     ;;  ('company-backends :ensure-front 'company-tabnine 'company-capf))
-     ((:macro set-indent) 4))
+     ((:when (eq c++-ide-type 'ycm))
+      ((:require company ycmd company-tabnine)
+       ('company-backends :ensure-front 'company-tabnine 'company-ycmd)))
+     ((:when (eq c++-ide-type 'lsp))
+      ((:require company lsp-mode company-tabnine)
+       ('company-backends :ensure-front 'company-tabnine 'company-lsp)))
+     ((:when (eq c++-ide-type 'eglot))
+      ((:require company eglot company-tabnine)
+       ('company-backends :ensure-front 'company-tabnine 'company-capf)))
+     ((:macro set-indent) 2))
 
     (:minor-modes
-     ((:require ycmd)
-      (ycmd-mode 1))
-     ;; ((:require lsp-mode)
-     ;;  (lsp))
-     ;; ((:require eglot)
-     ;;  (eglot))
-     )
+     ((:when (eq c++-ide-type 'ycm))
+      ((:require ycmd)
+       (ycmd-mode 1)))
+     ((:when (eq c++-ide-type 'lsp))
+      ((:require lsp-mode)
+       (lsp)))
+     ((:when (eq c++-ide-type 'eglot))
+      ((:require eglot)
+       (eglot))))
 
     (:on-init
      ((:require tommyx-extensions cmake-ide)

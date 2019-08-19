@@ -120,7 +120,7 @@
                  'face 'company-preview-active-face)))))))
       (`hide (company-preview-hide)))))
 
-(defun $company-tng-frontend-patch ()
+(defun $company-tng-frontend-no-preview-patch ()
   (defun company-tng-frontend (command)
     "When the user changes the selection at least once, this
 frontend will display the candidate in the buffer as if it's
@@ -195,9 +195,6 @@ to have \"j\" as a company-mode command (so do not complete) but not to have
         (setq-local overriding-local-map company-posframe-active-map))
       (posframe-show
        buffer
-       :override-parameters '((border-width . 1)
-                              (internal-border-width . 1)
-                              (undecorated . t))
        :height 10
        :width (window-width) ; (if full-width (window-width) nil)
        :string contents
