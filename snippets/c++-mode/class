@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: class
+# key: class
+# --
+class ${1:`(snake-to-Camel (file-name-base (buffer-file-name)))`} {
+public:
+$1();
+virtual ~$1() = default;$0
+};

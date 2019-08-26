@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: destructor
+# key: dtor
+# --
+${1:`(snake-to-Camel (file-name-base (buffer-file-name)))`}::~$1() {$0}

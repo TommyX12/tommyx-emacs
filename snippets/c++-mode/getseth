@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: getseth
+# key: getseth
+# --
+virtual ${1:int} get_${2:prop}() const;
+virtual void set_$2(const $1 &);

@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: constructor
+# key: ctor
+# --
+${1:`(snake-to-Camel (file-name-base (buffer-file-name)))`}::$1($2) {$0}

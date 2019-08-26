@@ -446,6 +446,7 @@
                            "third_party/ycmd/.ycm_extra_conf.py"
                            tommyx-config-path))
      ('ycmd-server-python-command :default "python")
+     ('ycmd-parse-conditions '(save mode-enabled))
      ('ycmd-server-command
       `(,ycmd-server-python-command
         "-u" ,(expand-file-name "third_party/ycmd/ycmd/"
@@ -987,7 +988,7 @@
 
 ($define-module tommyx-c++-mode
   '(:settings
-    ('c++-ide-type 'lsp)
+    ('c++-ide-type 'ycm)
     ('c-basic-offset 2)
     ('c-default-style '((other . "linux")))
     ('auto-mode-alist :append-front '("\\.h\\'" . c++-mode))
@@ -1015,9 +1016,11 @@
      ((:when (eq c++-ide-type 'eglot))
       ((:require company eglot company-tabnine)
        ('company-backends :ensure-front 'company-tabnine 'company-capf)))
-     ((:macro set-indent) 2))
+     ((:macro set-indent) 2 4))
 
     (:minor-modes
+     ((:require format-all)
+      (format-all-mode))
      ((:when (eq c++-ide-type 'ycm))
       ((:require ycmd)
        (ycmd-mode 1)))

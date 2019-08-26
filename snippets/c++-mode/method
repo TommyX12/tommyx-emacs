@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: method
+# key: m
+# --
+${1:void} ${1:`(snake-to-Camel (file-name-base (buffer-file-name)))`}::${2:func}($3) {
+$0
+}

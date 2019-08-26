@@ -1692,7 +1692,9 @@
 
       jump-to-definition ,(lambda () (interactive)
                             (evil-set-jump)
-                            (ycmd-goto)))))
+                            (ycmd-goto))
+
+      format-buffer format-all-buffer)))
 
   ($bind-keys
    `(:case
@@ -2075,7 +2077,9 @@
              org-store-link
              :which-key "Org Store Link")
         "o" (:def
-             org-open-at-point
+             (lambda () (interactive)
+               (evil-set-jump)
+               (call-interactively 'org-open-at-point))
              :which-key "Org Open Link")
         "C-l" (:def
                org-toggle-link-display

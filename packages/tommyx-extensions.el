@@ -671,19 +671,21 @@ Useful for a search overview popup."
       (indent-according-to-mode)))
   (indent-according-to-mode))
 
-(defun update-heavy-tasks () (interactive)
-       "Update all the heavy tasks."
-       (message "Updating heavy tasks...")
-       (color-identifiers:refresh)
-       (font-lock-fontify-buffer)
-       (flyspell-lazy-check-visible)
-       (git-gutter:update-all-windows)
-       (git-gutter)
-       (flycheck-buffer)
-       (garbage-collect)
-       (yascroll:safe-show-scroll-bar)
-       (message "Done.")
-       (beacon-blink))
+(defun update-heavy-tasks ()
+  (interactive)
+  "Update all the heavy tasks."
+  (message "Updating heavy tasks...")
+  (color-identifiers:refresh)
+  (font-lock-fontify-buffer)
+  (flyspell-lazy-check-visible)
+  (when git-gutter-mode
+    (git-gutter:update-all-windows)
+    (git-gutter))
+  (flycheck-buffer)
+  (garbage-collect)
+  (yascroll:safe-show-scroll-bar)
+  (message "Done.")
+  (beacon-blink))
 
 (defun execute-buffer-as-sh ()
   (interactive)
@@ -1151,6 +1153,18 @@ If ARG is non-nil, toggle the mode."
   (setq cmake-ide-compile-command
         (concat "cd " cmake-ide-build-dir " && cmake .. && make"))
   (cmake-ide-load-db))
+
+(defun snake-to-camel (s)
+  "Converts underscore to camelCase. FIXME: Will incorrectly capitalize '_foo'."
+  (let ((l (split-string s "_")))
+    (if (cdr l)
+        (concat (car l) (mapconcat 'capitalize (cdr l) ""))
+      (car l))))
+
+(defun snake-to-Camel (s)
+  "Converts underscore to CamelCase. FIXME: Will incorrectly capitalize '_foo'."
+  (let ((l (split-string s "_")))
+    (mapconcat 'capitalize l "")))
 
 (provide 'tommyx-extensions)
 

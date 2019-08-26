@@ -1,0 +1,10 @@
+# -*- mode: snippet -*-
+# name: getsetc
+# key: getsetc
+# --
+${2:int} ${1:`(snake-to-Camel (file-name-base (buffer-file-name)))`}::get_${3:prop}() const {
+  return $3;
+}
+void $1::set_$3(const $2 &$3) {
+  this->$3 = $3;
+}
