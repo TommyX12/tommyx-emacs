@@ -6,7 +6,8 @@
 ;; initialize
 
 ;; TODO: This is for GNU archive bug fix
-(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+(when (boundp 'gnutls-algorithm-priority)
+  (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
 
 (setq load-prefer-newer t)
 (require 'package)
@@ -18,6 +19,7 @@
 ;; TODO temporarily disabled
 ;; (package-refresh-contents)
 (unless (package-installed-p 'use-package)
+  (package-refresh-contents)
   (package-install 'use-package))
 (eval-when-compile (require 'use-package))
 (use-package auto-compile :ensure t
