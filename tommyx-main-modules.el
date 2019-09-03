@@ -1085,7 +1085,12 @@
      (let ((pos (point)))
        (with-demoted-errors "Error: %s"
          (json-pretty-print-buffer))
-       (goto-char pos)))))
+       (goto-char pos))))
+
+  '((:mode-local jsonnet-mode)
+
+    (:settings
+     ((:macro set-indent) 2 4))))
 
 ($define-module tommyx-html-mode
   '(:settings

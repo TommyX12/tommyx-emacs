@@ -1,0 +1,16 @@
+# -*- mode: snippet -*-
+# name: header
+# key: header
+# --
+#ifndef ${1:${2:$(upcase yas-text)}_`(upcase (file-name-nondirectory (file-name-sans-extension (or (buffer-file-name) ""))))`_H}
+#define $1
+
+namespace ${2:nanite} {
+class ${3:`(snake-to-Camel (file-name-base (buffer-file-name)))`} {
+public:
+$3();
+virtual ~$3() = default;$0
+};
+} // namespace $2
+
+#endif /* $1 */
