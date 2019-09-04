@@ -71,6 +71,7 @@
 (use-package json :ensure t)
 (use-package unicode-escape :ensure t)
 (use-package alert :ensure t)
+(use-package font-lock-studio :ensure t)
 (use-package emms :ensure t :after evil
   :config
   (require 'emms-setup)

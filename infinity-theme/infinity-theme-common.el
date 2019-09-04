@@ -237,6 +237,8 @@
      `(font-lock-builtin-face ((,class (:foreground ,keyword))))
      `(font-lock-comment-face ((,class (:foreground ,base-dim :slant normal))))
      `(font-lock-constant-face ((,class (:foreground ,const))))
+     `(constant-true-face ((,class (:foreground ,const :background ,green-bg-s))))
+     `(constant-false-face ((,class (:foreground ,const :background ,red-bg-s))))
      `(font-lock-doc-face ((,class (:foreground ,comment :background ,comment-bg))))
      `(font-lock-function-name-face ((,class (:foreground ,func))))
      `(font-lock-keyword-face ((,class (:inherit bold :foreground ,keyword :slant normal))))

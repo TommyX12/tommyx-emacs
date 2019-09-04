@@ -795,6 +795,10 @@
      (flyspell-mode -1))))
 
 ($define-module tommyx-emacs-lisp-mode
+  '(:on-init
+    ((:require tommyx-extensions)
+     ($highlight-booleans 'emacs-lisp-mode "\\<t\\>" "\\<nil\\>")))
+
   '((:mode-local emacs-lisp-mode)
 
     (:settings
@@ -977,6 +981,10 @@
       (highlight-indentation-mode 1)))))
 
 ($define-module tommyx-java-mode
+  '(:on-init
+    ((:require tommyx-extensions)
+     ($highlight-booleans 'java-mode "\\<true\\>" "\\<false\\>")))
+
   '(:settings
     ((:require cc-mode)
      ('c-default-style :append-front '(java-mode . "java"))))
@@ -987,6 +995,10 @@
      ((:macro set-indent) 2))))
 
 ($define-module tommyx-c++-mode
+  '(:on-init
+    ((:require tommyx-extensions)
+     ($highlight-booleans 'c++-mode "\\<true\\>" "\\<false\\>")))
+
   '(:settings
     ('c++-ide-type 'ycm)
     ('c-basic-offset 2)
@@ -1069,6 +1081,10 @@
       ($setup-color-identifiers-parser 'c 'csharp-mode)))))
 
 ($define-module tommyx-json-mode
+  '(:on-init
+    ((:require tommyx-extensions)
+     ($highlight-booleans 'json-mode "\\<true\\>" "\\<false\\>")))
+
   '((:mode-local json-mode)
 
     (:minor-modes
@@ -1203,6 +1219,10 @@
      ($extra-word-char '(?-)))))
 
 ($define-module tommyx-python-mode
+  '(:on-init
+    ((:require tommyx-extensions)
+     ($highlight-booleans 'python-mode "\\<True\\>" "\\<False\\>")))
+
   '(:settings
     ('python-auto-format-code t))
 
@@ -1235,6 +1255,10 @@
         ('company-backends :ensure-front 'company-tabnine)))))))
 
 ($define-module tommyx-javascript-mode
+  '(:on-init
+    ((:require tommyx-extensions)
+     ($highlight-booleans 'js2-mode "\\<true\\>" "\\<false\\>")))
+
   '(:settings
     ('auto-mode-alist :append-front
                       '("\\.js\\'" . js2-mode))
@@ -1261,6 +1285,10 @@
       (tide-setup)))))
 
 ($define-module tommyx-typescript-mode
+  '(:on-init
+    ((:require tommyx-extensions)
+     ($highlight-booleans 'typescript-mode "\\<true\\>" "\\<false\\>")))
+
   '((:mode-local typescript-mode)
 
     (:settings

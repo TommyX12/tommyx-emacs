@@ -1166,6 +1166,19 @@ If ARG is non-nil, toggle the mode."
   (let ((l (split-string s "_")))
     (mapconcat 'capitalize l "")))
 
+(defface constant-true-face
+  '((t :inherit font-lock-constant-face :foreground "#00ff00"))
+  "")
+
+(defface constant-false-face
+  '((t :inherit font-lock-constant-face :foreground "#ff0000"))
+  "")
+
+(defun $highlight-booleans (mode true-regexp false-regexp)
+  (font-lock-add-keywords
+   mode `((,true-regexp . 'constant-true-face)
+          (,false-regexp . 'constant-false-face))))
+
 (provide 'tommyx-extensions)
 
 ;;; tommyx-extensions.el ends here
