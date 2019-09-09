@@ -3363,7 +3363,8 @@ REVERSE the order if REVERSE is non-nil."
      month-day
      today-month-day
      snapshot
-     computed-actions)
+     computed-actions
+     (exclude-today nil))
 
   ;; TODO can add to ui-data for caching
   (when (equal month-day today-month-day)
@@ -3372,26 +3373,31 @@ REVERSE the order if REVERSE is non-nil."
            (daynr (org-catalyst--month-day-to-days
                    month-day))
            (renderer-alist
-            (mapcar
-             (lambda (info)
-               (let ((item-id (plist-get info :item-id))
-                     (timestamp-days (plist-get info :timestamp-days)))
-                 (cons
-                  (or timestamp-days 0)
-                  (org-catalyst--partial-renderer
-                   org-catalyst--render-item-with-info
-                   :prefix-width 3
-                   :prefix-renderer
-                   (org-catalyst--inline-renderer ()
-                     (insert (org-catalyst--with-face
-                              (format "%dd" (- daynr timestamp-days))
-                              'org-catalyst-warning-face)))
-                   :month-day month-day
-                   :computed-actions computed-actions
-                   :snapshot snapshot
-                   :all-item-config all-item-config
-                   :item-id item-id))))
-             overdue-items)))
+            (seq-filter
+             #'identity
+             (mapcar
+              (lambda (info)
+                (let* ((item-id (plist-get info :item-id))
+                       (timestamp-days (plist-get info :timestamp-days))
+                       (num-days (- daynr timestamp-days)))
+                  (when (or (not exclude-today)
+                            (> num-days 0))
+                    (cons
+                     (or timestamp-days 0)
+                     (org-catalyst--partial-renderer
+                      org-catalyst--render-item-with-info
+                      :prefix-width 3
+                      :prefix-renderer
+                      (org-catalyst--inline-renderer ()
+                        (insert (org-catalyst--with-face
+                                 (format "%dd" num-days)
+                                 'org-catalyst-warning-face)))
+                      :month-day month-day
+                      :computed-actions computed-actions
+                      :snapshot snapshot
+                      :all-item-config all-item-config
+                      :item-id item-id)))))
+              overdue-items))))
 
       (when renderer-alist
         (org-catalyst--render-section-heading
@@ -4152,6 +4158,7 @@ If current UI state specifies order to be reversed, the returned order is revers
     (month-day
      snapshot
      computed-actions
+     today-month-day
      config
      ui-data)
   (org-catalyst--render-section-heading
@@ -4159,6 +4166,13 @@ If current UI state specifies order to be reversed, the returned order is revers
   (org-catalyst--render-curator
    :config config)
   (insert "\n")
+  (org-catalyst--render-overdue-items
+   :config config
+   :month-day month-day
+   :today-month-day today-month-day
+   :snapshot snapshot
+   :computed-actions computed-actions
+   :exclude-today t)
   (let* ((all-item-config (plist-get config :all-item-config))
          (topological-order (plist-get config :topological-order))
          (top-level-items (plist-get config :top-level-items))

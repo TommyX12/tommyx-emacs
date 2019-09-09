@@ -682,25 +682,26 @@ Taken from https://github.com/narendraj9/quoted-scratch."
                                 'info-playing-time))
            (playing-time emms-playing-time))
 
-      (propertize
-       (format "%s[%s/%s] %s"
-               (if emms-player-paused-p
-                   ""
-                 "♫ ")
-               (if playing-time
-                   (format "%02d:%02d"
-                           (/ playing-time 60)
-                           (% playing-time 60))
-                 "--:--")
-               (if total-playing-time
-                   (format "%02d:%02d"
-                           (/ total-playing-time 60)
-                           (% total-playing-time 60))
-                 "--:--")
-               (file-name-base
-                (emms-track-name
-                 (emms-playlist-current-selected-track))))
-       'face 'font-lock-comment-face))))
+      (concat
+       (if emms-player-paused-p
+           ""
+         (propertize "♫ " 'face 'success))
+       (propertize
+        (format "[%s/%s] %s"
+                (if playing-time
+                    (format "%02d:%02d"
+                            (/ playing-time 60)
+                            (% playing-time 60))
+                  "--:--")
+                (if total-playing-time
+                    (format "%02d:%02d"
+                            (/ total-playing-time 60)
+                            (% total-playing-time 60))
+                  "--:--")
+                (file-name-base
+                 (emms-track-name
+                  (emms-playlist-current-selected-track))))
+        'face 'font-lock-comment-face)))))
 
 
 

@@ -856,6 +856,7 @@
      `(neo-vc-default-face ((,class (:inherit neo-file-link-face))))
      `(neo-vc-added-face ((,class (:foreground ,green))))
      `(neo-vc-edited-face ((,class (:foreground ,aqua))))
+     `(neo-vc-ignored-face ((,class (:foreground ,base-dim))))
      `(neo-vc-user-face ((,class (:foreground ,yellow))))
      `(neo-vc-unregistered-face ((,class (:foreground ,green))))
      `(neo-vc-removed-face ((,class (:foreground ,red))))

@@ -2,7 +2,7 @@
 # name: class
 # key: class
 # --
-class ${1:`(snake-to-Camel (file-name-base (buffer-file-name)))`} {
+class ${1:`(snake-to-Camel (file-name-base (buffer-file-name)))`} ${3:: public ${2:BaseClass}}{
 public:
 $1();
 virtual ~$1() = default;$0

@@ -1000,7 +1000,8 @@
      ($highlight-booleans 'c++-mode "\\<true\\>" "\\<false\\>")))
 
   '(:settings
-    ('c++-ide-type 'ycm)
+    ('c++-ide-type nil)
+    ;; ('c++-ide-type 'ycm)
     ('c-basic-offset 2)
     ('c-default-style '((other . "linux")))
     ('auto-mode-alist :append-front '("\\.h\\'" . c++-mode))
@@ -1083,6 +1084,7 @@
 ($define-module tommyx-json-mode
   '(:on-init
     ((:require tommyx-extensions)
+     ($highlight-booleans 'jsonnet-mode "\\<true\\>" "\\<false\\>")
      ($highlight-booleans 'json-mode "\\<true\\>" "\\<false\\>")))
 
   '((:mode-local json-mode)

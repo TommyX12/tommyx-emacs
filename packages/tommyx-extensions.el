@@ -685,7 +685,8 @@ Useful for a search overview popup."
   (garbage-collect)
   (yascroll:safe-show-scroll-bar)
   (message "Done.")
-  (beacon-blink))
+  (beacon-blink)
+  (redraw-display))
 
 (defun execute-buffer-as-sh ()
   (interactive)
