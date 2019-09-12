@@ -1622,6 +1622,7 @@
       "d" neotree-delete-node ; delete
       "c" neotree-copy-node ; copy
       "o" neotree-enter
+      "t" neotree-dir ; goto
       goto-parent-semantic-element neotree-select-up-node
       goto-child-semantic-element neotree-select-down-node
       goto-previous-semantic-element neotree-select-previous-sibling-node

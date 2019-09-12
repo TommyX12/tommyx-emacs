@@ -3681,11 +3681,12 @@ If currently not in status window or if ARG is non-nil, the date will be
 interactively selected.
 Otherwise, the date will be the current day in the status window."
   `(let* ((in-status-buffer (org-catalyst--in-status-buffer))
-          (month-day (if (or ,arg
-                             (not in-status-buffer))
+          (status-month-day (or org-catalyst--status-month-day
+                                (org-catalyst--status-today-month-day)))
+          (month-day (if (or ,arg)
                          (org-catalyst--read-month-day
-                          org-catalyst--status-month-day)
-                       org-catalyst--status-month-day))
+                          status-month-day)
+                       status-month-day))
           (item-id
            (if org-catalyst--update-item-at-point
                (or (and in-status-buffer
