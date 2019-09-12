@@ -2157,6 +2157,9 @@
       ;; TAB and S-TAB: go through table fields
       ;; RET: table next row
 
+      "M-[" ,(lambda () (interactive)
+               (insert "- [ ] "))
+
       "C-c C-." org-time-stamp-inactive ; with C-u as previx also add time.
       "M-RET" org-meta-return
       "M-S-RET" org-insert-todo-heading
