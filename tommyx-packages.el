@@ -270,6 +270,7 @@
 ;; (require 'smart-completer)
 (require 'shaderlab-mode)
 (use-package auctex :defer t :ensure t)
+;; (use-package cuda-mode :ensure t)
 (use-package kivy-mode :ensure t)
 (use-package protobuf-mode :ensure t)
 (use-package cc-mode :ensure t)

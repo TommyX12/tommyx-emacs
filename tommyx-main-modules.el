@@ -1004,7 +1004,9 @@
     ;; ('c++-ide-type 'ycm)
     ('c-basic-offset 2)
     ('c-default-style '((other . "linux")))
-    ('auto-mode-alist :append-front '("\\.h\\'" . c++-mode))
+    ('auto-mode-alist :append-front
+                      '("\\.h\\'" . c++-mode)
+                      '("\\.cu\\'" . c++-mode))
     ((:when (eq c++-ide-type 'lsp))
      ((:require ccls)
       ('ccls-args nil)

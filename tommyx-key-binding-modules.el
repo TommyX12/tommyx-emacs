@@ -1017,7 +1017,9 @@
              emms-stop
              :which-key "Stop Music")
         "r" (:def
-             emms-random
+             ,(lambda () (interactive)
+                (emms-random)
+                (companion-update))
              :which-key "Play Random Music")
         "t" (:def
              emms-toggle-repeat-track
