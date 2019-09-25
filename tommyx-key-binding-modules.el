@@ -2118,6 +2118,9 @@
       shortcuts-prefix
       (:bindings
 
+       ;; show outline
+       "m" org-content
+
        ;; insert date
        "t" org-time-stamp
        ;; insert inactive date

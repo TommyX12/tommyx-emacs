@@ -1391,7 +1391,7 @@
      ('org-link-file-path-type 'relative)
      ('org-id-link-to-org-use-id nil)
      ('org-highlight-latex-and-related '(latex))
-     ('org-startup-with-latex-preview t)
+     ('org-startup-with-latex-preview nil)
      ('org-format-latex-options
       `(
         :foreground default
