@@ -751,19 +751,19 @@ Useful for a search overview popup."
   (let ((sort-fold-case t))
     (call-interactively #'sort-lines)))
 
-(evil-define-command evil-ex-search-next-flash () :repeat nil
+(evil-define-motion evil-ex-search-next-flash () :repeat nil
   (evil-ex-search-next)
   ($flash-cursor))
 
-(evil-define-command evil-ex-search-previous-flash () :repeat nil
+(evil-define-motion evil-ex-search-previous-flash () :repeat nil
   (evil-ex-search-previous)
   ($flash-cursor))
 
-(evil-define-command evil-ex-search-word-forward-flash () :repeat nil
+(evil-define-motion evil-ex-search-word-forward-flash () :repeat nil
   (evil-ex-search-word-forward 1)
   ($flash-cursor))
 
-(evil-define-command evil-ex-search-word-backward-flash () :repeat nil
+(evil-define-motion evil-ex-search-word-backward-flash () :repeat nil
   (evil-ex-search-word-backward 1)
   ($flash-cursor))
 

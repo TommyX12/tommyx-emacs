@@ -2,4 +2,4 @@
 # name: simple printf
 # key: p
 # --
-printf("`(buffer-file-name)`:`(line-number-at-pos)`: $1\n");$0
+printf("%s:%d: $1\n", __FILE__, __LINE__);$0
