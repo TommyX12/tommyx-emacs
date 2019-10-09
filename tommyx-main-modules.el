@@ -1112,6 +1112,18 @@
     (:settings
      ((:macro set-indent) 2 4))))
 
+($define-module tommyx-lua-mode
+  '(:on-init
+    ((:require tommyx-extensions)
+     ($highlight-booleans 'lua-mode "\\<true\\>" "\\<false\\>")))
+
+  '((:mode-local lua-mode)
+
+    (:settings
+     ((:macro set-indent) 3)
+     ((:require lua-mode)
+      ('lua-indent-level 3)))))
+
 ($define-module tommyx-html-mode
   '(:settings
     ('web-mode-enable-auto-expanding t)

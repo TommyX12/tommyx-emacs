@@ -1074,6 +1074,8 @@
 
       "RET" newline-and-maybe-indent
 
+      "M-i" indent-according-to-mode
+
       "j" ,(progn
              (setq
               insert-mode-j-mapping-func

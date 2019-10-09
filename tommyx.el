@@ -39,6 +39,7 @@
         'tommyx-csharp-mode
         'tommyx-glsl-mode
         'tommyx-json-mode
+        'tommyx-lua-mode
         'tommyx-html-mode
         'tommyx-css-mode
         'tommyx-racket-mode

@@ -276,6 +276,7 @@
 (use-package cc-mode :ensure t)
 (require 'cc-mode)
 (use-package ess :ensure t)
+(use-package lua-mode :ensure t)
 (use-package csharp-mode :ensure t)
 (use-package markdown-mode :ensure t)
 (use-package markdown-mode+ :ensure t)
