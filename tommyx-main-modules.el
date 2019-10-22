@@ -1122,7 +1122,16 @@
     (:settings
      ((:macro set-indent) 3)
      ((:require lua-mode)
-      ('lua-indent-level 3)))))
+      ('lua-indent-level 3)))
+
+    (:on-init
+     ((:require tommyx-extensions color-identifiers-mode)
+      ($setup-color-identifiers-parser 'js 'lua-mode)))
+
+    (:minor-modes
+     ;; ((:require format-all)
+     ;;  (format-all-mode))
+     )))
 
 ($define-module tommyx-html-mode
   '(:settings

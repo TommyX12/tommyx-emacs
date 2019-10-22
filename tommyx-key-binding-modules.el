@@ -1372,6 +1372,8 @@
      :keymaps (minibuffer-local-map evil-ex-completion-map)
      (:bindings
 
+      "M-p" counsel-minibuffer-history
+
       "j" ,(general-key-dispatch 'self-insert-command
              :timeout tommyx-key-chord-timeout
              "j" 'self-insert-command
@@ -1496,6 +1498,8 @@
    `(:case
      :keymaps (swiper-map ivy-minibuffer-map ivy-switch-buffer-map counsel-imenu-map)
      (:bindings
+
+      "M-p" counsel-minibuffer-history
 
       next-item ivy-next-line
       previous-item ivy-previous-line
