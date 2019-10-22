@@ -860,6 +860,9 @@
         "d" (:def
              companion-notif-dismiss
              :which-key "Dismiss Notification")
+        "D" (:def
+             companion-notif-dismiss-all
+             :which-key "Dismiss Notification")
         "q" (:def
              companion-show-last-qod
              :which-key "Quote Of The Day")

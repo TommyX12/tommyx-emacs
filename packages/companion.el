@@ -593,11 +593,14 @@ Taken from https://github.com/narendraj9/quoted-scratch."
 (defun companion-notif-dismiss()
   "Dismiss one active notification in the companion buffer."
   (interactive)
-                                        ; TODO
   (pop companion-notif--stack)
+  (companion-notif--update))
 
-  (companion-notif--update)
-  )
+(defun companion-notif-dismiss-all ()
+  "Dismiss all active notifications in the companion buffer."
+  (interactive)
+  (setq companion-notif--stack nil)
+  (companion-notif--update))
 
 ;;
 ;; Segments definition
