@@ -1180,6 +1180,11 @@ If ARG is non-nil, toggle the mode."
    mode `((,true-regexp . 'constant-true-face)
           (,false-regexp . 'constant-false-face))))
 
+(defun $minibuffer-history ()
+  (interactive)
+  (delete-minibuffer-contents)
+  (counsel-minibuffer-history))
+
 (provide 'tommyx-extensions)
 
 ;;; tommyx-extensions.el ends here
