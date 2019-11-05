@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: print line number
+# key: pl
+# --
+print('debug: `(line-number-at-pos)`')
