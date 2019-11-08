@@ -543,7 +543,9 @@
        :key-name global-leader
 
        "SPC" (:def
-              display-about-screen
+              (lambda () (interactive)
+                (display-about-screen)
+                (delete-other-windows))
               :which-key "About Emacs")
 
        "f" (:def
@@ -1867,12 +1869,24 @@
        "a" (:def
             org-agenda
             :which-key "Org Agenda")
-       "i" (:def
+       ;; "i" (:def
+       ;;      ,(lambda () (interactive) (org-clock-in '(4))) ; (lambda () (interactive) (org-pomodoro '(4)))
+       ;;      :which-key "Org Clock In Recent")
+       ;; "I" (:def
+       ;;      org-clock-goto
+       ;;      :which-key "Org Goto Clock")
+       "M-i" (:def
             ,(lambda () (interactive) (org-clock-in '(4))) ; (lambda () (interactive) (org-pomodoro '(4)))
             :which-key "Org Clock In Recent")
-       "I" (:def
+       "M-I" (:def
             org-clock-goto
             :which-key "Org Goto Clock")
+       "i" (:def
+            org-goto-inbox
+            :which-key "Org Goto Inbox")
+       "s" (:def
+            org-goto-scratch
+            :which-key "Org Goto Scratch")
        "o" (:def
             org-clock-out
             :which-key "Org Clock Out")

@@ -57,6 +57,7 @@
     ((:require auto-package-update)
      ('auto-package-update-interval 14)
      ('auto-package-update-prompt-before-update t))
+    ('confirm-kill-emacs t)
 
     ;; control center
     ((:require helm)
@@ -1059,6 +1060,10 @@
      ((:macro set-indent) 2))))
 
 ($define-module tommyx-csharp-mode
+  '(:on-init
+     ((:require tommyx-extensions color-identifiers-mode)
+      ($setup-color-identifiers-parser 'c 'csharp-mode)))
+
   '((:mode-local csharp-mode)
 
     (:settings
@@ -1066,22 +1071,18 @@
       ('company-backends :ensure-front 'company-tabnine 'company-ycmd)))
 
     (:minor-modes
-     (ycmd-mode 1))
-
-    (:on-init
-     ((:require tommyx-extensions color-identifiers-mode)
-      ($setup-color-identifiers-parser 'c 'csharp-mode)))))
+     (ycmd-mode 1))))
 
 ($define-module tommyx-glsl-mode
+  '(:on-init
+    ((:require tommyx-extensions color-identifiers-mode)
+     ($setup-color-identifiers-parser 'c 'glsl-mode)))
+
   '((:mode-local glsl-mode)
 
     (:minor-modes
      ((:require auto-highlight-symbol)
-      (auto-highlight-symbol-mode 1)))
-
-    (:on-init
-     ((:require tommyx-extensions color-identifiers-mode)
-      ($setup-color-identifiers-parser 'c 'csharp-mode)))))
+      (auto-highlight-symbol-mode 1)))))
 
 ($define-module tommyx-json-mode
   '(:on-init
@@ -1115,18 +1116,16 @@
 ($define-module tommyx-lua-mode
   '(:on-init
     ((:require tommyx-extensions)
-     ($highlight-booleans 'lua-mode "\\<true\\>" "\\<false\\>")))
+     ($highlight-booleans 'lua-mode "\\<true\\>" "\\<false\\>"))
+    ((:require tommyx-extensions color-identifiers-mode)
+     ($setup-color-identifiers-parser 'js 'lua-mode)))
 
   '((:mode-local lua-mode)
 
     (:settings
-     ((:macro set-indent) 3)
+     ((:macro set-indent) 2 4)
      ((:require lua-mode)
-      ('lua-indent-level 3)))
-
-    (:on-init
-     ((:require tommyx-extensions color-identifiers-mode)
-      ($setup-color-identifiers-parser 'js 'lua-mode)))
+      ('lua-indent-level 2)))
 
     (:minor-modes
      ;; ((:require format-all)
@@ -1312,7 +1311,9 @@
 ($define-module tommyx-typescript-mode
   '(:on-init
     ((:require tommyx-extensions)
-     ($highlight-booleans 'typescript-mode "\\<true\\>" "\\<false\\>")))
+     ($highlight-booleans 'typescript-mode "\\<true\\>" "\\<false\\>"))
+    ((:require tommyx-extensions color-identifiers-mode)
+      ($setup-color-identifiers-parser 'js 'typescript-mode)))
 
   '((:mode-local typescript-mode)
 
@@ -1331,8 +1332,6 @@
       (tide-hl-identifier-mode 1)))
 
     (:on-init
-     ((:require tommyx-extensions color-identifiers-mode)
-      ($setup-color-identifiers-parser 'js 'typescript-mode))
      ((:require tide)
       (tide-setup)))))
 

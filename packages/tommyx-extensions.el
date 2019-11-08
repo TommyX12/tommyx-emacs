@@ -123,6 +123,18 @@ regular expression,
 ;; TODO: make these a defcustom
 (defvar org-auto-capture-targets nil)
 
+(defun org-goto-inbox ()
+  (interactive)
+  (if org-inbox-file-name
+      (find-file-other-window org-inbox-file-name)
+    (error "`org-inbox-file-name' is not set")))
+
+(defun org-goto-scratch ()
+  (interactive)
+  (if org-scratch-file-name
+      (find-file-other-window org-scratch-file-name)
+    (error "`org-scratch-file-name' is not set")))
+
 (defun org-auto-capture-immediately-finalize
     (capture-key content)
   "Capture content and immediately finalize."
