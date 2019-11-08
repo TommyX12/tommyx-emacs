@@ -1364,6 +1364,8 @@
      :keymaps (minibuffer-local-shell-command-map)
      (:bindings
 
+      "C-H" left-word
+      "C-L" right-word
       previous-item ,(lambda () (interactive)
                        (previous-line-or-history-element)
                        (end-of-line))
@@ -1377,6 +1379,8 @@
      :keymaps (minibuffer-local-map evil-ex-completion-map)
      (:bindings
 
+      "C-H" left-word
+      "C-L" right-word
       "M-p" $minibuffer-history
       "M-P" counsel-minibuffer-history
 
@@ -1505,6 +1509,8 @@
      :keymaps (swiper-map ivy-minibuffer-map ivy-switch-buffer-map counsel-imenu-map)
      (:bindings
 
+      "C-H" left-word
+      "C-L" right-word
       "M-p" $minibuffer-history
       "M-P" counsel-minibuffer-history
 
