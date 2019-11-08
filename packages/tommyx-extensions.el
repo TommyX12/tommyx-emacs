@@ -457,6 +457,8 @@ Useful for a search overview popup."
          (or (not (fboundp 'easy-layout-get-property))
              (not (easy-layout-get-property
                    'persist-compilation-window)))
+         (not (bound-and-true-p
+               persist-compilation-window))
          (buffer-live-p buffer)
          (string-match "compilation" (buffer-name buffer))
          (string-match "finished" string)
@@ -470,6 +472,15 @@ Useful for a search overview popup."
                         (quit-window)))
                     buffer
                     (get-buffer-window buffer))))
+
+(defun toggle-persist-compilation-window ()
+  (interactive)
+  (setq persist-compilation-window
+        (not (bound-and-true-p
+              persist-compilation-window)))
+  (if persist-compilation-window
+      (message "Compilation window will now stay open")
+    (message "Compilation window will now close automatically (unless prohibited by layout)")))
 
 (defun $use-utf8-encoding ()
   (set-language-environment 'utf-8)
