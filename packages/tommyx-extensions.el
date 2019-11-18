@@ -1208,6 +1208,30 @@ If ARG is non-nil, toggle the mode."
   (delete-minibuffer-contents)
   (counsel-minibuffer-history))
 
+(defun $split-to-lines (separator)
+  "Converts the current region line, to a set of independent lines, splitting the string based on the provided separator."
+  (interactive "sEnter separator character: ")
+  (setq current-region-string
+        (if (region-active-p)
+            (buffer-substring-no-properties
+             (region-beginning)
+             (region-end))
+          (buffer-substring-no-properties
+           (point-at-bol)
+           (point-at-eol))))
+  (if (region-active-p)
+      (delete-region
+       (region-beginning)
+       (region-end))
+    (delete-region
+     (point-at-bol)
+     (point-at-eol)))
+  (insert
+   (mapconcat 'identity
+              (split-string current-region-string
+                            (concat separator "[ \f\t\n\r\v]*"))
+              (concat separator "\n"))))
+
 (provide 'tommyx-extensions)
 
 ;;; tommyx-extensions.el ends here
