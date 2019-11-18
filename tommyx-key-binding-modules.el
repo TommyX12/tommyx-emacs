@@ -437,8 +437,11 @@
                (winum-select-window-9)
                (delayed-mode-line-update))
 
-        ;; break line
+        ;; ,h break line
         "h" newline-and-maybe-indent
+
+        ;; ,H split line
+        "H" $split-to-lines
 
         ;; use ivy to select kill ring
         "p" counsel-yank-pop
@@ -1771,6 +1774,10 @@
      :keymaps python-mode-map
      :states (motion normal)
      (:bindings
+
+      format-region ,(lambda () (interactive)
+                       (error "Python naive code formatting is broken"))
+      format-buffer elpy-format-code
 
       jump-to-definition ,(lambda () (interactive)
                             (evil-set-jump)
