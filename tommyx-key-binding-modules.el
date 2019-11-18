@@ -1981,7 +1981,7 @@
       "<C-return>" org-insert-subheading
       "<C-S-return>" org-insert-todo-subheading
 
-      "C-g" ,(lambda () (interactive) (outline-hide-subtree))
+      ;; "C-g" ,(lambda () (interactive) (outline-hide-subtree))
       ;; (kbd "C-j") org-next-visible-heading
       ;; (kbd "C-k") org-previous-visible-heading
       ;; ;; (kbd "C-l") ,(lambda () (interactive) (outline-show-entry) (outline-show-children))
