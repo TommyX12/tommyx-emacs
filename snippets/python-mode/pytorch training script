@@ -1,0 +1,56 @@
+# -*- mode: snippet -*-
+# name: pytorch training script
+# key: torchtrain
+# --
+from contextlib import ExitStack
+from torch import nn
+import argparse
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+import torch
+import torch.nn.functional as F
+import torch.optim as optim
+
+
+ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
+EPSILON = 1e-15
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='${1:Training Script}')
+
+    parser.add_argument('--dataset_path', type=str, required=True,
+                        help='Path to dataset folder')
+    parser.add_argument('--output_path', type=str,
+                        default=os.path.join(ROOT_DIR, 'result'),
+                        help='Path to output experiment results')
+    parser.add_argument('--num_epochs', type=int, default=1000,
+                        help='Number of training epochs')
+    parser.add_argument('--resume_checkpoint', type=str, default='',
+                        help='If given, resume training from the given checkpoint')
+    parser.add_argument('--loader_workers', type=int, default=8,
+                        help='Number of workers for data loader')
+    parser.add_argument('--iters_per_checkpoint', type=int, default=100,
+                        help='iterations per model saving')
+    parser.add_argument('--iters_per_log', type=int, default=50,
+                        help='iterations per log')
+    parser.add_argument('--debug', action='store_true',
+                        help='Whether to enable debug mode')
+
+    return parser.parse_args()
+
+
+def main():
+    args = parse_arguments()
+    $0
+
+    with ExitStack() as context:
+        if args.debug:
+            context.enter_context(torch.autograd.detect_anomaly())
+
+    return
+
+
+if __name__ == '__main__':
+    main()

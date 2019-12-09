@@ -2344,6 +2344,7 @@
             org-capture-finalize
             :which-key "Capture Save")
        "K" (:def
+            ;; Jump to location after finalizing
             ,(lambda () (interactive) (org-capture-finalize '(4)))
             :which-key "Capture Save")))))
 
@@ -2423,7 +2424,40 @@
                (if parinfer-mode -1 1))
               (if parinfer-mode
                   (message "Enabled parinfer-mode")
-                (message "Enabled smartparens-mode"))))))))
+                (message "Enabled smartparens-mode")))))))
+
+  ($bind-keys
+   `(:case
+     ;; :keymaps (magit-mode-map)
+     ;; (:bindings
+
+     ;;  "h" evil-backward-word-begin
+     ;;  "l" evil-forward-word-end
+     ;;  "j" evil-next-visual-line
+     ;;  "k" evil-previous-visual-line
+
+     ;;  "H" evil-backward-WORD-begin
+     ;;  "L" evil-forward-WORD-end
+     ;;  "J" evil-forward-paragraph
+     ;;  "K" evil-backward-paragraph
+
+     ;;  "M-j" evil-scroll-down
+     ;;  "M-k" evil-scroll-down
+
+     ;;  "SPC")
+
+     :keymaps (with-editor-mode-map)
+     (:bindings
+
+      mode-specific-prefix
+      (:bindings
+
+       "j" (:def
+            with-editor-cancel
+            :which-key "Discard")
+       "k" (:def
+            with-editor-finish
+            :which-key "Finalize"))))))
 
 
 ($define-module tommyx-key-bindings

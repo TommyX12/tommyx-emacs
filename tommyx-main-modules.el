@@ -674,6 +674,8 @@
      ($disable-yascroll-in-insert-mode)
      ;; ($defer-hl-indentation-in-insert-mode)
      ($set-jump-on-insert-mode))
+    ((:require with-editor)
+     (evil-set-initial-state 'with-editor-mode 'normal))
 
     ;; key bindings
     ((:require general)
