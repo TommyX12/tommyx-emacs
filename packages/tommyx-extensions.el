@@ -1232,6 +1232,19 @@ If ARG is non-nil, toggle the mode."
                             (concat separator "[ \f\t\n\r\v]*"))
               (concat separator "\n"))))
 
+(defun $neotree-find-in-project ()
+  (interactive)
+  (save-window-excursion
+    (neotree-projectile-action))
+  (neotree-find))
+
+(defmacro $move-back-to-window (&rest body)
+  (declare (indent 0))
+  `(let ((old-window (selected-window)))
+     (progn
+       ,@body)
+     (select-window old-window)))
+
 (provide 'tommyx-extensions)
 
 ;;; tommyx-extensions.el ends here

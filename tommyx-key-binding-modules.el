@@ -893,18 +893,37 @@
         "f" (:def
              neotree-find
              :which-key "Locate Current File")
+
         "F" (:def
+             ,(lambda () (interactive)
+                ($move-back-to-window
+                  (neotree-find)))
+             :which-key "Locate Current File (No Move)")
+
+        "p" (:def
+             $neotree-find-in-project
+             :which-key "Locate In Project")
+
+        "P" (:def
+             ,(lambda () (interactive)
+                ($move-back-to-window
+                  ($neotree-find-in-project)))
+             :which-key "Locate In Project (No Move)")
+
+        "c"
+        (:bindings
+         :which-key "Change view"
+
+         "f" (:def
              neotree-show
              :which-key "Files")
-        "p" (:def
-             neotree-projectile-action
-             :which-key "Locate Project")
-        "o" (:def
+
+         "o" (:def
              ,(lambda () (interactive)
                 (display-buffer-in-side-window
                  (get-buffer imenu-list-buffer-name)
                  '((side . left))))
-             :which-key "Outline"))
+             :which-key "Outline")))
 
        "t"
        (:bindings
