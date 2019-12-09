@@ -7,7 +7,25 @@
 namespace ${2:nanite} {
 class ${3:`(snake-to-Camel (file-name-base (buffer-file-name)))`} {
 public:
-$3();
-virtual ~$3() = default;$0
+  //! Default constructor
+  $3() = default;
+
+  //! Copy constructor
+  $3(const $3 &other) = default;
+
+  //! Move constructor
+  $3($3 &&other) noexcept = default;
+
+  //! Destructor
+  virtual ~$3() noexcept = default;
+
+  //! Copy assignment
+  $3& operator=(const $3 &other) = default;
+
+  //! Move assignment
+  $3& operator=($3 &&other) noexcept = default;
+
+protected:
+private:
 };
 } // namespace $2

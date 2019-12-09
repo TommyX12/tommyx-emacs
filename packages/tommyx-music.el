@@ -84,10 +84,7 @@
             (emms-playlist-current-select-next)
             t)
         (error nil))
-      (if (funcall emms-ok-track-function
-                   (emms-playlist-current-selected-track))
-          (emms-start)
-        (emms-next-in-queue))
+      (emms-start)
     (emms-state-pop)))
 
 (defun emms-get-create-queue (&optional force-create)
@@ -132,6 +129,12 @@ This function uses `emms-show-format' to format the current track."
 (defun emms-next-and-echo ()
   (interactive)
   (emms-next)
+  (emms-echo-no-error)
+  (sit-for 2))
+
+(defun emms-random-and-echo ()
+  (interactive)
+  (emms-random)
   (emms-echo-no-error)
   (sit-for 2))
 

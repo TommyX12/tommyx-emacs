@@ -8,7 +8,7 @@
 
 (defhydra hydra-emms-control ()
   "EMMS control"
-  ("r" emms-random "random track")
+  ("r" emms-random-and-echo "random track")
   ("k" emms-previous-and-echo "previous track")
   ("j" emms-next-and-echo "next track")
   ("G" emms-restart "restart")
@@ -232,6 +232,8 @@
       ;; use M-S-j/k to go to top bottom
       "M-J" evil-goto-line
       "M-K" evil-goto-first-line
+
+      "M-a" mark-whole-buffer
 
       "q" (:def
            evil-execute-macro
@@ -1031,7 +1033,10 @@
              :which-key "Play Random Music")
         "t" (:def
              emms-toggle-repeat-track
-             :which-key "Toggle Repeat Track"))
+             :which-key "Toggle Repeat Track")
+        "T" (:def
+             emms-toggle-repeat-playlist
+             :which-key "Toggle Repeat Playlist"))
 
        "v"
        (:bindings
