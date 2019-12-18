@@ -1,0 +1,13 @@
+# -*- mode: snippet -*-
+# name: nanite component impl
+# key: nncomponentimpl
+# --
+#include "$1/`(file-name-base (buffer-file-name))`.h"
+#include <sol/table.hpp>
+
+namespace ${2:nanite} {
+void ${3:`(snake-to-Camel (file-name-base (buffer-file-name)))`}::script_register(sol::table &env, const std::string &name) {
+  auto type = env.new_usertype<$3>(name, sol::call_constructor,
+                                   sol::constructors<$3()>());
+}
+} // namespace $2

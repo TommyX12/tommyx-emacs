@@ -1190,6 +1190,11 @@ If ARG is non-nil, toggle the mode."
   (let ((l (split-string s "_")))
     (mapconcat 'capitalize l "")))
 
+(defun camel-to-snake (s)
+  "Converts camelCase to underscore."
+  (downcase
+   (replace-regexp-in-string "\\([A-Z]\\)" "_\\1" s)))
+
 (defface constant-true-face
   '((t :inherit font-lock-constant-face :foreground "#00ff00"))
   "")

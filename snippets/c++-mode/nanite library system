@@ -1,0 +1,16 @@
+# -*- mode: snippet -*-
+# name: nanite library system
+# key: nnlsystem
+# --
+#pragma once
+
+#include "nanite/core/system.h"
+#include "nanite/core/world.h"
+#include <fruit/macro.h>
+
+namespace nanite {
+class ${1:`(snake-to-Camel (file-name-base (buffer-file-name)))`} : public System {
+public:
+  INJECT($1(World &));
+};
+} // namespace nanite

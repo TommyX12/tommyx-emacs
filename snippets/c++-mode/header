@@ -14,16 +14,16 @@ public:
   $3(const $3 &other) = default;
 
   //! Move constructor
-  $3($3 &&other) noexcept = default;
+  $3($3 &&other) = default;
 
   //! Destructor
-  virtual ~$3() noexcept = default;
+  virtual ~$3() = default;
 
   //! Copy assignment
   $3& operator=(const $3 &other) = default;
 
   //! Move assignment
-  $3& operator=($3 &&other) noexcept = default;
+  $3& operator=($3 &&other) = default;
 
 protected:
 private:

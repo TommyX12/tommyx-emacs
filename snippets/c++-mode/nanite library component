@@ -1,0 +1,16 @@
+# -*- mode: snippet -*-
+# name: nanite library component
+# key: nnlcomponent
+# --
+#pragma once
+
+#include "nanite/core/component.h"
+#include <sol/forward.hpp>
+#include <string>
+
+namespace nanite {
+class ${1:`(snake-to-Camel (file-name-base (buffer-file-name)))`} : public Component {
+public:
+  static void script_register(sol::table &, const std::string &);
+};
+} // namespace nanite

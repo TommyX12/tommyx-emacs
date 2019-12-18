@@ -2452,6 +2452,29 @@
 
   ($bind-keys
    `(:case
+     :keymaps (markdown-mode-map)
+     :states (motion normal)
+     (:bindings
+      mode-specific-prefix
+      (:bindings
+
+       "h" (:def
+            markdown-insert-header-dwim
+            :which-key "Insert Header")
+       "i" (:def
+            markdown-insert-list-item
+            :which-key "Insert List Item")))
+
+     :keymaps (markdown-mode-map)
+     :states (insert)
+     (:bindings
+      "M-RET" markdown-insert-list-item
+      "<M-return>" markdown-insert-list-item
+      "M-S-RET" markdown-insert-header-dwim
+      "<M-S-return>" markdown-insert-header-dwim)))
+
+  ($bind-keys
+   `(:case
      ;; :keymaps (magit-mode-map)
      ;; (:bindings
 

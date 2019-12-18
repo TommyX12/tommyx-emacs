@@ -1,0 +1,13 @@
+# -*- mode: snippet -*-
+# name: nanite system impl
+# key: nnsystemimpl
+# --
+#include "$1/`(file-name-base (buffer-file-name))`.h"
+
+namespace n = nanite;
+
+namespace ${2:cellular} {
+${3:`(snake-to-Camel (file-name-base (buffer-file-name)))`}::$3(n::World &world) : System("${4:`(replace-regexp-in-string "_system$" "" (file-name-base (buffer-file-name)))`}", world) {
+  script_name = "$2.$4";
+}
+} // namespace $2

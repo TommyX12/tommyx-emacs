@@ -68,6 +68,7 @@
 (use-package cl-lib :ensure t)
 (use-package htmlize :ensure t)
 (use-package request :ensure t)
+(use-package string-inflection :ensure t)
 (use-package json :ensure t)
 (use-package unicode-escape :ensure t)
 (use-package alert :ensure t)

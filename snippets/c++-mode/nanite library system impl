@@ -1,0 +1,11 @@
+# -*- mode: snippet -*-
+# name: nanite library system impl
+# key: nnlsystemimpl
+# --
+#include "$1/`(file-name-base (buffer-file-name))`.h"
+
+namespace nanite {
+${2:`(snake-to-Camel (file-name-base (buffer-file-name)))`}::$2(World &world) : System("${3:`(replace-regexp-in-string "_system$" "" (file-name-base (buffer-file-name)))`}", world) {
+  script_name = "nanite.$3";
+}
+} // namespace nanite
