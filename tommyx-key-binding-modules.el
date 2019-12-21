@@ -2061,6 +2061,14 @@
                                ?f
                                #'org-sort-checklist-getkey-func
                                #'org-sort-checklist-compare-func))
+             :which-key "Org Sort Checklist")
+        "M-;" (:def
+             ,(lambda () (interactive)
+                (org-sort-list nil ?A)
+                (org-sort-list nil
+                               ?f
+                               #'org-sort-checklist-getkey-func
+                               #'org-sort-checklist-compare-func))
              :which-key "Org Sort Checklist"))
 
        :states (motion normal)

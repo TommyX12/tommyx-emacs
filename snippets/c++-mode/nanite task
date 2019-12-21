@@ -1,0 +1,11 @@
+# -*- mode: snippet -*-
+# name: nanite task
+# key: nntask
+# --
+auto ${1:task} = new_task("$1");
+{
+  auto res = $1->resource<SystemAccess::${2:NONE}, EntitiesAccess::${3:NONE}>(this);
+  $1->${4:run}([res](){
+    // TODO
+  });
+}
