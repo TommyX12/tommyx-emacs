@@ -251,7 +251,7 @@ See `format-time-string'."
   :group 'org-catalyst
   :type 'string)
 
-(defcustom org-catalyst-status-text-width 45
+(defcustom org-catalyst-status-text-width 60
   "The number of characters to use for displaying main description text."
   :group 'org-catalyst
   :type 'integer)
@@ -283,6 +283,11 @@ This is used to determine the default day to show in the status window."
   :group 'org-catalyst
   :type 'float)
 
+(defcustom org-catalyst--days-to-end-warning-days 7
+  "If a task has deadline within this many days, will change the appearence visually to notify user."
+  :group 'org-catalyst
+  :type 'integer)
+
 ;; TODO: make this more customizable
 (defcustom org-catalyst-level-faces
   '(org-catalyst-level-1-face
@@ -312,6 +317,8 @@ This is used to determine the default day to show in the status window."
 ;;; Constants
 
 ;; TODO make these customizable
+(defconst org-catalyst-INF 1.0e+INF)
+(defconst org-catalyst--default-days-to-end 30)
 (defconst org-catalyst--num-random-items 5)
 (defconst org-catalyst--default-expanded t)
 (defconst org-catalyst--item-categories
@@ -347,6 +354,14 @@ This is used to determine the default day to show in the status window."
              params "negative" nil)))))))
 (defconst org-catalyst--status-tabs
   `((:id
+     dashboard
+     :command
+     org-catalyst-status-dashboard
+     :name
+     "Dashboard"
+     :renderers
+     (org-catalyst--render-queue))
+    (:id
      overview
      :command
      org-catalyst-status-overview
@@ -383,6 +398,83 @@ This is used to determine the default day to show in the status window."
      "Quest Map"
      :renderers
      (org-catalyst--render-quest-map))))
+(defconst org-catalyst--dashboard-tabs
+  `((:id
+     actionable
+     :command
+     org-catalyst-dashboard-actionable
+     :name
+     "Actionable"
+     :filter-func
+     ,(lambda (item-config)
+        (>= org-catalyst--today-daynr
+            (org-catalyst-safe-get item-config "start" 0)))
+     :order-func
+     ,(lambda (item-config)
+        (org-catalyst-safe-get item-config "score"
+                               org-catalyst-INF))
+     :sort-func version-list-<)
+    (:id
+     has-deadline
+     :command
+     org-catalyst-dashboard-has-deadline
+     :name
+     "Has-Deadline"
+     :filter-func
+     ,(lambda (item-config)
+        (and (>= org-catalyst--today-daynr
+                 (org-catalyst-safe-get item-config "start" 0))
+             (org-catalyst-safe-get item-config "end" nil)))
+     :order-func
+     ,(lambda (item-config)
+        (org-catalyst-safe-get item-config "end"
+                               org-catalyst-INF))
+     :sort-func <)
+    (:id
+     no-deadline
+     :command
+     org-catalyst-dashboard-no-deadline
+     :name
+     "No-Deadline"
+     :filter-func
+     ,(lambda (item-config)
+        (and (>= org-catalyst--today-daynr
+                 (org-catalyst-safe-get item-config "start" 0))
+             (null (org-catalyst-safe-get item-config "end" nil))))
+     :order-func
+     ,(lambda (item-config)
+        (org-catalyst-safe-get item-config "score"
+                               org-catalyst-INF))
+     :sort-func version-list-<)
+    (:id
+     upcoming
+     :command
+     org-catalyst-dashboard-upcoming
+     :name
+     "Upcoming"
+     :filter-func
+     ,(lambda (item-config)
+        (and (< org-catalyst--today-daynr
+                (org-catalyst-safe-get item-config "start" 0))))
+     :order-func
+     ,(lambda (item-config)
+        (org-catalyst-safe-get item-config "start"
+                               org-catalyst-INF))
+     :sort-func <)
+    (:id
+     all
+     :command
+     org-catalyst-dashboard-all
+     :name
+     "All"
+     :filter-func
+     ,(lambda (item-config)
+        t)
+     :order-func
+     ,(lambda (item-config)
+        (org-catalyst-safe-get item-config "score"
+                               org-catalyst-INF))
+     :sort-func version-list-<)))
 (defconst org-catalyst--inventory-orders
   (ht<-alist
    `(("count"
@@ -634,13 +726,20 @@ This is used to determine the default day to show in the status window."
 (defconst org-catalyst--key-bindings
   (list (list (kbd "q") 'org-catalyst-status-quit)
         (list (kbd "r") 'org-catalyst-status-refresh)
-        (list (kbd "o") 'org-catalyst-status-overview)
+        (list (kbd "o") 'org-catalyst-status-dashboard)
+        (list (kbd "C-o") 'org-catalyst-status-overview)
         (list (kbd "i") 'org-catalyst-status-inventory)
         (list (kbd "m") 'org-catalyst-status-quest-map)
-        (list (kbd "O") 'org-catalyst-status-overview-at-point)
+        (list (kbd "O") 'org-catalyst-status-dashboard-at-point)
+        (list (kbd "C-O") 'org-catalyst-status-overview-at-point)
         (list (kbd "I") 'org-catalyst-status-inventory-at-point)
         (list (kbd "M") 'org-catalyst-status-quest-map-at-point)
         (list (kbd "w") org-catalyst-curator-map)
+        (list (kbd "e SPC") 'org-catalyst-dashboard-all)
+        (list (kbd "e a") 'org-catalyst-dashboard-actionable)
+        (list (kbd "e d") 'org-catalyst-dashboard-has-deadline)
+        (list (kbd "e n") 'org-catalyst-dashboard-no-deadline)
+        (list (kbd "e u") 'org-catalyst-dashboard-upcoming)
         (list (kbd "a") 'org-catalyst-complete-item)
         (list (kbd "s") 'org-catalyst-set-or-toggle-item)
         (list (kbd "d") 'org-catalyst-uncomplete-item)
@@ -972,6 +1071,7 @@ This is used to determine the default day to show in the status window."
 If EVIL is non-nil, bind to evil motion and normal state instead.
 
 If MAP is non-nil, bind to that keymap."
+  (interactive)
   (let ((map (or map org-catalyst-mode-map)))
     (dolist (binding org-catalyst--key-bindings)
       (if evil
@@ -980,6 +1080,7 @@ If MAP is non-nil, bind to that keymap."
 
 (defun org-catalyst-setup-evil-status-bindings ()
   "Bind default key bindings for the status window using evil."
+  (interactive)
   (org-catalyst-setup-status-bindings t))
 
 (defun org-catalyst-install-system (attribute type continuous update-func)
@@ -1088,13 +1189,13 @@ If KEY doesn't exist in TABLE or value is nil, DEFAULT will be passed to MAPPER.
                             0)
         (lambda (prev)
           (let* ((prev (if (equal prev "inf")
-                           1.0e+INF
+                           org-catalyst-INF
                          prev))
                  (result (+ (if (> days-since-last chain-interval)
                                 0
                               prev)
                             done)))
-            (if (= result 1.0e+INF)
+            (if (= result org-catalyst-INF)
                 "inf"
               (round result)))))
        (org-catalyst-safe-update
@@ -1102,7 +1203,7 @@ If KEY doesn't exist in TABLE or value is nil, DEFAULT will be passed to MAPPER.
         (lambda (prev)
           (let ((chain (org-catalyst-safe-get
                         item-attr "chain" 0)))
-            (if (or (equal chain 1.0e+INF)
+            (if (or (equal chain org-catalyst-INF)
                     (equal chain "inf"))
                 prev
               (max prev chain)))))
@@ -1213,6 +1314,11 @@ and fallback to current month-day."
   (org-catalyst--time-to-month-day
    (let ((d (calendar-gregorian-from-absolute days)))
      (encode-time 0 0 0 (nth 1 d) (car d) (nth 2 d)))))
+
+(defun org-catalyst--days-to-time (days)
+  "Convert number of DAYS since epoch to Emacs internal time representation."
+  (let ((d (calendar-gregorian-from-absolute days)))
+    (encode-time 0 0 0 (nth 1 d) (car d) (nth 2 d))))
 
 (defun org-catalyst--month-day-days-delta (month-day-1 month-day-2)
   "Find the number of days elapsed between MONTH-DAY-1 and MONTH-DAY-2.
@@ -1375,6 +1481,39 @@ As of the current implementation, this function re-seed random state by calling
     (random t)
     results))
 
+(defun org-catalyst--compute-scores (all-item-config)
+  "Compute scores of each item in ALL-ITEM-CONFIG.
+
+Writes directly to the given hash table."
+  (ht-each
+   (lambda (item-id item-config)
+     (let* (score
+            (start (ht-get item-config "start"))
+            (started (or (null start)
+                         (>= org-catalyst--today-daynr
+                             start)))
+            (is-todo (eq (ht-get item-config "todo-type" nil)
+                         'todo)))
+       (when (and ;; started
+              is-todo)
+         (let* ((end (ht-get item-config "end"))
+                (days-to-end (if end
+                                 (- end org-catalyst--today-daynr)
+                               org-catalyst--default-days-to-end))
+                (priority (1+ (- (or (ht-get item-config "priority"
+                                             org-lowest-priority)
+                                     org-lowest-priority)
+                                 org-highest-priority)))
+                (index (ht-get item-config "i" 0)))
+           (setq score
+                 (list
+                  (if (< days-to-end 0)
+                      days-to-end
+                    (* days-to-end priority))
+                  index))))
+       (ht-set item-config "score" score)))
+   all-item-config))
+
 (defun org-catalyst--get-config ()
   "TODO"
   ;; TODO: allow only getting parts of the things to optimize
@@ -1413,6 +1552,8 @@ As of the current implementation, this function re-seed random state by calling
          (prev-focus-pos nil)
          (focus-pos nil)
 
+         (index 0)
+
          (org-use-tag-inheritance nil)
          (daynr (org-catalyst--month-day-to-days
                  (org-catalyst--status-today-month-day)))
@@ -1430,10 +1571,25 @@ As of the current implementation, this function re-seed random state by calling
             (while (and children-stack
                         (<= level (caar children-stack)))
               (let* ((children-stack-entry (pop children-stack))
-                     (cur-level (car children-stack-entry))
+                     ;; (cur-level (car children-stack-entry))
                      (cur-children (nreverse (cdr children-stack-entry)))
                      (parent-id (pop children-parent-id-stack)))
-                (ht-set children parent-id cur-children)))))
+                (ht-set children parent-id cur-children)
+                (--each cur-children
+                  (unless (eq (org-catalyst-safe-get-chain
+                               all-item-config nil it "todo-type")
+                              'done)
+                    (org-catalyst-safe-update
+                     (ht-get all-item-config parent-id)
+                     "end" nil
+                     (lambda (prev)
+                       (let ((child-end (org-catalyst-safe-get-chain
+                                         all-item-config nil it "end")))
+                         (cond
+                          ((null prev) child-end)
+                          ((null child-end) prev)
+                          (t
+                           (min prev child-end))))))))))))
 
          (add-timestamp
           (item-id timestamp-days timestamp-type-name)
@@ -1494,9 +1650,13 @@ As of the current implementation, this function re-seed random state by calling
                                              timestamp-type-name))
 
                             (when is-start
+                              ;; This is the scheduled date, in daynr format.
+                              ;; This will be nil if there's no scheduled time.
                               (ht-set item-config "start" timestamp-days-past))
 
                             (when is-end
+                              ;; This is the deadline date, in daynr format.
+                              ;; This will be nil if there's no deadline.
                               (ht-set item-config "end" timestamp-days-past)
                               (when (and
                                      (<= timestamp-days-past daynr)
@@ -1630,9 +1790,13 @@ As of the current implementation, this function re-seed random state by calling
                (ht-set state-config "params" params)
                (ht-set all-state-config state-name state-config)))
 
-            ((or (setq tag (or (org-catalyst--contains-tag "item" tags t)
-                               (org-catalyst--contains-tag "group" tags t)))
-                 todo-type)
+            ((or
+              ;; (setq tag (or (org-catalyst--contains-tag "item" tags t)
+              ;;               (org-catalyst--contains-tag "group" tags t)))
+              todo-type)
+
+             (setq tag (or (org-catalyst--contains-tag "item" tags t)
+                           (org-catalyst--contains-tag "group" tags t)))
 
              (let ((display-name (org-no-properties
                                   (org-get-heading t t t t)))
@@ -1717,9 +1881,12 @@ As of the current implementation, this function re-seed random state by calling
                               (length org-catalyst--child-param-prefix))
                              (car (read-from-string prop-value)))))))
 
+               (ht-set item-config "i" index)
+               (incf index)
                (ht-set item-config "item-id" item-id)
                (ht-set item-config "is-full-item" is-full-item)
                (ht-set item-config "is-group" is-group)
+               ;; Priority is the char value of the org priority
                (ht-set item-config "priority" priority)
                (ht-set item-config "display-name" display-name)
                (ht-set item-config "todo-text" todo-text)
@@ -1782,7 +1949,10 @@ As of the current implementation, this function re-seed random state by calling
       (setq random-items
             (org-catalyst--get-random-items
              all-item-config
-             timestamps)))
+             timestamps))
+
+      (org-catalyst--compute-scores
+       all-item-config))
 
     (list :all-item-config all-item-config
           :all-state-config all-state-config
@@ -2388,7 +2558,7 @@ If the value of NUMBER is an integer, no decimal point will be displayed."
   (org-catalyst--with-face
    (cond
     ((or (equal delta "inf")
-         (equal delta 1.0e+INF))
+         (equal delta org-catalyst-INF))
      "inf")
     ((= delta 0)
      "")
@@ -2415,12 +2585,12 @@ Use DEFAULT when the value is not found."
 (defun org-catalyst--inf-to-number (number)
   "Convert NUMBER to 1.0e+INF if NUMBER is \"inf\", otherwise return NUMBER."
   (if (equal number "inf")
-      1.0e+INF
+      org-catalyst-INF
     number))
 
 (defun org-catalyst--stringify-inf (number)
   "Convert NUMBER to \"inf\" if NUMBER is 1.0e+INF, otherwise return NUMBER."
-  (if (equal number 1.0e+INF)
+  (if (equal number org-catalyst-INF)
       "inf"
     number))
 
@@ -2654,7 +2824,7 @@ REVERSE the order if REVERSE is non-nil."
              'org-catalyst-special-face)
             " "
             (org-catalyst--with-face
-             (if (or (equal chain 1.0e+INF)
+             (if (or (equal chain org-catalyst-INF)
                      (equal chain "inf"))
                  org-catalyst-inf-icon
                (org-catalyst--number-to-string chain))
@@ -2779,6 +2949,17 @@ REVERSE the order if REVERSE is non-nil."
                       (> start org-catalyst--today-daynr))
                  'org-catalyst-secondary-face)
                 (t 'org-todo)))
+              " "))))
+
+(org-catalyst--define-renderer org-catalyst--render-priority-chip
+    (item-config)
+  (let ((priority (org-catalyst-safe-get
+                   item-config "priority" nil)))
+    (when priority
+      (insert (org-catalyst--with-face
+               (format "[#%s]" (byte-to-string priority))
+               (org-catalyst--get-priority-face
+                priority))
               " "))))
 
 (org-catalyst--define-renderer org-catalyst--render-action-chip
@@ -2990,17 +3171,23 @@ REVERSE the order if REVERSE is non-nil."
         :item-config item-config)
        (org-catalyst--render-todo-chip
         :item-config item-config)
+       (org-catalyst--render-priority-chip
+        :item-config item-config)
        (let ((display-name
               (org-catalyst-safe-get
                item-config "display-name" "(unknown)")))
          (insert
           (org-catalyst--with-face
            display-name
-           (let ((face (org-catalyst--get-priority-face
-                        priority)))
-             (if is-group
-                 (list 'org-catalyst-item-group-face face)
-               face))))))
+           ;; (let ((face (org-catalyst--get-priority-face
+           ;;              priority)))
+           ;;   (if is-group
+           ;;       (list 'org-catalyst-item-group-face face)
+           ;;     face))
+           (if is-group
+               'org-catalyst-item-group-face
+             nil)
+           ))))
      :suffix-renderer suffix-renderer)))
 
 (org-catalyst--define-renderer org-catalyst--render-item-with-info
@@ -3212,7 +3399,7 @@ REVERSE the order if REVERSE is non-nil."
           :prev-value
           (when (and next-threshold
                      diff-sum
-                     (not (equal diff-sum 1.0e+INF)))
+                     (not (equal diff-sum org-catalyst-INF)))
             (/ (float (- prev-sum prev-threshold))
                (- next-threshold prev-threshold)))
           :face 'org-catalyst-special-face
@@ -3727,7 +3914,7 @@ If MUL is non-nil, the amount of XP required is multiplied by MUL.
 If WITH-PREV is non-nil, next-level-threshold will also be a cons cell,
 with car being previous level threshold, and cdr being next level threshold."
   (if (or (equal value "inf")
-          (equal value 1.0e+INF))
+          (equal value org-catalyst-INF))
       nil
     (let ((level 1)
           (threshold 0)
@@ -3814,6 +4001,35 @@ If IGNORE-GROUP is non-nil, item groups do not count."
               org-catalyst--tree-leaf))
            'org-catalyst-secondary-face)))
 
+(org-catalyst--define-renderer org-catalyst--render-date-info
+    (daynr type)
+  (when daynr
+    (let ((days-to-deadline (- daynr org-catalyst--today-daynr)))
+      (insert
+       (org-catalyst--with-face
+        (cond
+         ((> days-to-deadline 0)
+          (format "+%d" days-to-deadline))
+         ((< days-to-deadline 0)
+          (format "-%d" (- days-to-deadline)))
+         (t
+          (format "DUE" days-to-deadline)))
+        (if (eq type 'end)
+            (if (<= days-to-deadline
+                    org-catalyst--days-to-end-warning-days)
+                'org-catalyst-warning-face
+              'org-catalyst-quest-date-face)
+          'org-catalyst-secondary-face))
+       " "
+       (org-catalyst--with-face
+        (format-time-string "%Y-%m-%d %a"
+                            (org-catalyst--days-to-time daynr))
+        (if (eq type 'end)
+            (if (<= days-to-deadline 0)
+                'org-catalyst-warning-face
+              'org-catalyst-quest-date-day-face)
+          'org-catalyst-secondary-face))))))
+
 (org-catalyst--define-renderer org-catalyst--render-item-tree
     (month-day
      snapshot
@@ -3851,7 +4067,11 @@ If IGNORE-GROUP is non-nil, item groups do not count."
         :has-children cur-children
         :filter-active filter-active
         :filtered-nodes filtered-nodes)
-       (insert " "))
+       (insert " ")
+       ;; (insert (format "%f"
+       ;;                 (org-catalyst-safe-get-chain
+       ;;                  all-item-config 42069 item-id "score")))
+       )
      :month-day month-day
      :snapshot snapshot
      :computed-actions computed-actions
@@ -3984,6 +4204,19 @@ ALL-ITEM-CONFIG and TOPOLOGICAL-ORDER are needed."
             (ht-remove filtered-nodes item-id))))))
     filtered-nodes))
 
+(defun org-catalyst--get-dashboard-filtered-nodes (all-item-config dashboard-tab)
+  "Return a hash table of all items in ALL-ITEM-CONFIG that passes the dashboard filter under the current DASHBOARD-TAB."
+  (let* ((filtered-nodes (ht-create))
+         (filter-func (plist-get dashboard-tab :filter-func)))
+    (ht-each
+     (lambda (item-id item-config)
+       (when (and (ht-get item-config "score" nil)
+                  (funcall filter-func
+                           item-config))
+         (ht-set filtered-nodes item-id 1)))
+     all-item-config)
+    filtered-nodes))
+
 (defun org-catalyst--get-node-order (order-func
                                      all-item-config
                                      item-attributes
@@ -4002,28 +4235,54 @@ ORDER-FUNC, ALL-ITEM-CONFIG, ITEM-ATTRIBUTES, ACTIONS, SNAPSHOT, and TOPOLOGICAL
                actions))
     result))
 
-(defun org-catalyst--sort-with-node-order (item-id-list node-order)
+(defun org-catalyst--get-dashboard-node-order
+    (all-item-config
+     dashboard-tab)
+  "TODO"
+  (let ((result (ht-create))
+        (order-func (plist-get dashboard-tab :order-func)))
+    (ht-each
+     (lambda (item-id item-config)
+       (ht-set result item-id
+               (funcall order-func
+                        item-config)))
+     all-item-config)
+    result))
+
+(defun org-catalyst--sort-with-node-order (item-id-list node-order &optional force-no-reverse comp)
   "Return sorted copy of ITEM-ID-LIST using NODE-ORDER.
 
 ITEM-ID-LIST is modified by side-effects.
 
 NODE-ORDER should be returned from `org-catalyst--get-node-order'.
 
-If current UI state specifies order to be reversed, the returned order is reversed."
+If current UI state specifies order to be reversed, the returned order is reversed.
+
+If FORCE-NO-REVERSE is non-nil, the returned order is guaranteed to be not reversed.
+
+If COMP is given, it should be a function that returns whether one item is less than anaother."
+  (unless comp
+    (setq comp #'<))
   (sort item-id-list
-        (if (org-catalyst--get-ui-state
-             "order-reverse"
-             org-catalyst--inventory-default-order-reverse)
+        (if (and
+             (not force-no-reverse)
+             (org-catalyst--get-ui-state
+              "order-reverse"
+              org-catalyst--inventory-default-order-reverse))
             (lambda (a b)
-              (> (org-catalyst-safe-get
-                  node-order a 0)
-                 (org-catalyst-safe-get
-                  node-order b 0)))
-          (lambda (a b)
-            (< (org-catalyst-safe-get
-                node-order a 0)
+              (funcall
+               comp
                (org-catalyst-safe-get
-                node-order b 0))))))
+                node-order b 0)
+               (org-catalyst-safe-get
+                node-order a 0)))
+          (lambda (a b)
+            (funcall
+             comp
+             (org-catalyst-safe-get
+              node-order a 0)
+             (org-catalyst-safe-get
+              node-order b 0))))))
 
 (org-catalyst--define-renderer org-catalyst--render-inventory
     (month-day
@@ -4061,6 +4320,7 @@ If current UI state specifies order to be reversed, the returned order is revers
                                         item-attributes
                                         computed-actions
                                         topological-order)))
+
     (org-catalyst--render-section-heading :name "Inventory")
     ;; (insert "    ")
     ;; (org-catalyst--render-tab-bar
@@ -4101,6 +4361,201 @@ If current UI state specifies order to be reversed, the returned order is revers
          :computed-actions computed-actions
          :all-item-config all-item-config
          :item-id item-id)))))
+
+(org-catalyst--define-renderer org-catalyst--render-queue-tree
+    (month-day
+     snapshot
+     computed-actions
+     all-item-config
+     children
+     filtered-nodes
+     ;; dashboard-filtered-nodes
+     filter-active
+     node-order
+     sort-func
+     item-id
+     depth
+     has-more-sibling
+     prefixes)
+  (let* ((item-config (ht-get all-item-config item-id))
+         (cur-children (org-catalyst--sort-with-node-order
+                        (seq-filter
+                         (lambda (item-id)
+                           (ht-contains-p filtered-nodes item-id)
+                           ;; (and (ht-contains-p filtered-nodes item-id)
+                           ;;      (ht-contains-p dashboard-filtered-nodes
+                           ;;                     item-id))
+                           )
+                         (org-catalyst-safe-get
+                          children item-id nil))
+                        node-order
+                        t
+                        sort-func))
+         ;; (cur-children
+         ;;  (cond
+         ;;   ((cdr cur-children)
+         ;;    (list (car cur-children) nil))
+         ;;   (cur-children
+         ;;    (list (car cur-children)))
+         ;;   (t nil)))
+         (i (length cur-children))
+         (end (org-catalyst-safe-get item-config "end" nil))
+         (start (org-catalyst-safe-get item-config "start" nil))
+         (expanded
+          (org-catalyst-safe-get
+           (org-catalyst--get-ui-state
+            "expanded" nil)
+           item-id org-catalyst--default-expanded)))
+
+    (org-catalyst--render-item
+     :prefix-renderer
+     (org-catalyst--inline-renderer ()
+       (--each-r prefixes
+         (insert (org-catalyst--with-face
+                  it 'org-catalyst-secondary-face)))
+       (org-catalyst--render-node-icon
+        :item-id item-id
+        :has-children cur-children
+        :filter-active filter-active
+        :filtered-nodes filtered-nodes)
+       ;; (insert " ")
+       ;; (insert (prin1-to-string (org-catalyst-safe-get-chain
+       ;;                           all-item-config 42069 item-id "score")))
+       )
+     :month-day month-day
+     :snapshot snapshot
+     :info-renderer
+     (org-catalyst--partial-renderer
+      org-catalyst--render-date-info
+      :daynr end
+      :type 'end)
+     :second-info-renderer
+     (org-catalyst--partial-renderer
+      org-catalyst--render-date-info
+      :daynr start
+      :type 'start)
+     :action
+     (org-catalyst-safe-get computed-actions item-id nil)
+     :item-config item-config
+     :suffix-renderer
+     nil)
+
+    (when prefixes
+      (setq prefixes (cons
+                      (if has-more-sibling
+                          org-catalyst--tree-indent-line
+                        org-catalyst--tree-indent-empty)
+                      (cdr prefixes))))
+
+    (when expanded
+      (dolist (child cur-children)
+        (decf i)
+        (let ((new-prefixes
+               (cons
+                (if (> i 0)
+                    org-catalyst--tree-indent-junction
+                  org-catalyst--tree-indent-final)
+                prefixes)))
+          (if child
+              (org-catalyst--render-queue-tree
+               :month-day month-day
+               :snapshot snapshot
+               :computed-actions computed-actions
+               :all-item-config all-item-config
+               :children children
+               :filtered-nodes filtered-nodes
+               ;; :dashboard-filtered-nodes dashboard-filtered-nodes
+               :filter-active filter-active
+               :node-order node-order
+               :item-id child
+               :depth (1+ depth)
+               :has-more-sibling (> i 0)
+               :prefixes new-prefixes)
+            (--each-r new-prefixes
+              (insert (org-catalyst--with-face
+                       it 'org-catalyst-secondary-face)))
+            (insert (org-catalyst--with-face
+                     "○  ...\n" 'org-catalyst-secondary-face))))))))
+
+(org-catalyst--define-renderer org-catalyst--render-queue
+    (month-day
+     snapshot
+     computed-actions
+     config
+     ui-state)
+
+  (let* ((dashboard-tab-index (org-catalyst--get-ui-state "dashboard-tab" 0))
+         (dashboard-tab (nth dashboard-tab-index org-catalyst--dashboard-tabs))
+         (all-item-config (plist-get config :all-item-config))
+         (top-level-items (plist-get config :top-level-items))
+         (topological-order (plist-get config :topological-order))
+         (children (plist-get config :children))
+         ;; (page-index (org-catalyst--get-ui-state "page" 0))
+         ;; (page (nth page-index
+         ;;            org-catalyst--item-categories))
+         ;; (page-name (plist-get page :name))
+         ;; (page-predicate (plist-get page :predicate))
+         ;; TODO: we can make filtered node computation faster for lists
+         (filtered-nodes (org-catalyst--get-tree-filtered-nodes
+                          all-item-config topological-order))
+         (dashboard-filtered-nodes
+          (org-catalyst--get-dashboard-filtered-nodes
+           all-item-config
+           dashboard-tab))
+         (filter-active (org-catalyst--filter-active-p))
+         ;; (order (org-catalyst-safe-get
+         ;;         org-catalyst--inventory-orders
+         ;;         (org-catalyst--get-ui-state
+         ;;          "order" org-catalyst--inventory-default-order)
+         ;;         nil))
+         ;; (order-func (plist-get order :order-func))
+         (sort-func (plist-get dashboard-tab :sort-func))
+         (item-attributes (ht-get snapshot "item-attributes"))
+         (node-order
+          (org-catalyst--get-dashboard-node-order
+           all-item-config
+           dashboard-tab)))
+
+    (org-catalyst--render-section-heading :name "Dashboard")
+    ;; (insert "    ")
+    ;; (org-catalyst--render-tab-bar
+    ;;  :index page-index
+    ;;  :tabs org-catalyst--item-categories)
+    (org-catalyst--render-curator
+     :config config)
+
+    (org-catalyst--render-subline-spacing)
+
+    (org-catalyst--render-tab-bar
+     :index dashboard-tab-index
+     :tabs org-catalyst--dashboard-tabs)
+
+    (insert "\n")
+
+    (dolist (item-id (org-catalyst--sort-with-node-order
+                      (seq-filter
+                       (lambda (item-id)
+                         (and (ht-contains-p filtered-nodes item-id)
+                              (ht-contains-p dashboard-filtered-nodes
+                                             item-id)))
+                       top-level-items)
+                      node-order
+                      t
+                      sort-func))
+      (org-catalyst--render-queue-tree
+       :month-day month-day
+       :snapshot snapshot
+       :computed-actions computed-actions
+       :all-item-config all-item-config
+       :children children
+       :filtered-nodes filtered-nodes
+       ;; :dashboard-filtered-nodes dashboard-filtered-nodes
+       :filter-active filter-active
+       :item-id item-id
+       :node-order node-order
+       :sort-func sort-func
+       :depth 0)
+      (insert "\n"))))
 
 (defun org-catalyst--is-weekend (month-day)
   "Return if MONTH-DAY is a weekend."
@@ -4264,6 +4719,22 @@ If SAVE-POINT is non-nil, point will try to stay on the same item."
           (error "Tab %s not found" (symbol-name tab-id))))
     (error "Not in Catalyst buffer")))
 
+(defun org-catalyst--dashboard-goto-tab (tab-id)
+  "Jump to the dashboard tab having TAB-ID."
+  (if (org-catalyst--in-status-buffer)
+      (let ((index (-find-index
+                    (lambda (tab)
+                      (eq (plist-get tab :id) tab-id))
+                    org-catalyst--dashboard-tabs)))
+        (if index
+            (org-catalyst--update-ui-state
+             "dashboard-tab" 0
+             (lambda (prev)
+               index)
+             t)
+          (error "Dashboard tab %s not found" (symbol-name tab-id))))
+    (error "Not in Catalyst buffer")))
+
 (defun org-catalyst--set-fold-level (&optional fold-level refresh)
   "Update fold state of each entry according to FOLD-LEVEL.
 
@@ -4397,6 +4868,13 @@ With a prefix argument ARG, point will attempt to say on the same item."
   (interactive "P")
   (org-catalyst--goto-tab 'quest-map arg))
 
+(defun org-catalyst-status-dashboard (&optional arg)
+  "Go to Catalyst dashboard tab.
+
+With a prefix argument ARG, point will attempt to say on the same item."
+  (interactive "P")
+  (org-catalyst--goto-tab 'dashboard arg))
+
 (defun org-catalyst-status-overview (&optional arg)
   "Go to Catalyst overview tab.
 
@@ -4418,6 +4896,36 @@ With a prefix argument ARG, point will attempt to say on the same item."
   "Go to Catalyst overview tab, jumping to entry at point if possible."
   (interactive)
   (org-catalyst--goto-tab 'overview t))
+
+(defun org-catalyst-status-dashboard-at-point ()
+  "Go to Catalyst dashboard tab, jumping to entry at point if possible."
+  (interactive)
+  (org-catalyst--goto-tab 'dashboard t))
+
+(defun org-catalyst-dashboard-actionable ()
+  "TODO"
+  (interactive)
+  (org-catalyst--dashboard-goto-tab 'actionable))
+
+(defun org-catalyst-dashboard-all ()
+  "TODO"
+  (interactive)
+  (org-catalyst--dashboard-goto-tab 'all))
+
+(defun org-catalyst-dashboard-has-deadline ()
+  "TODO"
+  (interactive)
+  (org-catalyst--dashboard-goto-tab 'has-deadline))
+
+(defun org-catalyst-dashboard-no-deadline ()
+  "TODO"
+  (interactive)
+  (org-catalyst--dashboard-goto-tab 'no-deadline))
+
+(defun org-catalyst-dashboard-upcoming ()
+  "TODO"
+  (interactive)
+  (org-catalyst--dashboard-goto-tab 'upcoming))
 
 (defun org-catalyst-goto ()
   "TODO"
