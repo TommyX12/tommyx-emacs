@@ -1,0 +1,15 @@
+# -*- mode: snippet -*-
+# name: nanite feature
+# key: nnfeature
+# --
+feature:import {
+}
+
+feature:export {
+}
+
+feature.on_init = function (R)
+    local export = {
+    }
+    return export
+end

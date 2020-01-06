@@ -1034,7 +1034,10 @@
      ((:when (eq c++-ide-type 'eglot))
       ((:require company eglot company-tabnine)
        ('company-backends :ensure-front 'company-tabnine 'company-capf)))
-     ((:macro set-indent) 2 4))
+     ((:macro set-indent) 2 4)
+     ((:require cmake-ide)
+      ('cmake-ide-header-search-other-file nil)
+      ('cmake-ide-header-search-first-including nil)))
 
     (:minor-modes
      ((:require format-all)
