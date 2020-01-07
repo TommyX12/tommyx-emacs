@@ -2,4 +2,4 @@
 # name: print line number
 # key: pl
 # --
-print('debug: `(line-number-at-pos)`')
+print('`(buffer-file-name)`:`(line-number-at-pos)`: $1')$0

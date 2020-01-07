@@ -2,4 +2,4 @@
 # name: debug print
 # key: dp
 # --
-print("$1 = {}".format($1))
+print("`(buffer-file-name)`:`(line-number-at-pos)`: $1 = {}".format($1))$0

@@ -692,7 +692,8 @@ Useful for a search overview popup."
     (newline)
     (unless (eolp)
       (indent-according-to-mode)))
-  (indent-according-to-mode))
+  (save-excursion
+    (indent-according-to-mode)))
 
 (defun update-heavy-tasks ()
   (interactive)
