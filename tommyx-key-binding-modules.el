@@ -915,15 +915,15 @@
          :which-key "Change view"
 
          "f" (:def
-             neotree-show
-             :which-key "Files")
+              neotree-show
+              :which-key "Files")
 
          "o" (:def
-             ,(lambda () (interactive)
-                (display-buffer-in-side-window
-                 (get-buffer imenu-list-buffer-name)
-                 '((side . left))))
-             :which-key "Outline")))
+              ,(lambda () (interactive)
+                 (display-buffer-in-side-window
+                  (get-buffer imenu-list-buffer-name)
+                  '((side . left))))
+              :which-key "Outline")))
 
        "t"
        (:bindings
@@ -1913,11 +1913,11 @@
        ;;      org-clock-goto
        ;;      :which-key "Org Goto Clock")
        "M-i" (:def
-            ,(lambda () (interactive) (org-clock-in '(4))) ; (lambda () (interactive) (org-pomodoro '(4)))
-            :which-key "Org Clock In Recent")
+              ,(lambda () (interactive) (org-clock-in '(4))) ; (lambda () (interactive) (org-pomodoro '(4)))
+              :which-key "Org Clock In Recent")
        "M-I" (:def
-            org-clock-goto
-            :which-key "Org Goto Clock")
+              org-clock-goto
+              :which-key "Org Goto Clock")
        "i" (:def
             org-goto-inbox
             :which-key "Org Goto Inbox")
@@ -2063,13 +2063,13 @@
                                #'org-sort-checklist-compare-func))
              :which-key "Org Sort Checklist")
         "M-;" (:def
-             ,(lambda () (interactive)
-                (org-sort-list nil ?A)
-                (org-sort-list nil
-                               ?f
-                               #'org-sort-checklist-getkey-func
-                               #'org-sort-checklist-compare-func))
-             :which-key "Org Sort Checklist"))
+               ,(lambda () (interactive)
+                  (org-sort-list nil ?A)
+                  (org-sort-list nil
+                                 ?f
+                                 #'org-sort-checklist-getkey-func
+                                 #'org-sort-checklist-compare-func))
+               :which-key "Org Sort Checklist"))
 
        :states (motion normal)
        (:bindings
@@ -2114,8 +2114,19 @@
              org-deadline
              :which-key "Org Deadline")
         "D" (:def
-             ,(lambda () (interactive) (org-deadline nil "+1w"))
-             :which-key "Org Deadline To 1w")
+             ,(lambda () (interactive)
+                (defvar org-deadline-schedule-history nil)
+                (let ((time
+                       ;; (completing-read
+                       ;;  "Enter string for deadline and schedule: "
+                       ;;  org-deadline-schedule-history
+                       ;;  nil nil nil 'org-deadline-schedule-history)
+                       (read-string "Enter string for deadline and schedule: "
+                                    nil 'org-deadline-schedule-history
+                                    "")))
+                  (org-deadline nil time)
+                  (org-schedule nil time)))
+             :which-key "Org Schedule and Deadline")
         "p" (:def
              org-priority
              :which-key "Org Priority")
