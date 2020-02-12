@@ -414,7 +414,8 @@
 
     ;; linter
     ((:require lsp)
-     ('lsp-prefer-flymake nil))
+     ('lsp-prefer-flymake nil)
+     ('lsp-idle-delay 0.45))
     ((:require flycheck)
      ('flycheck-idle-change-delay 3)
      ('flycheck-check-syntax-automatically '(idle-change save mode-enabled)))
@@ -1066,8 +1067,8 @@
 
 ($define-module tommyx-csharp-mode
   '(:on-init
-     ((:require tommyx-extensions color-identifiers-mode)
-      ($setup-color-identifiers-parser 'c 'csharp-mode)))
+    ((:require tommyx-extensions color-identifiers-mode)
+     ($setup-color-identifiers-parser 'c 'csharp-mode)))
 
   '((:mode-local csharp-mode)
 
@@ -1077,6 +1078,34 @@
 
     (:minor-modes
      (ycmd-mode 1))))
+
+($define-module tommyx-kotlin-mode
+  '(:on-init
+    ((:require tommyx-extensions color-identifiers-mode)
+     ($setup-color-identifiers-parser 'c 'kotlin-mode))
+    (add-to-list 'exec-path "~/kotlin-language-server/bin"))
+
+  '(:settings
+    ('kotlin-auto-format nil))
+
+  '((:mode-local kotlin-mode)
+
+    (:settings
+     ((:require company lsp-mode company-tabnine)
+      ('company-backends :ensure-front 'company-tabnine 'company-lsp)))
+
+    (:on-before-save
+     ((:require lsp-mode)
+      (when kotlin-auto-format
+        (ignore-errors
+          (lsp-format-buffer)))))
+
+    (:minor-modes
+     ;; (ycmd-mode 1)
+     ((:require lsp-mode)
+      (lsp)
+      (lsp-ui-mode -1))
+     )))
 
 ($define-module tommyx-glsl-mode
   '(:on-init
@@ -1318,7 +1347,7 @@
     ((:require tommyx-extensions)
      ($highlight-booleans 'typescript-mode "\\<true\\>" "\\<false\\>"))
     ((:require tommyx-extensions color-identifiers-mode)
-      ($setup-color-identifiers-parser 'js 'typescript-mode)))
+     ($setup-color-identifiers-parser 'js 'typescript-mode)))
 
   '((:mode-local typescript-mode)
 

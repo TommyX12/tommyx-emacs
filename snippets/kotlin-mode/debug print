@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: debug print
+# key: dp
+# --
+println("`(buffer-file-name)`:`(line-number-at-pos)`: $1 = \${$1}")$0

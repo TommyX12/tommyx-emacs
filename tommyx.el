@@ -37,6 +37,7 @@
         'tommyx-c++-mode
         'tommyx-r-mode
         'tommyx-csharp-mode
+        'tommyx-kotlin-mode
         'tommyx-glsl-mode
         'tommyx-json-mode
         'tommyx-lua-mode

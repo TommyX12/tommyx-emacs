@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: print line number
+# key: pl
+# --
+println("`(buffer-file-name)`:`(line-number-at-pos)`: $1")$0

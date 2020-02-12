@@ -1063,7 +1063,15 @@
 
         "s" (:def
              magit-status
-             :which-key "Magit Status"))))
+             :which-key "Magit Status")
+
+        "d" (:def
+             $wfh-download
+             :which-key "WFH Download")
+
+        "u" (:def
+             $wfh-upload
+             :which-key "WFH Upload"))))
 
      :states (visual)
      (:bindings

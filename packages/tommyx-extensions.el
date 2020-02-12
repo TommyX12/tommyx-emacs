@@ -1251,6 +1251,53 @@ If ARG is non-nil, toggle the mode."
        ,@body)
      (select-window old-window)))
 
+(defmacro with-cd (dir &rest body)
+  (declare (indent 1))
+  `(let ((default-directory ,dir))
+     ,@body))
+
+(defun get-relative-path (dir path)
+  (let ((dir (expand-file-name dir))
+        (path (expand-file-name path)))
+    (substring path (length dir))))
+
+(defun get-project-relative-path (path)
+  (let ((dir (projectile-project-root)))
+    (when dir
+      (get-relative-path dir path))))
+
+(defun $wfh-script (script &optional enter-path)
+  (let ((dir (projectile-project-root)))
+    (if dir
+        (let ((path (get-relative-path
+                     dir
+                     (if enter-path
+                         (read-file-name
+                          (format "Enter file name for %s: " script))
+                       (buffer-file-name)))))
+          (with-cd dir
+            (compile (format "./%s \"%s\"" script path) t)))
+      (error "Not in a project"))))
+
+(defun $wfh-upload (&optional enter-path)
+  (interactive "P")
+  ($wfh-script "upload.sh" enter-path))
+
+(defun $wfh-download (&optional enter-path)
+  (interactive "P")
+  ($wfh-script "download.sh" enter-path))
+
+(defun kotlin-find-package (&optional dir)
+  (let* ((dir (expand-file-name
+               (or dir (file-name-directory
+                        (buffer-file-name)))))
+         (segments (split-string dir "/" t))
+         (index (-find-index (lambda (item) (string= item "src"))
+                       segments)))
+    (if index
+        (s-join "." (subseq segments (1+ index)))
+      nil)))
+
 (provide 'tommyx-extensions)
 
 ;;; tommyx-extensions.el ends here
