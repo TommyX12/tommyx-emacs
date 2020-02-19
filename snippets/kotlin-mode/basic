@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: basic
+# key: basic
+# --
+package ${1:`(or (kotlin-find-package) "package")`}
+
+class ${2:`(file-name-base (buffer-file-name))`} {
+    $3
+}

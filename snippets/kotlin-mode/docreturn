@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: docreturn
+# key: docr
+# --
+* @return ${1:TODO(description)}
