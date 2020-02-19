@@ -383,6 +383,10 @@
         :which-key "Shortcuts"
         :key-name shortcuts-prefix
 
+        "u" (:def
+             lsp-ui-mode
+             :which-key "Toggle LSP UI Mode")
+
         "e" (:def
              sp-unwrap-sexp
              :which-key "Un-wrap parens")
