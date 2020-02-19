@@ -692,8 +692,7 @@ Useful for a search overview popup."
     (newline)
     (unless (eolp)
       (indent-according-to-mode)))
-  (save-excursion
-    (indent-according-to-mode)))
+  (indent-according-to-mode))
 
 (defun update-heavy-tasks ()
   (interactive)
@@ -1250,6 +1249,20 @@ If ARG is non-nil, toggle the mode."
      (progn
        ,@body)
      (select-window old-window)))
+
+(defun counsel-projectile-switch-project-neotree ()
+  (interactive)
+  (ivy-read (projectile-prepend-project-name "Neotree switch to project: ")
+            (if counsel-projectile-remove-current-project
+                (projectile-relevant-known-projects)
+              projectile-known-projects)
+            :preselect (and (projectile-project-p)
+                            (abbreviate-file-name (projectile-project-root)))
+            :action (lambda (project)
+                      (neotree-dir project))
+            :require-match t
+            :sort counsel-projectile-sort-projects
+            :caller 'counsel-projectile-switch-project))
 
 (provide 'tommyx-extensions)
 

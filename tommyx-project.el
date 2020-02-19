@@ -56,6 +56,9 @@
      "p" (:def
           counsel-projectile-switch-project
           :which-key "Switch Project")
+     "P" (:def
+          counsel-projectile-switch-project-neotree
+          :which-key "Switch Project Neotree")
      "w" (:def
           persp-switch
           :which-key "Switch Workspace")
