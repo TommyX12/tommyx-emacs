@@ -1082,7 +1082,8 @@
 ($define-module tommyx-kotlin-mode
   '(:on-init
     ((:require tommyx-extensions color-identifiers-mode)
-     ($setup-color-identifiers-parser 'c 'kotlin-mode))
+     ($setup-color-identifiers-parser 'c 'kotlin-mode)
+     ($highlight-booleans 'kotlin-mode "\\<true\\>" "\\<false\\>"))
     (add-to-list 'exec-path "~/kotlin-language-server/bin"))
 
   '(:settings

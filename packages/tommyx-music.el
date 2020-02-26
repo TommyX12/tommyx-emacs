@@ -262,6 +262,30 @@ This function uses `emms-show-format' to format the current track."
               :preselect (counsel-emms-get-current-track)
               :require-match t)))
 
+(defun counsel-emms-enqueue-playlist ()
+  (interactive)
+  (unless emms-playlist-buffer
+    (error "No active playlist buffer"))
+
+  (let* ((dir (if (bound-and-true-p emms-default-music-dir)
+                  emms-default-music-dir
+                emms-source-file-default-directory))
+         (item
+          (read-file-name "Enqueue playlist: " dir dir t)))
+    (message "Enqueued playlist: %s" item)
+    (emms-get-create-queue)
+    (emms-add-playlist item)))
+
+(defun counsel-emms-save-playlist (format file)
+  "Similar to `emms-playlist-save', but uses `emms-default-music-dir'."
+  (interactive
+   (list (emms-source-playlist-read-format)
+         (let ((dir (if (bound-and-true-p emms-default-music-dir)
+                        emms-default-music-dir
+                      emms-source-file-default-directory)))
+           (read-file-name "Save playlist as: " dir dir nil))))
+  (emms-playlist-save format file))
+
 (defun emms-show-progress (&rest _)
   (let* ((total-playing-time (emms-track-get
                               (emms-playlist-current-selected-track)

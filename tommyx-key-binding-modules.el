@@ -1011,8 +1011,8 @@
          "P" (:def
               emms-state-pop
               :which-key "Pop Playlist State")
-         "s" (:def
-              emms-playlist-save
+         "w" (:def
+              counsel-emms-save-playlist
               :which-key "Save Playlist")
          "g" (:def
               emms
@@ -1037,6 +1037,9 @@
         "q" (:def
              counsel-emms-enqueue
              :which-key "Enqueue Music")
+        "Q" (:def
+             counsel-emms-enqueue-playlist
+             :which-key "Enqueue Playlist")
         "f" (:def
              counsel-emms-play
              :which-key "Play Music")
