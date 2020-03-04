@@ -867,7 +867,8 @@ Useful for a search overview popup."
   (when (fboundp 'companion-reopen)
     (companion-reopen))
   (unless (eq system-type 'darwin)
-    (posframe-delete-all)))
+    (posframe-delete-all))
+  (update-heavy-tasks))
 
 (defun pop-kill-ring ()
   "Remove most recent entry from kill-ring"
@@ -1310,6 +1311,21 @@ If ARG is non-nil, toggle the mode."
     (if index
         (s-join "." (subseq segments (1+ index)))
       nil)))
+
+(defun kotlin-disable-lsp-ui-mode ()
+  (interactive)
+  (-each (buffer-list)
+    (lambda (buffer)
+      (with-current-buffer buffer
+        (when (eq major-mode 'kotlin-mode)
+          (lsp-ui-mode -1))))))
+
+(defun insert-current-emms-track ()
+  (interactive)
+  (end-of-line)
+  (newline)
+  (insert
+   (emms-track-name (emms-playlist-current-selected-track))))
 
 (provide 'tommyx-extensions)
 

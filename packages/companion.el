@@ -115,6 +115,11 @@
   "*Face used for the companion buffer (secondary)."
   :group 'companion :group 'font-lock-highlighting-faces)
 (defvar companion-secondary 'companion-secondary)
+(defface companion-dim-face
+  '((t (:inherit font-lock-comment-face)))
+  "*Face used for the dim text companion buffer."
+  :group 'companion :group 'font-lock-highlighting-faces)
+(defvar companion-dim-face 'companion-dim-face)
 (defface companion-notif-icon-info
   '((t (:foreground "#67b11d" :inherit companion-face)))
   "*Face used for the icon in companion buffer for info notifications."
@@ -704,7 +709,7 @@ Taken from https://github.com/narendraj9/quoted-scratch."
                 (file-name-base
                  (emms-track-name
                   (emms-playlist-current-selected-track))))
-        'face 'font-lock-comment-face)))))
+        'face 'companion-dim-face)))))
 
 
 
