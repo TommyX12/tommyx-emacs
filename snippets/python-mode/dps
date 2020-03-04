@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: debug print shape
+# key: dps
+# --
+print("`(buffer-file-name)`:`(line-number-at-pos)`: $1.shape = {}".format($1.shape))$0
