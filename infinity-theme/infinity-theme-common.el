@@ -48,7 +48,7 @@
   (or (display-graphic-p) (= (tty-display-color-cells) 16777216)))
 
 (defun infinity-apply-theme (theme name)
-  (let
+  (let*
       ((class '((class color) (min-colors 89)))
        ;;                                                    ~~ Dark ~~                               ~~ Light ~~
        ;;                                                          GUI       TER                             GUI       TER
@@ -63,10 +63,33 @@
        (primary+3     (if (eq theme 'dark) (if (has-true-color) "#91ccff" "#268bd2") (if (has-true-color) "#2067cc" "#268bd2")))
        (primary+4     (if (eq theme 'dark) (if (has-true-color) "#bcdfff" "#268bd2") (if (has-true-color) "#1c48ad" "#268bd2")))
 
+       ($a     "#ecedee")
+       ($b     "#cccdce")
+       ($c     "#D9D9D9")
+       ($f     "#282828")
+       ($fb    "#207DD9")
+       ;; ($a     "#ABAFB3")
+       ;; ($b     "#919599")
+       ;; ($c     "#B7BCC1")
+       ;; ($f     "#ffffff")
+       ;; ($fb    "#207DD9")
+
+       (mode-line-buffer-id-inactive     (if (eq theme 'dark) (if (has-true-color) "#248bf2" "#d75fd7") (if (has-true-color) $fb "#8700af")))
+       (mode-line-buffer-id     (if (eq theme 'dark) (if (has-true-color) "#248bf2" "#d75fd7") (if (has-true-color) $fb "#8700af")))
+       (mode-line-bg            (if (eq theme 'dark) (if (has-true-color) "#1C1D21" "#268bd2") (if (has-true-color) $a "#268bd2")))
+       (mode-line-fg            (if (eq theme 'dark) (if (has-true-color) "#C0C5CC" "#b2b2b2") (if (has-true-color) $f "#5f5f87")))
+       (mode-line-bg-inactive   (if (eq theme 'dark) (if (has-true-color) "#1C1D21" "#268bd2") (if (has-true-color) $b "#268bd2")))
+       (mode-line-fg-inactive   (if (eq theme 'dark) (if (has-true-color) "#C0C5CC" "#b2b2b2") (if (has-true-color) $f "#5f5f87")))
+       (mode-line-2-bg          (if (eq theme 'dark) (if (has-true-color) "#1c48ad" "#268bd2") (if (has-true-color) $b "#268bd2")))
+       (mode-line-2-fg          (if (eq theme 'dark) (if (has-true-color) "#C0C5CC" "#268bd2") (if (has-true-color) $f "#268bd2")))
+       (mode-line-2-bg-inactive (if (eq theme 'dark) (if (has-true-color) "#344052" "#268bd2") (if (has-true-color) $b "#268bd2")))
+       (mode-line-2-fg-inactive (if (eq theme 'dark) (if (has-true-color) "#C0C5CC" "#b2b2b2") (if (has-true-color) $f "#5f5f87")))
+       (mode-line-4-bg          (if (eq theme 'dark) (if (has-true-color) "#242C38" "#268bd2") (if (has-true-color) $c "#268bd2")))
+       (mode-line-4-fg          (if (eq theme 'dark) (if (has-true-color) "#C0C5CC" "#b2b2b2") (if (has-true-color) $f "#5f5f87")))
+       (mode-line-4-bg-inactive (if (eq theme 'dark) (if (has-true-color) "#1C1D21" "#268bd2") (if (has-true-color) $b "#268bd2")))
+       (mode-line-4-fg-inactive (if (eq theme 'dark) (if (has-true-color) "#C0C5CC" "#b2b2b2") (if (has-true-color) $f "#5f5f87")))
        (secondary-4   (if (eq theme 'dark) (if (has-true-color) "#1C1D21" "#268bd2") (if (has-true-color) "#eeeeee" "#268bd2")))
-       (secondary-43  (if (eq theme 'dark) (if (has-true-color) "#1C1D21" "#268bd2") (if (has-true-color) "#eeeeee" "#268bd2")))
        (secondary-41  (if (eq theme 'dark) (if (has-true-color) "#242C38" "#268bd2") (if (has-true-color) "#D8D8D8" "#268bd2")))
-       (secondary-42  (if (eq theme 'dark) (if (has-true-color) "#344052" "#268bd2") (if (has-true-color) "#BFBFBF" "#268bd2")))
        ;; (secondary-4   (if (eq theme 'dark) (if (has-true-color) "#212121" "#268bd2") (if (has-true-color) "#eeeeee" "#268bd2")))
        ;; (secondary-3   (if (eq theme 'dark) (if (has-true-color) "#424242" "#268bd2") (if (has-true-color) "#d0d0d0" "#268bd2")))
        (secondary-3   (if (eq theme 'dark) (if (has-true-color) "#363a41" "#268bd2") (if (has-true-color) "#d0d0d0" "#268bd2")))
@@ -86,19 +109,20 @@
        (base-dim      (if (eq theme 'dark) (if (has-true-color) "#616A73" "#585858") (if (has-true-color) "#ABABAB" "#afafd7")))
        (base-dim2     (if (eq theme 'dark) (if (has-true-color) "#616A73" "#585858") (if (has-true-color) "#808080" "#afafd7")))
        (base-comment  (if (eq theme 'dark) (if (has-true-color) "#616A73" "#585858") (if (has-true-color) "#92B3B1" "#afafd7")))
-       (bg1           (if (eq theme 'dark) (if (has-true-color) "#282c34" "#262626") (if (has-true-color) "#f4f4f4" "#ffffff")))
+       (bg1           (if (eq theme 'dark) (if (has-true-color) "#282c34" "#262626") (if (has-true-color) "#ffffff" "#ffffff")))
        ;; (bg1           (if (eq theme 'dark) (if (has-true-color) "#2B2C30" "#262626") (if (has-true-color) "#f4f4f4" "#ffffff")))
        (bg11          (if (eq theme 'dark) (if (has-true-color) "#31343D" "#262626") (if (has-true-color) "#B4C9DD" "#ffffff")))
-       (bg12          (if (eq theme 'dark) (if (has-true-color) "#34373D" "#262626") (if (has-true-color) "#E0E0E0" "#ffffff")))
-       (bg12b         (if (eq theme 'dark) (if (has-true-color) "#2D3848" "#262626") (if (has-true-color) "#d2E2Eb" "#ffffff")))
+       (bg12          (if (eq theme 'dark) (if (has-true-color) "#34373D" "#262626") (if (has-true-color) "#EDEDED" "#ffffff")))
+       (bg12b         (if (eq theme 'dark) (if (has-true-color) "#2D3848" "#262626") (if (has-true-color) "#D6E7F0" "#ffffff")))
        (bg13          (if (eq theme 'dark) (if (has-true-color) "#1B1C1F" "#262626") (if (has-true-color) "#D4D4D4" "#ffffff")))
        (bg14          (if (eq theme 'dark) (if (has-true-color) "#404147" "#262626") (if (has-true-color) "#C7C7C7" "#ffffff")))
        (bg15          (if (eq theme 'dark) (if (has-true-color) "#333540" "#262626") (if (has-true-color) "#C7C7C7" "#ffffff")))
-       (bg2           (if (eq theme 'dark) (if (has-true-color) "#212329" "#1c1c1c") (if (has-true-color) "#DDDEE0" "#e4e4e4")))
+       (bg2           (if (eq theme 'dark) (if (has-true-color) "#212329" "#1c1c1c") (if (has-true-color) "#E9EAED" "#e4e4e4")))
        (bg3           (if (eq theme 'dark) (if (has-true-color) "#0a1014" "#121212") (if (has-true-color) "#dedede" "#d0d0d0")))
        (bg4           (if (eq theme 'dark) (if (has-true-color) "#080a14" "#080808") (if (has-true-color) "#dadada" "#bcbcbc")))
        (border        (if (eq theme 'dark) (if (has-true-color) "#565C66" "#111111") (if (has-true-color) "#aaaaaa" "#b3b9be")))
-       (border-dim    (if (eq theme 'dark) (if (has-true-color) "#434A54" "#111111") (if (has-true-color) "#aaaaaa" "#b3b9be")))
+       ;; (border-dim    (if (eq theme 'dark) (if (has-true-color) "#434A54" "#111111") (if (has-true-color) "#aaaaaa" "#b3b9be")))
+       (border-dim    (if (eq theme 'dark) (if (has-true-color) "#434A54" "#111111") (if (has-true-color) "#BCBDBF" "#b3b9be")))
        (back-border   (if (eq theme 'dark) (if (has-true-color) "#1C1E24" "#121212") (if (has-true-color) "#dedede" "#d0d0d0")))
        (back-border2  (if (eq theme 'dark) (if (has-true-color) "#20232A" "#121212") (if (has-true-color) "#DCDDDF" "#d0d0d0")))
        (border-shadow (if (eq theme 'dark) (if (has-true-color) "#060606" "#111111") (if (has-true-color) "#555555" "#b3b9be")))
@@ -808,11 +832,14 @@
      `(markdown-table-face ((,class (:foreground ,base :background ,head1-bg))))
 
 ;;;;; mode-line
-     `(mode-line           ((,class (:foreground ,base :background ,secondary-41 :box (:color ,border-dim :line-width 1 :style nil)))))
-     `(mode-line-inactive  ((,class (:foreground ,base :background ,secondary-4 :box (:color ,border-dim :line-width 1 :style nil)))))
+     ;; `(mode-line           ((,class (:foreground ,base :background ,secondary-41 :box (:color ,border-dim :line-width 1 :style nil)))))
+     ;; `(mode-line-inactive  ((,class (:foreground ,base :background ,secondary-4 :box (:color ,border-dim :line-width 1 :style nil)))))
+     `(mode-line           ((,class (:foreground ,mode-line-4-fg :background ,mode-line-4-bg :box (:color ,border-dim :line-width 1 :style nil)))))
+     `(mode-line-inactive  ((,class (:foreground ,mode-line-4-fg-inactive :background ,mode-line-4-bg-inactive :box (:color ,border-dim :line-width 1 :style nil)))))
      ;; `(mode-line           ((,class (:foreground ,base :background ,secondary-41 :box (:color ,border :line-width 1 :style ,(if (eq theme 'dark) 'released-button nil))))))
      ;; `(mode-line-inactive  ((,class (:foreground ,base :background ,secondary-4 :box (:color ,border :line-width 1 :style ,(if (eq theme 'dark) 'released-button nil))))))
-     `(mode-line-buffer-id ((,class (:foreground ,func :inherit bold))))
+     `(mode-line-buffer-id ((,class (:foreground ,mode-line-buffer-id :inherit bold))))
+     `(mode-line-buffer-id-inactive ((,class (:foreground ,mode-line-buffer-id-inactive :inherit bold))))
 
 ;;;;; mu4e
      `(mu4e-attach-number-face ((,class (:foreground ,var))))
@@ -970,10 +997,10 @@
      `(popup-tip-face ((,class (:background ,ttip-sl :foreground ,base :italic nil :underline nil))))
 
 ;;;;; powerline
-     `(powerline-active1 ((,class (:background ,primary-4 :foreground ,base))))
-     `(powerline-active2 ((,class (:background ,secondary-43 :foreground ,base))))
-     `(powerline-inactive1 ((,class (:background ,secondary-42 :foreground ,base))))
-     `(powerline-inactive2 ((,class (:background ,secondary-4 :foreground ,base))))
+     `(powerline-active1 ((,class (:background ,mode-line-2-bg :foreground ,mode-line-2-fg))))
+     `(powerline-active2 ((,class (:background ,mode-line-bg :foreground ,mode-line-fg))))
+     `(powerline-inactive1 ((,class (:background ,mode-line-2-bg-inactive :foreground ,mode-line-2-fg-inactive))))
+     `(powerline-inactive2 ((,class (:background ,mode-line-bg-inactive :foreground ,mode-line-fg-inactive))))
 
 ;;;;; rainbow-delimiters
      `(rainbow-delimiters-depth-1-face ((,class :foreground ,keyword)))

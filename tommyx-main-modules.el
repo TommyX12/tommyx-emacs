@@ -568,8 +568,8 @@
 
     ;; type break
     ;; TODO: disabled
-    ;; (type-break-mode 1)
-    ;; (type-break-query-mode 1)
+    (type-break-mode 1)
+    (type-break-query-mode 1)
 
     ;; snippets
     ((:require yasnippet)
@@ -713,13 +713,13 @@
     (5 (garbage-collect)))
 
   ;; TODO: disabled
-  ;; '(:on-interval
-  ;;   ((:require tommyx-extensions)
-  ;;    (120 ($type-break-schedule-check))))
+  '(:on-interval
+    ((:require tommyx-extensions)
+     (120 ($type-break-schedule-check))))
 
-  '(:on-focus-out
-    ;; performance
-    (garbage-collect))
+  ;; '(:on-focus-out
+  ;;   ;; performance
+  ;;   (garbage-collect))
 
   '(:patches
     ((:require tommyx-patches)

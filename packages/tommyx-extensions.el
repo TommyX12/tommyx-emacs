@@ -1306,8 +1306,8 @@ If ARG is non-nil, toggle the mode."
                (or dir (file-name-directory
                         (buffer-file-name)))))
          (segments (split-string dir "/" t))
-         (index (-find-index (lambda (item) (string= item "src"))
-                       segments)))
+         (index (-find-index (lambda (item) (member item '("src" "test")))
+                             segments)))
     (if index
         (s-join "." (subseq segments (1+ index)))
       nil)))
@@ -1326,6 +1326,40 @@ If ARG is non-nil, toggle the mode."
   (newline)
   (insert
    (emms-track-name (emms-playlist-current-selected-track))))
+
+(defun $random-choice (arr)
+  (nth (random (length arr)) arr))
+
+(defun $random-range (a b)
+  (+ a (random (- b a))))
+
+(defun mental-calculation-training ()
+  (interactive)
+  (let ((prefix ""))
+    (while t
+      (let* ((op ($random-choice (list '+ '- '*)))
+             (pair
+              (cond
+               ((eq op '+)
+                (cons ($random-range 1000 10000)
+                      ($random-range 1000 10000)))
+               ((eq op '-)
+                (cons ($random-range 100 1000)
+                      ($random-range 100 1000)))
+               ((eq op '*)
+                (cons ($random-range 10 20)
+                      ($random-range 10 100)))))
+             (a (car pair))
+             (b (cdr pair))
+             (ans (funcall op a b))
+             (response
+              (read-number
+               (format "%s%d %s %d = " prefix a (symbol-name op) b))))
+        (while (not (eq response ans))
+          (setq response
+                (read-number
+                 (format "WRONG. %d %s %d = " a (symbol-name op) b))))
+        (setq prefix "CORRECT! ")))))
 
 (provide 'tommyx-extensions)
 
