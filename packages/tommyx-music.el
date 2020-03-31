@@ -267,9 +267,13 @@ This function uses `emms-show-format' to format the current track."
   (unless emms-playlist-buffer
     (error "No active playlist buffer"))
 
-  (let* ((dir (if (bound-and-true-p emms-default-music-dir)
-                  emms-default-music-dir
-                emms-source-file-default-directory))
+  (let* ((dir (cond
+               ((bound-and-true-p emms-default-playlist-dir)
+                emms-default-playlist-dir)
+               ((bound-and-true-p emms-default-music-dir)
+                emms-default-music-dir)
+               (t
+                emms-source-file-default-directory)))
          (item
           (read-file-name "Enqueue playlist: " dir dir t)))
     (message "Enqueued playlist: %s" item)

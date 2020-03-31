@@ -173,7 +173,7 @@
        (suc           (if (eq theme 'dark) (if (has-true-color) "#86dc2f" "#86dc2f") (if (has-true-color) "#42ae2c" "#00af00")))
        (ttip          (if (eq theme 'dark) (if (has-true-color) "#9AA2BA" "#888888") (if (has-true-color) "#79839F" "#5f5f87")))
        (ttip-dim      (if (eq theme 'dark) (if (has-true-color) "#787F91" "#333333") (if (has-true-color) "#79839F" "#afafff")))
-       (ttip-sl       (if (eq theme 'dark) (if (has-true-color) "#505B79" "#333333") (if (has-true-color) "#C6C9DD" "#afafff")))
+       (ttip-sl       (if (eq theme 'dark) (if (has-true-color) "#505B79" "#333333") (if (has-true-color) "#61ADF2" "#afafff")))
        (ttip-bg       (if (eq theme 'dark) (if (has-true-color) "#323740" "#444444") (if (has-true-color) "#DEE1E8" "#dfdfff")))
        (ttip-bg2      (if (eq theme 'dark) (if (has-true-color) "#1F3866" "#444444") (if (has-true-color) "#DEE1E8" "#dfdfff")))
        ;; (type          (if (eq theme 'dark) (if (has-true-color) "#86ac4f" "#86dc2f") (if (has-true-color) "#52883c" "#00af00")))

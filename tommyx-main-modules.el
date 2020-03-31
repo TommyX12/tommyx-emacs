@@ -318,8 +318,8 @@
          font-lock-warning-face
          error)))
      ('color-identifiers-coloring-method 'sequential)
-     ('color-identifiers:max-color-saturation 0.45)
-     ('color-identifiers:min-color-saturation 0.2))
+     ('color-identifiers:max-color-saturation 0.55)
+     ('color-identifiers:min-color-saturation 0.55))
     ((:require auto-highlight-symbol)
      ('ahs-idle-interval 0.3)
      ('ahs-case-fold-search nil))

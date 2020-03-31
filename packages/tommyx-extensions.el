@@ -1361,6 +1361,32 @@ If ARG is non-nil, toggle the mode."
                  (format "WRONG. %d %s %d = " a (symbol-name op) b))))
         (setq prefix "CORRECT! ")))))
 
+(defun download-youtube-mp3 (dest)
+  (interactive
+   (list (read-directory-name
+          "Enter destination folder: "
+          "~"
+          "~")))
+  (make-directory dest t)
+  (let* ((dest (expand-file-name dest))
+         (process (lambda (it)
+                    (concat "'" (s-trim it) "' ")))
+         (urls
+          (if (region-active-p)
+              (mapcar process
+                      (s-split "\n" (buffer-substring-no-properties
+                                     (region-beginning) (region-end)) t))
+            (list (funcall process
+                           (buffer-substring-no-properties
+                            (point-at-bol) (point-at-eol)))))))
+    (compile
+     (apply #'concat
+            "youtube-dl -x --no-playlist -o '"
+            dest
+            "%(title)s.%(ext)s' --audio-format mp3 --audio-quality 2 "
+            urls)
+     t)))
+
 (provide 'tommyx-extensions)
 
 ;;; tommyx-extensions.el ends here

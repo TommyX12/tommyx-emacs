@@ -22,7 +22,8 @@
     ('org-directory "~/notes/org")
     ((:require tommyx-music)
      ;; Set this to nil if you don't have one.
-     ('emms-default-music-dir "~/data/files/music"))))
+     ('emms-default-music-dir "~/data/files/music")
+     ('emms-default-playlist-dir "~/data/files/music"))))
 
 ($define-module config-module
   ;; Extra configurations
