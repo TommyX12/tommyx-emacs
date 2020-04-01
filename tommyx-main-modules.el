@@ -312,12 +312,15 @@
     ((:require color-identifiers-mode)
      ((:require tommyx-extensions)
       ('color-identifiers-avoid-faces
-       '(color-identifiers-avoid-face-1
-         color-identifiers-avoid-face-2
-         color-identifiers-avoid-face-3
-         font-lock-warning-face
-         error)))
+       ;; '(color-identifiers-avoid-face-1
+       ;;   color-identifiers-avoid-face-2
+       ;;   color-identifiers-avoid-face-3
+       ;;   font-lock-warning-face
+       ;;   error)
+       '()
+       ))
      ('color-identifiers-coloring-method 'sequential)
+     ('color-identifiers:num-colors 8)
      ('color-identifiers:max-color-saturation 0.55)
      ('color-identifiers:min-color-saturation 0.55))
     ((:require auto-highlight-symbol)

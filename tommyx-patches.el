@@ -405,6 +405,52 @@ directory contents"
      (t (nth (1- (min org-l org-n-level-heading-text-faces))
              org-level-heading-text-faces)))))
 
+(defun color-identifiers:regenerate-colors ()
+  "Generate perceptually distinct colors with the same luminance in HSL space.
+Colors are output to `color-identifiers:colors'."
+  (interactive)
+  (let* ((luminance (or color-identifiers:color-luminance
+                        (max 0.35 (min 0.8 (color-identifiers:attribute-luminance :foreground)))))
+         (min-saturation (float color-identifiers:min-color-saturation))
+         (saturation-range (- (float color-identifiers:max-color-saturation) min-saturation))
+         (bgcolor (color-identifiers:attribute-lab :background))
+         (avoidlist (mapcar 'color-identifiers:foreground-lab color-identifiers-avoid-faces))
+         (candidates '())
+         (chosens '())
+         (n 8)
+         (n-1 (float (1- n))))
+    ;; Populate candidates with evenly spaced HSL colors with fixed luminance,
+    ;; converted to LAB
+    (dotimes (h n)
+      (dotimes (s n)
+        (add-to-list
+         'candidates
+         (apply 'color-srgb-to-lab
+                (color-hsl-to-rgb (/ h (float n))
+                                  (+ min-saturation (* (/ s n-1) saturation-range))
+                                  luminance)))))
+    (let ((choose-candidate (lambda (candidate)
+                              (delq candidate candidates)
+                              (push candidate chosens))))
+      (while (and candidates (< (length chosens) color-identifiers:num-colors))
+        (let* (;; For each remaining candidate, find the distance to the closest chosen
+               ;; color
+               (min-dists (-map (lambda (candidate)
+                                  (cons candidate
+                                        (-min (-map (lambda (chosen)
+                                                      (color-cie-de2000 candidate chosen))
+                                                    (cons bgcolor (append chosens avoidlist))))))
+                                candidates))
+               ;; Take the candidate with the highest min distance
+               (best (-max-by (lambda (x y) (> (cdr x) (cdr y))) min-dists)))
+          (funcall choose-candidate (car best))))
+      (setq color-identifiers:colors
+            (-map (lambda (lab)
+                    (let* ((srgb (apply 'color-lab-to-srgb lab))
+                           (rgb (mapcar 'color-clamp srgb)))
+                      (apply 'color-rgb-to-hex rgb)))
+                  chosens)))))
+
 (provide 'tommyx-patches)
 
 ;;; tommyx-patches.el ends here
