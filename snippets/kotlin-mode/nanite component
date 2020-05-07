@@ -1,0 +1,20 @@
+# -*- mode: snippet -*-
+# name: nanite component
+# key: nnc
+# --
+package ${1:`(or (kotlin-find-package) "package")`}
+
+import com.nanite.core.Component
+import com.nanite.core.Entity
+
+class ${2:`(file-name-base (buffer-file-name))`} : Component() {
+    $3
+
+    override fun onReuse() {}
+
+    companion object {
+        val metadata = Metadata.of<$2>(
+            factory = { $2() }
+        )
+    }
+}

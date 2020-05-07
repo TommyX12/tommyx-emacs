@@ -479,7 +479,12 @@
 
         "v" evil-visual-restore
         "V" select-paste-region
-        "d" delete-line-content
+        "d" (:case
+             :states (motion normal)
+             shrink-whitespace
+             :states (visual)
+             $remove-blank-lines)
+        "D" delete-line-content
         "f" flyspell-auto-correct-word
         "F" ,(lambda () (interactive)
                (flyspell-lazy-check-visible)
@@ -697,6 +702,11 @@
              ace-swap-window
              :which-key "Swap Window")
         "f" (:def
+             ,(lambda () (interactive)
+                (delete-other-windows)
+                (easy-layout-switch 'Outline))
+             :which-key "Single-file edit mode")
+        "e" (:def
              delete-other-windows
              :which-key "Delete Other Windows")
         "q" (:def
@@ -1062,7 +1072,10 @@
              :which-key "Toggle Repeat Track")
         "T" (:def
              emms-toggle-repeat-playlist
-             :which-key "Toggle Repeat Playlist"))
+             :which-key "Toggle Repeat Playlist")
+        "R" (:def
+             emms-toggle-random-playlist
+             :which-key "Toggle Random Playlist"))
 
        "v"
        (:bindings
@@ -1342,8 +1355,9 @@
             :states (visual)
             (:def
              ,(lambda () (interactive)
-                (message "Evaluating region.")
-                (call-interactively 'eval-region))
+                (message "Evaluating region...")
+                (call-interactively 'eval-region)
+                (message "Region evaluated."))
              :which-key "Eval Region"))
 
        "E" (:def
@@ -1758,7 +1772,14 @@
                             (evil-set-jump)
                             (ycmd-goto))
 
-      format-buffer format-all-buffer)))
+      format-buffer format-all-buffer
+
+      mode-specific-prefix
+      (:bindings
+
+       "c" (:def
+            $comp-prog-run-c++
+            :which-key "Comp Prog Run")))))
 
   ($bind-keys
    `(:case
@@ -1835,7 +1856,14 @@
       eval-buffer
       (:def
        python-shell-send-buffer
-       :which-key "Eval Buffer In Python"))))
+       :which-key "Eval Buffer In Python")
+
+      mode-specific-prefix
+      (:bindings
+
+       "c" (:def
+            $comp-prog-run-python
+            :which-key "Comp Prog Run")))))
 
   ($bind-keys
    `(:case
@@ -2538,7 +2566,16 @@
             :which-key "Discard")
        "k" (:def
             with-editor-finish
-            :which-key "Finalize"))))))
+            :which-key "Finalize")))))
+
+  ($bind-keys
+   `(:case
+     :keymaps (doctor-mode-map)
+     :states (insert)
+     (:bindings
+
+      "RET" doctor-ret-or-read
+      "<return>" doctor-ret-or-read))))
 
 
 ($define-module tommyx-key-bindings

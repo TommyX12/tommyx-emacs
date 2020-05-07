@@ -1,0 +1,17 @@
+# -*- mode: snippet -*-
+# name: nanite world prop
+# key: nnw
+# --
+package ${1:`(or (kotlin-find-package) "package")`}
+
+import com.nanite.core.WorldProp
+
+class ${2:`(file-name-base (buffer-file-name))`} : WorldProp() {
+    $3
+
+    companion object {
+        val metadata = Metadata.of<$2>(
+            factory = { $2() }
+        )
+    }
+}

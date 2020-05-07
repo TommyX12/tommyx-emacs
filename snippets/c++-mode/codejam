@@ -1,17 +1,21 @@
 # -*- mode: snippet -*-
-# name: competitive programming starter
-# key: compprog
+# name: codejam
+# key: codejam
 # --
-#include <bits/stdc++.h>
+#include <cstdio>
 
 using namespace std;
 
-int N;
+int T;
 
 int main() {
 #ifdef DEBUG
     freopen("${1:`(file-name-base (buffer-file-name))`}.txt", "r", stdin);
 #endif
 
-	scanf("%d", &N);
+	scanf("%d", &T);
+    for (int t = 0; t < T; ++t) {
+       $0
+        printf("Case #%d: \n", t + 1);
+    }
 }

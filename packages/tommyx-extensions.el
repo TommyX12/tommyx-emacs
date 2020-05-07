@@ -144,18 +144,19 @@ regular expression,
 (defun org-auto-capture-get-target-map (auto-capture-targets)
   (let ((result (ht-create)))
     (dolist (config auto-capture-targets)
-      (let ((capture-key (car config))
-            (patterns (cadr config))
-            (action (caddr config)))
-        (dolist (pattern patterns)
-          (when (ht-contains? result pattern)
-            (error "Error: pattern \"%s\" already exists" pattern))
-          (ht-set! result pattern config))))
+      (when config
+        (let ((capture-key (car config))
+              (patterns (cadr config))
+              (action (caddr config)))
+          (dolist (pattern patterns)
+            (when (ht-contains? result pattern)
+              (error "Error: pattern \"%s\" already exists" pattern))
+            (ht-set! result pattern config)))))
     result))
-(defun org-auto-capture-ignore
-    (capture-key content)
-  "Do nothing and move on to the next entry."
-  '(:no-mark-delete t))
+;; (defun org-auto-capture-ignore
+;;     (capture-key content)
+;;   "Do nothing and move on to the next entry."
+;;   '(:no-mark-delete t))
 (defun org-auto-capture-mark-delete ()
   (interactive)
   (save-excursion
@@ -165,10 +166,16 @@ regular expression,
   ;; TODO
   (unless (string-match-p "^[ \t]*$" line)
     (string-match "^\\([^:]+\\):\\(.+\\)" line)
-    (let ((pattern (match-string 1 line))
+    (let ((patterns (let ((s (match-string 1 line)))
+                      (when s
+                        (save-match-data
+                          (split-string s "&" t)))))
           (content (match-string 2 line)))
-      (when (and pattern content)
-        `(:pattern ,(string-trim (downcase pattern)) :content ,(string-trim content))))))
+      (when (and patterns content)
+        `(:patterns
+          ,(mapcar (lambda (pattern) (downcase (string-trim pattern)))
+                   patterns)
+          :content ,(string-trim content))))))
 (defun org-auto-capture-delete-marked-subtree ()
   "Delete all lines marked to be deleted from current line to the end of current subtree."
   (interactive)
@@ -192,13 +199,11 @@ regular expression,
   (let ((target-map
          (org-auto-capture-get-target-map org-auto-capture-targets))
         (loop-running t))
-    (while loop-running
+    (while (and loop-running (not (eobp)))
       (beginning-of-line)
       (cond
        ((looking-at org-auto-capture-delete-flag-regexp)
-        (if (eobp)
-            (setq loop-running nil)
-          (next-logical-line)))
+        (next-logical-line))
        ((looking-at org-auto-capture-heading-regexp)
         (setq loop-running nil))
        (t
@@ -206,26 +211,32 @@ regular expression,
                              (buffer-substring-no-properties
                               (point-at-bol)
                               (point-at-eol))))
-               (pattern (plist-get parsed-line :pattern))
+               (patterns (plist-get parsed-line :patterns))
                (content (plist-get parsed-line :content)))
-          (cond
-           ((null parsed-line)
-            (if (eobp)
-                (setq loop-running nil)
-              (next-logical-line)))
-           ((not (ht-contains? target-map (downcase pattern)))
-            (message "Error: pattern \"%s\" does not exist" pattern)
-            (next-logical-line))
-           (t
-            (let* ((config (ht-get target-map (downcase pattern)))
-                   (capture-key (car config))
-                   (action (caddr config))
-                   (action-return (funcall action capture-key content)))
-              (if (plist-get action-return :stop)
-                  (setq loop-running nil)
-                (unless (plist-get action-return :no-mark-delete)
+          (when parsed-line
+            (if (and patterns
+                     (-all? (lambda (pattern)
+                              (ht-contains? target-map pattern))
+                            patterns))
+                (progn
+                  (mapc
+                   (lambda (pattern)
+                     (let*
+                         ((config (ht-get target-map pattern))
+                          (capture-key (car config))
+                          (action (caddr config))
+                          (action-return (funcall action capture-key content)))
+                       (when (plist-get action-return :stop)
+                         (setq loop-running nil))))
+                   patterns)
                   (org-auto-capture-mark-delete))
-                (next-logical-line))))))
+              (if patterns
+                  (message "Error: pattern \"%s\" does not exist"
+                           (-first (lambda (pattern)
+                                     (not (ht-contains? target-map pattern)))
+                                   patterns))
+                (message "Error: no pattern"))))
+          (next-logical-line))
         (redisplay))))))
 
 (defface org-priority-1
@@ -1186,6 +1197,13 @@ If ARG is non-nil, toggle the mode."
         (concat (car l) (mapconcat 'capitalize (cdr l) ""))
       (car l))))
 
+(defun Camel-to-camel (s)
+  "Converts CamelCase to camelCase."
+  (concat
+   (downcase
+    (substring s 0 1))
+   (substring s 1)))
+
 (defun snake-to-Camel (s)
   "Converts underscore to CamelCase. FIXME: Will incorrectly capitalize '_foo'."
   (let ((l (split-string s "_")))
@@ -1386,6 +1404,30 @@ If ARG is non-nil, toggle the mode."
             "%(title)s.%(ext)s' --audio-format mp3 --audio-quality 2 "
             urls)
      t)))
+
+(defun $comp-prog-run-c++ ()
+  (interactive)
+  (let ((name (file-name-nondirectory (buffer-file-name)))
+        (out (if (eq system-type 'windows-nt)
+                 "a.exe"
+               "a.out")))
+    (compile
+     (format "g++ -Wall -D DEBUG -g -std=c++11 -o %s '%s' && ./%s"
+             out name out)
+     t)))
+
+(defun $comp-prog-run-python ()
+  (interactive)
+  (let ((name (file-name-nondirectory (buffer-file-name))))
+    (compile
+     (format "python3 %s" name)
+     t)))
+
+(defun $remove-blank-lines ()
+  (interactive)
+  (if (region-active-p)
+      (flush-lines "^[[:space:]]*$" (region-beginning) (region-end))
+    (error "Region not active")))
 
 (provide 'tommyx-extensions)
 

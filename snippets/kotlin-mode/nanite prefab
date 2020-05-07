@@ -1,0 +1,27 @@
+# -*- mode: snippet -*-
+# name: nanite proto
+# key: nnp
+# --
+package ${1:`(or (kotlin-find-package) "package")`}
+
+import com.nanite.core.Entity
+import com.nanite.core.EntitySpec
+import com.nanite.core.Prefab
+import com.nanite.core.World
+
+class ${2:`(file-name-base (buffer-file-name))`}(val world: World) : Prefab<Entity>() {
+
+    val spec = EntitySpec {
+    }
+
+    override fun create() = world.create {
+        entity(spec) {
+        }
+    }
+
+    companion object {
+        val metadata = Metadata.of<$2>(
+            factory = { $2(it) }
+        )
+    }
+}

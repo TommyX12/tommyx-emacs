@@ -1,0 +1,19 @@
+# -*- mode: snippet -*-
+# name: nanite system
+# key: nns
+# --
+package ${1:`(or (kotlin-find-package) "package")`}
+
+import com.nanite.core.System
+import com.nanite.core.World
+import com.nanite.core.Family
+
+class ${2:`(file-name-base (buffer-file-name))`}(val world: World) : System() {
+    override fun run(dt: Float) {}
+
+    companion object {
+        val metadata = Metadata.of<$2>(
+            factory = { $2(it) }
+        )
+    }
+}

@@ -136,6 +136,7 @@
 (use-package google-this :ensure t)
 (use-package swiper :ensure t)
 (use-package which-key :ensure t)
+(use-package shrink-whitespace :ensure t)
 (use-package spacemacs-theme :ensure t :defer t)
 (use-package doom-themes :ensure t :defer t)
 (use-package ace-window :ensure t)

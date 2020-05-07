@@ -220,6 +220,8 @@
            nil ; initial-input
            'easy-layout--select-layout-history))))
   ;; TODO
+  (when (symbolp layout)
+    (setq symbolp (eon-get easy-layout-layout-configs (layout))))
   (let* ((inhibit-redisplay t)
          (buffer (current-buffer))
          (layout-config (eon-get easy-layout-layout-configs (layout))))

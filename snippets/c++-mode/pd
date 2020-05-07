@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: printfd
+# key: pd
+# --
+printf("%d", $1);$0
