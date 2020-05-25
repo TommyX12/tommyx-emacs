@@ -1,0 +1,16 @@
+# -*- mode: snippet -*-
+# name: nanite ui component
+# key: nnuc
+# --
+package ${1:`(or (kotlin-find-package) "package")`}
+
+import com.nanite.core.Context
+import com.nanite.graphics.Graphics
+import com.nanite.ui.UIComponent
+
+class ${2:`(file-name-base (buffer-file-name))`}(val env: Context) : UIComponent() {
+
+    override fun onUpdate(dt: Float) {
+        super.onUpdate(dt)
+    }
+}

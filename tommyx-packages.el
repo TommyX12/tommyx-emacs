@@ -247,6 +247,7 @@
 ;; (use-package page-break-lines :ensure t)
 ;; (use-package dashboard :ensure t :after page-break-lines)
 (use-package org :ensure org-plus-contrib)
+(use-package org-make-toc :ensure t)
 (use-package org-super-agenda :ensure t)
 (use-package org-journal :ensure t)
 (use-package org-pomodoro :ensure t)

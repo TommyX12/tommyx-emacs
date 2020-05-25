@@ -1525,7 +1525,10 @@
 
   '(:minor-modes
     ((:require org-super-agenda)
-     (org-super-agenda-mode 1)))
+     (org-super-agenda-mode 1))
+    ;; ((:require org-make-toc)
+    ;;  (org-make-toc-mode 1))
+    )
 
   '(:on-init
     ((:require org)
