@@ -19,3 +19,4 @@
 - `rg`
 - `ycmd`
 - `elpy`
+- Fonts

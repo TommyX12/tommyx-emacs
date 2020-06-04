@@ -2289,6 +2289,9 @@
       "M-[" ,(lambda () (interactive)
                (insert "- [ ] "))
 
+      "M-t" ,(lambda () (interactive)
+               (insert "TODO [0/0] [100%] "))
+
       "C-c C-." org-time-stamp-inactive ; with C-u as previx also add time.
       "M-RET" org-meta-return
       "M-S-RET" org-insert-todo-heading

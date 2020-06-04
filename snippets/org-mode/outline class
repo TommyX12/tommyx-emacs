@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: outline class
+# key: oc
+# --
+- [ ] $0
+  - [ ] props
+    - [ ]
+  - [ ] methods
+    - [ ]

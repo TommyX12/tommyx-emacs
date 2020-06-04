@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: feature planner
+# key: feat
+# --
+TODO [0/1] [0%] $1
+- [ ] $0
