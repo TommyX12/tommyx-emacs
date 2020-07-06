@@ -2,4 +2,4 @@
 # name: docreturn
 # key: docr
 # --
-* @return ${1:TODO(description)}
+@return ${1:TODO(description)}

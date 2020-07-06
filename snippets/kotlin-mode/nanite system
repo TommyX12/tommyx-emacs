@@ -8,6 +8,13 @@ import com.nanite.core.System
 import com.nanite.core.World
 import com.nanite.core.Family
 
+/**
+ * Pre-conditions
+ * TODO
+ *
+ * Post-conditions
+ * TODO
+ */
 class ${2:`(file-name-base (buffer-file-name))`}(val world: World) : System() {
     override fun run(dt: Float) {}
 

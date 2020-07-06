@@ -4,14 +4,15 @@
 # --
 package ${1:`(or (kotlin-find-package) "package")`}
 
+import com.nanite.core.World
 import com.nanite.core.WorldProp
 
-class ${2:`(file-name-base (buffer-file-name))`} : WorldProp() {
+class ${2:`(file-name-base (buffer-file-name))`}(world: World) : WorldProp() {
     $3
 
     companion object {
         val metadata = Metadata.of<$2>(
-            factory = { $2() }
+            factory = { $2(it) }
         )
     }
 }

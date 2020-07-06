@@ -354,6 +354,14 @@ This is used to determine the default day to show in the status window."
              params "negative" nil)))))))
 (defconst org-catalyst--status-tabs
   `((:id
+     quest-map
+     :command
+     org-catalyst-status-quest-map
+     :name
+     "Quest Map"
+     :renderers
+     (org-catalyst--render-quest-map))
+    (:id
      dashboard
      :command
      org-catalyst-status-dashboard
@@ -390,16 +398,73 @@ This is used to determine the default day to show in the status window."
     ;;  "Inventory Tree"
     ;;  :renderers
     ;;  (org-catalyst--render-tree-view))
-    (:id
-     quest-map
-     :command
-     org-catalyst-status-quest-map
-     :name
-     "Quest Map"
-     :renderers
-     (org-catalyst--render-quest-map))))
+    ))
 (defconst org-catalyst--dashboard-tabs
   `((:id
+     required
+     :command
+     org-catalyst-dashboard-required
+     :name
+     "Required"
+     :filter-func
+     ,(lambda (item-config)
+        (and (>= org-catalyst--today-daynr
+                 (org-catalyst-safe-get item-config "start" 0))
+             (not (org-catalyst-safe-get item-config "optional" nil))))
+     :order-func
+     ,(lambda (item-config)
+        (org-catalyst-safe-get item-config "score"
+                               org-catalyst-INF))
+     :sort-func version-list-<)
+    (:id
+     optional
+     :command
+     org-catalyst-dashboard-optional
+     :name
+     "Optional"
+     :filter-func
+     ,(lambda (item-config)
+        (and (>= org-catalyst--today-daynr
+                 (org-catalyst-safe-get item-config "start" 0))
+             (org-catalyst-safe-get item-config "optional" nil)))
+     :order-func
+     ,(lambda (item-config)
+        (org-catalyst-safe-get item-config "score"
+                               org-catalyst-INF))
+     :sort-func version-list-<)
+    (:id
+     required-upcoming
+     :command
+     org-catalyst-dashboard-required-upcoming
+     :name
+     "Upcoming Required"
+     :filter-func
+     ,(lambda (item-config)
+        (and (< org-catalyst--today-daynr
+                (org-catalyst-safe-get item-config "start" 0))
+             (not (org-catalyst-safe-get item-config "optional" nil))))
+     :order-func
+     ,(lambda (item-config)
+        (org-catalyst-safe-get item-config "start"
+                               org-catalyst-INF))
+     :sort-func <)
+    (:id
+     optional-upcoming
+     :command
+     org-catalyst-dashboard-optional-upcoming
+     :name
+     "Upcoming Optional"
+     :filter-func
+     ,(lambda (item-config)
+        (and (< org-catalyst--today-daynr
+                (org-catalyst-safe-get item-config "start" 0))
+             (org-catalyst-safe-get item-config "optional" nil)))
+     :order-func
+     ,(lambda (item-config)
+        (org-catalyst-safe-get item-config "start"
+                               org-catalyst-INF))
+     :sort-func <)
+    (:id
      actionable
      :command
      org-catalyst-dashboard-actionable
@@ -414,38 +479,38 @@ This is used to determine the default day to show in the status window."
         (org-catalyst-safe-get item-config "score"
                                org-catalyst-INF))
      :sort-func version-list-<)
-    (:id
-     has-deadline
-     :command
-     org-catalyst-dashboard-has-deadline
-     :name
-     "Has-Deadline"
-     :filter-func
-     ,(lambda (item-config)
-        (and (>= org-catalyst--today-daynr
-                 (org-catalyst-safe-get item-config "start" 0))
-             (org-catalyst-safe-get item-config "end" nil)))
-     :order-func
-     ,(lambda (item-config)
-        (org-catalyst-safe-get item-config "end"
-                               org-catalyst-INF))
-     :sort-func <)
-    (:id
-     no-deadline
-     :command
-     org-catalyst-dashboard-no-deadline
-     :name
-     "No-Deadline"
-     :filter-func
-     ,(lambda (item-config)
-        (and (>= org-catalyst--today-daynr
-                 (org-catalyst-safe-get item-config "start" 0))
-             (null (org-catalyst-safe-get item-config "end" nil))))
-     :order-func
-     ,(lambda (item-config)
-        (org-catalyst-safe-get item-config "score"
-                               org-catalyst-INF))
-     :sort-func version-list-<)
+    ;; (:id
+    ;;  has-deadline
+    ;;  :command
+    ;;  org-catalyst-dashboard-has-deadline
+    ;;  :name
+    ;;  "Has-Deadline"
+    ;;  :filter-func
+    ;;  ,(lambda (item-config)
+    ;;     (and (>= org-catalyst--today-daynr
+    ;;              (org-catalyst-safe-get item-config "start" 0))
+    ;;          (org-catalyst-safe-get item-config "end" nil)))
+    ;;  :order-func
+    ;;  ,(lambda (item-config)
+    ;;     (org-catalyst-safe-get item-config "end"
+    ;;                            org-catalyst-INF))
+    ;;  :sort-func <)
+    ;; (:id
+    ;;  no-deadline
+    ;;  :command
+    ;;  org-catalyst-dashboard-no-deadline
+    ;;  :name
+    ;;  "No-Deadline"
+    ;;  :filter-func
+    ;;  ,(lambda (item-config)
+    ;;     (and (>= org-catalyst--today-daynr
+    ;;              (org-catalyst-safe-get item-config "start" 0))
+    ;;          (null (org-catalyst-safe-get item-config "end" nil))))
+    ;;  :order-func
+    ;;  ,(lambda (item-config)
+    ;;     (org-catalyst-safe-get item-config "score"
+    ;;                            org-catalyst-INF))
+    ;;  :sort-func version-list-<)
     (:id
      upcoming
      :command
@@ -736,6 +801,10 @@ This is used to determine the default day to show in the status window."
         (list (kbd "M") 'org-catalyst-status-quest-map-at-point)
         (list (kbd "w") org-catalyst-curator-map)
         (list (kbd "e SPC") 'org-catalyst-dashboard-all)
+        (list (kbd "e r") 'org-catalyst-dashboard-required)
+        (list (kbd "e R") 'org-catalyst-dashboard-required-upcoming)
+        (list (kbd "e o") 'org-catalyst-dashboard-optional)
+        (list (kbd "e O") 'org-catalyst-dashboard-optional-upcoming)
         (list (kbd "e a") 'org-catalyst-dashboard-actionable)
         (list (kbd "e d") 'org-catalyst-dashboard-has-deadline)
         (list (kbd "e n") 'org-catalyst-dashboard-no-deadline)
@@ -888,6 +957,11 @@ This is used to determine the default day to show in the status window."
 (defface org-catalyst-subline-spacing-face
   '((t :height 0.3))
   "Face for Catalyst sub-line spacing."
+  :group 'org-catalyst)
+
+(defface org-catalyst-highlighted-subline-spacing-face
+  '((t :inherit hl-line :height 0.3))
+  "Face for Catalyst highlighted sub-line spacing."
   :group 'org-catalyst)
 
 (defface org-catalyst-item-group-face
@@ -1890,6 +1964,7 @@ Writes directly to the given hash table."
                (ht-set item-config "priority" priority)
                (ht-set item-config "display-name" display-name)
                (ht-set item-config "todo-text" todo-text)
+               (ht-set item-config "optional" (string= todo-text "OPTN"))
                (ht-set item-config "todo-type" todo-type)
                (ht-set item-config "state-deltas"
                        (if state-deltas-stack
@@ -2621,6 +2696,10 @@ PREV-SNAPSHOT, and cdr is the value in SNAPSHOT."
 (org-catalyst--define-renderer org-catalyst--render-subline-spacing
     ()
   (insert (org-catalyst--with-face "\n" 'org-catalyst-subline-spacing-face)))
+
+(org-catalyst--define-renderer org-catalyst--render-highlighted-subline-spacing
+    ()
+  (insert (org-catalyst--with-face "\n" 'org-catalyst-highlighted-subline-spacing-face)))
 
 (org-catalyst--define-renderer org-catalyst--render-section-heading
     (name face (no-newline nil))
@@ -3551,7 +3630,8 @@ REVERSE the order if REVERSE is non-nil."
      today-month-day
      snapshot
      computed-actions
-     (exclude-today nil))
+     (exclude-today nil)
+     (dashboard-filtered-nodes nil))
 
   ;; TODO can add to ui-data for caching
   (when (equal month-day today-month-day)
@@ -3567,8 +3647,12 @@ REVERSE the order if REVERSE is non-nil."
                 (let* ((item-id (plist-get info :item-id))
                        (timestamp-days (plist-get info :timestamp-days))
                        (num-days (- daynr timestamp-days)))
-                  (when (or (not exclude-today)
-                            (> num-days 0))
+                  (when (and dashboard-filtered-nodes
+                             (ht-contains-p
+                              dashboard-filtered-nodes
+                              item-id)
+                             (or (not exclude-today)
+                                 (> num-days 0)))
                     (cons
                      (or timestamp-days 0)
                      (org-catalyst--partial-renderer
@@ -4482,11 +4566,10 @@ If COMP is given, it should be a function that returns whether one item is less 
      snapshot
      computed-actions
      config
+     today-month-day
      ui-state)
 
-  (let* ((dashboard-tab-index (org-catalyst--get-ui-state "dashboard-tab" 0))
-         (dashboard-tab (nth dashboard-tab-index org-catalyst--dashboard-tabs))
-         (all-item-config (plist-get config :all-item-config))
+  (let* ((all-item-config (plist-get config :all-item-config))
          (top-level-items (plist-get config :top-level-items))
          (topological-order (plist-get config :topological-order))
          (children (plist-get config :children))
@@ -4498,6 +4581,8 @@ If COMP is given, it should be a function that returns whether one item is less 
          ;; TODO: we can make filtered node computation faster for lists
          (filtered-nodes (org-catalyst--get-tree-filtered-nodes
                           all-item-config topological-order))
+         (dashboard-tab-index (org-catalyst--get-ui-state "dashboard-tab" 0))
+         (dashboard-tab (nth dashboard-tab-index org-catalyst--dashboard-tabs))
          (dashboard-filtered-nodes
           (org-catalyst--get-dashboard-filtered-nodes
            all-item-config
@@ -4515,6 +4600,13 @@ If COMP is given, it should be a function that returns whether one item is less 
           (org-catalyst--get-dashboard-node-order
            all-item-config
            dashboard-tab)))
+
+    (org-catalyst--render-random-items
+     :config config
+     :month-day month-day
+     :today-month-day today-month-day
+     :snapshot snapshot
+     :computed-actions computed-actions)
 
     (org-catalyst--render-section-heading :name "Dashboard")
     ;; (insert "    ")
@@ -4591,7 +4683,7 @@ If COMP is given, it should be a function that returns whether one item is less 
                   ((and year-same month-same day-same)
                    "            ")
                   ((and year-same month-same)
-                   "        %d %u")
+                   "     %m-%d %u")
                   (year-same
                    "     %m-%d %u")
                   (t
@@ -4605,9 +4697,13 @@ If COMP is given, it should be a function that returns whether one item is less 
        (put-text-property
         7 11 'face 'org-catalyst-quest-date-day-face
         str)
-       (put-text-property
-        0 7 'face 'org-catalyst-quest-date-face
-        str)
+       (if month-same
+           (put-text-property
+            0 7 'face 'org-catalyst-secondary-face
+            str)
+         (put-text-property
+          0 7 'face 'org-catalyst-quest-date-face
+          str))
        str))))
 
 (org-catalyst--define-renderer org-catalyst--render-quest-map
@@ -4617,87 +4713,163 @@ If COMP is given, it should be a function that returns whether one item is less 
      today-month-day
      config
      ui-data)
-  (org-catalyst--render-section-heading
-   :name "Quest Map")
-  (org-catalyst--render-curator
-   :config config)
-  (insert "\n")
-  (org-catalyst--render-overdue-items
-   :config config
-   :month-day month-day
-   :today-month-day today-month-day
-   :snapshot snapshot
-   :computed-actions computed-actions
-   :exclude-today t)
-  (let* ((all-item-config (plist-get config :all-item-config))
-         (topological-order (plist-get config :topological-order))
-         (top-level-items (plist-get config :top-level-items))
-         (days-to-timestamps (org-catalyst-safe-get
-                              ui-data "days-to-timestamps" (ht-create)))
-         (children (plist-get config :children))
-         (cur-month-day month-day)
-         (prev-month-day nil)
-         (filter-active (org-catalyst--filter-active-p))
-         (filtered-nodes (org-catalyst--get-tree-filtered-nodes
-                          all-item-config topological-order)))
+
+  (let*
+      ((all-item-config (plist-get config :all-item-config))
+       (dashboard-tab-index (org-catalyst--get-ui-state "dashboard-tab" 0))
+       (dashboard-tab (nth dashboard-tab-index org-catalyst--dashboard-tabs))
+       (dashboard-filtered-nodes
+        (org-catalyst--get-dashboard-filtered-nodes
+         all-item-config
+         dashboard-tab))
+       (topological-order (plist-get config :topological-order))
+       (top-level-items (plist-get config :top-level-items))
+       (days-to-timestamps (org-catalyst-safe-get
+                            ui-data "days-to-timestamps" (ht-create)))
+       (children (plist-get config :children))
+       (cur-month-day month-day)
+       (cur-days (org-catalyst--month-day-to-days cur-month-day))
+       (prev-month-day nil)
+       (filter-active (org-catalyst--filter-active-p))
+       (filtered-nodes (org-catalyst--get-tree-filtered-nodes
+                        all-item-config topological-order))
+       (render-day
+        (lambda (days)
+          (let* ((timestamps (org-catalyst-safe-get
+                              days-to-timestamps days nil))
+                 (item-ids (and timestamps
+                                (seq-filter
+                                 (lambda (item-id)
+                                   (and
+                                    (ht-contains-p filtered-nodes
+                                                   item-id)
+                                    (ht-contains-p dashboard-filtered-nodes
+                                                   item-id)))
+                                 (ht-keys timestamps))))
+                 (days-renderer
+                  (org-catalyst--partial-renderer
+                   org-catalyst--render-quest-date
+                   :prev-month-day prev-month-day
+                   :month-day cur-month-day)))
+            (if item-ids
+                (dolist (item-id item-ids)
+                  (let* ((item-config
+                          (org-catalyst-safe-get
+                           all-item-config item-id nil)))
+                    (org-catalyst--render-item
+                     :prefix-width 10
+                     :prefix-renderer
+                     (org-catalyst--inline-renderer ()
+                       (funcall days-renderer)
+                       (insert " ")
+                       (org-catalyst--render-node-icon
+                        :item-id item-id
+                        :has-children (org-catalyst-safe-get
+                                       children item-id nil)
+                        :filter-active filter-active
+                        :filtered-nodes filtered-nodes))
+                     :info-renderer
+                     (org-catalyst--inline-renderer ()
+                       (dolist (timestamp-type-name (org-catalyst-safe-get
+                                                     timestamps item-id nil))
+                         (let ((timestamp-type
+                                (ht-get org-catalyst--timestamp-types
+                                        timestamp-type-name)))
+                           (funcall (plist-get timestamp-type :renderer)
+                                    item-config)
+                           (insert " "))))
+                     :action (org-catalyst-safe-get
+                              computed-actions item-id nil)
+                     :item-config item-config
+                     :month-day month-day
+                     :snapshot snapshot))
+                  (setq prev-month-day cur-month-day))
+              (org-catalyst--render-row
+               :prefix-width 10
+               :prefix-renderer
+               days-renderer
+               :text-renderer
+               (org-catalyst--inline-renderer ()
+                 (insert "--")))
+              (setq prev-month-day cur-month-day))))))
+
+    (org-catalyst--render-random-items
+     :config config
+     :month-day month-day
+     :today-month-day today-month-day
+     :snapshot snapshot
+     :computed-actions computed-actions)
+
+    (org-catalyst--render-section-heading
+     :name "Quest Map")
+    (org-catalyst--render-curator
+     :config config)
+    (org-catalyst--render-subline-spacing)
+    (org-catalyst--render-tab-bar
+     :index dashboard-tab-index
+     :tabs org-catalyst--dashboard-tabs)
+    (insert "\n")
+
+    (org-catalyst--render-overdue-items
+     :config config
+     :month-day month-day
+     :today-month-day today-month-day
+     :snapshot snapshot
+     :computed-actions computed-actions
+     :dashboard-filtered-nodes dashboard-filtered-nodes
+     :exclude-today t)
+
     (dotimes (i org-catalyst--quest-map-days)
-      (let* ((days (org-catalyst--month-day-to-days cur-month-day))
-             (timestamps (org-catalyst-safe-get
-                          days-to-timestamps days nil))
-             (item-ids (and timestamps
-                            (seq-filter
-                             (lambda (item-id)
-                               (ht-contains-p filtered-nodes
-                                              item-id))
-                             (ht-keys timestamps))))
-             (days-renderer
-              (org-catalyst--partial-renderer
-               org-catalyst--render-quest-date
-               :prev-month-day prev-month-day
-               :month-day cur-month-day)))
-        (if item-ids
-            (dolist (item-id item-ids)
-              (let* ((item-config
-                      (org-catalyst-safe-get
-                       all-item-config item-id nil)))
-                (org-catalyst--render-item
-                 :prefix-width 10
-                 :prefix-renderer
-                 (org-catalyst--inline-renderer ()
-                   (funcall days-renderer)
-                   (insert " ")
-                   (org-catalyst--render-node-icon
-                    :item-id item-id
-                    :has-children (org-catalyst-safe-get
-                                   children item-id nil)
-                    :filter-active filter-active
-                    :filtered-nodes filtered-nodes))
-                 :info-renderer
-                 (org-catalyst--inline-renderer ()
-                   (dolist (timestamp-type-name (org-catalyst-safe-get
-                                                 timestamps item-id nil))
-                     (let ((timestamp-type
-                            (ht-get org-catalyst--timestamp-types
-                                    timestamp-type-name)))
-                       (funcall (plist-get timestamp-type :renderer)
-                                item-config)
-                       (insert " "))))
-                 :action (org-catalyst-safe-get
-                          computed-actions item-id nil)
-                 :item-config item-config
-                 :month-day month-day
-                 :snapshot snapshot))
-              (setq prev-month-day cur-month-day))
-          (org-catalyst--render-row
-           :prefix-width 10
-           :prefix-renderer
-           days-renderer
-           :text-renderer
-           (org-catalyst--inline-renderer ()
-             (insert "--")))
-          (setq prev-month-day cur-month-day)))
+      (let* ((days (org-catalyst--month-day-to-days cur-month-day)))
+        (funcall render-day days)
+        (if (string= "7" (format-time-string
+                          "%u"
+                          (org-catalyst--month-day-to-time cur-month-day)))
+            (org-catalyst--render-highlighted-subline-spacing)
+          (org-catalyst--render-subline-spacing)))
+      (setq prev-month-day cur-month-day)
       (setq cur-month-day
-            (org-catalyst--next-month-day cur-month-day)))))
+            (org-catalyst--next-month-day cur-month-day))
+      (setq cur-days
+            (org-catalyst--month-day-to-days cur-month-day)))
+    (setq cur-days (1- cur-days))
+    (mapcar
+     (lambda (days)
+       (setq cur-month-day (org-catalyst--days-to-month-day days))
+       (when (> (- days cur-days) 1)
+         (insert (org-catalyst--with-face
+                  "           |\n" 'org-catalyst-secondary-face)))
+       (when (> (- days cur-days) 30)
+         (insert (org-catalyst--with-face
+                  "           |\n" 'org-catalyst-secondary-face)))
+       (when (> (- days cur-days) 60)
+         (insert (org-catalyst--with-face
+                  "           |\n" 'org-catalyst-secondary-face)))
+       (when (> (- days cur-days) 180)
+         (insert (org-catalyst--with-face
+                  "           |\n" 'org-catalyst-secondary-face)))
+       (when (> (- days cur-days) 365)
+         (insert (org-catalyst--with-face
+                  "           |\n" 'org-catalyst-secondary-face)))
+       (setq cur-days days)
+       (funcall render-day days)
+       (setq prev-month-day cur-month-day))
+     (sort
+      (seq-filter
+       (lambda (d)
+         (and (-some
+               (lambda (item-id)
+                 (and
+                  (ht-contains-p filtered-nodes
+                                 item-id)
+                  (ht-contains-p dashboard-filtered-nodes
+                                 item-id)))
+               (ht-keys (org-catalyst-safe-get
+                         days-to-timestamps d nil)))
+              (>= d cur-days)))
+       (ht-keys days-to-timestamps))
+      #'<))
+    ))
 
 (defun org-catalyst--goto-tab (tab-id &optional save-point)
   "Jump to the tab having TAB-ID.
@@ -4901,6 +5073,26 @@ With a prefix argument ARG, point will attempt to say on the same item."
   "Go to Catalyst dashboard tab, jumping to entry at point if possible."
   (interactive)
   (org-catalyst--goto-tab 'dashboard t))
+
+(defun org-catalyst-dashboard-required ()
+  "TODO"
+  (interactive)
+  (org-catalyst--dashboard-goto-tab 'required))
+
+(defun org-catalyst-dashboard-required-upcoming ()
+  "TODO"
+  (interactive)
+  (org-catalyst--dashboard-goto-tab 'required-upcoming))
+
+(defun org-catalyst-dashboard-optional ()
+  "TODO"
+  (interactive)
+  (org-catalyst--dashboard-goto-tab 'optional))
+
+(defun org-catalyst-dashboard-optional-upcoming ()
+  "TODO"
+  (interactive)
+  (org-catalyst--dashboard-goto-tab 'optional-upcoming))
 
 (defun org-catalyst-dashboard-actionable ()
   "TODO"
@@ -5495,6 +5687,7 @@ Note that this invalidates config cache."
   "Major mode for Catalyst."
   (toggle-truncate-lines 1)
   (font-lock-mode -1)
+  (hl-line-mode 1)
   (setq-local tab-width 4))
 
 ;;; Hooks

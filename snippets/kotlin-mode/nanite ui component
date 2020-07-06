@@ -7,6 +7,7 @@ package ${1:`(or (kotlin-find-package) "package")`}
 import com.nanite.core.Context
 import com.nanite.graphics.Graphics
 import com.nanite.ui.*
+import com.nanite.util.Event
 
 class ${2:`(file-name-base (buffer-file-name))`}(env: Context) : UIComponent() {
 

@@ -2,4 +2,4 @@
 # name: docparam
 # key: docp
 # --
-* @param ${1:TODO(name)} ${2:TODO(description)}
+@param ${1:TODO(name)} ${2:TODO(description)}
