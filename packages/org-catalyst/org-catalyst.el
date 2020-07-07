@@ -1555,8 +1555,8 @@ As of the current implementation, this function re-seed random state by calling
     (random t)
     results))
 
-(defun org-catalyst--compute-scores (all-item-config)
-  "Compute scores of each item in ALL-ITEM-CONFIG.
+(defun org-catalyst--compute-computed (all-item-config)
+  "Compute scores and stuff of each item in ALL-ITEM-CONFIG.
 
 Writes directly to the given hash table."
   (ht-each
@@ -1585,7 +1585,8 @@ Writes directly to the given hash table."
                       days-to-end
                     (* days-to-end priority))
                   index))))
-       (ht-set item-config "score" score)))
+       (ht-set item-config "score" score)
+       (ht-set item-config "optional" (not (ht-get item-config "end")))))
    all-item-config))
 
 (defun org-catalyst--get-config ()
@@ -1964,7 +1965,6 @@ Writes directly to the given hash table."
                (ht-set item-config "priority" priority)
                (ht-set item-config "display-name" display-name)
                (ht-set item-config "todo-text" todo-text)
-               (ht-set item-config "optional" (string= todo-text "OPTN"))
                (ht-set item-config "todo-type" todo-type)
                (ht-set item-config "state-deltas"
                        (if state-deltas-stack
@@ -2026,7 +2026,7 @@ Writes directly to the given hash table."
              all-item-config
              timestamps))
 
-      (org-catalyst--compute-scores
+      (org-catalyst--compute-computed
        all-item-config))
 
     (list :all-item-config all-item-config
@@ -4853,6 +4853,7 @@ If COMP is given, it should be a function that returns whether one item is less 
                   "           |\n" 'org-catalyst-secondary-face)))
        (setq cur-days days)
        (funcall render-day days)
+       (org-catalyst--render-subline-spacing)
        (setq prev-month-day cur-month-day))
      (sort
       (seq-filter
