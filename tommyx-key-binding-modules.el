@@ -978,6 +978,9 @@
         "r" (:def
              rename-buffer
              :which-key "Rename Buffer")
+        "R" (:def
+             revert-buffer
+             :which-key "Revert Buffer")
         "w" (:def
              evil-write-all
              :which-key "Save All Buffers"))
