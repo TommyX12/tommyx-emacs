@@ -1032,6 +1032,9 @@
                  (emms-sort)
                  (message "Playlist sorted."))
               :which-key "Sort Playlist")
+         "r" (:def
+              emms-sort-recent
+              :which-key "Sort Playlist by Recent")
          "S" (:def
               ,(lambda () (interactive)
                  (emms-shuffle)

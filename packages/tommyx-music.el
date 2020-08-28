@@ -30,6 +30,7 @@
 
 ;;; Code:
 
+(require 'cl)
 (require 'emms)
 (require 'ivy)
 (require 'counsel)
@@ -307,6 +308,17 @@ This function uses `emms-show-format' to format the current track."
 
 (defun emms-setup-show-progress-on-seek ()
   (add-hook 'emms-player-seeked-functions #'emms-show-progress 'append))
+
+(defun emms-sort-recent ()
+  "Sort music by the file's modification time."
+  (interactive)
+  (let ((emms-sort-lessp-function
+         (lambda (a b)
+           (time-less-p
+            (nth 5 (file-attributes (emms-track-name a) 'string))
+            (nth 5 (file-attributes (emms-track-name b) 'string))))))
+    (emms-sort)
+    (message "Playlist sorted by recent.")))
 
 (provide 'tommyx-music)
 

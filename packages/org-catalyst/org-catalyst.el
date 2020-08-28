@@ -433,32 +433,28 @@ This is used to determine the default day to show in the status window."
                                org-catalyst-INF))
      :sort-func version-list-<)
     (:id
-     required-upcoming
+     required-all
      :command
-     org-catalyst-dashboard-required-upcoming
+     org-catalyst-dashboard-required-all
      :name
-     "Upcoming Required"
+     "All Required"
      :filter-func
      ,(lambda (item-config)
-        (and (< org-catalyst--today-daynr
-                (org-catalyst-safe-get item-config "start" 0))
-             (not (org-catalyst-safe-get item-config "optional" nil))))
+        (not (org-catalyst-safe-get item-config "optional" nil)))
      :order-func
      ,(lambda (item-config)
         (org-catalyst-safe-get item-config "start"
                                org-catalyst-INF))
      :sort-func <)
     (:id
-     optional-upcoming
+     optional-all
      :command
-     org-catalyst-dashboard-optional-upcoming
+     org-catalyst-dashboard-optional-all
      :name
-     "Upcoming Optional"
+     "All Optional"
      :filter-func
      ,(lambda (item-config)
-        (and (< org-catalyst--today-daynr
-                (org-catalyst-safe-get item-config "start" 0))
-             (org-catalyst-safe-get item-config "optional" nil)))
+        (org-catalyst-safe-get item-config "optional" nil))
      :order-func
      ,(lambda (item-config)
         (org-catalyst-safe-get item-config "start"
@@ -511,21 +507,6 @@ This is used to determine the default day to show in the status window."
     ;;     (org-catalyst-safe-get item-config "score"
     ;;                            org-catalyst-INF))
     ;;  :sort-func version-list-<)
-    (:id
-     upcoming
-     :command
-     org-catalyst-dashboard-upcoming
-     :name
-     "Upcoming"
-     :filter-func
-     ,(lambda (item-config)
-        (and (< org-catalyst--today-daynr
-                (org-catalyst-safe-get item-config "start" 0))))
-     :order-func
-     ,(lambda (item-config)
-        (org-catalyst-safe-get item-config "start"
-                               org-catalyst-INF))
-     :sort-func <)
     (:id
      all
      :command
@@ -802,13 +783,12 @@ This is used to determine the default day to show in the status window."
         (list (kbd "w") org-catalyst-curator-map)
         (list (kbd "e SPC") 'org-catalyst-dashboard-all)
         (list (kbd "e r") 'org-catalyst-dashboard-required)
-        (list (kbd "e R") 'org-catalyst-dashboard-required-upcoming)
+        (list (kbd "e R") 'org-catalyst-dashboard-required-all)
         (list (kbd "e o") 'org-catalyst-dashboard-optional)
-        (list (kbd "e O") 'org-catalyst-dashboard-optional-upcoming)
+        (list (kbd "e O") 'org-catalyst-dashboard-optional-all)
         (list (kbd "e a") 'org-catalyst-dashboard-actionable)
         (list (kbd "e d") 'org-catalyst-dashboard-has-deadline)
         (list (kbd "e n") 'org-catalyst-dashboard-no-deadline)
-        (list (kbd "e u") 'org-catalyst-dashboard-upcoming)
         (list (kbd "a") 'org-catalyst-complete-item)
         (list (kbd "s") 'org-catalyst-set-or-toggle-item)
         (list (kbd "d") 'org-catalyst-uncomplete-item)
@@ -3197,24 +3177,26 @@ REVERSE the order if REVERSE is non-nil."
      (second-info-renderer nil)
      (second-info-width nil)
      (suffix-renderer nil)
+     (custom-id nil)
      action
      item-config
      month-day
      snapshot)
-  (let ((is-group (org-catalyst-safe-get
-                   item-config "is-group" nil))
-        (params (org-catalyst-safe-get
-                 item-config "params" nil))
-        (item-id (org-catalyst-safe-get
-                  item-config "item-id" nil))
-        (priority (org-catalyst-safe-get
-                   item-config "priority" nil)))
-    (when (equal item-id org-catalyst--watch-id)
+  (let* ((is-group (org-catalyst-safe-get
+                    item-config "is-group" nil))
+         (params (org-catalyst-safe-get
+                  item-config "params" nil))
+         (item-id (org-catalyst-safe-get
+                   item-config "item-id" nil))
+         (id (or custom-id item-id))
+         (priority (org-catalyst-safe-get
+                    item-config "priority" nil)))
+    (when (equal id org-catalyst--watch-id)
       (push (org-current-line) org-catalyst--watched-id-positions))
     (org-catalyst--render-row
      :prefix-renderer prefix-renderer
      :prefix-width prefix-width
-     :property-alist `((id . ,item-id)
+     :property-alist `((id . ,id)
                        (is-item . t)
                        (is-group . ,is-group))
      :info-width info-width
@@ -5080,20 +5062,20 @@ With a prefix argument ARG, point will attempt to say on the same item."
   (interactive)
   (org-catalyst--dashboard-goto-tab 'required))
 
-(defun org-catalyst-dashboard-required-upcoming ()
+(defun org-catalyst-dashboard-required-all ()
   "TODO"
   (interactive)
-  (org-catalyst--dashboard-goto-tab 'required-upcoming))
+  (org-catalyst--dashboard-goto-tab 'required-all))
 
 (defun org-catalyst-dashboard-optional ()
   "TODO"
   (interactive)
   (org-catalyst--dashboard-goto-tab 'optional))
 
-(defun org-catalyst-dashboard-optional-upcoming ()
+(defun org-catalyst-dashboard-optional-all ()
   "TODO"
   (interactive)
-  (org-catalyst--dashboard-goto-tab 'optional-upcoming))
+  (org-catalyst--dashboard-goto-tab 'optional-all))
 
 (defun org-catalyst-dashboard-actionable ()
   "TODO"
@@ -5114,11 +5096,6 @@ With a prefix argument ARG, point will attempt to say on the same item."
   "TODO"
   (interactive)
   (org-catalyst--dashboard-goto-tab 'no-deadline))
-
-(defun org-catalyst-dashboard-upcoming ()
-  "TODO"
-  (interactive)
-  (org-catalyst--dashboard-goto-tab 'upcoming))
 
 (defun org-catalyst-goto ()
   "TODO"

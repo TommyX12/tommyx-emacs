@@ -4,10 +4,10 @@
 # --
 package ${1:`(or (kotlin-find-package) "package")`}
 
-import com.nanite.core.Component
+import com.nanite.core.FixedComponent
 import com.nanite.core.Entity
 
-class ${2:`(file-name-base (buffer-file-name))`} : Component() {
+class ${2:`(file-name-base (buffer-file-name))`} : FixedComponent() {
     $3
 
     override fun onReuse() {

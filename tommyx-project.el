@@ -14,6 +14,7 @@
 
 ;; TODO: temporary bug fix
 ;; (setq projectile-project-compilation-cmd "")
+(setq projectile-git-submodule-command nil)
 
 ;; helper functions
 (defun project/project-relative-name ()
