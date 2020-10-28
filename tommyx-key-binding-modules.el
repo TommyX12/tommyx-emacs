@@ -294,10 +294,12 @@
 
       ;; faster movement
       "K" (:def
-           evil-backward-paragraph
+           ;; evil-backward-paragraph
+           fast-move-up
            :key-name goto-greater-element-up)
       "J" (:def
-           evil-forward-paragraph
+           ;; evil-forward-paragraph
+           fast-move-down
            :key-name goto-greater-element-down)
       "H" (:def
            evil-backward-WORD-begin
