@@ -15,7 +15,7 @@
   ;; font
   (unless (bound-and-true-p selected-font)
     (cond
-     ((and (eq system-type 'ms-dos)
+     ((and (or (eq system-type 'ms-dos) (eq system-type 'windows-nt))
            (find-font (font-spec :name "Consolas")))
       (setq selected-font "Consolas"))
      ((find-font (font-spec :name "Fira Mono"))
@@ -738,7 +738,7 @@ Useful for a search overview popup."
       (company-complete-selection)
     (cond
      (company-candidates
-      (company-select-next)
+      ;; (company-select-next)
       (company-complete-selection))
      (t
       (company-auto-begin)

@@ -428,7 +428,7 @@
     ((:require company)
      ((:require company-tng company-tommyx-frontend)
       ('company-frontends
-       '(company-tng-frontend
+       '(;; company-tng-frontend
          ;; company-pseudo-tooltip-frontend
          company-tommyx-frontend
          ;; company-preview-frontend
@@ -739,7 +739,7 @@
       ($ahs-bug-patch))
      ((:require company)
       ($company-preview-patch)
-      ($company-tng-frontend-no-preview-patch)
+      ;; ($company-tng-frontend-no-preview-patch)
       ($company-echo-metadata-frontend-patch)
       ($company-general-compatibility-patch)
       ((:require yasnippet)
