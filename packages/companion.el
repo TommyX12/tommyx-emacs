@@ -659,6 +659,22 @@ Taken from https://github.com/narendraj9/quoted-scratch."
      (if value (format "%3d" value) "--")
      'face 'font-lock-function-name-face)))
 
+(spaceline-define-segment companion-pomodoro
+  "A spaceline segment to display information to help you use the Pomodoro method."
+  (let* ((days (1+ (time-to-days (current-time))))
+         (d (calendar-gregorian-from-absolute days))
+         (secs-to-eod (- (float-time (encode-time 0 0 0 (nth 1 d) (car d) (nth 2 d)))
+                         (float-time)))
+         (secs-4-pomos (* 60 (+ (* 4 30) 15)))
+         (secs-1-pomos (* 60 30))
+         (secs-no-break-pomos (* 60 25))
+         (num-4-pomos (floor (/ secs-to-eod secs-4-pomos)))
+         (secs-to-eod (- secs-to-eod (* num-4-pomos secs-4-pomos)))
+         (num-1-pomos (floor (/ secs-to-eod secs-1-pomos)))
+         (secs-to-eod (- secs-to-eod (* num-1-pomos secs-1-pomos)))
+         (num-no-break-pomos (floor (/ secs-to-eod secs-no-break-pomos))))
+    (format "maxP = %d" (+ (* 4 num-4-pomos) num-1-pomos num-no-break-pomos))))
+
 (spaceline-define-segment companion-type-break
   "A spaceline segment to display `type-break' information."
   (if (and type-break-mode type-break-time-next-break)
@@ -737,6 +753,8 @@ Taken from https://github.com/narendraj9/quoted-scratch."
         (workspace-number)
         (spellcaster :tight-right t :face 'companion-face
                      :priority 99)
+        (" | " :tight t :face 'companion-face)
+        (companion-pomodoro :tight t :face 'companion-face)
         (" | " :tight t :face 'companion-face)
         (companion-type-break :tight t :face 'companion-face)
         (" | " :tight t :face 'companion-face)
