@@ -2297,6 +2297,9 @@
       "M-[" ,(lambda () (interactive)
                (insert "- [ ] "))
 
+      "M-/" ,(lambda () (interactive)
+               (insert "[0/0] "))
+
       "M-t" ,(lambda () (interactive)
                (insert "TODO [0/0] [100%] "))
 

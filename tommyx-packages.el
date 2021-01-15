@@ -291,6 +291,7 @@
 (use-package rust-mode :ensure t)
 (use-package csv-mode :ensure t)
 (require 'cmake-mode)
+(require 'llvm-mode)
 (use-package cmake-font-lock :ensure t
   :config
   (autoload 'cmake-font-lock-activate "cmake-font-lock" nil t)

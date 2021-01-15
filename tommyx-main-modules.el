@@ -571,8 +571,8 @@
 
     ;; type break
     ;; TODO: disabled
-    (type-break-mode 1)
-    (type-break-query-mode 1)
+    ;; (type-break-mode 1)
+    ;; (type-break-query-mode 1)
 
     ;; snippets
     ((:require yasnippet)
