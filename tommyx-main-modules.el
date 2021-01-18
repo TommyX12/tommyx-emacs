@@ -493,7 +493,7 @@
     ('recentf-max-saved-items 500)
 
     ;; emacs server
-    ('server-window 'pop-to-buffer)
+    ('server-window nil)
 
     ;; tramp
     ('tramp-default-method "ssh")
