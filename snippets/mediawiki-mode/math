@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: math
+# key: m
+# --
+<math>$0</math>

@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: simple debug print
+# key: sdp
+# --
+print("$1 = {}".format($1))$0

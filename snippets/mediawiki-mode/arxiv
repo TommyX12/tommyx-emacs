@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: arxiv ref
+# key: arxiv
+# --
+<ref>{{cite arXiv | eprint=$1}}</ref>$0

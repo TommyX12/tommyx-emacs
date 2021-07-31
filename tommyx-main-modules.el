@@ -1077,7 +1077,8 @@
 
     (:settings
      ((:require company ycmd company-tabnine)
-      ('company-backends :ensure-front 'company-tabnine 'company-ycmd)))
+      ('company-backends :ensure-front 'company-tabnine 'company-ycmd))
+     ((:macro set-indent) 2))
 
     (:minor-modes
      (ycmd-mode 1))))

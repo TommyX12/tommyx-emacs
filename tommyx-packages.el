@@ -305,6 +305,7 @@
 (use-package tide :ensure t)
 (use-package jsonnet-mode :ensure t)
 (use-package glsl-mode :ensure t)
+(require 'mediawiki)
 (use-package gitignore-mode :ensure t)
 (use-package json-mode :ensure t)
 (use-package sgml-mode :ensure t)
