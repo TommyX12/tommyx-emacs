@@ -640,9 +640,10 @@ Useful for a search overview popup."
                 (nil font-lock-variable-name-face)))))))
 
 (defun $start-imenu-list-and-neotree ()
-  (imenu-list-get-buffer-create)
-  (imenu-list-start-timer)
-  (imenu-list-update nil t)
+  (when (bound-and-true-p enable-legacy-imenu-list)
+    (imenu-list-get-buffer-create)
+    (imenu-list-start-timer)
+    (imenu-list-update nil t))
   (neotree-show)
   ;; (display-buffer-in-side-window (get-buffer imenu-list-buffer-name) '((side . left)))
   )

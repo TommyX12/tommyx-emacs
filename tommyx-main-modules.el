@@ -428,6 +428,12 @@
     ((:require company)
      ((:require company-tng company-tommyx-frontend)
       ('company-frontends
+       ;; TODO: use this if expriencing problems
+       ;; '(;; company-tng-frontend
+       ;; company-pseudo-tooltip-frontend
+       ;; ;; company-tommyx-frontend
+       ;; ;; company-preview-frontend
+       ;; company-echo-metadata-frontend)
        '(;; company-tng-frontend
          ;; company-pseudo-tooltip-frontend
          company-tommyx-frontend
@@ -735,12 +741,16 @@
       ($ivy-format-function-patch)
       ($ivy-actions-patch))
      ((:require auto-highlight-symbol)
-      ($ahs-persistent-highlight-patch)
-      ($ahs-bug-patch))
+      (when (bound-and-true-p enable-legacy-patches)
+        ;; TODO: this patch needs to be updated to latest version of ahs
+        ($ahs-persistent-highlight-patch)
+        ($ahs-bug-patch)))
      ((:require company)
-      ($company-preview-patch)
+      (when (bound-and-true-p enable-legacy-patches)
+        ($company-preview-patch))
       ;; ($company-tng-frontend-no-preview-patch)
-      ($company-echo-metadata-frontend-patch)
+      (when (bound-and-true-p enable-legacy-patches)
+        ($company-echo-metadata-frontend-patch))
       ($company-general-compatibility-patch)
       ((:require yasnippet)
        ($company-yasnippet-compatibility-patch)))

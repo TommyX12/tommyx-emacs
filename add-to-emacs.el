@@ -23,7 +23,11 @@
     ((:require tommyx-music)
      ;; Set this to nil if you don't have one.
      ('emms-default-music-dir "~/data/files/music")
-     ('emms-default-playlist-dir "~/data/files/music"))))
+     ('emms-default-playlist-dir "~/data/files/music"))
+    ;; legacy settings. uncomment if you know what you're doing
+    ;; ('enable-legacy-imenu-list t)
+    ;; ('enable-legacy-patches t)
+    ))
 
 ($define-module config-module
   ;; Extra configurations
