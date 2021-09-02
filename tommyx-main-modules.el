@@ -1544,6 +1544,10 @@
   '(:on-init
     ((:require org)
      (org-clock-persistence-insinuate)
+     (font-lock-add-keywords
+      'org-mode
+      `(("^[ \t]*\\(?:[-+*]\\|[0-9]+[).]\\)[ \t]+\\(\\(?:\\[@\\(?:start:\\)?[0-9]+\\][ \t]*\\)?\\[\\(?:X\\|\\([0-9]+\\)/\\2\\)\\][^\n]*\n\\)" 1 'font-lock-comment-face prepend))
+      'append)
      ((:require tommyx-extensions)
       ($ask-for-clock-out-on-quit)
       ((:require smartparens)
