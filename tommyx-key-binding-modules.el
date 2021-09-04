@@ -2251,7 +2251,9 @@
       (:bindings
 
        ;; show outline
-       "m" org-content
+       "m" ,(lambda () (interactive)
+              (org-content)
+              (recenter))
 
        ;; insert date
        "t" org-time-stamp
