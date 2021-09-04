@@ -1430,6 +1430,23 @@ If ARG is non-nil, toggle the mode."
       (flush-lines "^[[:space:]]*$" (region-beginning) (region-end))
     (error "Region not active")))
 
+(defun org-show-current-heading-tidily ()
+  (interactive)  ;Inteactive
+  "Show next entry, keeping other entries closed."
+  (save-excursion
+    (if (save-excursion (end-of-line) (outline-invisible-p))
+        (progn (org-show-entry) (show-children))
+      (outline-back-to-heading)
+      (unless (and (bolp) (org-on-heading-p))
+        (org-up-heading-safe)
+        (hide-subtree)
+        (error "Boundary reached"))
+      (org-overview)
+      (org-reveal t)
+      (org-show-entry)
+      (show-children)))
+  (call-interactively #'evil-scroll-line-to-center))
+
 (provide 'tommyx-extensions)
 
 ;;; tommyx-extensions.el ends here

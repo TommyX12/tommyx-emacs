@@ -451,6 +451,13 @@ Colors are output to `color-identifiers:colors'."
                       (apply 'color-rgb-to-hex rgb)))
                   chosens)))))
 
+(defun $org-fontify-whole-heading-line-patch ()
+  (defun org--set-faces-extend (faces extend-p)
+    (when (fboundp 'set-face-extend)
+      (mapc (lambda (f) (set-face-extend f extend-p)) faces)))
+  (org--set-faces-extend org-level-heading-text-faces org-fontify-whole-heading-line)
+  (org--set-faces-extend org-level-faces org-fontify-whole-heading-line))
+
 (provide 'tommyx-patches)
 
 ;;; tommyx-patches.el ends here

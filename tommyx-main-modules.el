@@ -1546,7 +1546,7 @@
      (org-clock-persistence-insinuate)
      (font-lock-add-keywords
       'org-mode
-      `(("^[ \t]*\\(?:[-+*]\\|[0-9]+[).]\\)[ \t]+\\(\\(?:\\[@\\(?:start:\\)?[0-9]+\\][ \t]*\\)?\\[\\(?:X\\|\\([0-9]+\\)/\\2\\)\\][^\n]*\n\\)" 1 'font-lock-comment-face prepend))
+      `(("^[ \t]*\\(?:[-+*]\\|[0-9]+[).]\\)[ \t]+\\(\\(?:\\[@\\(?:start:\\)?[0-9]+\\][ \t]*\\)?\\[\\(?:X\\|\\([0-9]+\\)/\\2\\)\\][^\n]*\n\\)" 1 'org-headline-done prepend))
       'append)
      ((:require tommyx-extensions)
       ($ask-for-clock-out-on-quit)
@@ -1562,7 +1562,8 @@
   '(:patches
     ((:require tommyx-patches org smartparens)
      ($org-mode-angular-brackets-patch)
-     ($org-mode-heading-coloring-patch)))
+     ($org-mode-heading-coloring-patch)
+     ($org-fontify-whole-heading-line-patch)))
 
   '((:when (bound-and-true-p org-directory))
 
