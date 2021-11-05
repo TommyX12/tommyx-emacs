@@ -142,7 +142,7 @@
        (comp          (if (eq theme 'dark) (if (has-true-color) "#67b11d" "#d75fd7") (if (has-true-color) "#5faf00" "#8700af")))
        (err           (if (eq theme 'dark) (if (has-true-color) "#E03B38" "#e0211d") (if (has-true-color) "#E03B38" "#e0211d")))
        (func          (if (eq theme 'dark) (if (has-true-color) "#248bf2" "#d75fd7") (if (has-true-color) "#2067cc" "#8700af")))
-       (head-done     (if (eq theme 'dark) (if (has-true-color) "#666666" "#444444") (if (has-true-color) "#92a3a1" "#af87af")))
+       (head-done     (if (eq theme 'dark) (if (has-true-color) "#616A73" "#585858") (if (has-true-color) "#92B3B1" "#afafd7")))
        (head1         (if (eq theme 'dark) (if (has-true-color) "#56A5EB" "#268bd2") (if (has-true-color) "#3a81c3" "#268bd2")))
        (head2         (if (eq theme 'dark) (if (has-true-color) "#2d9574" "#2aa198") (if (has-true-color) "#2d9574" "#2aa198")))
        (head3         (if (eq theme 'dark) (if (has-true-color) "#67b11d" "#67b11d") (if (has-true-color) "#579916" "#5faf00")))
