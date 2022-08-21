@@ -115,10 +115,11 @@
      ('ivy-display-function nil)
      ((:require tommyx-extensions)
       ('ivy-posframe-size-function #'$ivy-posframe-get-size)
-      ('ivy-posframe-display-functions-alist
+      (set 'ivy-posframe-display-functions-alist
        '((swiper . $ivy-posframe-display-swiper)
          (swiper-multi . nil)
          (swiper-all . nil)
+         (org-roam-node-find . nil)
          (ivy-cs . nil)
          (counsel-ag . nil)
          (counsel-rg . nil)
@@ -1532,7 +1533,9 @@
       ('org-bullets-bullet-list '("●")))
      ((:require counsel)
       ('counsel-org-headline-display-style 'path)
-      ('counsel-org-headline-path-separator "/"))))
+      ('counsel-org-headline-path-separator "/"))
+     ((:require org-roam) ; TODO
+      )))
 
   '(:minor-modes
     ((:require org-super-agenda)
@@ -1558,6 +1561,11 @@
       (org-notify-add 'default
                       '(:time "1h" :actions nil :period "2m" :duration 60))
       (companion-notif-create-stream 'org-notify 120))))
+
+  '(:after-init
+    ((:require org-roam)
+     (org-roam-setup)
+     (org-roam-db-autosync-mode)))
 
   '(:patches
     ((:require tommyx-patches org smartparens)

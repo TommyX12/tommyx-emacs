@@ -5,16 +5,17 @@
 
 ;; initialize
 
-;; TODO: This is for GNU archive bug fix
-(when (boundp 'gnutls-algorithm-priority)
-  (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
-
 (setq load-prefer-newer t)
 (require 'package)
 (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/"))
 (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
 (add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/"))
 (setq package-enable-at-startup nil)
+
+;; TODO: This is for GNU archive bug fix
+(when (boundp 'gnutls-algorithm-priority)
+  (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
+
 (package-initialize)
 ;; TODO temporarily disabled
 ;; (package-refresh-contents)
@@ -255,6 +256,7 @@
 (use-package org-preview-html :ensure t)
 (require 'org-notify)
 (require 'org-habit)
+(use-package org-roam :ensure t)
 (use-package helm-org-rifle :ensure t)
 (use-package outshine :ensure t)
 (use-package load-relative :ensure t)

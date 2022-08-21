@@ -20,6 +20,7 @@
     ('use-light-theme nil)
     ;; Set this to nil if you are not me.
     ('org-directory "~/notes/org")
+    ('org-roam-directory "~/notes/org-roam")
     ((:require tommyx-music)
      ;; Set this to nil if you don't have one.
      ('emms-default-music-dir "~/data/files/music")

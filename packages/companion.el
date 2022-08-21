@@ -665,15 +665,20 @@ Taken from https://github.com/narendraj9/quoted-scratch."
          (d (calendar-gregorian-from-absolute days))
          (secs-to-eod (- (float-time (encode-time 0 0 0 (nth 1 d) (car d) (nth 2 d)))
                          (float-time)))
-         (secs-4-pomos (* 60 (+ (* 4 30) 15)))
-         (secs-1-pomos (* 60 30))
-         (secs-no-break-pomos (* 60 25))
-         (num-4-pomos (floor (/ secs-to-eod secs-4-pomos)))
-         (secs-to-eod (- secs-to-eod (* num-4-pomos secs-4-pomos)))
-         (num-1-pomos (floor (/ secs-to-eod secs-1-pomos)))
-         (secs-to-eod (- secs-to-eod (* num-1-pomos secs-1-pomos)))
-         (num-no-break-pomos (floor (/ secs-to-eod secs-no-break-pomos))))
-    (format "maxP = %d" (+ (* 4 num-4-pomos) num-1-pomos num-no-break-pomos))))
+         ;; (secs-4-pomos (* 60 (+ (* 4 30) 15)))
+         ;; (secs-1-pomos (* 60 30))
+         ;; (secs-no-break-pomos (* 60 25))
+         ;; (num-4-pomos (floor (/ secs-to-eod secs-4-pomos)))
+         ;; (secs-to-eod (- secs-to-eod (* num-4-pomos secs-4-pomos)))
+         ;; (num-1-pomos (floor (/ secs-to-eod secs-1-pomos)))
+         ;; (secs-to-eod (- secs-to-eod (* num-1-pomos secs-1-pomos)))
+         ;; (num-no-break-pomos (floor (/ secs-to-eod secs-no-break-pomos)))
+         (num-pomos (round (/ secs-to-eod 1800)))
+         )
+    (format "maxP = %d"
+            num-pomos
+            ; (+ (* 4 num-4-pomos) num-1-pomos num-no-break-pomos)
+            )))
 
 (spaceline-define-segment companion-type-break
   "A spaceline segment to display `type-break' information."
